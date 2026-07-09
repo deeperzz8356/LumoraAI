@@ -11,7 +11,12 @@ data class LumoraSpacing(
     val md: Dp = 16.dp,
     val lg: Dp = 24.dp,
     val xl: Dp = 32.dp,
-    val xxl: Dp = 48.dp
+    val xxl: Dp = 48.dp,
+    val base: Dp = 8.dp,
+    val containerPadding: Dp = 24.dp,
+    val gutterMd: Dp = 16.dp,
+    val marginMobile: Dp = 16.dp,
+    val marginDesktop: Dp = 64.dp
 )
 
 val LocalSpacing = staticCompositionLocalOf { LumoraSpacing() }

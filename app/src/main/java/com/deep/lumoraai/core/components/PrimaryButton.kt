@@ -33,9 +33,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog as ComposeDialog
 import com.deep.lumoraai.core.theme.Dimension
-import com.deep.lumoraai.core.theme.LumoraAccent
 import com.deep.lumoraai.core.theme.LumoraPrimary
 import com.deep.lumoraai.core.theme.LumoraSecondary
+import com.deep.lumoraai.core.theme.LumoraTertiary
 
 @Composable
 fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
@@ -53,7 +53,7 @@ fun GradientButton(text: String, onClick: () -> Unit, modifier: Modifier = Modif
         onClick = onClick,
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        modifier = modifier.height(Dimension.ButtonHeight).clip(RoundedCornerShape(8.dp)).background(Brush.horizontalGradient(listOf(LumoraPrimary, LumoraSecondary, LumoraAccent)))
+        modifier = modifier.height(Dimension.ButtonHeight).clip(RoundedCornerShape(8.dp)).background(Brush.horizontalGradient(listOf(LumoraPrimary, LumoraSecondary, LumoraTertiary)))
     ) { Text(text, color = Color(0xFF0B0D12), fontWeight = FontWeight.Bold) }
 }
 

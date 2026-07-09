@@ -4,27 +4,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.deep.lumoraai.data.repository.FakeRepository
+import com.google.firebase.auth.FirebaseAuth
 
-class ProfileViewModel(
-    private val repository: FakeRepository = FakeRepository()
-) : ViewModel() {
+class ProfileViewModel : ViewModel() {
     var uiState: ProfileUiState by mutableStateOf(ProfileUiState.Loading)
         private set
 
     init { load() }
 
     fun load() {
-        val items = when ("profile") {
-            "templates" -> repository.getTemplates().map { it.title }
-            "history" -> repository.getHistory().map { it.title }
-            "credits" -> repository.getCredits().map { "${it.label}: ${it.amount}" }
-            "notifications" -> repository.getNotifications().map { it.title }
-            "queue" -> repository.getQueue().map { it.title }
-            "result" -> repository.getResults().map { it.title }
-            "profile" -> listOf(repository.getProfile().name, repository.getProfile().plan, "${repository.getProfile().credits} credits")
-            else -> listOf("Profile ready", "Fake data only", "No Firebase, AI, Room, Retrofit, or network")
+        val user = FirebaseAuth.getInstance().currentUser
+        val items = if (user != null) {
+            val name = user.displayName ?: user.email?.substringBefore("@") ?: "Guest User"
+            val email = user.email ?: "Anonymous Access"
+            val plan = if (user.isAnonymous) "Free Tier (Guest)" else "Premium Account"
+            listOf(name, email, plan)
+        } else {
+            listOf("Not Logged In", "Please register or sign in.")
         }
-        uiState = if (items.isEmpty()) ProfileUiState.Empty else ProfileUiState.Success(items)
+        uiState = ProfileUiState.Success(items)
+    }
+
+    fun signOut() {
+        FirebaseAuth.getInstance().signOut()
     }
 }

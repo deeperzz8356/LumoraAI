@@ -16,3 +16,5 @@ app/src/asset/stitch_remix_of_lumora_ai_splash_screen
 backend/.venv
 .env
 
+app/google-services.json
+

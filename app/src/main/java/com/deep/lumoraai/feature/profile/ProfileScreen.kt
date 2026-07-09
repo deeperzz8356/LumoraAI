@@ -18,12 +18,19 @@ import com.deep.lumoraai.core.components.EmptyState
 import com.deep.lumoraai.core.components.ErrorState
 import com.deep.lumoraai.core.components.GradientButton
 import com.deep.lumoraai.core.components.Loading
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.graphics.Color
 import com.deep.lumoraai.feature.profile.components.ProfileFeatureCard
 
 @Composable
 fun ProfileScreen(
     uiState: ProfileUiState,
     onNext: () -> Unit,
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -39,19 +46,41 @@ fun ProfileScreen(
     ) { padding ->
         when (uiState) {
             ProfileUiState.Loading -> Loading(modifier = Modifier.padding(padding))
-            ProfileUiState.Empty -> EmptyState(title = "Profile", message = "No fake data yet.", modifier = Modifier.padding(padding))
+            ProfileUiState.Empty -> EmptyState(title = "Profile", message = "No data yet.", modifier = Modifier.padding(padding))
             is ProfileUiState.Error -> ErrorState(title = "Profile", message = uiState.message, modifier = Modifier.padding(padding))
-            is ProfileUiState.Success -> ProfileContent(items = uiState.items, onNext = onNext, modifier = Modifier.padding(padding))
+            is ProfileUiState.Success -> ProfileContent(
+                items = uiState.items,
+                onNext = onNext,
+                onSignOut = onSignOut,
+                modifier = Modifier.padding(padding)
+            )
         }
     }
 }
 
 @Composable
-private fun ProfileContent(items: List<String>, onNext: () -> Unit, modifier: Modifier = Modifier) {
+private fun ProfileContent(
+    items: List<String>,
+    onNext: () -> Unit,
+    onSignOut: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Profile", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Architecture placeholder using fake local data.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        items.forEach { item -> ProfileFeatureCard(title = item, subtitle = "Local fake data") }
+        Text("Manage your authenticated session and settings.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        items.forEach { item -> ProfileFeatureCard(title = item, subtitle = "Account Information") }
         GradientButton(text = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
+        Button(
+            onClick = onSignOut,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF2C1616),
+                contentColor = Color(0xFFFF7A7A)
+            ),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, Color(0xFFFF7A7A).copy(alpha = 0.2f)),
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+        ) {
+            Text("Sign Out", fontWeight = FontWeight.Bold)
+        }
     }
 }

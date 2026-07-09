@@ -3,6 +3,7 @@ package com.deep.lumoraai.core.navigation
 sealed class Screen(val route: String, val title: String) {
     data object Splash : Screen("splash", "Splash")
     data object Onboarding : Screen("onboarding", "Onboarding")
+    data object Auth : Screen("auth", "Auth")
     data object Home : Screen("home", "Home")
     data object CreateHub : Screen("createhub", "Create Hub")
     data object TextToImage : Screen("texttoimage", "Text To Image")
@@ -22,6 +23,7 @@ sealed class Screen(val route: String, val title: String) {
 val navigationSequence = listOf(
     Screen.Splash,
     Screen.Onboarding,
+    Screen.Auth,
     Screen.Home,
     Screen.CreateHub,
     Screen.TextToImage,
