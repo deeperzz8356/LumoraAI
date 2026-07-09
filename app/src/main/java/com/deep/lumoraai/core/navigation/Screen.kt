@@ -1,0 +1,39 @@
+package com.deep.lumoraai.core.navigation
+
+sealed class Screen(val route: String, val title: String) {
+    data object Splash : Screen("splash", "Splash")
+    data object Onboarding : Screen("onboarding", "Onboarding")
+    data object Home : Screen("home", "Home")
+    data object CreateHub : Screen("createhub", "Create Hub")
+    data object TextToImage : Screen("texttoimage", "Text To Image")
+    data object ImageToVideo : Screen("imagetovideo", "Image To Video")
+    data object TextToVideo : Screen("texttovideo", "Text To Video")
+    data object Templates : Screen("templates", "Templates")
+    data object Queue : Screen("queue", "Queue")
+    data object Result : Screen("result", "Result")
+    data object History : Screen("history", "History")
+    data object Credits : Screen("credits", "Credits")
+    data object Notifications : Screen("notifications", "Notifications")
+    data object Subscription : Screen("subscription", "Subscription")
+    data object Profile : Screen("profile", "Profile")
+    data object Settings : Screen("settings", "Settings")
+}
+
+val navigationSequence = listOf(
+    Screen.Splash,
+    Screen.Onboarding,
+    Screen.Home,
+    Screen.CreateHub,
+    Screen.TextToImage,
+    Screen.ImageToVideo,
+    Screen.TextToVideo,
+    Screen.Templates,
+    Screen.Queue,
+    Screen.Result,
+    Screen.History,
+    Screen.Credits,
+    Screen.Notifications,
+    Screen.Subscription,
+    Screen.Profile,
+    Screen.Settings
+)
