@@ -2,14 +2,20 @@ package com.deep.lumoraai.core.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,6 +37,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog as ComposeDialog
 import com.deep.lumoraai.core.theme.Dimension
 import com.deep.lumoraai.core.theme.LumoraPrimary
@@ -67,14 +74,49 @@ fun AppToolbar(title: String, modifier: Modifier = Modifier, action: (@Composabl
 
 @Composable
 fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (String) -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxWidth(), tonalElevation = 3.dp) {
-        Row(modifier = Modifier.height(Dimension.BottomBarHeight).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            items.forEach { item ->
-                TextButton(onClick = { onSelected(item) }) {
-                    Text(item, color = if (item == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
+    Box(
+        modifier = modifier.fillMaxWidth().height(88.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(72.dp).background(Color(0xFF0F1026))
+                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            NavItem("🏠", "Home", selected == "home", { onSelected("home") }, Modifier.weight(1f))
+            NavItem("🧭", "Explore", selected == "templates", { onSelected("templates") }, Modifier.weight(1f))
+            Spacer(modifier = Modifier.width(72.dp))
+            NavItem("🗂️", "Projects", selected == "queue", { onSelected("queue") }, Modifier.weight(1f))
+            NavItem("👤", "Profile", selected == "profile", { onSelected("profile") }, Modifier.weight(1f))
         }
+        Box(
+            modifier = Modifier.padding(bottom = 20.dp).size(60.dp)
+                .background(Color(0xFFCFBDFF), CircleShape).clickable { onSelected("createhub") },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("+", color = Color(0xFF0F1026), fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun NavItem(
+    icon: String,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val tint = if (isSelected) Color(0xFFA855F7) else Color.White.copy(alpha = 0.5f)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxHeight().clickable(onClick = onClick)
+    ) {
+        Text(icon, fontSize = 20.sp, color = tint)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(label, color = tint, fontSize = 11.sp, fontWeight = FontWeight.Medium)
     }
 }
 

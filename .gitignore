@@ -17,5 +17,7 @@ backend/.venv
 .env
 
 app/google-services.json
+app/src/asset
 
-
+demo_cloudflare.py
+demo_output.png

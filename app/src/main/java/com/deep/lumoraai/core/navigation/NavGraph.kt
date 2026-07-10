@@ -11,6 +11,7 @@ import com.deep.lumoraai.feature.credits.CreditsRoute
 import com.deep.lumoraai.feature.history.HistoryRoute
 import com.deep.lumoraai.feature.home.HomeRoute
 import com.deep.lumoraai.feature.imagetovideo.ImageToVideoRoute
+import com.deep.lumoraai.feature.language.LanguageRoute
 import com.deep.lumoraai.feature.notifications.NotificationsRoute
 import com.deep.lumoraai.feature.onboarding.OnboardingRoute
 import com.deep.lumoraai.feature.profile.ProfileRoute
@@ -34,11 +35,12 @@ fun NavGraph(modifier: Modifier = Modifier) {
             SplashRoute(
                 onNext = {
                     val user = FirebaseAuth.getInstance().currentUser
-                    val target = if (user != null) Screen.Home.route else Screen.Onboarding.route
+                    val target = if (user != null) Screen.Home.route else Screen.Language.route
                     navController.goTo(target)
                 }
             )
         }
+        composable(Screen.Language.route) { LanguageRoute(onNext = next(Screen.Language)) }
         composable(Screen.Onboarding.route) { OnboardingRoute(onNext = next(Screen.Onboarding)) }
         composable(Screen.Auth.route) { AuthRoute(onNext = next(Screen.Auth)) }
         composable(Screen.Home.route) { HomeRoute(onNext = next(Screen.Home)) }
