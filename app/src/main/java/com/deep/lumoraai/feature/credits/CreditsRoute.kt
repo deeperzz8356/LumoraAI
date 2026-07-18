@@ -8,5 +8,5 @@ fun CreditsRoute(
     onNext: () -> Unit,
     viewModel: CreditsViewModel = viewModel()
 ) {
-    CreditsScreen(uiState = viewModel.uiState, onNext = onNext)
+    CreditsScreen(uiState = viewModel.uiState, viewModel = viewModel, onNext = onNext)
 }

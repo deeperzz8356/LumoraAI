@@ -10,23 +10,23 @@ private val previewState = CreateHubUiState.Success(listOf("Create Hub fake item
 @Preview(name = "Create Hub Light Preview", showBackground = true)
 @Composable
 fun CreateHubLightPreview() {
-    LumoraTheme(darkTheme = false) { CreateHubScreen(uiState = previewState, onNext = {}) }
+    LumoraTheme(darkTheme = false) { CreateHubScreen(uiState = previewState, onGenerateImage = { _, _, _, _, _, _ -> }, onResetState = {}, onNext = {}) }
 }
 
 @Preview(name = "Create Hub Dark Preview", showBackground = true)
 @Composable
 fun CreateHubDarkPreview() {
-    LumoraTheme(darkTheme = true) { CreateHubScreen(uiState = previewState, onNext = {}) }
+    LumoraTheme(darkTheme = true) { CreateHubScreen(uiState = previewState, onGenerateImage = { _, _, _, _, _, _ -> }, onResetState = {}, onNext = {}) }
 }
 
 @Preview(name = "Create Hub Tablet Preview", device = Devices.TABLET, showBackground = true)
 @Composable
 fun CreateHubTabletPreview() {
-    LumoraTheme(darkTheme = true) { CreateHubScreen(uiState = previewState, onNext = {}) }
+    LumoraTheme(darkTheme = true) { CreateHubScreen(uiState = previewState, onGenerateImage = { _, _, _, _, _, _ -> }, onResetState = {}, onNext = {}) }
 }
 
 @Preview(name = "Create Hub Landscape Preview", widthDp = 891, heightDp = 411, showBackground = true)
 @Composable
 fun CreateHubLandscapePreview() {
-    LumoraTheme(darkTheme = true) { CreateHubScreen(uiState = previewState, onNext = {}) }
+    LumoraTheme(darkTheme = true) { CreateHubScreen(uiState = previewState, onGenerateImage = { _, _, _, _, _, _ -> }, onResetState = {}, onNext = {}) }
 }

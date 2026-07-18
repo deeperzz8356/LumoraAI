@@ -50,8 +50,7 @@ fun TextToVideoScreen(
 private fun TextToVideoContent(items: List<String>, onNext: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Text To Video", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Architecture placeholder using fake local data.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        items.forEach { item -> TextToVideoFeatureCard(title = item, subtitle = "Local fake data") }
+        items.forEach { item -> TextToVideoFeatureCard(title = item, subtitle = "This card will show details of your text-to-video scenes.") }
         GradientButton(text = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }

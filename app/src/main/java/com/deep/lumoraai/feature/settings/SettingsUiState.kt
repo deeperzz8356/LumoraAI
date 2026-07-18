@@ -1,8 +1,8 @@
 package com.deep.lumoraai.feature.settings
 
-sealed interface SettingsUiState {
-    data object Loading : SettingsUiState
-    data class Success(val items: List<String>) : SettingsUiState
-    data class Error(val message: String) : SettingsUiState
-    data object Empty : SettingsUiState
-}
+data class SettingsUiState(
+    val isDarkMode: Boolean = true,
+    val notificationsEnabled: Boolean = true,
+    val highQualityMode: Boolean = false,
+    val selectedLanguage: String = "English"
+)

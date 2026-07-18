@@ -1,30 +1,48 @@
 package com.deep.lumoraai.feature.settings
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import com.deep.lumoraai.data.repository.FakeRepository
+import com.deep.lumoraai.data.repository.SettingsRepository
 
-class SettingsViewModel(
-    private val repository: FakeRepository = FakeRepository()
-) : ViewModel() {
-    var uiState: SettingsUiState by mutableStateOf(SettingsUiState.Loading)
+class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository = SettingsRepository(application)
+    
+    var uiState: SettingsUiState by mutableStateOf(SettingsUiState())
         private set
 
-    init { load() }
+    init {
+        load()
+    }
 
-    fun load() {
-        val items = when ("settings") {
-            "templates" -> repository.getTemplates().map { it.title }
-            "history" -> repository.getHistory().map { it.title }
-            "credits" -> repository.getCredits().map { "${it.label}: ${it.amount}" }
-            "notifications" -> repository.getNotifications().map { it.title }
-            "queue" -> repository.getQueue().map { it.title }
-            "result" -> repository.getResults().map { it.title }
-            "profile" -> listOf(repository.getProfile().name, repository.getProfile().plan, "${repository.getProfile().credits} credits")
-            else -> listOf("Settings ready", "Fake data only", "No Firebase, AI, Room, Retrofit, or network")
-        }
-        uiState = if (items.isEmpty()) SettingsUiState.Empty else SettingsUiState.Success(items)
+    private fun load() {
+        uiState = SettingsUiState(
+            isDarkMode = repository.isDarkMode,
+            notificationsEnabled = repository.notificationsEnabled,
+            highQualityMode = repository.highQualityMode,
+            selectedLanguage = repository.language
+        )
+    }
+
+    fun toggleDarkMode(enabled: Boolean) {
+        repository.isDarkMode = enabled
+        uiState = uiState.copy(isDarkMode = enabled)
+    }
+
+    fun toggleNotifications(enabled: Boolean) {
+        repository.notificationsEnabled = enabled
+        uiState = uiState.copy(notificationsEnabled = enabled)
+    }
+
+    fun toggleHighQualityMode(enabled: Boolean) {
+        repository.highQualityMode = enabled
+        uiState = uiState.copy(highQualityMode = enabled)
+    }
+
+    fun setLanguage(language: String) {
+        repository.language = language
+        uiState = uiState.copy(selectedLanguage = language)
     }
 }

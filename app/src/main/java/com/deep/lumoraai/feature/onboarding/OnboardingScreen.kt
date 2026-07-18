@@ -17,21 +17,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -52,7 +59,10 @@ fun OnboardingScreen(
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var currentStep by remember { mutableStateOf(1) }
+    val pagerState = rememberPagerState(pageCount = { 5 })
+    val coroutineScope = rememberCoroutineScope()
+    val currentStep = pagerState.currentPage + 1
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -62,14 +72,39 @@ fun OnboardingScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding()
+                .systemBarsPadding() // Ensures no overlap with status/nav bars
         ) {
             OnboardingTopBar(currentStep = currentStep, onSkip = onNext)
-            OnboardingBody(
-                currentStep = currentStep,
-                onStepChange = { currentStep = it },
-                onGetStarted = onNext
-            )
+            
+            // Step Content takes up remaining space
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) { page ->
+                StandardStepScreen(currentStep = page + 1)
+            }
+            
+            // Fixed Bottom Controls
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            ) {
+                if (currentStep < 5) {
+                    OnboardingControls(
+                        currentStep = currentStep,
+                        onNext = { 
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        }
+                    )
+                } else {
+                    OnboardingFinalControls(onGetStarted = onNext)
+                }
+            }
         }
     }
 }
@@ -162,127 +197,38 @@ fun OnboardingLogo() {
 }
 
 @Composable
-fun OnboardingBody(
-    currentStep: Int,
-    onStepChange: (Int) -> Unit,
-    onGetStarted: () -> Unit
-) {
-    when (currentStep) {
-        1 -> StepOneScreen(onNext = { onStepChange(2) })
-        2 -> StepTwoScreen(onNext = { onStepChange(3) })
-        3 -> StepThreeScreen(onNext = { onStepChange(4) })
-        4 -> StepFourScreen(onNext = { onStepChange(5) })
-        5 -> StepFiveScreen(onGetStarted = onGetStarted)
-    }
-}
-
-@Composable
-fun StepOneScreen(onNext: () -> Unit) {
+fun StandardStepScreen(currentStep: Int) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        StepTitle(step = 1)
+        // Fixed height for title area so it doesn't shift the layout
+        Box(
+            modifier = Modifier.fillMaxWidth().height(110.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            StepTitle(step = currentStep)
+        }
+        
         Spacer(modifier = Modifier.height(16.dp))
-        StepDescription(step = 1)
-        Spacer(modifier = Modifier.height(24.dp))
-        OnboardingControls(currentStep = 1, onNext = onNext)
-        Spacer(modifier = Modifier.weight(1f))
-        StepIllustration(
-            step = 1,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(280.dp)
-        )
-    }
-}
-
-@Composable
-fun StepTwoScreen(onNext: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        StepTitle(step = 2)
-        Spacer(modifier = Modifier.weight(1f))
-        StepIllustration(
-            step = 2,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        StepDescription(step = 2)
-        Spacer(modifier = Modifier.height(24.dp))
-        OnboardingControls(currentStep = 2, onNext = onNext)
-        Spacer(modifier = Modifier.height(24.dp))
-    }
-}
-
-@Composable
-fun StepThreeScreen(onNext: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        StepTitle(step = 3)
-        Spacer(modifier = Modifier.height(16.dp))
-        StepDescription(step = 3)
-        Spacer(modifier = Modifier.height(24.dp))
-        OnboardingControls(currentStep = 3, onNext = onNext)
-        Spacer(modifier = Modifier.weight(1f))
-        StepIllustration(
-            step = 3,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp)
-        )
-    }
-}
-
-@Composable
-fun StepFourScreen(onNext: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        StepTitle(step = 4)
-        Spacer(modifier = Modifier.weight(1f))
-        StepIllustration(
-            step = 4,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        StepDescription(step = 4)
-        Spacer(modifier = Modifier.height(24.dp))
-        OnboardingControls(currentStep = 4, onNext = onNext)
-        Spacer(modifier = Modifier.height(24.dp))
-    }
-}
-
-@Composable
-fun StepFiveScreen(onGetStarted: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        StepTitle(step = 5)
-        Spacer(modifier = Modifier.height(16.dp))
-        StepDescription(step = 5)
-        Spacer(modifier = Modifier.height(16.dp))
-        StepIllustration(
-            step = 5,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        OnboardingFinalControls(onGetStarted = onGetStarted)
-        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Fixed height for image
+        Box(
+            modifier = Modifier.fillMaxWidth().height(320.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            StepIllustration(
+                step = currentStep,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Description (hidden on step 5 to prevent overlap with large controls)
+        if (currentStep != 5) {
+            StepDescription(step = currentStep)
+        }
     }
 }
 
@@ -309,13 +255,9 @@ fun StepOneTitle() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Next-Gen", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Spacer(modifier = Modifier.width(4.dp))
-            Text("✦", color = Color(0xFFD4FF3B), fontSize = 22.sp)
         }
         Text("AI Text to Image", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("✦", color = Color(0xFFD4FF3B), fontSize = 22.sp)
-            Spacer(modifier = Modifier.width(4.dp))
             Text("Generation Tool", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFC5C0FF))
         }
     }
@@ -401,12 +343,8 @@ fun StepFiveTitle() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Welcome to", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Spacer(modifier = Modifier.width(4.dp))
-            Text("✦", color = Color(0xFFD4FF3B), fontSize = 22.sp)
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("✦", color = Color(0xFFD4FF3B), fontSize = 22.sp)
-            Spacer(modifier = Modifier.width(4.dp))
             Text("AI- ", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Text("Background", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE539B4))
             Text(" Eraser", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -462,20 +400,23 @@ fun StepDescription(step: Int, modifier: Modifier = Modifier) {
 
 @Composable
 fun StepIllustration(step: Int, modifier: Modifier = Modifier) {
-    val imageRes = when (step) {
-        1 -> R.drawable.onboarding_1_ill
-        2 -> R.drawable.onboarding_2_ill
-        3 -> R.drawable.onboarding_3_ill
-        4 -> R.drawable.onboarding_4_ill
-        5 -> R.drawable.onboarding_5_ill
-        else -> R.drawable.onboarding_1_ill
+    if (step == 2) {
+        com.deep.lumoraai.feature.onboarding.components.BeforeAfterVideoSlider(modifier = modifier)
+    } else {
+        val imageRes = when (step) {
+            1 -> R.drawable.onboarding_1_ill
+            3 -> R.drawable.onboarding_3_ill
+            4 -> R.drawable.onboarding_4_ill
+            5 -> R.drawable.onboarding_5_ill
+            else -> R.drawable.onboarding_1_ill
+        }
+        Image(
+            painter = painterResource(id = imageRes),
+            contentDescription = "Step $step",
+            modifier = modifier,
+            contentScale = ContentScale.Fit
+        )
     }
-    Image(
-        painter = painterResource(id = imageRes),
-        contentDescription = "Step $step",
-        modifier = modifier,
-        contentScale = ContentScale.Fit
-    )
 }
 
 @Composable
@@ -592,15 +533,31 @@ fun OnboardingUtilityButtons() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OnboardingSmallButton(text = "Rate Us", icon = "⭐", modifier = Modifier.weight(1f))
-            OnboardingSmallButton(text = "Share App", icon = "🔗", modifier = Modifier.weight(1f))
+            OnboardingSmallButton(
+                text = "Rate Us", 
+                icon = Icons.Default.Star,
+                modifier = Modifier.weight(1f)
+            )
+            OnboardingSmallButton(
+                text = "Share App", 
+                icon = Icons.Default.Share,
+                modifier = Modifier.weight(1f)
+            )
         }
-        OnboardingSmallButton(text = "Privacy Policy", icon = "🛡️", modifier = Modifier.fillMaxWidth())
+        OnboardingSmallButton(
+            text = "Privacy Policy", 
+            icon = Icons.Default.Lock,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
 @Composable
-fun OnboardingSmallButton(text: String, icon: String, modifier: Modifier = Modifier) {
+fun OnboardingSmallButton(
+    text: String, 
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
             .height(48.dp)
@@ -612,9 +569,15 @@ fun OnboardingSmallButton(text: String, icon: String, modifier: Modifier = Modif
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.Center
         ) {
-            Text(text = icon, fontSize = 14.sp)
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
             Text(text = text, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
         }
     }

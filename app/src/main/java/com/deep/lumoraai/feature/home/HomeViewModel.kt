@@ -4,27 +4,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.deep.lumoraai.data.repository.FakeRepository
+import com.google.firebase.auth.FirebaseAuth
 
-class HomeViewModel(
-    private val repository: FakeRepository = FakeRepository()
-) : ViewModel() {
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+
+class HomeViewModel : ViewModel() {
     var uiState: HomeUiState by mutableStateOf(HomeUiState.Loading)
         private set
+        
+    private val generationRepository = com.deep.lumoraai.data.repository.GenerationRepository()
 
     init { load() }
 
     fun load() {
-        val items = when ("home") {
-            "templates" -> repository.getTemplates().map { it.title }
-            "history" -> repository.getHistory().map { it.title }
-            "credits" -> repository.getCredits().map { "${it.label}: ${it.amount}" }
-            "notifications" -> repository.getNotifications().map { it.title }
-            "queue" -> repository.getQueue().map { it.title }
-            "result" -> repository.getResults().map { it.title }
-            "profile" -> listOf(repository.getProfile().name, repository.getProfile().plan, "${repository.getProfile().credits} credits")
-            else -> listOf("Home ready", "Fake data only", "No Firebase, AI, Room, Retrofit, or network")
+        val user = FirebaseAuth.getInstance().currentUser
+        val name = user?.displayName ?: user?.email?.substringBefore("@") ?: "Creator"
+        uiState = HomeUiState.Success(listOf("Welcome, $name!"))
+        
+        if (user != null) {
+            viewModelScope.launch {
+                val creditsResult = generationRepository.getCredits()
+                if (creditsResult.isSuccess) {
+                    val currentSuccess = uiState as? HomeUiState.Success
+                    if (currentSuccess != null) {
+                        uiState = currentSuccess.copy(credits = creditsResult.getOrDefault(0))
+                    }
+                }
+            }
         }
-        uiState = if (items.isEmpty()) HomeUiState.Empty else HomeUiState.Success(items)
     }
 }

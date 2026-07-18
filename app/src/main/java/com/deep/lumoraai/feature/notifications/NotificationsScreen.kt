@@ -50,8 +50,7 @@ fun NotificationsScreen(
 private fun NotificationsContent(items: List<String>, onNext: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Notifications", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Architecture placeholder using fake local data.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        items.forEach { item -> NotificationsFeatureCard(title = item, subtitle = "Local fake data") }
+        items.forEach { item -> NotificationsFeatureCard(title = item, subtitle = "This card will display active system alerts and generation status updates.") }
         GradientButton(text = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }

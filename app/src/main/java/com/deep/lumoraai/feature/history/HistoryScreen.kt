@@ -50,8 +50,7 @@ fun HistoryScreen(
 private fun HistoryContent(items: List<String>, onNext: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("History", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Architecture placeholder using fake local data.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        items.forEach { item -> HistoryFeatureCard(title = item, subtitle = "Local fake data") }
+        items.forEach { item -> HistoryFeatureCard(title = item, subtitle = "This card displays your past creations stored in the database.") }
         GradientButton(text = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }

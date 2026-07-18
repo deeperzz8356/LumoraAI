@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -28,6 +30,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -75,7 +83,11 @@ fun AppToolbar(title: String, modifier: Modifier = Modifier, action: (@Composabl
 @Composable
 fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (String) -> Unit, modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.fillMaxWidth().height(88.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color(0xFF0F1026))
+            .navigationBarsPadding()
+            .height(88.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         Row(
@@ -84,25 +96,25 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            NavItem("🏠", "Home", selected == "home", { onSelected("home") }, Modifier.weight(1f))
-            NavItem("🧭", "Explore", selected == "templates", { onSelected("templates") }, Modifier.weight(1f))
+            NavItem(Icons.Default.Home, "Home", selected == "home", { onSelected("home") }, Modifier.weight(1f))
+            NavItem(Icons.Default.Search, "Explore", selected == "templates", { onSelected("templates") }, Modifier.weight(1f))
             Spacer(modifier = Modifier.width(72.dp))
-            NavItem("🗂️", "Projects", selected == "queue", { onSelected("queue") }, Modifier.weight(1f))
-            NavItem("👤", "Profile", selected == "profile", { onSelected("profile") }, Modifier.weight(1f))
+            NavItem(Icons.Default.List, "Queue", selected == "queue", { onSelected("queue") }, Modifier.weight(1f))
+            NavItem(Icons.Default.Person, "Profile", selected == "profile", { onSelected("profile") }, Modifier.weight(1f))
         }
         Box(
             modifier = Modifier.padding(bottom = 20.dp).size(60.dp)
                 .background(Color(0xFFCFBDFF), CircleShape).clickable { onSelected("createhub") },
             contentAlignment = Alignment.Center
         ) {
-            Text("+", color = Color(0xFF0F1026), fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF0F1026), modifier = Modifier.size(28.dp))
         }
     }
 }
 
 @Composable
 private fun NavItem(
-    icon: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -114,7 +126,7 @@ private fun NavItem(
         verticalArrangement = Arrangement.Center,
         modifier = modifier.fillMaxHeight().clickable(onClick = onClick)
     ) {
-        Text(icon, fontSize = 20.sp, color = tint)
+        Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.height(4.dp))
         Text(label, color = tint, fontSize = 11.sp, fontWeight = FontWeight.Medium)
     }

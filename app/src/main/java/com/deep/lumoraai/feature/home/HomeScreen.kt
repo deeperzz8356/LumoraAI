@@ -1,6 +1,5 @@
 package com.deep.lumoraai.feature.home
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,19 +20,30 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,12 +51,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.components.AppButton
+import com.deep.lumoraai.core.components.AppCard
+import com.deep.lumoraai.core.components.AppEmptyScreen
+import com.deep.lumoraai.core.components.AppErrorScreen
+import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.ui.theme.tokens.Spacing
 
 data class ToolItemInfo(
     val title: String,
     val description: String,
-    val iconEmoji: String,
+    val icon: ImageVector,
     val badge: String? = null
 )
 
@@ -53,93 +71,114 @@ data class ToolItemInfo(
 fun HomeScreen(
     uiState: HomeUiState,
     onNext: () -> Unit,
+    onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        bottomBar = { BottomNavigationBar(emptyList(), "home", {}) }
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = { BottomNavigationBar(emptyList(), "home", onNavigate) }
     ) { padding ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(padding)
-                .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
         ) {
-            HomeContent(onGenerate = onNext)
+            when (uiState) {
+                is HomeUiState.Loading -> AppLoadingScreen()
+                is HomeUiState.Error -> AppErrorScreen(message = uiState.message)
+                is HomeUiState.Empty -> AppEmptyScreen(title = "No Content", body = "Nothing to see here.")
+                is HomeUiState.Success -> HomeContent(uiState = uiState, onNavigate = onNavigate)
+            }
         }
     }
 }
 
 @Composable
-private fun HomeContent(onGenerate: () -> Unit) {
+private fun HomeContent(uiState: HomeUiState.Success, onNavigate: (String) -> Unit) {
     val imageTools = remember {
         listOf(
-            ToolItemInfo("Text to Image", "Generate from prompt", "✨", "Popular"),
-            ToolItemInfo("Templates", "Quick start styles", "🎴"),
-            ToolItemInfo("Art Effects", "Style transfer", "🎨"),
-            ToolItemInfo("AI Background", "Replace scenery", "🏞️", "New"),
-            ToolItemInfo("Upscaler", "4K enhancement", "🔎", "Pro"),
-            ToolItemInfo("BG Remover", "Instant transparent", "✂️")
+            ToolItemInfo("Text to Image", "Generate from prompt", Icons.Default.Star, "Popular"),
+            ToolItemInfo("Templates", "Quick start styles", Icons.Default.List),
+            ToolItemInfo("Art Effects", "Style transfer", Icons.Default.Edit),
+            ToolItemInfo("AI Background", "Replace scenery", Icons.Default.Share, "New"),
+            ToolItemInfo("Upscaler", "4K enhancement", Icons.Default.Search, "Pro"),
+            ToolItemInfo("BG Remover", "Instant transparent", Icons.Default.Close)
         )
     }
     val videoTools = remember {
         listOf(
-            ToolItemInfo("Image to Video", "Animate stills", "🎬"),
-            ToolItemInfo("Text to Video", "Full scene gen", "🎥", "Pro"),
-            ToolItemInfo("Video Templates", "Pre-made storyboards", "📋"),
-            ToolItemInfo("Video Ads", "Convert any link", "📣", "New")
+            ToolItemInfo("Image to Video", "Animate stills", Icons.Default.PlayArrow),
+            ToolItemInfo("Text to Video", "Full scene gen", Icons.Default.PlayArrow, "Pro"),
+            ToolItemInfo("Video Templates", "Pre-made storyboards", Icons.Default.List),
+            ToolItemInfo("Video Ads", "Convert any link", Icons.Default.Share, "New")
         )
     }
+    
+    val greeting = if (uiState.items.isNotEmpty()) uiState.items.first() else "Create"
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = Spacing.containerMargin, vertical = Spacing.md),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xl)
     ) {
-        HomeTopBar()
-        HomeHeroSection()
+        HomeTopBar(onNavigate = onNavigate)
+        HomeHeroSection(greeting = greeting, credits = uiState.credits, onNavigate = onNavigate)
         HomeRecentlyUsedSection()
-        HomeToolsSection(title = "Image Tools", icon = "🖼️", tools = imageTools)
-        HomeToolsSection(title = "Video Tools", icon = "📹", tools = videoTools)
-        HomeUpgradeCard()
+        HomeToolsSection(title = "Image Tools", icon = Icons.Default.Star, tools = imageTools, onNavigate = onNavigate)
+        HomeToolsSection(title = "Video Tools", icon = Icons.Default.PlayArrow, tools = videoTools, onNavigate = onNavigate)
+        HomeUpgradeCard(onNavigate = onNavigate)
     }
 }
 
 @Composable
-private fun HomeTopBar() {
+private fun HomeTopBar(onNavigate: (String) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.sm),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("⠿", color = Color.White, fontSize = 24.sp)
-            Spacer(modifier = Modifier.width(12.dp))
-            Text("Lumora AI 4", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Icon(Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(Spacing.md))
+            Text("Lumora AI 4", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("🔔", fontSize = 20.sp, color = Color.White)
-            Spacer(modifier = Modifier.width(16.dp))
+            Icon(
+                Icons.Default.Notifications,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable { onNavigate(Screen.Notifications.route) }
+            )
+            Spacer(modifier = Modifier.width(Spacing.lg))
             Image(
                 painter = painterResource(id = R.drawable.user_avatar),
                 contentDescription = null,
-                modifier = Modifier.size(36.dp).clip(CircleShape)
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(MaterialTheme.shapes.extraLarge)
             )
         }
     }
 }
 
 @Composable
-private fun HomeHeroSection() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Create", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+private fun HomeHeroSection(greeting: String, credits: Int, onNavigate: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        Text(greeting, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onSurface)
         Text(
             text = "Turn ideas into stunning images and videos with the next generation of AI creative tools.",
-            color = Color.White.copy(alpha = 0.6f),
-            fontSize = 14.sp,
-            lineHeight = 20.sp
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         HomeSearchBar()
-        HomeStatsRow()
+        HomeStatsRow(credits = credits, onNavigate = onNavigate)
     }
 }
 
@@ -148,57 +187,70 @@ private fun HomeSearchBar() {
     OutlinedTextField(
         value = "",
         onValueChange = {},
-        placeholder = { Text("Search tools, templates, or styles...", color = Color.White.copy(alpha = 0.3f)) },
-        leadingIcon = { Text("🔍", fontSize = 16.sp, modifier = Modifier.padding(start = 8.dp)) },
-        modifier = Modifier.fillMaxWidth().height(52.dp),
-        shape = RoundedCornerShape(26.dp),
+        placeholder = { Text("Search tools, templates, or styles...", style = MaterialTheme.typography.bodyMedium) },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF1E214A).copy(alpha = 0.4f),
-            unfocusedContainerColor = Color(0xFF1E214A).copy(alpha = 0.4f),
-            focusedBorderColor = Color(0xFFA855F7).copy(alpha = 0.5f),
-            unfocusedBorderColor = Color.White.copy(alpha = 0.05f),
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+            unfocusedBorderColor = Color.Transparent,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
         singleLine = true
     )
 }
 
 @Composable
-private fun HomeStatsRow() {
+private fun HomeStatsRow(credits: Int, onNavigate: (String) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.sm),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         StatItem("CREATIONS", "48")
         StatItem("PLAN", "Pro")
-        StatItem("CREDITS", "∞")
+        StatItem("CREDITS", credits.toString(), onClick = { onNavigate(Screen.Credits.route) })
     }
 }
 
 @Composable
-private fun StatItem(label: String, value: String) {
-    Column {
-        Text(label, color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(value, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+private fun StatItem(label: String, value: String, onClick: (() -> Unit)? = null) {
+    val modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+    Column(modifier = modifier) {
+        Text(
+            label, 
+            style = MaterialTheme.typography.labelSmall, 
+            color = MaterialTheme.colorScheme.onSurfaceVariant, 
+            fontWeight = FontWeight.Bold, 
+            letterSpacing = 1.sp
+        )
+        Spacer(modifier = Modifier.height(Spacing.xs))
+        Text(value, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
 @Composable
 private fun HomeRecentlyUsedSection() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Recently Used", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text("View All", color = Color(0xFFA855F7), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text("Recently Used", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text("View All", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             RecentItemCard(
                 title = "Fantasy Portrait",
@@ -230,48 +282,44 @@ private fun RecentItemCard(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(110.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                .aspectRatio(1.5f)
+                .clip(MaterialTheme.shapes.medium)
         )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(time, color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+        Spacer(modifier = Modifier.height(Spacing.sm))
+        Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+        Text(time, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
 private fun HomeToolsSection(
     title: String,
-    icon: String,
-    tools: List<ToolItemInfo>
+    icon: ImageVector,
+    tools: List<ToolItemInfo>,
+    onNavigate: (String) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    AppCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("$icon  $title", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(Spacing.sm))
+            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
         }
-        ToolsGrid(tools = tools)
+        Spacer(modifier = Modifier.height(Spacing.md))
+        ToolsGrid(tools = tools, onNavigate = onNavigate)
     }
 }
 
 @Composable
-private fun ToolsGrid(tools: List<ToolItemInfo>) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+private fun ToolsGrid(tools: List<ToolItemInfo>, onNavigate: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
         for (i in tools.indices step 2) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
-                ToolCardItem(info = tools[i], modifier = Modifier.weight(1f))
+                ToolCardItem(info = tools[i], onNavigate = onNavigate, modifier = Modifier.weight(1f))
                 if (i + 1 < tools.size) {
-                    ToolCardItem(info = tools[i + 1], modifier = Modifier.weight(1f))
+                    ToolCardItem(info = tools[i + 1], onNavigate = onNavigate, modifier = Modifier.weight(1f))
                 } else {
                     Spacer(modifier = Modifier.weight(1f))
                 }
@@ -283,29 +331,39 @@ private fun ToolsGrid(tools: List<ToolItemInfo>) {
 @Composable
 private fun ToolCardItem(
     info: ToolItemInfo,
+    onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .height(110.dp)
-            .background(Color(0xFF0F1026), RoundedCornerShape(12.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-            .clickable { /* Action */ }
-            .padding(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(info.iconEmoji, fontSize = 20.sp)
-            Column {
-                Text(info.title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(info.description, color = Color.White.copy(alpha = 0.5f), fontSize = 9.sp, lineHeight = 12.sp)
+    Surface(
+        onClick = {
+            when (info.title) {
+                "Text to Image" -> onNavigate(Screen.CreateHub.route)
+                "Templates" -> onNavigate(Screen.Templates.route)
+                "Image to Video" -> onNavigate(Screen.CreateHub.route + "?tab=1")
+                "Text to Video" -> onNavigate(Screen.CreateHub.route + "?tab=1")
+                else -> {}
             }
-        }
-        if (info.badge != null) {
-            ToolBadge(text = info.badge, modifier = Modifier.align(Alignment.BottomEnd))
+        },
+        modifier = modifier.height(110.dp),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    ) {
+        Box(modifier = Modifier.padding(Spacing.md)) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Icon(info.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
+                Column {
+                    Text(info.title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(info.description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            if (info.badge != null) {
+                ToolBadge(text = info.badge, modifier = Modifier.align(Alignment.BottomEnd))
+            }
         }
     }
 }
@@ -313,50 +371,44 @@ private fun ToolCardItem(
 @Composable
 private fun ToolBadge(text: String, modifier: Modifier = Modifier) {
     val bgColor = when (text) {
-        "Popular" -> Color(0xFFCFBDFF).copy(alpha = 0.15f)
+        "Popular" -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
         "New" -> Color(0xFFADF021).copy(alpha = 0.15f)
-        else -> Color(0xFFA855F7).copy(alpha = 0.15f)
+        else -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)
     }
     val textColor = when (text) {
-        "Popular" -> Color(0xFFCFBDFF)
+        "Popular" -> MaterialTheme.colorScheme.primary
         "New" -> Color(0xFFADF021)
-        else -> Color(0xFFA855F7)
+        else -> MaterialTheme.colorScheme.secondary
     }
     Box(
         modifier = modifier
-            .background(bgColor, RoundedCornerShape(4.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .background(bgColor, MaterialTheme.shapes.extraSmall)
+            .padding(horizontal = Spacing.sm, vertical = 2.dp)
     ) {
-        Text(text = text, color = textColor, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+        Text(text = text, color = textColor, style = MaterialTheme.typography.labelSmall)
     }
 }
 
 @Composable
-private fun HomeUpgradeCard() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth().padding(vertical = 8.dp)
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp)
-    ) {
+private fun HomeUpgradeCard(onNavigate: (String) -> Unit) {
+    AppCard {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            Text("Upgrade to Pro", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Upgrade to Pro", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
             Text(
                 text = "Unlock 8K rendering, unlimited creations, and priority queue processing for all your projects.",
-                color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp, textAlign = TextAlign.Center, lineHeight = 16.sp
+                style = MaterialTheme.typography.bodySmall, 
+                color = MaterialTheme.colorScheme.onSurfaceVariant, 
+                textAlign = TextAlign.Center
             )
-            Button(
-                onClick = {},
-                modifier = Modifier.fillMaxWidth().height(44.dp),
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCFBDFF))
-            ) {
-                Text("Get Started", color = Color(0xFF0F1026), fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            }
+            Spacer(modifier = Modifier.height(Spacing.xs))
+            AppButton(
+                text = "Get Started",
+                onClick = { onNavigate(Screen.Subscription.route) },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

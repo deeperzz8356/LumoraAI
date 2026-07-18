@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun ProfileRoute(
     onNext: () -> Unit,
     onSignOut: () -> Unit,
+    onNavigate: (String) -> Unit,
     viewModel: ProfileViewModel = viewModel()
 ) {
     ProfileScreen(
@@ -15,6 +16,7 @@ fun ProfileRoute(
         onSignOut = {
             viewModel.signOut()
             onSignOut()
-        }
+        },
+        onNavigate = onNavigate
     )
 }

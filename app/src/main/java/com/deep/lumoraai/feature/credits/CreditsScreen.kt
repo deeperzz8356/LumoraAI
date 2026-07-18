@@ -1,28 +1,37 @@
 package com.deep.lumoraai.feature.credits
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.EmptyState
 import com.deep.lumoraai.core.components.ErrorState
-import com.deep.lumoraai.core.components.GradientButton
 import com.deep.lumoraai.core.components.Loading
-import com.deep.lumoraai.feature.credits.components.CreditsFeatureCard
 
 @Composable
 fun CreditsScreen(
     uiState: CreditsUiState,
+    viewModel: CreditsViewModel,
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -31,27 +40,81 @@ fun CreditsScreen(
         topBar = { AppToolbar(title = "Credits") },
         bottomBar = {
             BottomNavigationBar(
-                items = listOf("home", "createhub", "queue", "profile"),
+                items = emptyList(),
                 selected = "credits",
                 onSelected = { onNext() }
             )
         }
     ) { padding ->
-        when (uiState) {
-            CreditsUiState.Loading -> Loading(modifier = Modifier.padding(padding))
-            CreditsUiState.Empty -> EmptyState(title = "Credits", message = "No fake data yet.", modifier = Modifier.padding(padding))
-            is CreditsUiState.Error -> ErrorState(title = "Credits", message = uiState.message, modifier = Modifier.padding(padding))
-            is CreditsUiState.Success -> CreditsContent(items = uiState.items, onNext = onNext, modifier = Modifier.padding(padding))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
+                .padding(padding)
+        ) {
+            when (uiState) {
+                CreditsUiState.Loading -> Loading()
+                is CreditsUiState.Error -> ErrorState(title = "Credits", message = uiState.message)
+                is CreditsUiState.Success -> CreditsContent(credits = uiState.credits, onBuy = { viewModel.buyCredits(it) })
+            }
         }
     }
 }
 
 @Composable
-private fun CreditsContent(items: List<String>, onNext: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Credits", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Architecture placeholder using fake local data.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        items.forEach { item -> CreditsFeatureCard(title = item, subtitle = "Local fake data") }
-        GradientButton(text = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
+private fun CreditsContent(credits: Int, onBuy: (Int) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF161838), RoundedCornerShape(16.dp))
+                .border(1.dp, Color(0xFFA855F7).copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("Current Balance", color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp)
+            Text("$credits", color = Color.White, fontSize = 48.sp, fontWeight = FontWeight.Bold)
+            Text("Credits", color = Color(0xFFA855F7), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        }
+        
+        Text("Top Up Credits", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        
+        CreditPackageCard(title = "Starter Pack", credits = 50, price = "$4.99", onBuy = { onBuy(50) })
+        CreditPackageCard(title = "Creator Pack", credits = 150, price = "$12.99", onBuy = { onBuy(150) }, highlighted = true)
+        CreditPackageCard(title = "Pro Pack", credits = 500, price = "$39.99", onBuy = { onBuy(500) })
+    }
+}
+
+@Composable
+private fun CreditPackageCard(title: String, credits: Int, price: String, onBuy: () -> Unit, highlighted: Boolean = false) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (highlighted) Color(0xFFA855F7).copy(alpha = 0.1f) else Color(0xFF161838), RoundedCornerShape(12.dp))
+            .border(
+                1.dp,
+                if (highlighted) Color(0xFFA855F7) else Color.White.copy(alpha = 0.05f),
+                RoundedCornerShape(12.dp)
+            )
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("$credits Credits", color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp)
+        }
+        Button(
+            onClick = onBuy,
+            colors = ButtonDefaults.buttonColors(containerColor = if (highlighted) Color(0xFFA855F7) else Color(0xFFCFBDFF))
+        ) {
+            Text(price, color = if (highlighted) Color.White else Color(0xFF0F1026), fontWeight = FontWeight.Bold)
+        }
     }
 }

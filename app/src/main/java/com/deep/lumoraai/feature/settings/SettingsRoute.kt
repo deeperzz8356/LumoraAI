@@ -6,7 +6,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun SettingsRoute(
     onNext: () -> Unit,
+    onNavigate: (String) -> Unit = {},
     viewModel: SettingsViewModel = viewModel()
 ) {
-    SettingsScreen(uiState = viewModel.uiState, onNext = onNext)
+    SettingsScreen(uiState = viewModel.uiState, viewModel = viewModel, onNext = onNext, onNavigate = onNavigate)
 }

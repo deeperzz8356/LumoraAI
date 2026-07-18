@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -36,28 +37,72 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.BottomNavigationBar
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.os.Build
+import android.provider.MediaStore
+import androidx.compose.ui.platform.LocalContext
+import java.io.ByteArrayOutputStream
+import android.util.Base64
 @Composable
 fun CreateHubScreen(
     uiState: CreateHubUiState,
+    initialPrompt: String? = null,
+    initialTab: Int = 0,
+    onGenerateImage: (String, String, Int, Int, String?, String?) -> Unit,
+    onGenerateVideo: (String, String, String?, Int, String?, Int) -> Unit = { _, _, _, _, _, _ -> },
+    onResetState: () -> Unit,
     onNext: () -> Unit,
+    onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var selectedTabIndex by remember { mutableStateOf(initialTab) }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
                 selected = "createhub",
-                onSelected = { onNext() }
+                onSelected = onNavigate
             )
         }
     ) { padding ->
@@ -67,13 +112,60 @@ fun CreateHubScreen(
                 .padding(padding)
                 .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
         ) {
-            CreateHubContent(onNext = onNext)
+            CreateHubContent(initialPrompt = initialPrompt, onGenerateImage = onGenerateImage, onGenerateVideo = onGenerateVideo, onNext = onNext)
+            
+            // Generating state is tracked in the background, and navigation immediately goes to Queue screen.
+            // if (uiState is CreateHubUiState.Generating) {
+            //     Box(
+            //         modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
+            //         contentAlignment = Alignment.Center
+            //     ) {
+            //         CircularProgressIndicator(color = Color(0xFFA855F7))
+            //     }
+            // }
+            
+            if (uiState is CreateHubUiState.ImageGenerated) {
+                val bitmap = remember(uiState.imageUrl) {
+                    val decodedBytes = Base64.decode(uiState.imageUrl, Base64.DEFAULT)
+                    BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                }
+                AlertDialog(
+                    onDismissRequest = onResetState,
+                    confirmButton = {
+                        Button(onClick = onResetState) { Text("Close") }
+                    },
+                    title = { Text("Image Generated!") },
+                    text = {
+                        if (bitmap != null) {
+                            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Generated Image", modifier = Modifier.fillMaxWidth().height(300.dp))
+                        } else {
+                            Text("Failed to decode image.")
+                        }
+                    }
+                )
+            }
+            
+            if (uiState is CreateHubUiState.VideoGenerated) {
+                VideoPlayerDialog(
+                    videoUrl = uiState.videoUrl,
+                    onDismiss = onResetState
+                )
+            }
+            
+            if (uiState is CreateHubUiState.Error) {
+                AlertDialog(
+                    onDismissRequest = onResetState,
+                    confirmButton = { Button(onClick = onResetState) { Text("OK") } },
+                    title = { Text("Error") },
+                    text = { Text(uiState.message) }
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun CreateHubContent(onNext: () -> Unit, modifier: Modifier = Modifier) {
+private fun CreateHubContent(initialPrompt: String?, onGenerateImage: (String, String, Int, Int, String?, String?) -> Unit, onGenerateVideo: (String, String, String?, Int, String?, Int) -> Unit, onNext: () -> Unit, modifier: Modifier = Modifier) {
     var selectedTab by remember { mutableStateOf("Image") }
     Column(
         modifier = modifier
@@ -84,9 +176,9 @@ private fun CreateHubContent(onNext: () -> Unit, modifier: Modifier = Modifier) 
     ) {
         CreateHubTabs(selectedTab = selectedTab, onTabSelected = { selectedTab = it })
         if (selectedTab == "Image") {
-            ImageFormContent(onGenerate = onNext)
+            ImageFormContent(initialPrompt = initialPrompt, onGenerate = { prompt, style, w, h, neg, img -> onGenerateImage(prompt, style, w, h, neg, img) })
         } else {
-            VideoFormContent(onGenerate = onNext)
+            VideoFormContent(onGenerate = onGenerateVideo)
         }
     }
 }
@@ -130,23 +222,40 @@ private fun CreateHubTabs(
 }
 
 @Composable
-private fun ImageFormContent(onGenerate: () -> Unit) {
-    var prompt by remember { mutableStateOf("") }
+private fun ImageFormContent(initialPrompt: String?, onGenerate: (String, String, Int, Int, String?, String?) -> Unit) {
+    var prompt by remember(initialPrompt) { mutableStateOf(initialPrompt ?: "") }
+    var negativePrompt by remember { mutableStateOf("") }
     var selectedStyle by remember { mutableStateOf("Cinematic") }
     var selectedRatio by remember { mutableStateOf("1:1") }
+    var sourceImageB64 by remember { mutableStateOf<String?>(null) }
+    var numOutputs by remember { mutableStateOf(1) }
+    
+    val baseCostPerImage = 1
+    val totalCost = numOutputs * baseCostPerImage
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         ImagePromptInput(prompt = prompt, onPromptChange = { prompt = it })
         ImageInspirationChips(onChipClick = { prompt = it })
-        NegativePromptSelector()
+        NegativePromptSelector(negativePrompt = negativePrompt, onNegativePromptChange = { negativePrompt = it })
+        ImageTemplateSelector(sourceImageB64 = sourceImageB64, onSourceImageChange = { sourceImageB64 = it })
         Text("Configuration", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         CreativeStyleSelector(selectedStyle = selectedStyle, onStyleSelect = { selectedStyle = it })
         ImageAspectRatioSelector(selectedRatio = selectedRatio, onRatioSelect = { selectedRatio = it })
-        OutputsCard()
-        PublicToggleCard()
-        ImageGenerateButton(onClick = onGenerate)
+        OutputsCard(numOutputs = numOutputs, onOutputsChange = { numOutputs = it })
+        ImageGenerateButton(
+            costText = "$totalCost Credits",
+            onClick = {
+                val (w, h) = when (selectedRatio) {
+                    "16:9" -> Pair(1024, 576)
+                    "9:16" -> Pair(576, 1024)
+                    else -> Pair(1024, 1024)
+                }
+                onGenerate(prompt, selectedStyle, w, h, negativePrompt, sourceImageB64) 
+            }
+        )
     }
 }
 
@@ -180,8 +289,8 @@ private fun ImagePromptInput(prompt: String, onPromptChange: (String) -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("🪄", fontSize = 18.sp, color = Color.White.copy(alpha = 0.6f))
-                    Text("🖼️", fontSize = 18.sp, color = Color.White.copy(alpha = 0.6f))
+                    Icon(Icons.Default.Star, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
                 }
                 Text("${prompt.length} / 1000", color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
             }
@@ -194,7 +303,7 @@ private fun ImageInspirationChips(onChipClick: (String) -> Unit) {
     val chips = listOf("Cyberpunk cityscape", "Cinematic portrait", "Studio lighting", "Hyper-realistic")
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("📍", fontSize = 12.sp)
+            Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text("Inspiration", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
@@ -232,26 +341,107 @@ private fun InspirationChip(text: String, onClick: () -> Unit, modifier: Modifie
 }
 
 @Composable
-private fun NegativePromptSelector() {
+private fun NegativePromptSelector(negativePrompt: String, onNegativePromptChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFF161838), RoundedCornerShape(12.dp))
-            .clickable { expanded = !expanded }
-            .padding(14.dp)
+            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(14.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("⛔", fontSize = 14.sp)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Negative Prompt", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Warning, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Negative Prompt", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Text(if (expanded) "▲" else "▼", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
             }
-            Text(if (expanded) "▲" else "▼", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+        }
+        if (expanded) {
+            OutlinedTextField(
+                value = negativePrompt,
+                onValueChange = onNegativePromptChange,
+                placeholder = { Text("What to avoid (e.g., blurry, ugly, extra fingers)...", color = Color.White.copy(alpha = 0.3f), fontSize = 12.sp) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedBorderColor = Color(0xFFA855F7).copy(alpha = 0.5f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun ImageTemplateSelector(sourceImageB64: String?, onSourceImageChange: (String?) -> Unit) {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    val convertBitmapToBase64 = { bitmap: Bitmap ->
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+        val byteArray = outputStream.toByteArray()
+        val base64 = Base64.encodeToString(byteArray, Base64.DEFAULT)
+        onSourceImageChange(base64)
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            try {
+                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri))
+                } else {
+                    MediaStore.Images.Media.getBitmap(contentResolver, uri)
+                }
+                convertBitmapToBase64(bitmap)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        if (bitmap != null) {
+            convertBitmapToBase64(bitmap)
+        }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("Image Template (Img2Img)", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Button(
+                onClick = { galleryLauncher.launch("image/*") },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF161838))
+            ) {
+                Text(if (sourceImageB64 != null) "Change Image" else "Upload Image", color = Color.White)
+            }
+            Button(
+                onClick = { cameraLauncher.launch(null) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF161838))
+            ) {
+                Text("Camera", color = Color.White)
+            }
+        }
+        if (sourceImageB64 != null) {
+            Text("Source image selected", color = Color(0xFFA855F7), fontSize = 12.sp)
         }
     }
 }
@@ -372,7 +562,7 @@ private fun RatioSelectorCard(
 }
 
 @Composable
-private fun OutputsCard() {
+private fun OutputsCard(numOutputs: Int, onOutputsChange: (Int) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -387,38 +577,19 @@ private fun OutputsCard() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("—", color = Color.White, modifier = Modifier.clickable {})
-            Text("1", color = Color.White, fontWeight = FontWeight.Bold)
-            Text("+", color = Color.White, modifier = Modifier.clickable {})
+            Text("—", color = Color.White, modifier = Modifier.clickable { 
+                if (numOutputs > 1) onOutputsChange(numOutputs - 1)
+            })
+            Text(numOutputs.toString(), color = Color.White, fontWeight = FontWeight.Bold)
+            Text("+", color = Color.White, modifier = Modifier.clickable { 
+                if (numOutputs < 4) onOutputsChange(numOutputs + 1)
+            })
         }
     }
 }
 
 @Composable
-private fun PublicToggleCard() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(12.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("🌐", fontSize = 16.sp)
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text("Public Generation", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                Text("Visible in the community showcase", color = Color.White.copy(alpha = 0.5f), fontSize = 9.sp)
-            }
-        }
-        Text("●", color = Color(0xFFA855F7), fontSize = 24.sp)
-    }
-}
-
-@Composable
-private fun ImageGenerateButton(onClick: () -> Unit) {
+private fun ImageGenerateButton(costText: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -429,7 +600,9 @@ private fun ImageGenerateButton(onClick: () -> Unit) {
             shape = RoundedCornerShape(27.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCFBDFF))
         ) {
-            Text("✨  Generate Image", color = Color(0xFF0F1026), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFF0F1026), modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("Generate Image ($costText)", color = Color(0xFF0F1026), fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
         Box(
             modifier = Modifier
@@ -445,55 +618,36 @@ private fun ImageGenerateButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun VideoFormContent(onGenerate: () -> Unit) {
+private fun VideoFormContent(onGenerate: (String, String, String?, Int, String?, Int) -> Unit) {
     var prompt by remember { mutableStateOf("") }
     var selectedEngine by remember { mutableStateOf("Veo-1 Ultra") }
+    var sourceImageB64 by remember { mutableStateOf<String?>(null) }
+    var motionStrength by remember { mutableStateOf(65) }
+    var cameraDirection by remember { mutableStateOf<String?>(null) }
+    var duration by remember { mutableStateOf(10) }
+    
+    val videoCost = 5 // Base cost for video generation
+    
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        VideoSourceSelector()
+        ImageTemplateSelector(sourceImageB64 = sourceImageB64, onSourceImageChange = { sourceImageB64 = it })
         VideoPromptInput(prompt = prompt, onPromptChange = { prompt = it })
-        MotionDynamicsSelector()
+        MotionDynamicsSelector(
+            motionStrength = motionStrength, onMotionStrengthChange = { motionStrength = it },
+            cameraDirection = cameraDirection, onCameraDirectionChange = { cameraDirection = it },
+            duration = duration, onDurationChange = { duration = it }
+        )
         GenerationEngineSelector(selectedEngine = selectedEngine, onEngineSelect = { selectedEngine = it })
-        VideoGenerateButton(onClick = onGenerate)
+        VideoGenerateButton(
+            costText = "$videoCost Credits",
+            onClick = { onGenerate(prompt, selectedEngine, sourceImageB64, motionStrength, cameraDirection, duration) }
+        )
     }
 }
 
-@Composable
-private fun VideoSourceSelector() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(180.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.style_fantasy),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-        Box(
-            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("➕", fontSize = 24.sp, color = Color.White)
-                Text("Click to replace source image", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-            }
-        }
-        Row(
-            modifier = Modifier.align(Alignment.BottomStart).padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(modifier = Modifier.size(32.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape), contentAlignment = Alignment.Center) { Text("🔍", fontSize = 12.sp) }
-            Box(modifier = Modifier.size(32.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape), contentAlignment = Alignment.Center) { Text("🖼️", fontSize = 12.sp) }
-        }
-        Text("16:9 CINEMA", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp))
-    }
-}
+// Reusing ImageTemplateSelector for source image upload
 
 @Composable
 private fun VideoPromptInput(prompt: String, onPromptChange: (String) -> Unit) {
@@ -502,7 +656,7 @@ private fun VideoPromptInput(prompt: String, onPromptChange: (String) -> Unit) {
         OutlinedTextField(
             value = prompt,
             onValueChange = onPromptChange,
-            placeholder = { Text("Describe how the scene should come to life... (e.g. 'Slow cinematic zoom into the neon lights with rain falling softly')", color = Color.White.copy(alpha = 0.3f)) },
+            placeholder = { Text("Describe how the scene should come to life...", color = Color.White.copy(alpha = 0.3f)) },
             modifier = Modifier.fillMaxWidth().height(100.dp),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -518,7 +672,11 @@ private fun VideoPromptInput(prompt: String, onPromptChange: (String) -> Unit) {
 }
 
 @Composable
-private fun MotionDynamicsSelector() {
+private fun MotionDynamicsSelector(
+    motionStrength: Int, onMotionStrengthChange: (Int) -> Unit,
+    cameraDirection: String?, onCameraDirectionChange: (String?) -> Unit,
+    duration: Int, onDurationChange: (Int) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -528,52 +686,60 @@ private fun MotionDynamicsSelector() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("🎬  Motion Dynamics", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Motion Dynamics", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
-        MotionStrengthRow()
-        CameraDirectionRow()
-        DurationAndSfxRows()
+        MotionStrengthRow(motionStrength, onMotionStrengthChange)
+        CameraDirectionRow(cameraDirection, onCameraDirectionChange)
+        DurationAndSfxRows(duration, onDurationChange)
     }
 }
 
 @Composable
-private fun MotionStrengthRow() {
+private fun MotionStrengthRow(motionStrength: Int, onMotionStrengthChange: (Int) -> Unit) {
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Motion Strength", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
-            Text("65", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(motionStrength.toString(), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        Box(
-            modifier = Modifier.fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.1f), CircleShape)
-        ) {
-            Box(modifier = Modifier.fillMaxWidth(0.65f).fillMaxHeight().background(Color(0xFFA855F7), CircleShape))
-        }
+        androidx.compose.material3.Slider(
+            value = motionStrength.toFloat(),
+            onValueChange = { onMotionStrengthChange(it.toInt()) },
+            valueRange = 0f..100f,
+            colors = androidx.compose.material3.SliderDefaults.colors(
+                thumbColor = Color(0xFFA855F7),
+                activeTrackColor = Color(0xFFA855F7),
+                inactiveTrackColor = Color.White.copy(alpha = 0.1f)
+            )
+        )
     }
 }
 
 @Composable
-private fun CameraDirectionRow() {
+private fun CameraDirectionRow(cameraDirection: String?, onCameraDirectionChange: (String?) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text("Camera Direction", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val directions = listOf("ZOOM IN" to "🔍", "PAN L" to "👈", "PAN R" to "👉", "AUTO" to "🔄")
+            val directions = listOf("ZOOM IN" to Icons.Default.Search, "PAN L" to Icons.Default.ArrowBack, "PAN R" to Icons.Default.ArrowForward, "AUTO" to Icons.Default.Refresh)
             directions.forEach { (name, icon) ->
+                val isSelected = cameraDirection == name || (cameraDirection == null && name == "AUTO")
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .height(44.dp)
-                        .background(Color(0xFF0F1026), RoundedCornerShape(8.dp))
-                        .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
-                        .clickable {},
+                        .background(if (isSelected) Color(0xFFA855F7).copy(alpha = 0.2f) else Color(0xFF0F1026), RoundedCornerShape(8.dp))
+                        .border(1.dp, if (isSelected) Color(0xFFA855F7) else Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                        .clickable { onCameraDirectionChange(if (name == "AUTO") null else name) },
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(icon, fontSize = 10.sp)
-                        Text(name, color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                        Icon(icon, contentDescription = null, tint = if (isSelected) Color(0xFFA855F7) else Color.White, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(name, color = if (isSelected) Color(0xFFA855F7) else Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -582,7 +748,7 @@ private fun CameraDirectionRow() {
 }
 
 @Composable
-private fun DurationAndSfxRows() {
+private fun DurationAndSfxRows(duration: Int, onDurationChange: (Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -590,11 +756,18 @@ private fun DurationAndSfxRows() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("⏱️", fontSize = 14.sp)
+                Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Clip Duration", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
-            Text("10 Seconds  ▼", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+            Box(
+                modifier = Modifier
+                    .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                    .clickable { onDurationChange(if (duration == 5) 10 else 5) }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text("$duration Seconds  ▼", color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp)
+            }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -602,7 +775,7 @@ private fun DurationAndSfxRows() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("🎵", fontSize = 14.sp)
+                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Ambient SFX", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
@@ -614,7 +787,7 @@ private fun DurationAndSfxRows() {
 @Composable
 private fun GenerationEngineSelector(selectedEngine: String, onEngineSelect: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("⚙️  Generation Engine", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text("Generation Engine", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -655,7 +828,7 @@ private fun EngineCard(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(if (name == "Veo-1 Ultra") "⭐" else "⚡", fontSize = 12.sp)
+            Icon(Icons.Default.Star, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
             Spacer(modifier = Modifier.width(4.dp))
             Text(name, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
@@ -664,13 +837,89 @@ private fun EngineCard(
 }
 
 @Composable
-private fun VideoGenerateButton(onClick: () -> Unit) {
+private fun VideoGenerateButton(costText: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(54.dp),
         shape = RoundedCornerShape(27.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCFBDFF))
     ) {
-        Text("Generate with Veo", color = Color(0xFF0F1026), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Text("Generate with Veo ($costText)", color = Color(0xFF0F1026), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+@Composable
+fun VideoPlayerDialog(
+    videoUrl: String,
+    onDismiss: () -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val exoPlayer = androidx.compose.runtime.remember {
+        androidx.media3.exoplayer.ExoPlayer.Builder(context).build().apply {
+            setMediaItem(androidx.media3.common.MediaItem.fromUri(videoUrl))
+            repeatMode = androidx.media3.common.Player.REPEAT_MODE_ALL
+            playWhenReady = true
+            prepare()
+        }
+    }
+
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        androidx.compose.foundation.layout.Box(
+            modifier = androidx.compose.ui.Modifier
+                .fillMaxWidth(0.9f)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                .background(Color(0xFF131524))
+        ) {
+            androidx.compose.foundation.layout.Column(
+                modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+            ) {
+                // Video Player
+                androidx.compose.foundation.layout.Box(
+                    modifier = androidx.compose.ui.Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .background(Color.Black)
+                ) {
+                    androidx.compose.ui.viewinterop.AndroidView(
+                        factory = { ctx ->
+                            androidx.media3.ui.PlayerView(ctx).apply {
+                                player = exoPlayer
+                                useController = true
+                                resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                layoutParams = android.widget.FrameLayout.LayoutParams(
+                                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                                )
+                            }
+                        },
+                        modifier = androidx.compose.ui.Modifier.fillMaxSize()
+                    )
+                }
+
+                // Controls
+                androidx.compose.foundation.layout.Row(
+                    modifier = androidx.compose.ui.Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End
+                ) {
+                    androidx.compose.material3.TextButton(onClick = onDismiss) {
+                        androidx.compose.material3.Text("Close", color = Color.White)
+                    }
+                }
+            }
+        }
     }
 }

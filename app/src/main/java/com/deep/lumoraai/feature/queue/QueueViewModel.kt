@@ -4,7 +4,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.repository.FakeRepository
+import com.deep.lumoraai.data.repository.GenerationRepository
+import kotlinx.coroutines.launch
 
 class QueueViewModel(
     private val repository: FakeRepository = FakeRepository()
@@ -12,19 +16,15 @@ class QueueViewModel(
     var uiState: QueueUiState by mutableStateOf(QueueUiState.Loading)
         private set
 
-    init { load() }
+    init {
+        observeJobs()
+    }
 
-    fun load() {
-        val items = when ("queue") {
-            "templates" -> repository.getTemplates().map { it.title }
-            "history" -> repository.getHistory().map { it.title }
-            "credits" -> repository.getCredits().map { "${it.label}: ${it.amount}" }
-            "notifications" -> repository.getNotifications().map { it.title }
-            "queue" -> repository.getQueue().map { it.title }
-            "result" -> repository.getResults().map { it.title }
-            "profile" -> listOf(repository.getProfile().name, repository.getProfile().plan, "${repository.getProfile().credits} credits")
-            else -> listOf("Queue ready", "Fake data only", "No Firebase, AI, Room, Retrofit, or network")
+    private fun observeJobs() {
+        viewModelScope.launch {
+            GenerationRepository.activeJobs.collect { activeJobs ->
+                uiState = if (activeJobs.isEmpty()) QueueUiState.Empty else QueueUiState.Success(activeJobs)
+            }
         }
-        uiState = if (items.isEmpty()) QueueUiState.Empty else QueueUiState.Success(items)
     }
 }

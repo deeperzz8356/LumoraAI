@@ -6,7 +6,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun HomeRoute(
     onNext: () -> Unit,
+    onNavigate: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
-    HomeScreen(uiState = viewModel.uiState, onNext = onNext)
+    HomeScreen(uiState = viewModel.uiState, onNext = onNext, onNavigate = onNavigate)
 }

@@ -5,7 +5,21 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.deep.lumoraai.core.theme.LumoraTheme
 
-private val previewState = QueueUiState.Success(listOf("Queue fake item", "Preview data", "Compile-only screen"))
+import com.deep.lumoraai.data.model.ActiveJobInfo
+
+private val previewState = QueueUiState.Success(
+    listOf(
+        ActiveJobInfo(
+            title = "Cyberpunk Cathedral",
+            subtitle = "Est. 12s remaining",
+            badgeText = "Text to Image",
+            statusText = "Generating",
+            progressPercent = 0.68f,
+            isCompleted = false,
+            imageRes = com.deep.lumoraai.R.drawable.style_anime
+        )
+    )
+)
 
 @Preview(name = "Queue Light Preview", showBackground = true)
 @Composable

@@ -12,7 +12,7 @@ import java.net.URL
 
 class AuthRepository {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val backendUrl = "http://10.0.2.2:8000/api/v1/auth" // 10.0.2.2 is localhost for Android Emulator
+    private val backendUrl = "https://lumoraai-backend-rlcy.onrender.com/api/v1/auth"
 
     /**
      * Signs in anonymously with Firebase, gets the ID token, and syncs it.
