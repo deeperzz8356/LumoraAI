@@ -9,7 +9,7 @@
 .cxx
 local.properties
 app/src/asset/stitch_remix_of_lumora_ai_splash_screen
-/backend/
+.android-sdk/
 
 .kotlin
 **/__pycache__/

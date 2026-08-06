@@ -1,37 +1,78 @@
 package com.deep.lumoraai.feature.subscription
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.deep.lumoraai.billing.BillingConstants
 import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.core.components.EmptyState
-import com.deep.lumoraai.core.components.ErrorState
 import com.deep.lumoraai.core.components.GradientButton
 import com.deep.lumoraai.core.components.Loading
-import com.deep.lumoraai.feature.subscription.model.SubscriptionPlan
+import com.revenuecat.purchases.CustomerInfo
+import com.revenuecat.purchases.Package
+import com.revenuecat.purchases.PurchasesError
+import com.revenuecat.purchases.models.StoreTransaction
+import com.revenuecat.purchases.ui.revenuecatui.ExperimentalPreviewRevenueCatUIPurchasesAPI
+import com.revenuecat.purchases.ui.revenuecatui.Paywall
+import com.revenuecat.purchases.ui.revenuecatui.PaywallDialog
+import com.revenuecat.purchases.ui.revenuecatui.PaywallDialogOptions
+import com.revenuecat.purchases.ui.revenuecatui.PaywallListener
+import com.revenuecat.purchases.ui.revenuecatui.PaywallOptions
+import com.revenuecat.purchases.ui.revenuecatui.customercenter.CustomerCenter
 
+@OptIn(ExperimentalPreviewRevenueCatUIPurchasesAPI::class)
 @Composable
 fun SubscriptionScreen(
-    uiState: SubscriptionUiState,
+    uiState: SubscriptionViewState,
     onNext: () -> Unit,
+    onSelectPeriod: (BillingPeriod) -> Unit,
+    onPurchase: (Activity) -> Unit,
+    onRestore: () -> Unit,
+    onShowPaywall: () -> Unit,
+    onDismissPaywall: () -> Unit,
+    onShowCustomerCenter: () -> Unit,
+    onDismissCustomerCenter: () -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
-    onSelectPlan: (String) -> Unit = {},
 ) {
+    if (uiState.showCustomerCenter) {
+        CustomerCenter(
+            modifier = Modifier.fillMaxSize(),
+            onDismiss = onDismissCustomerCenter,
+        )
+        return
+    }
+
+    if (uiState.showPaywall) {
+        FullScreenPaywall(
+            onDismiss = onDismissPaywall,
+            onPurchaseCompleted = { onDismissPaywall(); onRefresh() },
+            onRestoreCompleted = { onDismissPaywall(); onRefresh() },
+        )
+        return
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { AppToolbar(title = "Subscription") },
@@ -43,86 +84,247 @@ fun SubscriptionScreen(
             )
         }
     ) { padding ->
-        when (uiState) {
-            SubscriptionUiState.Loading -> Loading(modifier = Modifier.padding(padding))
-            SubscriptionUiState.Empty -> EmptyState(title = "Subscription", message = "No plans are available right now.", modifier = Modifier.padding(padding))
-            is SubscriptionUiState.Error -> ErrorState(title = "Subscription", message = uiState.message, modifier = Modifier.padding(padding))
-            is SubscriptionUiState.Success -> SubscriptionContent(
-                plans = uiState.plans,
-                currentPlan = uiState.currentPlan,
-                onSelectPlan = onSelectPlan,
+        when {
+            uiState.isLoading -> Loading(modifier = Modifier.padding(padding))
+            else -> SubscriptionContent(
+                uiState = uiState,
+                onSelectPeriod = onSelectPeriod,
+                onPurchase = onPurchase,
+                onRestore = onRestore,
+                onShowPaywall = onShowPaywall,
+                onShowCustomerCenter = onShowCustomerCenter,
                 modifier = Modifier.padding(padding)
             )
         }
     }
+
+    // Auto-present paywall dialog when gated and not entitled (optional helper).
+    // Shown only when explicitly requested via showPaywall path above for full-screen.
+}
+
+@OptIn(ExperimentalPreviewRevenueCatUIPurchasesAPI::class)
+@Composable
+fun EntitlementGatedPaywallDialog(
+    requiredEntitlementId: String = BillingConstants.ENTITLEMENT_ID,
+    onPurchaseCompleted: () -> Unit = {},
+    onRestoreCompleted: () -> Unit = {},
+    onDismiss: () -> Unit = {},
+) {
+    PaywallDialog(
+        PaywallDialogOptions.Builder()
+            .setRequiredEntitlementIdentifier(requiredEntitlementId)
+            .setDismissRequest(onDismiss)
+            .setListener(object : PaywallListener {
+                override fun onPurchaseCompleted(
+                    customerInfo: CustomerInfo,
+                    storeTransaction: StoreTransaction,
+                ) {
+                    onPurchaseCompleted()
+                }
+
+                override fun onRestoreCompleted(customerInfo: CustomerInfo) {
+                    onRestoreCompleted()
+                }
+
+                override fun onPurchaseError(error: PurchasesError) {
+                    // Listener keeps dialog open; caller can show snackbar if needed.
+                }
+            })
+            .build()
+    )
+}
+
+@OptIn(ExperimentalPreviewRevenueCatUIPurchasesAPI::class)
+@Composable
+private fun FullScreenPaywall(
+    onDismiss: () -> Unit,
+    onPurchaseCompleted: () -> Unit,
+    onRestoreCompleted: () -> Unit,
+) {
+    Paywall(
+        options = PaywallOptions.Builder(dismissRequest = onDismiss)
+            .setListener(object : PaywallListener {
+                override fun onPurchaseCompleted(
+                    customerInfo: CustomerInfo,
+                    storeTransaction: StoreTransaction,
+                ) {
+                    onPurchaseCompleted()
+                }
+
+                override fun onRestoreCompleted(customerInfo: CustomerInfo) {
+                    onRestoreCompleted()
+                }
+            })
+            .build()
+    )
 }
 
 @Composable
 private fun SubscriptionContent(
-    plans: List<SubscriptionPlan>,
-    currentPlan: String?,
-    onSelectPlan: (String) -> Unit,
+    uiState: SubscriptionViewState,
+    onSelectPeriod: (BillingPeriod) -> Unit,
+    onPurchase: (Activity) -> Unit,
+    onRestore: () -> Unit,
+    onShowPaywall: () -> Unit,
+    onShowCustomerCenter: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize().padding(16.dp),
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Text("Choose your plan", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text(
-                "Unlock more credits and video generations.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+        Text(
+            "MK Tech Media tech",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            if (uiState.isEntitled) {
+                "You're subscribed. Manage or restore anytime."
+            } else {
+                "Unlock premium access with a monthly or yearly plan."
+            },
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        StatusChip(isEntitled = uiState.isEntitled, customerInfo = uiState.customerInfo)
+
+        if (!uiState.isEntitled) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                FilterChip(
+                    selected = uiState.selectedBillingPeriod == BillingPeriod.MONTHLY,
+                    onClick = { onSelectPeriod(BillingPeriod.MONTHLY) },
+                    label = { Text("Monthly") }
+                )
+                FilterChip(
+                    selected = uiState.selectedBillingPeriod == BillingPeriod.YEARLY,
+                    onClick = { onSelectPeriod(BillingPeriod.YEARLY) },
+                    label = { Text("Yearly") }
+                )
+            }
+
+            PackageCard(
+                title = if (uiState.selectedBillingPeriod == BillingPeriod.YEARLY) {
+                    "Yearly"
+                } else {
+                    "Monthly"
+                },
+                pkg = uiState.selectedPackage,
+                isPurchasing = uiState.isPurchasing,
+                onPurchase = {
+                    if (activity != null) onPurchase(activity)
+                }
+            )
+
+            GradientButton(
+                text = "View Paywall",
+                onClick = onShowPaywall,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
-        items(plans) { plan ->
-            PlanCard(plan = plan, isCurrent = plan.code == currentPlan, onSelectPlan = onSelectPlan)
+        TextButton(onClick = onRestore, enabled = !uiState.isPurchasing) {
+            Text("Restore purchases")
         }
+
+        if (uiState.isEntitled) {
+            GradientButton(
+                text = "Manage Subscription",
+                onClick = onShowCustomerCenter,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        uiState.error?.let { message ->
+            Text(message, color = MaterialTheme.colorScheme.error)
+        }
+        uiState.statusMessage?.let { message ->
+            Text(message, color = MaterialTheme.colorScheme.primary)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
 @Composable
-private fun PlanCard(
-    plan: SubscriptionPlan,
-    isCurrent: Boolean,
-    onSelectPlan: (String) -> Unit,
+private fun StatusChip(isEntitled: Boolean, customerInfo: CustomerInfo?) {
+    val entitlement = customerInfo?.entitlements?.get(BillingConstants.ENTITLEMENT_ID)
+    val label = when {
+        isEntitled && entitlement?.willRenew == false ->
+            "Active — cancels on ${entitlement.expirationDate}"
+        isEntitled -> "Active"
+        else -> "Not subscribed"
+    }
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = if (isEntitled) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        }
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelLarge
+        )
+    }
+}
+
+@Composable
+private fun PackageCard(
+    title: String,
+    pkg: Package?,
+    isPurchasing: Boolean,
+    onPurchase: () -> Unit,
 ) {
     Surface(
         shape = MaterialTheme.shapes.large,
-        tonalElevation = if (plan.isPopular) 4.dp else 2.dp,
-        color = if (plan.isPopular) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 3.dp,
+        color = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Column {
-                    Text(plan.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("${plan.priceUsd.toInt()} USD / month", style = MaterialTheme.typography.bodyMedium)
-                }
-                if (plan.isPopular) {
-                    Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {
-                        Text("Popular", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-            }
-
-            Text("${plan.monthlyCredits} image credits • ${plan.videoCredits} video credits", style = MaterialTheme.typography.bodyMedium)
-            plan.features.forEach { feature ->
-                Text("• $feature", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            if (plan.signupBonusCredits > 0) {
-                Text("Signup bonus: ${plan.signupBonusCredits} free credit", style = MaterialTheme.typography.bodySmall)
-            }
-
-            GradientButton(
-                text = if (isCurrent) "Current plan" else if (plan.code == "free") "Continue with Free" else "Upgrade",
-                onClick = { onSelectPlan(plan.code) },
-                modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                pkg?.product?.price?.formatted ?: "Price unavailable",
+                style = MaterialTheme.typography.bodyLarge
             )
+            Text(
+                "Entitlement: ${BillingConstants.ENTITLEMENT_ID}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (isPurchasing) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Loading()
+                }
+            } else {
+                GradientButton(
+                    text = "Subscribe",
+                    onClick = onPurchase,
+                    enabled = pkg != null,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
