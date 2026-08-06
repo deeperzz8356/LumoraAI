@@ -1,6 +1,5 @@
 package com.deep.lumoraai.feature.profile
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,10 +20,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,26 +47,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.deep.lumoraai.R
-import com.deep.lumoraai.core.components.BottomNavigationBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Star
-
+import com.deep.lumoraai.core.components.PolishedTabScaffold
 import com.deep.lumoraai.core.navigation.Screen
 
 @Composable
@@ -65,21 +62,18 @@ fun ProfileScreen(
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            BottomNavigationBar(
-                items = emptyList(),
-                selected = "profile",
-                onSelected = onNavigate
-            )
-        }
-    ) { padding ->
+    PolishedTabScaffold(selectedRoute = "profile", onNavigate = onNavigate, modifier = modifier) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)
+                        )
+                    )
+                )
         ) {
             ProfileContent(uiState = uiState, onSignOut = onSignOut, onNavigate = onNavigate)
         }
@@ -88,21 +82,22 @@ fun ProfileScreen(
 
 @Composable
 private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNavigate: (String) -> Unit) {
+    val credits = if (uiState is ProfileUiState.Success) uiState.credits else 0
+    val generations = if (uiState is ProfileUiState.Success) uiState.generations else emptyList()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = 16.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         ProfileTopBar()
-        ProfileHeader()
-        val credits = if (uiState is ProfileUiState.Success) uiState.credits else 0
-        CreditsBalanceCard(credits = credits)
-        PlanCard()
-        BuyMoreCreditsCard()
-        if (uiState is ProfileUiState.Success) {
-            CreationsGrid(generations = uiState.generations)
+        ProfileHeroCard()
+        QuickStatsRow(credits = credits)
+        AccountOverviewCard()
+        if (generations.isNotEmpty()) {
+            CreationsGrid(generations = generations)
         }
         PurchaseHistoryCard()
         PreferencesList(onSignOut = onSignOut, onNavigate = onNavigate)
@@ -113,47 +108,103 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
 @Composable
 private fun ProfileTopBar() {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Lumina AI", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Column {
+            Text(
+                text = "Profile",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "Your creative workspace",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         Image(
             painter = painterResource(id = R.drawable.user_avatar),
             contentDescription = null,
-            modifier = Modifier.size(36.dp).clip(CircleShape)
+            modifier = Modifier.size(40.dp).clip(CircleShape)
         )
     }
 }
 
 @Composable
-private fun ProfileHeader() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier.fillMaxWidth()
+private fun ProfileHeroCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
     ) {
-        Box(contentAlignment = Alignment.BottomCenter) {
-            Image(
-                painter = painterResource(id = R.drawable.user_avatar),
-                contentDescription = null,
-                modifier = Modifier.size(80.dp).clip(CircleShape).border(2.dp, Color(0xFFA855F7), CircleShape)
-            )
-            Box(
-                modifier = Modifier
-                    .background(Color(0xFFA855F7), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text("PRO", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
+                        )
+                    )
+                )
+                .padding(20.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Box(contentAlignment = Alignment.BottomCenter) {
+                    Image(
+                        painter = painterResource(id = R.drawable.user_avatar),
+                        contentDescription = null,
+                        modifier = Modifier.size(88.dp).clip(CircleShape).border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(10.dp))
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text("PRO", color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Alex Thorne", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Text("@alexthorne_creatives", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TagPill("Concept Artist")
+                    TagPill("Video Director")
+                }
+                Spacer(modifier = Modifier.height(14.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = {},
+                        modifier = Modifier.weight(1f).height(44.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Edit Profile", color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 13.sp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), CircleShape)
+                            .clickable {},
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
+                    }
+                }
             }
         }
-        Text("Alex Thorne", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text("@alexthorne_creatives", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TagPill("Concept Artist")
-            TagPill("Video Director")
-        }
-        ProfileHeaderActions()
     }
 }
 
@@ -161,146 +212,115 @@ private fun ProfileHeader() {
 private fun TagPill(text: String) {
     Box(
         modifier = Modifier
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f), RoundedCornerShape(999.dp))
+            .padding(horizontal = 10.dp, vertical = 5.dp)
     ) {
-        Text(text, color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
+        Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
     }
 }
 
 @Composable
-private fun ProfileHeaderActions() {
+private fun QuickStatsRow(credits: Int) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Button(
-            onClick = {},
-            modifier = Modifier.weight(1f).height(44.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7E50EF)),
-            shape = RoundedCornerShape(22.dp)
-        ) {
-            Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text("Edit Profile", color = Color.White, fontSize = 13.sp)
-        }
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .background(Color.White.copy(alpha = 0.05f), CircleShape)
-                .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape)
-                .clickable {},
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+        StatCard(title = "Credits", value = "$credits LUM", subtitle = "Refill in 12 days", modifier = Modifier.weight(1f))
+        StatCard(title = "Plan", value = "Elite", subtitle = "Annual • $499/yr", modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun StatCard(title: String, value: String, subtitle: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f))
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 @Composable
-private fun CreditsBalanceCard(credits: Int) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+private fun AccountOverviewCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f))
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Credits Balance", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
-            Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-        }
-        Text("$credits LUM", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Box(
-            modifier = Modifier.fillMaxWidth().height(6.dp).background(Color.White.copy(alpha = 0.1f), CircleShape)
-        ) {
-            Box(modifier = Modifier.fillMaxWidth(0.6f).fillMaxHeight().background(Color(0xFFCFBDFF), CircleShape))
-        }
-        Text("Next refill in 12 days", color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
-    }
-}
-
-@Composable
-private fun PlanCard() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text("Active Plan", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text("Elite Pro", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("Billed annually • $499/yr", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Active Plan", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Elite Pro", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Manage", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(Icons.Default.Share, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                }
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Manage Plan", color = Color(0xFFA855F7), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFFA855F7), modifier = Modifier.size(14.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(12.dp)).padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Next refill", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("12 days", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                }
+                Button(
+                    onClick = {},
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Add Credits", color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 12.sp)
+                }
             }
-        }
-    }
-}
-
-@Composable
-private fun BuyMoreCreditsCard() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(12.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-            .clickable {}
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-        Column {
-            Text("Buy More Credits", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Text("Instant refill for emergency generations.", color = Color.White.copy(alpha = 0.5f), fontSize = 9.sp)
         }
     }
 }
 
 @Composable
 private fun CreationsGrid(generations: List<com.deep.lumoraai.data.repository.GenerationHistoryItem>) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("My Published Creations", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("View Gallery", color = Color(0xFFA855F7), fontSize = 12.sp)
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color(0xFFA855F7), modifier = Modifier.size(16.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Recent Creations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Gallery", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                }
             }
-        }
-        
-        if (generations.isEmpty()) {
-            Text("You haven't generated any images yet.", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
-        } else {
-            // Take up to 4 recent generations and display them in a grid
             val displayItems = generations.take(4)
             val rows = displayItems.chunked(2)
-            
             for (rowItems in rows) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                     for (item in rowItems) {
-                        ImageCard(item.imageUrl, Modifier.weight(1f))
+                        ImageCard(item.imageUrl, modifier = Modifier.weight(1f))
                     }
                     if (rowItems.size == 1) {
                         Spacer(modifier = Modifier.weight(1f))
@@ -313,42 +333,42 @@ private fun CreationsGrid(generations: List<com.deep.lumoraai.data.repository.Ge
 
 @Composable
 private fun ImageCard(imageUrl: String, modifier: Modifier = Modifier) {
-    coil.compose.AsyncImage(
+    AsyncImage(
         model = imageUrl,
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = modifier
-            .height(100.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+            .height(104.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.14f), RoundedCornerShape(12.dp))
     )
 }
 
 @Composable
 private fun PurchaseHistoryCard() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f))
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.List, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("PURCHASE HISTORY", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        }
-        PurchaseRow("Pro Annual Plan", "Nov 12, 2023 • Inv #6921", "$499.00")
-        PurchaseRow("1,000 Credit Pack", "Oct 28, 2023 • Inv #7741", "$49.00")
-        PurchaseRow("Early Adopter Credit Bonus", "Sep 15, 2023 • Promo", "FREE")
-        Button(
-            onClick = {},
-            modifier = Modifier.fillMaxWidth().height(44.dp),
-            shape = RoundedCornerShape(22.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.05f))
-        ) {
-            Text("Download All Receipts", color = Color.White, fontSize = 12.sp)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.List, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Purchase History", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            }
+            PurchaseRow("Pro Annual Plan", "Nov 12, 2023 • Inv #6921", "$499.00")
+            PurchaseRow("1,000 Credit Pack", "Oct 28, 2023 • Inv #7741", "$49.00")
+            PurchaseRow("Early Adopter Credit Bonus", "Sep 15, 2023 • Promo", "FREE")
+            Button(
+                onClick = {},
+                modifier = Modifier.fillMaxWidth().height(44.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Text("Download Receipts", color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp)
+            }
         }
     }
 }
@@ -360,30 +380,30 @@ private fun PurchaseRow(title: String, desc: String, price: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Text(title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Text(desc, color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
+        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(desc, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
         }
-        Text(price, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(price, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
 private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f))
     ) {
-        Text("PREFERENCES", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
-        PrefRow("Privacy Policy", Icons.Default.Share, Color.White)
-        PrefRow("Terms of Service", Icons.Default.Info, Color.White)
-        PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A))
-        PrefRow("Sign Out", Icons.Default.ExitToApp, Color(0xFFFF7A7A), onSignOut)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Preferences", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            PrefRow("Account Settings", Icons.Default.Settings, MaterialTheme.colorScheme.onSurface, onClick = { onNavigate(Screen.Settings.route) })
+            PrefRow("Privacy Policy", Icons.Default.Share, MaterialTheme.colorScheme.onSurface)
+            PrefRow("Terms of Service", Icons.Default.Info, MaterialTheme.colorScheme.onSurface)
+            PrefRow("Delete Account", Icons.Default.Delete, MaterialTheme.colorScheme.error)
+            PrefRow("Sign Out", Icons.Default.ExitToApp, MaterialTheme.colorScheme.error, onSignOut)
+        }
     }
 }
 
@@ -399,33 +419,35 @@ private fun PrefRow(title: String, icon: androidx.compose.ui.graphics.vector.Ima
             Spacer(modifier = Modifier.width(10.dp))
             Text(title, color = color, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
-        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
+        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
     }
 }
 
 @Composable
 private fun SupportCard() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.95f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f))
     ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-            Text("Need Help?", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(2.dp))
-            Text("Our concierge support is available 24/7.", color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp, lineHeight = 14.sp)
-        }
-        Button(
-            onClick = {},
-            modifier = Modifier.height(36.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.05f))
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Support Chat", color = Color.White, fontSize = 11.sp)
+            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                Text("Need help?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Our concierge team is ready to help with any creative workflow questions.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Button(
+                onClick = {},
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Text("Support", color = MaterialTheme.colorScheme.onSurface, fontSize = 11.sp)
+            }
         }
     }
 }

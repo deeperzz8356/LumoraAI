@@ -23,9 +23,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,7 +56,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.deep.lumoraai.R
-import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.PolishedTabScaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -96,20 +97,10 @@ fun CreateHubScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedTabIndex by remember { mutableStateOf(initialTab) }
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            BottomNavigationBar(
-                items = emptyList(),
-                selected = "createhub",
-                onSelected = onNavigate
-            )
-        }
-    ) { padding ->
+    PolishedTabScaffold(selectedRoute = "createhub", onNavigate = onNavigate, modifier = modifier) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
         ) {
             CreateHubContent(initialPrompt = initialPrompt, onGenerateImage = onGenerateImage, onGenerateVideo = onGenerateVideo, onNext = onNext)
@@ -171,9 +162,19 @@ private fun CreateHubContent(initialPrompt: String?, onGenerateImage: (String, S
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
+            .padding(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Text(
+            "Create job",
+            color = Color.White,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
+        )
+        Text(
+            "Build high-fidelity images or video jobs with one consistent creation flow.",
+            color = Color.White.copy(alpha = 0.65f),
+            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp)
+        )
         CreateHubTabs(selectedTab = selectedTab, onTabSelected = { selectedTab = it })
         if (selectedTab == "Image") {
             ImageFormContent(initialPrompt = initialPrompt, onGenerate = { prompt, style, w, h, neg, img -> onGenerateImage(prompt, style, w, h, neg, img) })
@@ -188,34 +189,68 @@ private fun CreateHubTabs(
     selectedTab: String,
     onTabSelected: (String) -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp)
-            .background(Color(0xFF161838), RoundedCornerShape(24.dp))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
+    val tabs = listOf("Image" to "Visuals", "Video" to "Motion")
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
-        val tabs = listOf("Image", "Video")
-        tabs.forEach { tab ->
-            val isSelected = selectedTab == tab
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .background(
-                        color = if (isSelected) Color(0xFFCFBDFF) else Color.Transparent,
-                        shape = RoundedCornerShape(20.dp)
-                    )
-                    .clickable { onTabSelected(tab) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = tab,
-                    color = if (isSelected) Color(0xFF0F1026) else Color.White.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.horizontalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.45f),
+                            MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.95f)
+                        )
+                    ),
+                    shape = RoundedCornerShape(26.dp)
                 )
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
+                    shape = RoundedCornerShape(26.dp)
+                )
+                .padding(6.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                tabs.forEach { (tab, subtitle) ->
+                    val isSelected = selectedTab == tab
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(46.dp)
+                            .background(
+                                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.95f) else Color.Transparent,
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                            .clickable { onTabSelected(tab) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = tab,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                            )
+                            Text(
+                                text = subtitle,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
