@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -97,7 +98,7 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
             verticalAlignment = Alignment.CenterVertically
         ) {
             NavItem(Icons.Default.Home, "Home", selected == "home", { onSelected("home") }, Modifier.weight(1f))
-            NavItem(Icons.Default.Search, "Explore", selected == "templates", { onSelected("templates") }, Modifier.weight(1f))
+            NavItem(Icons.Default.Star, "Premium", selected == "subscription", { onSelected("subscription") }, Modifier.weight(1f))
             Spacer(modifier = Modifier.width(72.dp))
             NavItem(Icons.Default.List, "Queue", selected == "queue", { onSelected("queue") }, Modifier.weight(1f))
             NavItem(Icons.Default.Person, "Profile", selected == "profile", { onSelected("profile") }, Modifier.weight(1f))

@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -94,8 +95,8 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
     ) {
         ProfileTopBar()
         ProfileHeroCard()
-        QuickStatsRow(credits = credits)
-        AccountOverviewCard()
+        QuickStatsRow(credits = credits, onNavigate = onNavigate)
+        AccountOverviewCard(onNavigate = onNavigate)
         if (generations.isNotEmpty()) {
             CreationsGrid(generations = generations)
         }
@@ -220,20 +221,38 @@ private fun TagPill(text: String) {
 }
 
 @Composable
-private fun QuickStatsRow(credits: Int) {
+private fun QuickStatsRow(credits: Int, onNavigate: (String) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        StatCard(title = "Credits", value = "$credits LUM", subtitle = "Refill in 12 days", modifier = Modifier.weight(1f))
-        StatCard(title = "Plan", value = "Elite", subtitle = "Annual • $499/yr", modifier = Modifier.weight(1f))
+        StatCard(
+            title = "Credits",
+            value = "$credits LUM",
+            subtitle = "Tap to view balance",
+            modifier = Modifier.weight(1f),
+            onClick = { onNavigate(Screen.Credits.route) }
+        )
+        StatCard(
+            title = "Plan",
+            value = "MK Tech",
+            subtitle = "View subscription",
+            modifier = Modifier.weight(1f),
+            onClick = { onNavigate(Screen.Subscription.route) }
+        )
     }
 }
 
 @Composable
-private fun StatCard(title: String, value: String, subtitle: String, modifier: Modifier = Modifier) {
+private fun StatCard(
+    title: String,
+    value: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
     Card(
-        modifier = modifier,
+        modifier = modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f))
@@ -247,9 +266,11 @@ private fun StatCard(title: String, value: String, subtitle: String, modifier: M
 }
 
 @Composable
-private fun AccountOverviewCard() {
+private fun AccountOverviewCard(onNavigate: (String) -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onNavigate(Screen.Subscription.route) },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f))
@@ -262,12 +283,12 @@ private fun AccountOverviewCard() {
             ) {
                 Column {
                     Text("Active Plan", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Elite Pro", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("MK Tech Media tech", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Manage", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Icon(Icons.Default.Share, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
                 }
             }
             Row(
@@ -398,6 +419,7 @@ private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("Preferences", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            PrefRow("Subscription & Billing", Icons.Default.Star, MaterialTheme.colorScheme.onSurface, onClick = { onNavigate(Screen.Subscription.route) })
             PrefRow("Account Settings", Icons.Default.Settings, MaterialTheme.colorScheme.onSurface, onClick = { onNavigate(Screen.Settings.route) })
             PrefRow("Privacy Policy", Icons.Default.Share, MaterialTheme.colorScheme.onSurface)
             PrefRow("Terms of Service", Icons.Default.Info, MaterialTheme.colorScheme.onSurface)

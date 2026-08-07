@@ -18,6 +18,7 @@ fun SubscriptionLightPreview() {
         SubscriptionScreen(
             uiState = previewState,
             onNext = {},
+            onNavigate = {},
             onSelectPeriod = {},
             onPurchase = {},
             onRestore = {},
@@ -37,6 +38,7 @@ fun SubscriptionDarkPreview() {
         SubscriptionScreen(
             uiState = previewState.copy(isEntitled = true),
             onNext = {},
+            onNavigate = {},
             onSelectPeriod = {},
             onPurchase = {},
             onRestore = {},
@@ -56,6 +58,7 @@ fun SubscriptionTabletPreview() {
         SubscriptionScreen(
             uiState = previewState,
             onNext = {},
+            onNavigate = {},
             onSelectPeriod = {},
             onPurchase = {},
             onRestore = {},
@@ -75,6 +78,7 @@ fun SubscriptionLandscapePreview() {
         SubscriptionScreen(
             uiState = previewState,
             onNext = {},
+            onNavigate = {},
             onSelectPeriod = {},
             onPurchase = {},
             onRestore = {},

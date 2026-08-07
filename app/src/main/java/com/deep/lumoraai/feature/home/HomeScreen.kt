@@ -214,7 +214,7 @@ private fun HomeStatsGrid(credits: Int, onNavigate: (String) -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             StatItem("CREATIONS", "48", modifier = Modifier.weight(if (compact) 1f else 1f))
-            StatItem("PLAN", "Pro", modifier = Modifier.weight(if (compact) 1f else 1f))
+            StatItem("PLAN", "Pro", modifier = Modifier.weight(if (compact) 1f else 1f), onClick = { onNavigate(Screen.Subscription.route) })
         }
         Spacer(modifier = Modifier.height(Spacing.md))
         StatItem(
@@ -277,11 +277,11 @@ private fun HomeQuickActions(onNavigate: (String) -> Unit) {
                 onClick = { onNavigate(Screen.Queue.route) }
             )
             QuickActionCard(
-                title = "Billing",
-                subtitle = "View credits and plan",
-                icon = Icons.Default.Share,
+                title = "Subscription",
+                subtitle = "Plans, paywall & billing",
+                icon = Icons.Default.Star,
                 modifier = Modifier.weight(1f),
-                onClick = { onNavigate(Screen.Credits.route) }
+                onClick = { onNavigate(Screen.Subscription.route) }
             )
         }
     }

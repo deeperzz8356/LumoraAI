@@ -79,7 +79,12 @@ fun NavGraph(modifier: Modifier = Modifier) {
         composable(Screen.History.route) { HistoryRoute(onNext = next(Screen.History)) }
         composable(Screen.Credits.route) { CreditsRoute(onNext = next(Screen.Credits)) }
         composable(Screen.Notifications.route) { NotificationsRoute(onNext = next(Screen.Notifications)) }
-        composable(Screen.Subscription.route) { SubscriptionRoute(onNext = next(Screen.Subscription)) }
+        composable(Screen.Subscription.route) {
+            SubscriptionRoute(
+                onNext = next(Screen.Subscription),
+                onNavigate = { navController.goTo(it) },
+            )
+        }
         composable(Screen.Profile.route) {
             ProfileRoute(
                 onNext = next(Screen.Profile),

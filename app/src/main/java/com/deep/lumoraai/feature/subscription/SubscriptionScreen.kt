@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,10 +24,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.billing.BillingConstants
-import com.deep.lumoraai.core.components.AppToolbar
-import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.GradientButton
 import com.deep.lumoraai.core.components.Loading
+import com.deep.lumoraai.core.components.PolishedTabScaffold
 import com.revenuecat.purchases.CustomerInfo
 import com.revenuecat.purchases.Package
 import com.revenuecat.purchases.PurchasesError
@@ -46,6 +44,7 @@ import com.revenuecat.purchases.ui.revenuecatui.customercenter.CustomerCenter
 fun SubscriptionScreen(
     uiState: SubscriptionViewState,
     onNext: () -> Unit,
+    onNavigate: (String) -> Unit,
     onSelectPeriod: (BillingPeriod) -> Unit,
     onPurchase: (Activity) -> Unit,
     onRestore: () -> Unit,
@@ -73,19 +72,13 @@ fun SubscriptionScreen(
         return
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = { AppToolbar(title = "Subscription") },
-        bottomBar = {
-            BottomNavigationBar(
-                items = listOf("home", "createhub", "queue", "profile"),
-                selected = "subscription",
-                onSelected = { onNext() }
-            )
-        }
-    ) { padding ->
+    PolishedTabScaffold(
+        selectedRoute = "subscription",
+        onNavigate = onNavigate,
+        modifier = modifier,
+    ) {
         when {
-            uiState.isLoading -> Loading(modifier = Modifier.padding(padding))
+            uiState.isLoading -> Loading(modifier = Modifier.fillMaxSize())
             else -> SubscriptionContent(
                 uiState = uiState,
                 onSelectPeriod = onSelectPeriod,
@@ -93,13 +86,9 @@ fun SubscriptionScreen(
                 onRestore = onRestore,
                 onShowPaywall = onShowPaywall,
                 onShowCustomerCenter = onShowCustomerCenter,
-                modifier = Modifier.padding(padding)
             )
         }
     }
-
-    // Auto-present paywall dialog when gated and not entitled (optional helper).
-    // Shown only when explicitly requested via showPaywall path above for full-screen.
 }
 
 @OptIn(ExperimentalPreviewRevenueCatUIPurchasesAPI::class)
