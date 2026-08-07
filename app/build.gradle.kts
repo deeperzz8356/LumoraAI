@@ -19,6 +19,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Test Store key for debug/development. Never ship this in release.
+        buildConfigField(
+            "String",
+            "REVENUECAT_API_KEY",
+            "\"test_GEIOhUGfQCKpWthxIRpKWHgSbRY\""
+        )
     }
 
     buildTypes {
@@ -27,6 +34,12 @@ android {
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
+            )
+            // Replace with your Google Play platform API key before releasing.
+            buildConfigField(
+                "String",
+                "REVENUECAT_API_KEY",
+                "\"goog_YOUR_PRODUCTION_ANDROID_KEY\""
             )
         }
     }
@@ -37,6 +50,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -63,11 +77,22 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
 
+    // HTTP client for API calls
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     kapt(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)
+
+    // RevenueCat
+    implementation(libs.purchases)
+    implementation(libs.purchases.ui)
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -25,15 +25,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.AppCard
 import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.ui.theme.tokens.Spacing
+import com.revenuecat.purchases.ui.revenuecatui.ExperimentalPreviewRevenueCatUIPurchasesAPI
+import com.revenuecat.purchases.ui.revenuecatui.customercenter.CustomerCenter
 
+@OptIn(ExperimentalPreviewRevenueCatUIPurchasesAPI::class)
 @Composable
 fun SettingsScreen(
     uiState: SettingsUiState,
@@ -42,6 +43,16 @@ fun SettingsScreen(
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var showCustomerCenter by remember { mutableStateOf(false) }
+
+    if (showCustomerCenter) {
+        CustomerCenter(
+            modifier = Modifier.fillMaxSize(),
+            onDismiss = { showCustomerCenter = false },
+        )
+        return
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -55,7 +66,7 @@ fun SettingsScreen(
         }
     ) { padding ->
         var showLanguageDialog by remember { mutableStateOf(false) }
-        
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -66,55 +77,61 @@ fun SettingsScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 Text("Account", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
-                
+
                 SettingsActionRow(
                     title = "Manage Profile",
                     subtitle = "Update your personal information",
-                    onClick = { /* TODO */ }
+                    onClick = { onNavigate(Screen.Profile.route) }
                 )
-                
+
                 SettingsActionRow(
                     title = "Subscription & Billing",
-                    subtitle = "Manage your Pro plan",
-                    onClick = { /* TODO */ }
+                    subtitle = "Plans, restore purchases, and manage billing",
+                    onClick = { onNavigate(Screen.Subscription.route) }
                 )
-                
+
+                SettingsActionRow(
+                    title = "Customer Center",
+                    subtitle = "Cancel, restore, or get subscription help",
+                    onClick = { showCustomerCenter = true }
+                )
+
                 SettingsActionRow(
                     title = "Privacy & Security",
                     subtitle = "Protect your account data",
                     onClick = { /* TODO */ }
                 )
-                
+
                 SettingsActionRow(
                     title = "Help & Support",
                     subtitle = "Contact us for assistance",
                     onClick = { /* TODO */ }
                 )
             }
-            
+
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 Text("Preferences", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
-                
+
                 SettingsActionRow(
                     title = "Language",
                     subtitle = uiState.selectedLanguage,
                     onClick = { showLanguageDialog = true }
                 )
-                
+
                 SettingsToggleRow(
                     title = "Dark Mode",
                     subtitle = "Use dark theme across the app",
                     checked = uiState.isDarkMode,
                     onCheckedChange = { viewModel.toggleDarkMode(it) }
                 )
-                
+
                 SettingsToggleRow(
                     title = "Push Notifications",
                     subtitle = "Receive updates on generated tasks",
                     checked = uiState.notificationsEnabled,
                     onCheckedChange = { viewModel.toggleNotifications(it) }
                 )
-                
+
                 SettingsToggleRow(
                     title = "High Quality Mode",
                     subtitle = "Generate images in higher resolution (uses more credits)",
@@ -123,13 +140,13 @@ fun SettingsScreen(
                 )
             }
         }
-        
+
         if (showLanguageDialog) {
             LanguageSelectionDialog(
                 currentLanguage = uiState.selectedLanguage,
-                onLanguageSelected = { 
+                onLanguageSelected = {
                     viewModel.setLanguage(it)
-                    showLanguageDialog = false 
+                    showLanguageDialog = false
                 },
                 onDismissRequest = { showLanguageDialog = false }
             )
@@ -199,7 +216,7 @@ private fun LanguageSelectionDialog(
     onDismissRequest: () -> Unit
 ) {
     val languages = listOf("English", "Spanish", "French", "German", "Chinese", "Japanese", "Korean", "Hindi")
-    
+
     AlertDialog(
         onDismissRequest = onDismissRequest,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,

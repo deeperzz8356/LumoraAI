@@ -22,7 +22,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,10 +43,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
-import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.AppButton
+import com.deep.lumoraai.core.components.AppCard
+import com.deep.lumoraai.core.components.CardVariant
+import com.deep.lumoraai.core.components.PolishedTabScaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import android.content.ClipboardManager
 import android.content.ClipData
 import android.content.Context
@@ -53,6 +58,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.ui.theme.tokens.Spacing
 
 data class TemplateItem(
     val id: String,
@@ -69,24 +75,8 @@ fun TemplatesScreen(
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            BottomNavigationBar(
-                items = emptyList(),
-                selected = "templates",
-                onSelected = onNavigate
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
-        ) {
-            TemplatesContent(onNavigate = onNavigate)
-        }
+    PolishedTabScaffold(selectedRoute = "templates", onNavigate = onNavigate, modifier = modifier) {
+        TemplatesContent(onNavigate = onNavigate)
     }
 }
 
@@ -145,14 +135,15 @@ private fun TemplatesContent(onNavigate: (String) -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(vertical = Spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(Spacing.lg)
     ) {
         TemplatesTopBar()
+        TemplatesSummaryCard(onNavigate = onNavigate)
         TemplatesHeader()
         TemplatesSearchBar(query = searchQuery, onQueryChange = { searchQuery = it })
         FilterPillsHorizontal(selectedFilter = selectedFilter, onFilterSelect = { selectedFilter = it })
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
             filteredTemplates.forEach { item ->
                 TemplateCard(
                     item = item,
@@ -166,11 +157,23 @@ private fun TemplatesContent(onNavigate: (String) -> Unit) {
                 )
             }
             if (filteredTemplates.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(150.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No templates found matching your search.", color = Color.White.copy(alpha = 0.5f), fontSize = 14.sp)
+                AppCard(variant = CardVariant.Outlined, modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        Text("No templates match this filter", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                        Text(
+                            "Try a broader keyword or switch to another style to keep browsing.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        AppButton(
+                            text = "Clear filters",
+                            onClick = {
+                                searchQuery = ""
+                                selectedFilter = "All Styles"
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
@@ -180,25 +183,76 @@ private fun TemplatesContent(onNavigate: (String) -> Unit) {
 @Composable
 private fun TemplatesTopBar() {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Lumina AI", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Icon(Icons.Default.Menu, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("Explore", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Template library", color = MaterialTheme.colorScheme.onSurface, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+        }
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(14.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
+        }
     }
 }
 
 @Composable
 private fun TemplatesHeader() {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Image Templates", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        Text("Browse production-ready prompts", color = MaterialTheme.colorScheme.onSurface, fontSize = 28.sp, fontWeight = FontWeight.SemiBold)
         Text(
-            text = "Accelerate your workflow with professional, AI-optimized prompts and layouts across cinematic styles.",
-            color = Color.White.copy(alpha = 0.6f),
+            text = "Find polished starting points for image and video jobs, then open them directly in Create Job.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
-            lineHeight = 20.sp
+            lineHeight = 20.sp,
+            maxLines = 2
         )
+    }
+}
+
+@Composable
+private fun TemplatesSummaryCard(onNavigate: (String) -> Unit) {
+    AppCard(variant = CardVariant.Elevated) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Library status", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("4 curated prompt sets", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                }
+                Box(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
+                        .padding(horizontal = Spacing.sm, vertical = 6.dp)
+                ) {
+                    Text("Updated today", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Text(
+                text = "Use these prompts as reliable starting points for client-ready outputs, then refine them in the creation flow.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), modifier = Modifier.fillMaxWidth()) {
+                AppButton(
+                    text = "Open Create Job",
+                    onClick = { onNavigate(Screen.CreateHub.route) },
+                    modifier = Modifier.weight(1f)
+                )
+                AppButton(
+                    text = "View queue",
+                    onClick = { onNavigate(Screen.Queue.route) },
+                    modifier = Modifier.weight(1f),
+                    variant = com.deep.lumoraai.core.components.AppButtonVariant.Tonal
+                )
+            }
+        }
     }
 }
 
@@ -207,17 +261,19 @@ private fun TemplatesSearchBar(query: String, onQueryChange: (String) -> Unit) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        placeholder = { Text("Search templates...", color = Color.White.copy(alpha = 0.3f)) },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.4f)) },
-        modifier = Modifier.fillMaxWidth().height(52.dp),
+        placeholder = { Text("Search templates") },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+        modifier = Modifier.fillMaxWidth().height(56.dp),
         shape = RoundedCornerShape(26.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF161838),
-            unfocusedContainerColor = Color(0xFF161838),
-            focusedBorderColor = Color(0xFFA855F7).copy(alpha = 0.5f),
-            unfocusedBorderColor = Color.White.copy(alpha = 0.05f),
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            focusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
         singleLine = true
     )
@@ -228,18 +284,18 @@ private fun FilterPillsHorizontal(selectedFilter: String, onFilterSelect: (Strin
     val filters = listOf("All Styles", "Wallpapers", "Anime", "Fantasy")
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
         filters.forEach { filter ->
             val isSelected = selectedFilter == filter
             Box(
                 modifier = Modifier
                     .background(
-                        color = if (isSelected) Color(0xFFCFBDFF) else Color.White.copy(alpha = 0.05f),
+                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f) else MaterialTheme.colorScheme.surfaceContainerLow,
                         shape = RoundedCornerShape(16.dp)
                     )
                     .border(
-                        BorderStroke(1.dp, if (isSelected) Color.Transparent else Color.White.copy(alpha = 0.1f)),
+                        BorderStroke(1.dp, if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                         RoundedCornerShape(16.dp)
                     )
                     .clickable { onFilterSelect(filter) }
@@ -248,7 +304,7 @@ private fun FilterPillsHorizontal(selectedFilter: String, onFilterSelect: (Strin
             ) {
                 Text(
                     text = filter,
-                    color = if (isSelected) Color(0xFF0F1026) else Color.White.copy(alpha = 0.8f),
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -274,16 +330,16 @@ private fun TemplateCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(18.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
+            .padding(Spacing.md),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(14.dp))
         ) {
             Image(
                 painter = painterResource(id = item.imageRes),
@@ -294,24 +350,36 @@ private fun TemplateCard(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                    .padding(10.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.82f), RoundedCornerShape(999.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), RoundedCornerShape(999.dp))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Text(item.category, color = Color(0xFFCFBDFF), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text(item.category, color = MaterialTheme.colorScheme.onSurface, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
         }
 
-        Text(item.title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(item.title, color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+            }
+            Text(
+                text = "Prompt library entry",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         Text(
             text = item.prompt,
-            color = Color.White.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 12.sp,
             lineHeight = 18.sp,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
                 .padding(10.dp)
         )
 
@@ -324,16 +392,16 @@ private fun TemplateCard(
                     onCopyClick(item.prompt)
                     copied = true
                 },
-                modifier = Modifier.weight(1f).height(40.dp),
+                modifier = Modifier.weight(1f).height(42.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (copied) Color(0xFFADF021).copy(alpha = 0.15f) else Color.White.copy(alpha = 0.05f)
+                    containerColor = if (copied) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f) else MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
-                border = BorderStroke(1.dp, if (copied) Color(0xFFADF021).copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f))
+                border = BorderStroke(1.dp, if (copied) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
             ) {
                 Text(
                     text = if (copied) "Copied!" else "Copy Prompt",
-                    color = if (copied) Color(0xFFADF021) else Color.White,
+                    color = if (copied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -341,13 +409,13 @@ private fun TemplateCard(
 
             Button(
                 onClick = { onCreateClick(item.prompt) },
-                modifier = Modifier.weight(1f).height(40.dp),
+                modifier = Modifier.weight(1f).height(42.dp),
                 shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCFBDFF))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text(
-                    text = "Create with this",
-                    color = Color(0xFF0F1026),
+                    text = "Open in Create",
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
