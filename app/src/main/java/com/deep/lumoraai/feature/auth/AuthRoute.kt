@@ -1,15 +1,21 @@
 package com.deep.lumoraai.feature.auth
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
 import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
@@ -74,6 +80,12 @@ private fun triggerGoogleSignIn(
         try {
             val result = performGoogleSignIn(context, webClientId)
             viewModel.signInWithGoogle(result)
+        } catch (e: GetCredentialException) {
+            val message = when (e) {
+                is NoCredentialException -> "No Google account found. Add a Google account on this device."
+                else -> e.localizedMessage ?: "Google login failed."
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             Toast.makeText(context, "Google login failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
         }
@@ -81,19 +93,74 @@ private fun triggerGoogleSignIn(
 }
 
 private suspend fun performGoogleSignIn(context: Context, webClientId: String): String {
+    val activity = context.findActivity()
+        ?: throw IllegalStateException("Google sign-in requires an Activity context")
     val credentialManager = CredentialManager.create(context)
+
+    try {
+        return requestGoogleIdToken(
+            credentialManager = credentialManager,
+            context = activity,
+            webClientId = webClientId,
+            filterAuthorized = true,
+            autoSelect = true
+        )
+    } catch (_: NoCredentialException) {
+        try {
+            return requestGoogleIdToken(
+                credentialManager = credentialManager,
+                context = activity,
+                webClientId = webClientId,
+                filterAuthorized = false,
+                autoSelect = false
+            )
+        } catch (_: NoCredentialException) {
+            return requestSignInWithGoogle(credentialManager, activity, webClientId)
+        }
+    }
+}
+
+private suspend fun requestGoogleIdToken(
+    credentialManager: CredentialManager,
+    context: Context,
+    webClientId: String,
+    filterAuthorized: Boolean,
+    autoSelect: Boolean
+): String {
     val googleIdOption = GetGoogleIdOption.Builder()
-        .setFilterByAuthorizedAccounts(false)
+        .setFilterByAuthorizedAccounts(filterAuthorized)
         .setServerClientId(webClientId)
-        .setAutoSelectEnabled(true)
+        .setAutoSelectEnabled(autoSelect)
         .build()
     val request = GetCredentialRequest.Builder()
         .addCredentialOption(googleIdOption)
         .build()
     val result = credentialManager.getCredential(context = context, request = request)
-    val credential = result.credential
+    return extractGoogleIdToken(result.credential)
+}
+
+private suspend fun requestSignInWithGoogle(
+    credentialManager: CredentialManager,
+    context: Context,
+    webClientId: String
+): String {
+    val googleOption = GetSignInWithGoogleOption.Builder(webClientId).build()
+    val request = GetCredentialRequest.Builder()
+        .addCredentialOption(googleOption)
+        .build()
+    val result = credentialManager.getCredential(context = context, request = request)
+    return extractGoogleIdToken(result.credential)
+}
+
+private fun extractGoogleIdToken(credential: Credential): String {
     if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
         return GoogleIdTokenCredential.createFrom(credential.data).idToken
     }
     throw IllegalArgumentException("Invalid credential type")
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

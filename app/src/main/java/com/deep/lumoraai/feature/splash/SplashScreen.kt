@@ -48,13 +48,15 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
-    uiState: SplashUiState,
+    isReady: Boolean,
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(Unit) {
-        delay(3000)
-        onNext()
+    LaunchedEffect(isReady) {
+        if (isReady) {
+            delay(3000)
+            onNext()
+        }
     }
     SplashBackground(modifier = modifier) {
         SplashBottomContent()

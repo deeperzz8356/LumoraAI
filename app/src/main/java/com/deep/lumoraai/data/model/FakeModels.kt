@@ -1,7 +1,13 @@
 package com.deep.lumoraai.data.model
 
 data class TemplateModel(val id: String, val title: String, val category: String)
-data class HistoryModel(val id: String, val title: String, val createdAt: String)
+data class HistoryModel(
+    val id: String,
+    val title: String,
+    val createdAt: String,
+    val type: String = "IMAGE",
+    val mediaUrl: String? = null,
+)
 data class NotificationModel(val id: String, val title: String, val message: String)
 data class CreditModel(val id: String, val label: String, val amount: Int)
 data class QueueModel(val id: String, val title: String, val progress: Float)

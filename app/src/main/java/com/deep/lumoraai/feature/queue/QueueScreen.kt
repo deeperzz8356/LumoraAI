@@ -1,7 +1,6 @@
 package com.deep.lumoraai.feature.queue
 
-import android.graphics.BitmapFactory
-import android.util.Base64
+import com.deep.lumoraai.core.utils.GeneratedImage
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -152,21 +151,12 @@ private fun JobCardItem(job: ActiveJobInfo) {
             },
             title = { Text("Generated Image", style = MaterialTheme.typography.titleLarge) },
             text = {
-                val base64String = if (job.imageUrl.contains(",")) job.imageUrl.substringAfter(",") else job.imageUrl
-                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Full Generated Image",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(300.dp)
-                    )
-                } else {
-                    Text("Failed to decode image.", color = MaterialTheme.colorScheme.error)
-                }
+                GeneratedImage(
+                    imagePayload = job.imageUrl.orEmpty(),
+                    contentDescription = "Full Generated Image",
+                    modifier = Modifier.fillMaxWidth().height(300.dp),
+                    contentScale = ContentScale.Fit
+                )
             }
         )
     }
@@ -189,28 +179,14 @@ private fun JobCardItem(job: ActiveJobInfo) {
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 if (!job.imageUrl.isNullOrEmpty()) {
-                    val base64String = if (job.imageUrl.contains(",")) job.imageUrl.substringAfter(",") else job.imageUrl
-                    val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-                    val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                    if (bitmap != null) {
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(72.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = job.imageRes),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(72.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                        )
-                    }
+                    GeneratedImage(
+                        imagePayload = job.imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(MaterialTheme.shapes.medium),
+                        contentScale = ContentScale.Crop
+                    )
                 } else {
                     Image(
                         painter = painterResource(id = job.imageRes),

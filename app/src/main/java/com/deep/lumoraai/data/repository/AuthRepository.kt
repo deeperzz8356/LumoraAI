@@ -53,6 +53,18 @@ class AuthRepository {
         }
     }
 
+    suspend fun syncCurrentUser(): Boolean = withContext(Dispatchers.IO) {
+        val user = auth.currentUser ?: return@withContext false
+        try {
+            val tokenResult = user.getIdToken(true).await()
+            val idToken = tokenResult.token ?: return@withContext false
+            syncWithBackend(idToken)
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error syncing current user: ${e.message}")
+            false
+        }
+    }
+
     private suspend fun processAuthResultAndSync(user: com.google.firebase.auth.FirebaseUser?): Boolean {
         if (user != null) {
             val tokenResult = user.getIdToken(true).await()

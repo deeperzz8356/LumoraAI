@@ -7,9 +7,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import com.deep.lumoraai.core.utils.extractGeneratedImage
+import com.deep.lumoraai.core.utils.extractGeneratedVideo
+import com.deep.lumoraai.core.utils.isSuccessfulApiStatus
+import com.deep.lumoraai.core.utils.parseGenerationFailure
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -20,8 +27,10 @@ import java.net.URL
 class GenerationRepository {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val backendUrl = "https://lumoraai-backend-rlcy.onrender.com/api/v1/generation"
+    private val imageGenerateUrl = "https://lumoraai-backend-rlcy.onrender.com/api/v1/images/generate"
 
     companion object {
+        private val generationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         private val _activeJobs = MutableStateFlow<List<ActiveJobInfo>>(emptyList())
         val activeJobs: StateFlow<List<ActiveJobInfo>> = _activeJobs.asStateFlow()
 
@@ -36,6 +45,32 @@ class GenerationRepository {
                 }
             }
         }
+
+        fun runImageGeneration(
+            repository: GenerationRepository,
+            jobTitle: String,
+            prompt: String,
+            style: String,
+            width: Int,
+            height: Int,
+            negativePrompt: String?,
+            sourceImageB64: String?,
+            onResult: (Result<String>) -> Unit
+        ) {
+            generationScope.launch {
+                val result = repository.generateImage(
+                    prompt = prompt,
+                    style = style,
+                    width = width,
+                    height = height,
+                    negativePrompt = negativePrompt,
+                    sourceImageB64 = sourceImageB64
+                )
+                withContext(Dispatchers.Main) {
+                    onResult(result)
+                }
+            }
+        }
     }
 
     suspend fun generateImage(
@@ -45,31 +80,24 @@ class GenerationRepository {
         height: Int = 1024,
         negativePrompt: String? = null,
         sourceImageB64: String? = null
-    ): String? = withContext(Dispatchers.IO) {
+    ): Result<String> = withContext(Dispatchers.IO) {
         try {
             val user = auth.currentUser
-            if (user == null) {
-                Log.e("GenerationRepository", "User not logged in")
-                return@withContext null
-            }
+                ?: return@withContext Result.failure(Exception("Please sign in to generate images."))
             
             val tokenResult = user.getIdToken(true).await()
             val idToken = tokenResult.token
+                ?: return@withContext Result.failure(Exception("Failed to get authentication token."))
             
-            if (idToken == null) {
-                Log.e("GenerationRepository", "Failed to get ID token")
-                return@withContext null
-            }
-            
-            val url = URL("$backendUrl/image")
+            val url = URL(imageGenerateUrl)
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "POST"
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Authorization", "Bearer $idToken")
             connection.setRequestProperty("x-user-id", user.uid)
             connection.doOutput = true
-            connection.connectTimeout = 30000 // 30 seconds timeout
-            connection.readTimeout = 60000 // 60 seconds timeout
+            connection.connectTimeout = 60_000
+            connection.readTimeout = 120_000
 
             val jsonInputString = JSONObject().apply {
                 put("prompt", prompt)
@@ -90,23 +118,41 @@ class GenerationRepository {
             }
 
             val responseCode = connection.responseCode
+            val responseBody = connection.readResponseBody()
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                val responseString = reader.use { it.readText() }
-                
-                val responseJson = JSONObject(responseString)
-                if (responseJson.getString("status") == "success") {
-                    return@withContext responseJson.getString("image_url")
+                val responseJson = JSONObject(responseBody)
+                Log.d("GenerationRepository", "Image response (${responseBody.length} chars): ${responseBody.take(800)}")
+                responseJson.parseGenerationFailure()?.let { errorMessage ->
+                    Log.e("GenerationRepository", "Generation failed: $errorMessage body=$responseBody")
+                    return@withContext Result.failure(Exception(errorMessage))
+                }
+                val imagePayload = extractGeneratedImage(responseJson)
+                if (imagePayload != null) {
+                    Result.success(imagePayload)
                 } else {
-                    Log.e("GenerationRepository", "API returned status: ${responseJson.getString("status")}")
+                    val message = responseJson.parseApiMessage()
+                        ?: "Server returned no image data."
+                    Log.e("GenerationRepository", "API error: $message body=$responseBody")
+                    Result.failure(Exception(message))
                 }
             } else {
-                Log.e("GenerationRepository", "HTTP Error $responseCode")
+                val message = responseBody.parseApiMessage()
+                    ?: "Server error ($responseCode). The backend may still be waking up — try again in a moment."
+                Log.e("GenerationRepository", "HTTP $responseCode: $message")
+                Result.failure(Exception(message))
             }
         } catch (e: Exception) {
             Log.e("GenerationRepository", "Exception: ${e.message}")
+            Result.failure(
+                Exception(
+                    when {
+                        e.message?.contains("timeout", ignoreCase = true) == true ->
+                            "Request timed out. The server may be starting up — please try again."
+                        else -> e.message ?: "Network error during image generation."
+                    }
+                )
+            )
         }
-        return@withContext null
     }
 
     suspend fun generateVideo(
@@ -151,8 +197,9 @@ class GenerationRepository {
                 val reader = BufferedReader(InputStreamReader(connection.inputStream))
                 val responseString = reader.use { it.readText() }
                 val responseJson = JSONObject(responseString)
-                if (responseJson.getString("status") == "success") {
-                    Result.success(responseJson.getString("video_url"))
+                val videoUrl = extractGeneratedVideo(responseJson)
+                if (videoUrl != null && responseJson.isSuccessfulApiStatus()) {
+                    Result.success(videoUrl)
                 } else {
                     Result.failure(Exception(responseJson.optString("message", "API status was not success")))
                 }
@@ -192,7 +239,8 @@ class GenerationRepository {
                             GenerationHistoryItem(
                                 id = obj.optString("id"),
                                 prompt = obj.optString("prompt"),
-                                imageUrl = obj.optString("image_url"),
+                                imageUrl = obj.optString("image_url")
+                                    .ifBlank { obj.optString("imageUrl") },
                                 style = obj.optString("style")
                             )
                         )
@@ -291,3 +339,16 @@ data class GenerationHistoryItem(
     val imageUrl: String,
     val style: String?
 )
+
+private fun HttpURLConnection.readResponseBody(): String {
+    val stream = if (responseCode in 200..299) inputStream else errorStream
+    return stream?.let { BufferedReader(InputStreamReader(it)).use { reader -> reader.readText() } }.orEmpty()
+}
+
+private fun JSONObject.parseApiMessage(): String? =
+    sequenceOf("message", "detail", "error")
+        .map { optString(it) }
+        .firstOrNull { it.isNotBlank() }
+
+private fun String.parseApiMessage(): String? =
+    runCatching { JSONObject(this).parseApiMessage() }.getOrNull()

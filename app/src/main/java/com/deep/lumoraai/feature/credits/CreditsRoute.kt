@@ -6,7 +6,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun CreditsRoute(
     onNext: () -> Unit,
+    onNavigate: (String) -> Unit = {},
+    onBack: () -> Unit = {},
     viewModel: CreditsViewModel = viewModel()
 ) {
-    CreditsScreen(uiState = viewModel.uiState, viewModel = viewModel, onNext = onNext)
+    CreditsScreen(
+        uiState = viewModel.uiState,
+        viewModel = viewModel,
+        onNext = onNext,
+        onNavigate = onNavigate,
+        onBack = onBack
+    )
 }

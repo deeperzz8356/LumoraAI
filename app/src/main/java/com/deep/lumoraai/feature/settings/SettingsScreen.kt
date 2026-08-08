@@ -76,7 +76,7 @@ fun SettingsScreen(
                 SettingsActionRow(
                     title = "Subscription & Billing",
                     subtitle = "Manage your Pro plan",
-                    onClick = { /* TODO */ }
+                    onClick = { onNavigate(com.deep.lumoraai.core.navigation.Screen.Subscription.route) }
                 )
                 
                 SettingsActionRow(
@@ -121,6 +121,39 @@ fun SettingsScreen(
                     checked = uiState.highQualityMode,
                     onCheckedChange = { viewModel.toggleHighQualityMode(it) }
                 )
+            }
+
+            if (uiState.isDevModeUnlocked) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    Text("Developer", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+                    SettingsToggleRow(
+                        title = "Developer Mode",
+                        subtitle = if (uiState.isDeveloperMode) "Unlimited trial — no restrictions" else "User mode — normal restrictions apply",
+                        checked = uiState.isDeveloperMode,
+                        onCheckedChange = { viewModel.toggleDeveloperMode(it) }
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.onVersionTapped() }
+                    .padding(vertical = Spacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Version 1.0",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (uiState.versionTapCount in 1..6) {
+                    Text(
+                        text = "${7 - uiState.versionTapCount} taps to unlock developer options",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
             }
         }
         

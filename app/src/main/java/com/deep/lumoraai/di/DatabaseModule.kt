@@ -18,11 +18,7 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideLumoraDatabase(@ApplicationContext context: Context): LumoraDatabase {
-        return Room.databaseBuilder(
-            context,
-            LumoraDatabase::class.java,
-            "lumora_database"
-        ).build()
+        return LumoraDatabase.getInstance(context)
     }
 
     @Provides

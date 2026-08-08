@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog as ComposeDialog
 import com.deep.lumoraai.core.theme.Dimension
+import com.deep.lumoraai.core.theme.IntroPalette
+import com.deep.lumoraai.core.theme.IntroTypography
 import com.deep.lumoraai.core.theme.LumoraPrimary
 import com.deep.lumoraai.core.theme.LumoraSecondary
 import com.deep.lumoraai.core.theme.LumoraTertiary
@@ -85,14 +87,17 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF0F1026))
+            .background(IntroPalette.BackgroundBase)
             .navigationBarsPadding()
             .height(88.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(72.dp).background(Color(0xFF0F1026))
-                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .background(IntroPalette.SurfaceRaised)
+                .border(BorderStroke(1.dp, IntroPalette.BorderSubtle)),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -103,11 +108,14 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
             NavItem(Icons.Default.Person, "Profile", selected == "profile", { onSelected("profile") }, Modifier.weight(1f))
         }
         Box(
-            modifier = Modifier.padding(bottom = 20.dp).size(60.dp)
-                .background(Color(0xFFCFBDFF), CircleShape).clickable { onSelected("createhub") },
+            modifier = Modifier
+                .padding(bottom = 20.dp)
+                .size(60.dp)
+                .background(IntroPalette.PrimaryButton, CircleShape)
+                .clickable { onSelected("createhub") },
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF0F1026), modifier = Modifier.size(28.dp))
+            Icon(Icons.Default.Add, contentDescription = "Create", tint = IntroPalette.TextPrimary, modifier = Modifier.size(28.dp))
         }
     }
 }
@@ -120,7 +128,7 @@ private fun NavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val tint = if (isSelected) Color(0xFFA855F7) else Color.White.copy(alpha = 0.5f)
+    val tint = if (isSelected) IntroPalette.IndicatorActive else IntroPalette.TextSubtle
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -128,7 +136,7 @@ private fun NavItem(
     ) {
         Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.height(4.dp))
-        Text(label, color = tint, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+        Text(label, style = IntroTypography.navLabel.copy(color = tint))
     }
 }
 

@@ -8,5 +8,5 @@ fun SplashRoute(
     onNext: () -> Unit,
     viewModel: SplashViewModel = viewModel()
 ) {
-    SplashScreen(uiState = viewModel.uiState, onNext = onNext)
+    SplashScreen(isReady = viewModel.isReady, onNext = onNext)
 }

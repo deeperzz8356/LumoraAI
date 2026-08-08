@@ -4,11 +4,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.data.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.launch
 
 class AuthViewModel(
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
     var uiState: AuthUiState by mutableStateOf(AuthUiState.Initial)
         private set
@@ -24,10 +28,10 @@ class AuthViewModel(
     fun signInAnonymously() {
         uiState = AuthUiState.Loading
         auth.signInAnonymously().addOnCompleteListener { task ->
-            uiState = if (task.isSuccessful) {
-                AuthUiState.Success
+            if (task.isSuccessful) {
+                finishWithBackendSync()
             } else {
-                AuthUiState.Error(task.exception?.message ?: "Guest access failed.")
+                uiState = AuthUiState.Error(task.exception?.message ?: "Guest access failed.")
             }
         }
     }
@@ -44,10 +48,10 @@ class AuthViewModel(
             auth.signInWithEmailAndPassword(email, password)
         }
         task.addOnCompleteListener { res ->
-            uiState = if (res.isSuccessful) {
-                AuthUiState.Success
+            if (res.isSuccessful) {
+                finishWithBackendSync()
             } else {
-                AuthUiState.Error(res.exception?.message ?: "Authentication failed.")
+                uiState = AuthUiState.Error(res.exception?.message ?: "Authentication failed.")
             }
         }
     }
@@ -56,10 +60,21 @@ class AuthViewModel(
         uiState = AuthUiState.Loading
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential).addOnCompleteListener { task ->
-            uiState = if (task.isSuccessful) {
+            if (task.isSuccessful) {
+                finishWithBackendSync()
+            } else {
+                uiState = AuthUiState.Error(task.exception?.message ?: "Google login failed.")
+            }
+        }
+    }
+
+    private fun finishWithBackendSync() {
+        viewModelScope.launch {
+            val synced = authRepository.syncCurrentUser()
+            uiState = if (synced) {
                 AuthUiState.Success
             } else {
-                AuthUiState.Error(task.exception?.message ?: "Google login failed.")
+                AuthUiState.Error("Connected to Firebase but server sync failed. Check your internet and try again.")
             }
         }
     }

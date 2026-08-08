@@ -99,8 +99,8 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
         ProfileHeader()
         val credits = if (uiState is ProfileUiState.Success) uiState.credits else 0
         CreditsBalanceCard(credits = credits)
-        PlanCard()
-        BuyMoreCreditsCard()
+        PlanCard(onNavigate = onNavigate)
+        BuyMoreCreditsCard(onNavigate = onNavigate)
         if (uiState is ProfileUiState.Success) {
             CreationsGrid(generations = uiState.generations)
         }
@@ -226,7 +226,7 @@ private fun CreditsBalanceCard(credits: Int) {
 }
 
 @Composable
-private fun PlanCard() {
+private fun PlanCard(onNavigate: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -245,7 +245,10 @@ private fun PlanCard() {
                 Text("Elite Pro", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text("Billed annually • $499/yr", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onNavigate(Screen.Subscription.route) }
+            ) {
                 Text("Manage Plan", color = Color(0xFFA855F7), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFFA855F7), modifier = Modifier.size(14.dp))
@@ -255,13 +258,13 @@ private fun PlanCard() {
 }
 
 @Composable
-private fun BuyMoreCreditsCard() {
+private fun BuyMoreCreditsCard(onNavigate: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFF161838), RoundedCornerShape(12.dp))
             .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-            .clickable {}
+            .clickable { onNavigate(Screen.Credits.route) }
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically

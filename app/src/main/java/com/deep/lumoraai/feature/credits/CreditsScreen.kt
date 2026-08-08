@@ -7,13 +7,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,17 +33,33 @@ import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.EmptyState
 import com.deep.lumoraai.core.components.ErrorState
 import com.deep.lumoraai.core.components.Loading
+import com.deep.lumoraai.core.navigation.Screen
 
 @Composable
 fun CreditsScreen(
     uiState: CreditsUiState,
     viewModel: CreditsViewModel,
     onNext: () -> Unit,
+    onNavigate: (String) -> Unit = {},
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { AppToolbar(title = "Credits") },
+        topBar = {
+            AppToolbar(
+                title = "Credits",
+                action = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            )
+        },
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
@@ -55,14 +77,24 @@ fun CreditsScreen(
             when (uiState) {
                 CreditsUiState.Loading -> Loading()
                 is CreditsUiState.Error -> ErrorState(title = "Credits", message = uiState.message)
-                is CreditsUiState.Success -> CreditsContent(credits = uiState.credits, onBuy = { viewModel.buyCredits(it) })
+                is CreditsUiState.Success -> CreditsContent(
+                    credits = uiState.credits,
+                    isDeveloperMode = uiState.isDeveloperMode,
+                    onBuy = { viewModel.buyCredits(it) },
+                    onNavigate = onNavigate
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CreditsContent(credits: Int, onBuy: (Int) -> Unit) {
+private fun CreditsContent(
+    credits: Int,
+    isDeveloperMode: Boolean,
+    onBuy: (Int) -> Unit,
+    onNavigate: (String) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -79,8 +111,22 @@ private fun CreditsContent(credits: Int, onBuy: (Int) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text("Current Balance", color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp)
-            Text("$credits", color = Color.White, fontSize = 48.sp, fontWeight = FontWeight.Bold)
-            Text("Credits", color = Color(0xFFA855F7), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                if (isDeveloperMode) "Unlimited" else "$credits",
+                color = Color.White,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                if (isDeveloperMode) "Developer Mode" else "Credits",
+                color = Color(0xFFA855F7),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        TextButton(onClick = { onNavigate(Screen.Subscription.route) }, modifier = Modifier.fillMaxWidth()) {
+            Text("View subscription plans", color = Color(0xFFCFBDFF))
         }
         
         Text("Top Up Credits", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)

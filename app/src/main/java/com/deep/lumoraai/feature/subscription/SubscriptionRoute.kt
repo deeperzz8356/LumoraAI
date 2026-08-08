@@ -5,8 +5,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun SubscriptionRoute(
-    onNext: () -> Unit,
+    onNavigate: (String) -> Unit = {},
+    onBack: () -> Unit,
     viewModel: SubscriptionViewModel = viewModel()
 ) {
-    SubscriptionScreen(uiState = viewModel.uiState, onNext = onNext)
+    SubscriptionScreen(
+        uiState = viewModel.uiState,
+        onSelectPlan = viewModel::selectPlan,
+        onPurchase = viewModel::purchaseSelectedPlan,
+        onClearMessage = viewModel::clearPurchaseMessage,
+        onBack = onBack,
+        onNavigate = onNavigate
+    )
 }

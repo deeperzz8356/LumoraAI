@@ -53,6 +53,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.navigation.createHubRoute
 
 data class TemplateItem(
     val id: String,
@@ -161,7 +162,7 @@ private fun TemplatesContent(onNavigate: (String) -> Unit) {
                         clipboardManager.setPrimaryClip(clip)
                     },
                     onCreateClick = { promptText ->
-                        onNavigate(Screen.CreateHub.route + "?prompt=" + promptText)
+                        onNavigate(createHubRoute(prompt = promptText))
                     }
                 )
             }

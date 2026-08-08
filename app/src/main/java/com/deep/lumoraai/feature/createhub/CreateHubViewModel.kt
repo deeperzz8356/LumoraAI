@@ -1,20 +1,26 @@
 package com.deep.lumoraai.feature.createhub
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.data.model.ActiveJobInfo
+import com.deep.lumoraai.data.repository.AppPreferencesRepository
+import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.data.repository.FakeRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
-import com.deep.lumoraai.data.model.ActiveJobInfo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class CreateHubViewModel(
-    private val repository: FakeRepository = FakeRepository(),
-    private val generationRepository: GenerationRepository = GenerationRepository()
-) : ViewModel() {
+class CreateHubViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository = FakeRepository()
+    private val generationRepository = GenerationRepository()
+    private val authRepository = AuthRepository()
+    private val appPreferences = AppPreferencesRepository.getInstance(application)
     var uiState: CreateHubUiState by mutableStateOf(CreateHubUiState.Loading)
         private set
 
@@ -46,7 +52,43 @@ class CreateHubViewModel(
             uiState = CreateHubUiState.Error("Prompt cannot be empty")
             return
         }
-        
+
+        viewModelScope.launch {
+            val isDev = appPreferences.isDeveloperModeEnabled()
+            if (!isDev) {
+                val credits = fetchCreditsWithSync()
+                if (credits == null) {
+                    uiState = CreateHubUiState.Error("Could not verify credits. Check your connection and try again.")
+                    return@launch
+                }
+                if (!GenerationGate.canGenerateImage(credits, isDev)) {
+                    uiState = CreateHubUiState.Error(GenerationGate.insufficientCreditsMessage())
+                    return@launch
+                }
+            } else {
+                authRepository.syncCurrentUser()
+            }
+            startImageGeneration(prompt, style, width, height, negativePrompt, sourceImageB64)
+        }
+    }
+
+    private suspend fun fetchCreditsWithSync(): Int? {
+        var result = generationRepository.getCredits()
+        if (result.isFailure) {
+            authRepository.syncCurrentUser()
+            result = generationRepository.getCredits()
+        }
+        return result.getOrNull()
+    }
+
+    private fun startImageGeneration(
+        prompt: String,
+        style: String,
+        width: Int,
+        height: Int,
+        negativePrompt: String?,
+        sourceImageB64: String?
+    ) {
         uiState = CreateHubUiState.Generating
 
         val jobTitle = prompt
@@ -81,17 +123,19 @@ class CreateHubViewModel(
                 }
             }
 
-            try {
-                val imageUrl = generationRepository.generateImage(
-                    prompt = prompt, 
-                    style = style, 
-                    width = width, 
-                    height = height,
-                    negativePrompt = negativePrompt,
-                    sourceImageB64 = sourceImageB64
-                )
+            GenerationRepository.runImageGeneration(
+                repository = generationRepository,
+                jobTitle = jobTitle,
+                prompt = prompt,
+                style = style,
+                width = width,
+                height = height,
+                negativePrompt = negativePrompt,
+                sourceImageB64 = sourceImageB64,
+            ) { result ->
                 progressJob.cancel()
-                if (imageUrl != null) {
+                if (result.isSuccess) {
+                    val imageUrl = result.getOrThrow()
                     uiState = CreateHubUiState.ImageGenerated(imageUrl)
                     GenerationRepository.updateJob(jobTitle) { job ->
                         job.copy(
@@ -103,24 +147,15 @@ class CreateHubViewModel(
                         )
                     }
                 } else {
-                    uiState = CreateHubUiState.Error("Failed to generate image. Please try again.")
+                    val message = result.exceptionOrNull()?.message ?: "Failed to generate image. Please try again."
+                    uiState = CreateHubUiState.Error(message)
                     GenerationRepository.updateJob(jobTitle) { job ->
                         job.copy(
                             progressPercent = null,
                             statusText = "Failed",
-                            subtitle = "Generation failed"
+                            subtitle = message
                         )
                     }
-                }
-            } catch (e: Exception) {
-                progressJob.cancel()
-                uiState = CreateHubUiState.Error(e.message ?: "An error occurred")
-                GenerationRepository.updateJob(jobTitle) { job ->
-                    job.copy(
-                        progressPercent = null,
-                        statusText = "Failed",
-                        subtitle = e.message ?: "An error occurred"
-                    )
                 }
             }
         }
@@ -139,8 +174,17 @@ class CreateHubViewModel(
             return
         }
 
-        uiState = CreateHubUiState.Generating
         viewModelScope.launch {
+            val isDev = appPreferences.isDeveloperModeEnabled()
+            if (!isDev) {
+                val creditsResult = generationRepository.getCredits()
+                val credits = creditsResult.getOrDefault(0)
+                if (!GenerationGate.canGenerateVideo(credits, isDev)) {
+                    uiState = CreateHubUiState.Error(GenerationGate.insufficientCreditsMessage())
+                    return@launch
+                }
+            }
+            uiState = CreateHubUiState.Generating
             val result = generationRepository.generateVideo(
                 prompt = prompt, 
                 engine = engine,

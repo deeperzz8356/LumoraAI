@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import com.deep.lumoraai.feature.createhub.model.VideoEngine
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -75,8 +76,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.deep.lumoraai.core.utils.GeneratedImage
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
@@ -125,10 +126,6 @@ fun CreateHubScreen(
             // }
             
             if (uiState is CreateHubUiState.ImageGenerated) {
-                val bitmap = remember(uiState.imageUrl) {
-                    val decodedBytes = Base64.decode(uiState.imageUrl, Base64.DEFAULT)
-                    BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                }
                 AlertDialog(
                     onDismissRequest = onResetState,
                     confirmButton = {
@@ -136,11 +133,12 @@ fun CreateHubScreen(
                     },
                     title = { Text("Image Generated!") },
                     text = {
-                        if (bitmap != null) {
-                            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Generated Image", modifier = Modifier.fillMaxWidth().height(300.dp))
-                        } else {
-                            Text("Failed to decode image.")
-                        }
+                        GeneratedImage(
+                            imagePayload = uiState.imageUrl,
+                            contentDescription = "Generated Image",
+                            modifier = Modifier.fillMaxWidth().height(300.dp),
+                            contentScale = ContentScale.Fit
+                        )
                     }
                 )
             }
@@ -620,7 +618,7 @@ private fun ImageGenerateButton(costText: String, onClick: () -> Unit) {
 @Composable
 private fun VideoFormContent(onGenerate: (String, String, String?, Int, String?, Int) -> Unit) {
     var prompt by remember { mutableStateOf("") }
-    var selectedEngine by remember { mutableStateOf("Veo-1 Ultra") }
+    var selectedEngine by remember { mutableStateOf(VideoEngine.VEO_ULTRA) }
     var sourceImageB64 by remember { mutableStateOf<String?>(null) }
     var motionStrength by remember { mutableStateOf(65) }
     var cameraDirection by remember { mutableStateOf<String?>(null) }
@@ -642,7 +640,7 @@ private fun VideoFormContent(onGenerate: (String, String, String?, Int, String?,
         GenerationEngineSelector(selectedEngine = selectedEngine, onEngineSelect = { selectedEngine = it })
         VideoGenerateButton(
             costText = "$videoCost Credits",
-            onClick = { onGenerate(prompt, selectedEngine, sourceImageB64, motionStrength, cameraDirection, duration) }
+            onClick = { onGenerate(prompt, selectedEngine.modelId, sourceImageB64, motionStrength, cameraDirection, duration) }
         )
     }
 }
@@ -785,7 +783,10 @@ private fun DurationAndSfxRows(duration: Int, onDurationChange: (Int) -> Unit) {
 }
 
 @Composable
-private fun GenerationEngineSelector(selectedEngine: String, onEngineSelect: (String) -> Unit) {
+private fun GenerationEngineSelector(
+    selectedEngine: VideoEngine,
+    onEngineSelect: (VideoEngine) -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Generation Engine", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Row(
@@ -793,17 +794,17 @@ private fun GenerationEngineSelector(selectedEngine: String, onEngineSelect: (St
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             EngineCard(
-                name = "Veo-1 Ultra",
+                name = VideoEngine.VEO_ULTRA.displayName,
                 desc = "Cinematic Quality",
-                isSelected = selectedEngine == "Veo-1 Ultra",
-                onClick = { onEngineSelect("Veo-1 Ultra") },
+                isSelected = selectedEngine == VideoEngine.VEO_ULTRA,
+                onClick = { onEngineSelect(VideoEngine.VEO_ULTRA) },
                 modifier = Modifier.weight(1f)
             )
             EngineCard(
-                name = "FastDraft",
+                name = VideoEngine.FAST_DRAFT.displayName,
                 desc = "Lower Res",
-                isSelected = selectedEngine == "FastDraft",
-                onClick = { onEngineSelect("FastDraft") },
+                isSelected = selectedEngine == VideoEngine.FAST_DRAFT,
+                onClick = { onEngineSelect(VideoEngine.FAST_DRAFT) },
                 modifier = Modifier.weight(1f)
             )
         }

@@ -4,4 +4,9 @@ import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class LumoraApplication : Application()
+class LumoraApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        com.deep.lumoraai.data.repository.AppPreferencesRepository.getInstance(this)
+    }
+}

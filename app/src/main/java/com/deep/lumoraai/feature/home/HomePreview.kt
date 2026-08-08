@@ -5,28 +5,40 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.deep.lumoraai.core.theme.LumoraTheme
 
-private val previewState = HomeUiState.Success(listOf("Home fake item", "Preview data", "Compile-only screen"))
+private val previewState = HomeUiState.Success(
+    userName = "Dev",
+    credits = 120,
+    creationCount = 12,
+    planLabel = "Premium",
+    recentItems = emptyList(),
+)
 
-@Preview(name = "Home Light Preview", showBackground = true)
+@Preview(name = "Home Preview", showBackground = true)
 @Composable
-fun HomeLightPreview() {
-    LumoraTheme(darkTheme = false) { HomeScreen(uiState = previewState, onNext = {}) }
+fun HomePreview() {
+    LumoraTheme(darkTheme = true) {
+        HomeScreen(uiState = previewState, onNext = {})
+    }
 }
 
-@Preview(name = "Home Dark Preview", showBackground = true)
+@Preview(name = "Home With Recent", showBackground = true)
 @Composable
-fun HomeDarkPreview() {
-    LumoraTheme(darkTheme = true) { HomeScreen(uiState = previewState, onNext = {}) }
+fun HomeWithRecentPreview() {
+    LumoraTheme(darkTheme = true) {
+        HomeScreen(
+            uiState = previewState.copy(
+                recentItems = listOf(
+                    HomeRecentItem("1", "Fantasy Portrait", "2h ago", null, com.deep.lumoraai.R.drawable.style_fantasy),
+                    HomeRecentItem("2", "Product Render", "Yesterday", null, com.deep.lumoraai.R.drawable.style_digital),
+                )
+            ),
+            onNext = {}
+        )
+    }
 }
 
-@Preview(name = "Home Tablet Preview", device = Devices.TABLET, showBackground = true)
+@Preview(name = "Home Tablet", device = Devices.TABLET, showBackground = true)
 @Composable
 fun HomeTabletPreview() {
-    LumoraTheme(darkTheme = true) { HomeScreen(uiState = previewState, onNext = {}) }
-}
-
-@Preview(name = "Home Landscape Preview", widthDp = 891, heightDp = 411, showBackground = true)
-@Composable
-fun HomeLandscapePreview() {
     LumoraTheme(darkTheme = true) { HomeScreen(uiState = previewState, onNext = {}) }
 }

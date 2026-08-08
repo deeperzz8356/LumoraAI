@@ -4,27 +4,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.deep.lumoraai.data.repository.FakeRepository
+import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.data.repository.AuthRepository
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 class SplashViewModel(
-    private val repository: FakeRepository = FakeRepository()
+    private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
-    var uiState: SplashUiState by mutableStateOf(SplashUiState.Loading)
+    var isReady: Boolean by mutableStateOf(false)
         private set
 
-    init { load() }
-
-    fun load() {
-        val items = when ("splash") {
-            "templates" -> repository.getTemplates().map { it.title }
-            "history" -> repository.getHistory().map { it.title }
-            "credits" -> repository.getCredits().map { "${it.label}: ${it.amount}" }
-            "notifications" -> repository.getNotifications().map { it.title }
-            "queue" -> repository.getQueue().map { it.title }
-            "result" -> repository.getResults().map { it.title }
-            "profile" -> listOf(repository.getProfile().name, repository.getProfile().plan, "${repository.getProfile().credits} credits")
-            else -> listOf("Splash ready", "Fake data only", "No Firebase, AI, Room, Retrofit, or network")
+    init {
+        viewModelScope.launch {
+            if (FirebaseAuth.getInstance().currentUser != null) {
+                authRepository.syncCurrentUser()
+            }
+            isReady = true
         }
-        uiState = if (items.isEmpty()) SplashUiState.Empty else SplashUiState.Success(items)
     }
 }

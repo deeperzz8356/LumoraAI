@@ -7,7 +7,9 @@ fun HistoryEntity.toDomainModel(): HistoryModel {
     return HistoryModel(
         id = id,
         title = title,
-        createdAt = createdAt
+        createdAt = createdAt,
+        type = type,
+        mediaUrl = mediaUrl,
     )
 }
 

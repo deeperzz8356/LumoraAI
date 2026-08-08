@@ -52,6 +52,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.components.LumoraIntroBackground
+import com.deep.lumoraai.core.components.LumoraIntroLogo
+import com.deep.lumoraai.core.components.LumoraIntroPrimaryButton
+import com.deep.lumoraai.core.components.LumoraIntroSecondaryButton
+import com.deep.lumoraai.core.theme.IntroPalette
 
 @Composable
 fun OnboardingScreen(
@@ -66,9 +71,9 @@ fun OnboardingScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF090909))
+            .background(IntroPalette.BackgroundBase)
     ) {
-        OnboardingBackground()
+        LumoraIntroBackground()
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -110,39 +115,6 @@ fun OnboardingScreen(
 }
 
 @Composable
-fun OnboardingBackground(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(
-                        Color(0xFF161A2D).copy(alpha = 0.4f),
-                        Color(0xFF121212).copy(alpha = 0.2f),
-                        Color(0xFF090909)
-                    )
-                )
-            )
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val gridWidth = 40.dp.toPx()
-            val gridHeight = 40.dp.toPx()
-            val lineColor = Color(0xFFC2C5DF).copy(alpha = 0.05f)
-            var x = 0f
-            while (x < size.width) {
-                drawLine(lineColor, Offset(x, 0f), Offset(x, size.height), 0.5.dp.toPx())
-                x += gridWidth
-            }
-            var y = 0f
-            while (y < size.height) {
-                drawLine(lineColor, Offset(0f, y), Offset(size.width, y), 0.5.dp.toPx())
-                y += gridHeight
-            }
-        }
-    }
-}
-
-@Composable
 fun OnboardingTopBar(currentStep: Int, onSkip: () -> Unit) {
     Row(
         modifier = Modifier
@@ -153,7 +125,7 @@ fun OnboardingTopBar(currentStep: Int, onSkip: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (currentStep == 1 || currentStep == 5) {
-            OnboardingLogo()
+            LumoraIntroLogo()
         } else {
             Spacer(modifier = Modifier.size(1.dp))
         }
@@ -162,37 +134,12 @@ fun OnboardingTopBar(currentStep: Int, onSkip: () -> Unit) {
                 Text(
                     text = "Skip",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White.copy(alpha = 0.6f)
+                    color = IntroPalette.TextMuted
                 )
             }
         } else {
             Spacer(modifier = Modifier.size(1.dp))
         }
-    }
-}
-
-@Composable
-fun OnboardingLogo() {
-    Box(modifier = Modifier.size(width = 36.dp, height = 48.dp)) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val path = Path().apply {
-                moveTo(0f, 0f)
-                lineTo(size.width, 0f)
-                lineTo(size.width, size.height * 0.8f)
-                lineTo(0f, size.height)
-                close()
-            }
-            drawPath(path = path, color = Color(0xFFD4FF3B))
-        }
-        Text(
-            text = "ai",
-            color = Color.Black,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(bottom = 6.dp)
-        )
     }
 }
 
@@ -258,7 +205,7 @@ fun StepOneTitle() {
         }
         Text("AI Text to Image", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Generation Tool", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFC5C0FF))
+            Text("Generation Tool", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = IntroPalette.SecondaryText)
         }
     }
 }
@@ -273,7 +220,7 @@ fun StepTwoTitle() {
             Text("Cinematic ", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Box(
                 modifier = Modifier
-                    .background(Color(0xFFE539B4), RoundedCornerShape(4.dp))
+                    .background(IntroPalette.AccentPink, RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
                 Text("Video", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -299,7 +246,7 @@ fun StepThreeTitle() {
         ) {
             Box(
                 modifier = Modifier
-                    .background(Color(0xFFE539B4), RoundedCornerShape(4.dp))
+                    .background(IntroPalette.AccentPink, RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
                 Text("Generate", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -327,7 +274,7 @@ fun StepFourTitle() {
             Text("AI-", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Box(
                 modifier = Modifier
-                    .background(Color(0xFFE539B4), RoundedCornerShape(4.dp))
+                    .background(IntroPalette.AccentPink, RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
                 Text("Powered", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -346,7 +293,7 @@ fun StepFiveTitle() {
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("AI- ", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Text("Background", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE539B4))
+            Text("Background", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = IntroPalette.AccentPink)
             Text(" Eraser", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
@@ -369,7 +316,7 @@ fun UnderlinedText(text: String, fontSize: androidx.compose.ui.unit.TextUnit, co
             }
             drawPath(
                 path = path,
-                color = Color(0xFFD4FF3B),
+                color = IntroPalette.AccentLime,
                 style = Stroke(width = 2.dp.toPx())
             )
         }
@@ -389,7 +336,7 @@ fun StepDescription(step: Int, modifier: Modifier = Modifier) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
-        color = Color.White.copy(alpha = 0.7f),
+        color = IntroPalette.TextMuted,
         textAlign = TextAlign.Center,
         modifier = modifier
             .fillMaxWidth()
@@ -450,7 +397,7 @@ fun OnboardingIndicators(currentStep: Int) {
                     .height(6.dp)
                     .width(if (active) 24.dp else 6.dp)
                     .background(
-                        color = if (active) Color(0xFFCFBDFF) else Color.White.copy(alpha = 0.3f),
+                        color = if (active) IntroPalette.IndicatorActive else IntroPalette.TextSubtle,
                         shape = RoundedCornerShape(3.dp)
                     )
             )
@@ -460,23 +407,7 @@ fun OnboardingIndicators(currentStep: Int) {
 
 @Composable
 fun OnboardingNextButton(onNext: () -> Unit) {
-    Button(
-        onClick = onNext,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF7E50EF),
-            contentColor = Color.White
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(28.dp)
-    ) {
-        Text(
-            text = "Next",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold
-        )
-    }
+    LumoraIntroPrimaryButton(text = "Next", onClick = onNext)
 }
 
 @Composable
@@ -501,7 +432,7 @@ fun OnboardingFinalControls(
 fun OnboardingStartButton(onGetStarted: () -> Unit) {
     Button(
         onClick = onGetStarted,
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7E50EF)),
+        colors = ButtonDefaults.buttonColors(containerColor = IntroPalette.PrimaryButton),
         modifier = Modifier.fillMaxWidth().height(56.dp),
         shape = RoundedCornerShape(28.dp)
     ) {
@@ -522,7 +453,7 @@ fun OnboardingStartArrow() {
         modifier = Modifier.size(40.dp).background(Color.White, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Text(">>>", color = Color(0xFF7E50EF), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+        Text(">>>", color = IntroPalette.PrimaryButton, fontWeight = FontWeight.Bold, fontSize = 12.sp)
     }
 }
 
@@ -554,31 +485,15 @@ fun OnboardingUtilityButtons() {
 
 @Composable
 fun OnboardingSmallButton(
-    text: String, 
+    text: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .height(48.dp)
-            .background(Color(0xFF131524), RoundedCornerShape(24.dp))
-            .border(1.dp, Color(0xFF2C2F48), RoundedCornerShape(24.dp))
-            .clickable { /* Action */ }
-            .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = text, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        }
-    }
+    LumoraIntroSecondaryButton(
+        text = text,
+        onClick = { /* Action */ },
+        leadingIcon = icon,
+        modifier = modifier,
+        height = 48.dp
+    )
 }
