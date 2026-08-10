@@ -6,7 +6,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun HistoryRoute(
     onNext: () -> Unit,
+    onNavigate: (String) -> Unit = {},
     viewModel: HistoryViewModel = viewModel()
 ) {
-    HistoryScreen(uiState = viewModel.uiState, onNext = onNext)
+    HistoryScreen(uiState = viewModel.uiState, onNext = onNext, onNavigate = onNavigate)
 }
