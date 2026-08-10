@@ -113,7 +113,13 @@ fun CreateHubScreen(
                 .padding(padding)
                 .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
         ) {
-            CreateHubContent(initialPrompt = initialPrompt, onGenerateImage = onGenerateImage, onGenerateVideo = onGenerateVideo, onNext = onNext)
+            CreateHubContent(
+                initialPrompt = initialPrompt,
+                isGenerating = uiState is CreateHubUiState.Generating,
+                onGenerateImage = onGenerateImage,
+                onGenerateVideo = onGenerateVideo,
+                onNext = onNext,
+            )
             
             // Generating state is tracked in the background, and navigation immediately goes to Queue screen.
             // if (uiState is CreateHubUiState.Generating) {
@@ -163,7 +169,14 @@ fun CreateHubScreen(
 }
 
 @Composable
-private fun CreateHubContent(initialPrompt: String?, onGenerateImage: (String, String, Int, Int, String?, String?) -> Unit, onGenerateVideo: (String, String, String?, Int, String?, Int) -> Unit, onNext: () -> Unit, modifier: Modifier = Modifier) {
+private fun CreateHubContent(
+    initialPrompt: String?,
+    isGenerating: Boolean,
+    onGenerateImage: (String, String, Int, Int, String?, String?) -> Unit,
+    onGenerateVideo: (String, String, String?, Int, String?, Int) -> Unit,
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var selectedTab by remember { mutableStateOf("Image") }
     Column(
         modifier = modifier
@@ -176,7 +189,7 @@ private fun CreateHubContent(initialPrompt: String?, onGenerateImage: (String, S
         if (selectedTab == "Image") {
             ImageFormContent(initialPrompt = initialPrompt, onGenerate = { prompt, style, w, h, neg, img -> onGenerateImage(prompt, style, w, h, neg, img) })
         } else {
-            VideoFormContent(onGenerate = onGenerateVideo)
+            VideoFormContent(isGenerating = isGenerating, onGenerate = onGenerateVideo)
         }
     }
 }
@@ -616,9 +629,12 @@ private fun ImageGenerateButton(costText: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun VideoFormContent(onGenerate: (String, String, String?, Int, String?, Int) -> Unit) {
+private fun VideoFormContent(
+    isGenerating: Boolean,
+    onGenerate: (String, String, String?, Int, String?, Int) -> Unit,
+) {
     var prompt by remember { mutableStateOf("") }
-    var selectedEngine by remember { mutableStateOf(VideoEngine.VEO_ULTRA) }
+    var selectedEngine by remember { mutableStateOf(VideoEngine.FAST_DRAFT) }
     var sourceImageB64 by remember { mutableStateOf<String?>(null) }
     var motionStrength by remember { mutableStateOf(65) }
     var cameraDirection by remember { mutableStateOf<String?>(null) }
@@ -640,6 +656,7 @@ private fun VideoFormContent(onGenerate: (String, String, String?, Int, String?,
         GenerationEngineSelector(selectedEngine = selectedEngine, onEngineSelect = { selectedEngine = it })
         VideoGenerateButton(
             costText = "$videoCost Credits",
+            isGenerating = isGenerating,
             onClick = { onGenerate(prompt, selectedEngine.modelId, sourceImageB64, motionStrength, cameraDirection, duration) }
         )
     }
@@ -838,14 +855,25 @@ private fun EngineCard(
 }
 
 @Composable
-private fun VideoGenerateButton(costText: String, onClick: () -> Unit) {
+private fun VideoGenerateButton(costText: String, isGenerating: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
+        enabled = !isGenerating,
         modifier = Modifier.fillMaxWidth().height(54.dp),
         shape = RoundedCornerShape(27.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCFBDFF))
     ) {
-        Text("Generate with Veo ($costText)", color = Color(0xFF0F1026), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        if (isGenerating) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = Color(0xFF0F1026),
+                strokeWidth = 2.dp,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Generating...", color = Color(0xFF0F1026), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        } else {
+            Text("Generate with Veo ($costText)", color = Color(0xFF0F1026), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
 

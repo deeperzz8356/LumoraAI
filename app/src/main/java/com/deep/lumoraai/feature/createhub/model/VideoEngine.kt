@@ -6,6 +6,6 @@ enum class VideoEngine(val displayName: String, val modelId: String) {
 
     companion object {
         fun fromDisplayName(name: String): VideoEngine =
-            entries.firstOrNull { it.displayName.equals(name, ignoreCase = true) } ?: VEO_ULTRA
+            entries.firstOrNull { it.displayName.equals(name, ignoreCase = true) } ?: FAST_DRAFT
     }
 }
