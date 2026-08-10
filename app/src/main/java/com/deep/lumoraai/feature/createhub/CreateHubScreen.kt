@@ -46,17 +46,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.MediaViewerDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -71,17 +63,14 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.deep.lumoraai.core.utils.GeneratedImage
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
-import androidx.compose.ui.platform.LocalContext
 import java.io.ByteArrayOutputStream
 import android.util.Base64
 @Composable
@@ -120,42 +109,27 @@ fun CreateHubScreen(
                 onGenerateVideo = onGenerateVideo,
                 onNext = onNext,
             )
-            
-            // Generating state is tracked in the background, and navigation immediately goes to Queue screen.
-            // if (uiState is CreateHubUiState.Generating) {
-            //     Box(
-            //         modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
-            //         contentAlignment = Alignment.Center
-            //     ) {
-            //         CircularProgressIndicator(color = Color(0xFFA855F7))
-            //     }
-            // }
-            
+
             if (uiState is CreateHubUiState.ImageGenerated) {
-                AlertDialog(
-                    onDismissRequest = onResetState,
-                    confirmButton = {
-                        Button(onClick = onResetState) { Text("Close") }
-                    },
-                    title = { Text("Image Generated!") },
-                    text = {
-                        GeneratedImage(
-                            imagePayload = uiState.imageUrl,
-                            contentDescription = "Generated Image",
-                            modifier = Modifier.fillMaxWidth().height(300.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
+                MediaViewerDialog(
+                    filePath = uiState.filePath,
+                    mediaType = "IMAGE",
+                    mimeType = uiState.mimeType,
+                    title = "Image Generated!",
+                    onDismiss = onResetState,
                 )
             }
-            
+
             if (uiState is CreateHubUiState.VideoGenerated) {
-                VideoPlayerDialog(
-                    videoUrl = uiState.videoUrl,
-                    onDismiss = onResetState
+                MediaViewerDialog(
+                    filePath = uiState.filePath,
+                    mediaType = "VIDEO",
+                    mimeType = uiState.mimeType,
+                    title = "Video Ready",
+                    onDismiss = onResetState,
                 )
             }
-            
+
             if (uiState is CreateHubUiState.Error) {
                 AlertDialog(
                     onDismissRequest = onResetState,
@@ -877,78 +851,14 @@ private fun VideoGenerateButton(costText: String, isGenerating: Boolean, onClick
     }
 }
 
-@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 fun VideoPlayerDialog(
     videoUrl: String,
     onDismiss: () -> Unit
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val exoPlayer = androidx.compose.runtime.remember {
-        androidx.media3.exoplayer.ExoPlayer.Builder(context).build().apply {
-            setMediaItem(androidx.media3.common.MediaItem.fromUri(videoUrl))
-            repeatMode = androidx.media3.common.Player.REPEAT_MODE_ALL
-            playWhenReady = true
-            prepare()
-        }
-    }
-
-    androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose {
-            exoPlayer.release()
-        }
-    }
-
-    androidx.compose.ui.window.Dialog(
-        onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        androidx.compose.foundation.layout.Box(
-            modifier = androidx.compose.ui.Modifier
-                .fillMaxWidth(0.9f)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-                .background(Color(0xFF131524))
-        ) {
-            androidx.compose.foundation.layout.Column(
-                modifier = androidx.compose.ui.Modifier.fillMaxWidth()
-            ) {
-                // Video Player
-                androidx.compose.foundation.layout.Box(
-                    modifier = androidx.compose.ui.Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .background(Color.Black)
-                ) {
-                    androidx.compose.ui.viewinterop.AndroidView(
-                        factory = { ctx ->
-                            androidx.media3.ui.PlayerView(ctx).apply {
-                                player = exoPlayer
-                                useController = true
-                                resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
-                                layoutParams = android.widget.FrameLayout.LayoutParams(
-                                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
-                                )
-                            }
-                        },
-                        modifier = androidx.compose.ui.Modifier.fillMaxSize()
-                    )
-                }
-
-                // Controls
-                androidx.compose.foundation.layout.Row(
-                    modifier = androidx.compose.ui.Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End
-                ) {
-                    androidx.compose.material3.TextButton(onClick = onDismiss) {
-                        androidx.compose.material3.Text("Close", color = Color.White)
-                    }
-                }
-            }
-        }
-    }
+    MediaViewerDialog(
+        filePath = videoUrl,
+        mediaType = "VIDEO",
+        onDismiss = onDismiss,
+    )
 }

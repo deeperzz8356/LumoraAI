@@ -1,6 +1,5 @@
 package com.deep.lumoraai.feature.queue
 
-import com.deep.lumoraai.core.utils.GeneratedImage
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,6 +49,8 @@ import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.MediaViewerDialog
+import com.deep.lumoraai.core.utils.GeneratedImage
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.ui.theme.tokens.Spacing
 
@@ -139,33 +140,26 @@ private fun QueueTopBar() {
 
 @Composable
 private fun JobCardItem(job: ActiveJobInfo) {
-    val showImageDialog = remember { mutableStateOf(false) }
+    val showMediaDialog = remember { mutableStateOf(false) }
+    val mediaPath = job.localMediaPath
+        ?: job.videoUrl
+        ?: job.imageUrl
+    val isVideo = job.mediaType.equals("VIDEO", ignoreCase = true)
 
-    if (showImageDialog.value && !job.imageUrl.isNullOrEmpty()) {
-        AlertDialog(
-            onDismissRequest = { showImageDialog.value = false },
-            confirmButton = {
-                Button(onClick = { showImageDialog.value = false }) {
-                    Text("Close")
-                }
-            },
-            title = { Text("Generated Image", style = MaterialTheme.typography.titleLarge) },
-            text = {
-                GeneratedImage(
-                    imagePayload = job.imageUrl.orEmpty(),
-                    contentDescription = "Full Generated Image",
-                    modifier = Modifier.fillMaxWidth().height(300.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
+    if (showMediaDialog.value && !mediaPath.isNullOrBlank()) {
+        MediaViewerDialog(
+            filePath = mediaPath,
+            mediaType = if (isVideo) "VIDEO" else "IMAGE",
+            title = if (isVideo) "Generated Video" else "Generated Image",
+            onDismiss = { showMediaDialog.value = false },
         )
     }
 
     AppCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = {
-            if (job.isCompleted && !job.imageUrl.isNullOrEmpty()) {
-                showImageDialog.value = true
+            if (job.isCompleted && !mediaPath.isNullOrBlank()) {
+                showMediaDialog.value = true
             }
         }
     ) {
@@ -178,7 +172,7 @@ private fun JobCardItem(job: ActiveJobInfo) {
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
-                if (!job.imageUrl.isNullOrEmpty()) {
+                if (!isVideo && !job.imageUrl.isNullOrEmpty()) {
                     GeneratedImage(
                         imagePayload = job.imageUrl,
                         contentDescription = null,

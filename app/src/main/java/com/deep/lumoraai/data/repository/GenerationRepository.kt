@@ -178,7 +178,7 @@ class GenerationRepository {
             connection.applyAuthHeaders(idToken, user.uid, developerMode)
             connection.doOutput = true
             connection.connectTimeout = 30000
-            connection.readTimeout = 60000
+            connection.readTimeout = 180_000
 
             val jsonInputString = JSONObject().apply {
                 put("prompt", prompt)
@@ -195,18 +195,28 @@ class GenerationRepository {
             }
 
             val responseCode = connection.responseCode
+            val responseBody = connection.readResponseBody()
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                val responseString = reader.use { it.readText() }
-                val responseJson = JSONObject(responseString)
+                val responseJson = JSONObject(responseBody)
+                Log.d("GenerationRepository", "Video response (${responseBody.length} chars): ${responseBody.take(800)}")
+                responseJson.parseGenerationFailure()?.let { errorMessage ->
+                    Log.e("GenerationRepository", "Video generation failed: $errorMessage")
+                    return@withContext Result.failure(Exception(errorMessage))
+                }
                 val videoUrl = extractGeneratedVideo(responseJson)
                 if (videoUrl != null && responseJson.isSuccessfulApiStatus()) {
                     Result.success(videoUrl)
                 } else {
-                    Result.failure(Exception(responseJson.optString("message", "API status was not success")))
+                    val message = responseJson.parseApiMessage()
+                        ?: "Server returned no video data."
+                    Log.e("GenerationRepository", "Video API error: $message")
+                    Result.failure(Exception(message))
                 }
             } else {
-                Result.failure(Exception("HTTP Error $responseCode"))
+                val message = responseBody.parseApiMessage()
+                    ?: "Server error ($responseCode). The backend may still be waking up — try again in a moment."
+                Log.e("GenerationRepository", "Video HTTP $responseCode: $message")
+                Result.failure(Exception(message))
             }
         } catch (e: Exception) {
             Result.failure(e)

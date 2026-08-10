@@ -22,5 +22,8 @@ data class ActiveJobInfo(
     val progressPercent: Float?,
     val isCompleted: Boolean,
     val imageRes: Int,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val mediaType: String = "IMAGE", // IMAGE | VIDEO
+    val localMediaPath: String? = null,
+    val videoUrl: String? = null,
 )

@@ -84,9 +84,55 @@ fun JSONObject.parseGenerationFailure(): String? {
 fun isHttpImageUrl(value: String): Boolean =
     value.startsWith("http://", ignoreCase = true) || value.startsWith("https://", ignoreCase = true)
 
+fun isHttpMediaUrl(value: String): Boolean = isHttpImageUrl(value)
+
+fun isLocalFilePath(value: String): Boolean =
+    value.startsWith("/") ||
+        value.startsWith("file:", ignoreCase = true) ||
+        value.startsWith("content:", ignoreCase = true)
+
 fun isSvgPayload(value: String): Boolean =
     value.contains("image/svg", ignoreCase = true) ||
         value.trimStart().startsWith("<svg", ignoreCase = true)
+
+/**
+ * Decode a data URL or raw base64 payload into bytes + mime type.
+ */
+fun decodeMediaPayload(payload: String): Pair<ByteArray, String>? {
+    if (payload.isBlank()) return null
+    return when {
+        payload.startsWith("data:", ignoreCase = true) -> {
+            val header = payload.substringBefore(",", missingDelimiterValue = "")
+            val encoded = payload.substringAfter(",", missingDelimiterValue = "")
+            if (encoded.isBlank()) return null
+            val mime = header
+                .removePrefix("data:")
+                .substringBefore(";")
+                .ifBlank { "application/octet-stream" }
+            runCatching { Base64.decode(encoded, Base64.DEFAULT) to mime }.getOrNull()
+        }
+        else -> {
+            runCatching {
+                Base64.decode(payload, Base64.DEFAULT) to "application/octet-stream"
+            }.getOrNull()?.takeIf { it.first.isNotEmpty() }
+        }
+    }
+}
+
+fun extensionForMimeType(mimeType: String, mediaType: String): String {
+    val lower = mimeType.lowercase()
+    return when {
+        "png" in lower -> "png"
+        "jpeg" in lower || "jpg" in lower -> "jpg"
+        "webp" in lower -> "webp"
+        "gif" in lower -> "gif"
+        "mp4" in lower -> "mp4"
+        "webm" in lower -> "webm"
+        "mov" in lower || "quicktime" in lower -> "mov"
+        mediaType.equals("VIDEO", ignoreCase = true) -> "mp4"
+        else -> "png"
+    }
+}
 
 @Composable
 fun GeneratedImage(
@@ -96,7 +142,7 @@ fun GeneratedImage(
     contentScale: ContentScale = ContentScale.Crop,
 ) {
     when {
-        isHttpImageUrl(imagePayload) -> {
+        isHttpImageUrl(imagePayload) || isLocalFilePath(imagePayload) -> {
             AsyncImage(
                 model = imagePayload,
                 contentDescription = contentDescription,

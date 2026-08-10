@@ -76,7 +76,9 @@ fun NavGraph(modifier: Modifier = Modifier) {
         composable(Screen.Templates.route) { TemplatesRoute(onNext = next(Screen.Templates), onNavigate = { navController.goTo(it) }) }
         composable(Screen.Queue.route) { QueueRoute(onNext = next(Screen.Queue), onNavigate = { navController.goTo(it) }) }
         composable(Screen.Result.route) { ResultRoute(onNext = next(Screen.Result)) }
-        composable(Screen.History.route) { HistoryRoute(onNext = next(Screen.History)) }
+        composable(Screen.History.route) {
+            HistoryRoute(onNext = next(Screen.History), onNavigate = { route -> navController.navigate(route) })
+        }
         composable(Screen.Credits.route) {
             CreditsRoute(
                 onNext = next(Screen.Credits),

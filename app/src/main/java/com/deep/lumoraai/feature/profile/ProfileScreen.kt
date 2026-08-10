@@ -27,6 +27,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.MediaViewerDialog
+import com.deep.lumoraai.data.model.HistoryModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -48,6 +54,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
@@ -56,6 +63,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Star
 
 import com.deep.lumoraai.core.navigation.Screen
+import java.io.File
 
 @Composable
 fun ProfileScreen(
@@ -65,6 +73,8 @@ fun ProfileScreen(
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var selectedItem by remember { mutableStateOf<HistoryModel?>(null) }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
@@ -81,13 +91,38 @@ fun ProfileScreen(
                 .padding(padding)
                 .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
         ) {
-            ProfileContent(uiState = uiState, onSignOut = onSignOut, onNavigate = onNavigate)
+            ProfileContent(
+                uiState = uiState,
+                onSignOut = onSignOut,
+                onNavigate = onNavigate,
+                onOpenMedia = { selectedItem = it },
+            )
+        }
+    }
+
+    selectedItem?.let { item ->
+        val path = item.mediaUrl
+        if (!path.isNullOrBlank()) {
+            MediaViewerDialog(
+                filePath = path,
+                mediaType = item.type,
+                mimeType = if (item.type.equals("VIDEO", ignoreCase = true)) "video/mp4" else "image/png",
+                title = item.title,
+                onDismiss = { selectedItem = null },
+            )
+        } else {
+            selectedItem = null
         }
     }
 }
 
 @Composable
-private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNavigate: (String) -> Unit) {
+private fun ProfileContent(
+    uiState: ProfileUiState,
+    onSignOut: () -> Unit,
+    onNavigate: (String) -> Unit,
+    onOpenMedia: (HistoryModel) -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -102,7 +137,11 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
         PlanCard(onNavigate = onNavigate)
         BuyMoreCreditsCard(onNavigate = onNavigate)
         if (uiState is ProfileUiState.Success) {
-            CreationsGrid(generations = uiState.generations)
+            CreationsGrid(
+                generations = uiState.generations,
+                onOpenMedia = onOpenMedia,
+                onNavigate = onNavigate,
+            )
         }
         PurchaseHistoryCard()
         PreferencesList(onSignOut = onSignOut, onNavigate = onNavigate)
@@ -278,32 +317,42 @@ private fun BuyMoreCreditsCard(onNavigate: (String) -> Unit) {
 }
 
 @Composable
-private fun CreationsGrid(generations: List<com.deep.lumoraai.data.repository.GenerationHistoryItem>) {
+private fun CreationsGrid(
+    generations: List<HistoryModel>,
+    onOpenMedia: (HistoryModel) -> Unit,
+    onNavigate: (String) -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("My Published Creations", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("My Saved Creations", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onNavigate(Screen.History.route) }
+            ) {
                 Text("View Gallery", color = Color(0xFFA855F7), fontSize = 12.sp)
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color(0xFFA855F7), modifier = Modifier.size(16.dp))
             }
         }
-        
+
         if (generations.isEmpty()) {
-            Text("You haven't generated any images yet.", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+            Text("You haven't generated any media yet.", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
         } else {
-            // Take up to 4 recent generations and display them in a grid
             val displayItems = generations.take(4)
             val rows = displayItems.chunked(2)
-            
+
             for (rowItems in rows) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                     for (item in rowItems) {
-                        ImageCard(item.imageUrl, Modifier.weight(1f))
+                        CreationCard(
+                            item = item,
+                            onClick = { onOpenMedia(item) },
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                     if (rowItems.size == 1) {
                         Spacer(modifier = Modifier.weight(1f))
@@ -315,16 +364,40 @@ private fun CreationsGrid(generations: List<com.deep.lumoraai.data.repository.Ge
 }
 
 @Composable
-private fun ImageCard(imageUrl: String, modifier: Modifier = Modifier) {
-    coil.compose.AsyncImage(
-        model = imageUrl,
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
+private fun CreationCard(
+    item: HistoryModel,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isVideo = item.type.equals("VIDEO", ignoreCase = true)
+    val path = item.mediaUrl
+    Box(
         modifier = modifier
             .height(100.dp)
             .clip(RoundedCornerShape(8.dp))
             .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
-    )
+            .background(Color.Black)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!path.isNullOrBlank() && File(path).exists() && !isVideo) {
+            coil.compose.AsyncImage(
+                model = File(path),
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (isVideo) {
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = "Video",
+                tint = Color.White,
+                modifier = Modifier.size(28.dp)
+            )
+        } else {
+            Text("No media", color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
+        }
+    }
 }
 
 @Composable
