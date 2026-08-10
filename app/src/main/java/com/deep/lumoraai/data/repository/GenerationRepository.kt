@@ -55,6 +55,7 @@ class GenerationRepository {
             height: Int,
             negativePrompt: String?,
             sourceImageB64: String?,
+            developerMode: Boolean = false,
             onResult: (Result<String>) -> Unit
         ) {
             generationScope.launch {
@@ -64,7 +65,8 @@ class GenerationRepository {
                     width = width,
                     height = height,
                     negativePrompt = negativePrompt,
-                    sourceImageB64 = sourceImageB64
+                    sourceImageB64 = sourceImageB64,
+                    developerMode = developerMode,
                 )
                 withContext(Dispatchers.Main) {
                     onResult(result)
@@ -79,7 +81,8 @@ class GenerationRepository {
         width: Int = 1024, 
         height: Int = 1024,
         negativePrompt: String? = null,
-        sourceImageB64: String? = null
+        sourceImageB64: String? = null,
+        developerMode: Boolean = false,
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
             val user = auth.currentUser
@@ -93,8 +96,7 @@ class GenerationRepository {
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "POST"
             connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("Authorization", "Bearer $idToken")
-            connection.setRequestProperty("x-user-id", user.uid)
+            connection.applyAuthHeaders(idToken, user.uid, developerMode)
             connection.doOutput = true
             connection.connectTimeout = 60_000
             connection.readTimeout = 120_000
@@ -161,7 +163,8 @@ class GenerationRepository {
         sourceImageB64: String? = null,
         motionStrength: Int = 65,
         cameraDirection: String? = null,
-        duration: Int = 10
+        duration: Int = 10,
+        developerMode: Boolean = false,
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
             val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))
@@ -172,8 +175,7 @@ class GenerationRepository {
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "POST"
             connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("Authorization", "Bearer $idToken")
-            connection.setRequestProperty("x-user-id", user.uid)
+            connection.applyAuthHeaders(idToken, user.uid, developerMode)
             connection.doOutput = true
             connection.connectTimeout = 30000
             connection.readTimeout = 60000
@@ -339,6 +341,18 @@ data class GenerationHistoryItem(
     val imageUrl: String,
     val style: String?
 )
+
+private fun HttpURLConnection.applyAuthHeaders(
+    idToken: String,
+    userId: String,
+    developerMode: Boolean,
+) {
+    setRequestProperty("Authorization", "Bearer $idToken")
+    setRequestProperty("x-user-id", userId)
+    if (developerMode) {
+        setRequestProperty("X-Developer-Mode", "true")
+    }
+}
 
 private fun HttpURLConnection.readResponseBody(): String {
     val stream = if (responseCode in 200..299) inputStream else errorStream

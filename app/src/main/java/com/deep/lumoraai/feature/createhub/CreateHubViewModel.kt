@@ -68,7 +68,15 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
             } else {
                 authRepository.syncCurrentUser()
             }
-            startImageGeneration(prompt, style, width, height, negativePrompt, sourceImageB64)
+            startImageGeneration(
+                prompt = prompt,
+                style = style,
+                width = width,
+                height = height,
+                negativePrompt = negativePrompt,
+                sourceImageB64 = sourceImageB64,
+                developerMode = isDev,
+            )
         }
     }
 
@@ -87,7 +95,8 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
         width: Int,
         height: Int,
         negativePrompt: String?,
-        sourceImageB64: String?
+        sourceImageB64: String?,
+        developerMode: Boolean,
     ) {
         uiState = CreateHubUiState.Generating
 
@@ -132,6 +141,7 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
                 height = height,
                 negativePrompt = negativePrompt,
                 sourceImageB64 = sourceImageB64,
+                developerMode = developerMode,
             ) { result ->
                 progressJob.cancel()
                 if (result.isSuccess) {
@@ -191,7 +201,8 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
                 sourceImageB64 = sourceImageB64,
                 motionStrength = motionStrength,
                 cameraDirection = cameraDirection,
-                duration = duration
+                duration = duration,
+                developerMode = isDev,
             )
             if (result.isSuccess) {
                 uiState = CreateHubUiState.VideoGenerated(result.getOrNull() ?: "")
