@@ -1,6 +1,10 @@
 package com.deep.lumoraai.core.components
 
+import android.Manifest
 import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +20,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -33,8 +41,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
+import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.core.utils.MediaShareUtils
 import java.io.File
+import kotlinx.coroutines.launch
 
 @Composable
 fun MediaViewerDialog(
@@ -45,8 +55,51 @@ fun MediaViewerDialog(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val file = remember(filePath) { File(filePath) }
     val exists = file.exists()
+    var isDownloading by remember { mutableStateOf(false) }
+
+    fun downloadToGallery() {
+        if (isDownloading) return
+        isDownloading = true
+        scope.launch {
+            val result = MediaGallerySaver.saveToGallery(
+                context = context,
+                filePath = filePath,
+                mimeType = mimeType,
+                mediaType = mediaType,
+            )
+            isDownloading = false
+            val message = result.getOrElse { e ->
+                e.message ?: "Could not save to gallery"
+            }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            downloadToGallery()
+        } else {
+            Toast.makeText(
+                context,
+                "Storage permission is required to save to Gallery",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    fun onDownloadClick() {
+        when {
+            MediaGallerySaver.hasWritePermission(context) -> downloadToGallery()
+            MediaGallerySaver.needsWritePermission() ->
+                permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            else -> downloadToGallery()
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -96,6 +149,15 @@ fun MediaViewerDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     if (exists) {
+                        TextButton(
+                            onClick = { onDownloadClick() },
+                            enabled = !isDownloading,
+                        ) {
+                            Text(
+                                if (isDownloading) "Saving..." else "Download",
+                                color = Color(0xFFCFBDFF)
+                            )
+                        }
                         TextButton(
                             onClick = {
                                 MediaShareUtils.shareMedia(context, filePath, mimeType)

@@ -1,5 +1,9 @@
 package com.deep.lumoraai.feature.queue
 
+import android.Manifest
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,8 +27,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,16 +35,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.AppCard
 import com.deep.lumoraai.core.components.AppEmptyScreen
@@ -51,8 +52,10 @@ import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.MediaViewerDialog
 import com.deep.lumoraai.core.utils.GeneratedImage
+import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.ui.theme.tokens.Spacing
+import kotlinx.coroutines.launch
 
 @Composable
 fun QueueScreen(
@@ -140,11 +143,57 @@ private fun QueueTopBar() {
 
 @Composable
 private fun JobCardItem(job: ActiveJobInfo) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val showMediaDialog = remember { mutableStateOf(false) }
     val mediaPath = job.localMediaPath
         ?: job.videoUrl
         ?: job.imageUrl
     val isVideo = job.mediaType.equals("VIDEO", ignoreCase = true)
+    val mimeType = if (isVideo) "video/mp4" else "image/png"
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted && !mediaPath.isNullOrBlank()) {
+            scope.launch {
+                val result = MediaGallerySaver.saveToGallery(
+                    context = context,
+                    filePath = mediaPath,
+                    mimeType = mimeType,
+                    mediaType = job.mediaType,
+                )
+                Toast.makeText(
+                    context,
+                    result.getOrElse { it.message ?: "Could not save to gallery" },
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        } else if (!granted) {
+            Toast.makeText(context, "Storage permission is required to save to Gallery", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun downloadToGallery() {
+        val path = mediaPath ?: return
+        if (!MediaGallerySaver.hasWritePermission(context) && MediaGallerySaver.needsWritePermission()) {
+            permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            return
+        }
+        scope.launch {
+            val result = MediaGallerySaver.saveToGallery(
+                context = context,
+                filePath = path,
+                mimeType = mimeType,
+                mediaType = job.mediaType,
+            )
+            Toast.makeText(
+                context,
+                result.getOrElse { it.message ?: "Could not save to gallery" },
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     if (showMediaDialog.value && !mediaPath.isNullOrBlank()) {
         MediaViewerDialog(
@@ -193,7 +242,16 @@ private fun JobCardItem(job: ActiveJobInfo) {
                 }
                 JobDetails(job = job)
             }
-            JobRightControl(progressPercent = job.progressPercent, isCompleted = job.isCompleted, onCancel = {})
+            JobRightControl(
+                progressPercent = job.progressPercent,
+                isCompleted = job.isCompleted,
+                onCancel = {},
+                onDownload = {
+                    if (job.isCompleted && !mediaPath.isNullOrBlank()) {
+                        downloadToGallery()
+                    }
+                },
+            )
         }
     }
 }
@@ -227,14 +285,15 @@ private fun JobDetails(job: ActiveJobInfo) {
 private fun JobRightControl(
     progressPercent: Float?,
     isCompleted: Boolean,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onDownload: () -> Unit = {},
 ) {
     if (isCompleted) {
         Box(
             modifier = Modifier
                 .size(40.dp)
                 .background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.extraLarge)
-                .clickable {},
+                .clickable(onClick = onDownload),
             contentAlignment = Alignment.Center
         ) {
             Icon(
