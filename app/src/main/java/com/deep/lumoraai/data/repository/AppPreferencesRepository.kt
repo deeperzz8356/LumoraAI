@@ -40,6 +40,13 @@ class AppPreferencesRepository private constructor(context: Context) {
         }
     }
 
+    suspend fun resetDeveloperSession() {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.IS_DEVELOPER_MODE] = false
+            prefs[PreferenceKeys.DEV_MODE_UNLOCKED] = false
+        }
+    }
+
     suspend fun isDeveloperModeEnabled(): Boolean = isDeveloperMode.first()
 
     companion object {
