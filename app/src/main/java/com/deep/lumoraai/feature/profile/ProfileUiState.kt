@@ -1,10 +1,14 @@
 package com.deep.lumoraai.feature.profile
 
-import com.deep.lumoraai.data.repository.GenerationHistoryItem
+import com.deep.lumoraai.data.model.HistoryModel
 
 sealed interface ProfileUiState {
     data object Loading : ProfileUiState
-    data class Success(val items: List<String>, val generations: List<GenerationHistoryItem> = emptyList(), val credits: Int = 0) : ProfileUiState
+    data class Success(
+        val items: List<String>,
+        val generations: List<HistoryModel> = emptyList(),
+        val credits: Int = 0,
+    ) : ProfileUiState
     data class Error(val message: String) : ProfileUiState
     data object Empty : ProfileUiState
 }

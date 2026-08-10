@@ -3,7 +3,6 @@ package com.deep.lumoraai.feature.queue
 import com.deep.lumoraai.core.utils.GeneratedImage
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,15 +16,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,20 +35,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.AppCard
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.MediaViewerDialog
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.ui.theme.tokens.Spacing
+import java.io.File
 
 @Composable
 fun QueueScreen(
@@ -139,33 +135,29 @@ private fun QueueTopBar() {
 
 @Composable
 private fun JobCardItem(job: ActiveJobInfo) {
-    val showImageDialog = remember { mutableStateOf(false) }
+    val showMediaDialog = remember { mutableStateOf(false) }
+    val isVideo = job.mediaType.equals("VIDEO", ignoreCase = true)
+    val mediaPath = job.localMediaPath
+        ?: job.videoUrl
+        ?: job.imageUrl
+    val canOpenMedia = job.isCompleted &&
+        !mediaPath.isNullOrBlank() &&
+        File(mediaPath).exists()
 
-    if (showImageDialog.value && !job.imageUrl.isNullOrEmpty()) {
-        AlertDialog(
-            onDismissRequest = { showImageDialog.value = false },
-            confirmButton = {
-                Button(onClick = { showImageDialog.value = false }) {
-                    Text("Close")
-                }
-            },
-            title = { Text("Generated Image", style = MaterialTheme.typography.titleLarge) },
-            text = {
-                GeneratedImage(
-                    imagePayload = job.imageUrl.orEmpty(),
-                    contentDescription = "Full Generated Image",
-                    modifier = Modifier.fillMaxWidth().height(300.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
+    if (showMediaDialog.value && canOpenMedia && mediaPath != null) {
+        MediaViewerDialog(
+            filePath = mediaPath,
+            mediaType = if (isVideo) "VIDEO" else "IMAGE",
+            title = if (isVideo) "Video Ready" else "Image Ready",
+            onDismiss = { showMediaDialog.value = false },
         )
     }
 
     AppCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = {
-            if (job.isCompleted && !job.imageUrl.isNullOrEmpty()) {
-                showImageDialog.value = true
+            if (canOpenMedia) {
+                showMediaDialog.value = true
             }
         }
     ) {
@@ -178,28 +170,56 @@ private fun JobCardItem(job: ActiveJobInfo) {
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
-                if (!job.imageUrl.isNullOrEmpty()) {
-                    GeneratedImage(
-                        imagePayload = job.imageUrl,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(MaterialTheme.shapes.medium),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = job.imageRes),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                    )
-                }
+                JobThumbnail(job = job, isVideo = isVideo)
                 JobDetails(job = job)
             }
             JobRightControl(progressPercent = job.progressPercent, isCompleted = job.isCompleted, onCancel = {})
+        }
+    }
+}
+
+@Composable
+private fun JobThumbnail(job: ActiveJobInfo, isVideo: Boolean) {
+    val thumbPath = when {
+        !isVideo && !job.localMediaPath.isNullOrBlank() -> job.localMediaPath
+        !isVideo && !job.imageUrl.isNullOrBlank() -> job.imageUrl
+        else -> null
+    }
+    Box(
+        modifier = Modifier
+            .size(72.dp)
+            .clip(MaterialTheme.shapes.medium),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!thumbPath.isNullOrBlank()) {
+            GeneratedImage(
+                imagePayload = thumbPath,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Image(
+                painter = painterResource(id = job.imageRes),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        if (isVideo && job.isCompleted) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.35f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play video",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
     }
 }

@@ -27,6 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.MediaViewerDialog
+import com.deep.lumoraai.data.model.HistoryModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -48,12 +52,15 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Star
+import coil.compose.AsyncImage
+import java.io.File
 
 import com.deep.lumoraai.core.navigation.Screen
 
@@ -278,32 +285,54 @@ private fun BuyMoreCreditsCard(onNavigate: (String) -> Unit) {
 }
 
 @Composable
-private fun CreationsGrid(generations: List<com.deep.lumoraai.data.repository.GenerationHistoryItem>) {
+private fun CreationsGrid(generations: List<HistoryModel>) {
+    val selected = remember { mutableStateOf<HistoryModel?>(null) }
+    val viewing = selected.value
+
+    if (viewing != null && !viewing.mediaUrl.isNullOrBlank()) {
+        MediaViewerDialog(
+            filePath = viewing.mediaUrl.orEmpty(),
+            mediaType = viewing.type,
+            title = viewing.title.ifBlank {
+                if (viewing.type.equals("VIDEO", ignoreCase = true)) "Video" else "Image"
+            },
+            onDismiss = { selected.value = null },
+        )
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("My Published Creations", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("My Creations", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("View Gallery", color = Color(0xFFA855F7), fontSize = 12.sp)
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color(0xFFA855F7), modifier = Modifier.size(16.dp))
             }
         }
-        
+
         if (generations.isEmpty()) {
-            Text("You haven't generated any images yet.", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+            Text("You haven't generated any media yet.", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
         } else {
-            // Take up to 4 recent generations and display them in a grid
             val displayItems = generations.take(4)
             val rows = displayItems.chunked(2)
-            
+
             for (rowItems in rows) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                     for (item in rowItems) {
-                        ImageCard(item.imageUrl, Modifier.weight(1f))
+                        CreationCard(
+                            item = item,
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                val path = item.mediaUrl
+                                if (!path.isNullOrBlank() && File(path).exists()) {
+                                    selected.value = item
+                                }
+                            },
+                        )
                     }
                     if (rowItems.size == 1) {
                         Spacer(modifier = Modifier.weight(1f))
@@ -315,16 +344,46 @@ private fun CreationsGrid(generations: List<com.deep.lumoraai.data.repository.Ge
 }
 
 @Composable
-private fun ImageCard(imageUrl: String, modifier: Modifier = Modifier) {
-    coil.compose.AsyncImage(
-        model = imageUrl,
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
+private fun CreationCard(
+    item: HistoryModel,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val isVideo = item.type.equals("VIDEO", ignoreCase = true)
+    val path = item.mediaUrl
+    Box(
         modifier = modifier
             .height(100.dp)
             .clip(RoundedCornerShape(8.dp))
             .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
-    )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!isVideo && !path.isNullOrBlank() && File(path).exists()) {
+            AsyncImage(
+                model = File(path),
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF1C1F3A)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isVideo) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Video",
+                        tint = Color(0xFFCFBDFF),
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

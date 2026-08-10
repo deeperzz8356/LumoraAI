@@ -70,23 +70,90 @@ fun JSONObject.parseGenerationFailure(): String? {
     if (!status.equals("error", ignoreCase = true) && !status.equals("failed", ignoreCase = true)) {
         return null
     }
-    val detail = sequenceOf("message", "detail", "error", "errorMessage", "reason")
-        .map { optString(it) }
-        .firstOrNull { it.isNotBlank() }
-    val model = optString("model").takeIf { it.isNotBlank() }
+    return formatGenerationErrorMessage(
+        detail = sequenceOf("message", "detail", "error", "errorMessage", "reason")
+            .map { optString(it) }
+            .firstOrNull { it.isNotBlank() },
+        model = optString("model").takeIf { it.isNotBlank() },
+        mediaType = "image",
+    )
+}
+
+fun formatGenerationErrorMessage(
+    detail: String?,
+    model: String? = null,
+    mediaType: String = "image",
+): String {
+    val normalizedDetail = detail?.let(::humanizeProviderError)
     return when {
-        detail != null -> detail
-        model != null -> "Image generation failed ($model). The server could not produce an image — check API keys and quota on Render."
-        else -> "Image generation failed on the server. Please try again."
+        normalizedDetail != null -> normalizedDetail
+        model != null ->
+            "${mediaType.replaceFirstChar { it.uppercase() }} generation failed ($model). " +
+                "The server could not produce a $mediaType — check API keys and quota on Render."
+        else -> "${mediaType.replaceFirstChar { it.uppercase() }} generation failed on the server. Please try again."
+    }
+}
+
+fun humanizeProviderError(raw: String): String {
+    val lower = raw.lowercase()
+    return when {
+        "resource_exhausted" in lower || "quota exceeded" in lower || "429" in raw ->
+            "Video generation quota is exhausted on Google Vertex AI. " +
+                "Request a quota increase in Google Cloud Console or try the FastDraft engine."
+        else -> raw
     }
 }
 
 fun isHttpImageUrl(value: String): Boolean =
     value.startsWith("http://", ignoreCase = true) || value.startsWith("https://", ignoreCase = true)
 
+fun isLocalFilePath(value: String): Boolean =
+    value.startsWith("/") ||
+        value.startsWith("file:", ignoreCase = true) ||
+        value.startsWith("content:", ignoreCase = true)
+
 fun isSvgPayload(value: String): Boolean =
     value.contains("image/svg", ignoreCase = true) ||
         value.trimStart().startsWith("<svg", ignoreCase = true)
+
+/**
+ * Decode a data URL or raw base64 payload into bytes + mime type.
+ */
+fun decodeMediaPayload(payload: String): Pair<ByteArray, String>? {
+    if (payload.isBlank()) return null
+    return when {
+        payload.startsWith("data:", ignoreCase = true) -> {
+            val header = payload.substringBefore(",", missingDelimiterValue = "")
+            val encoded = payload.substringAfter(",", missingDelimiterValue = "")
+            if (encoded.isBlank()) return null
+            val mime = header
+                .removePrefix("data:")
+                .substringBefore(";")
+                .ifBlank { "application/octet-stream" }
+            runCatching { Base64.decode(encoded, Base64.DEFAULT) to mime }.getOrNull()
+        }
+        else -> {
+            runCatching {
+                Base64.decode(payload, Base64.DEFAULT) to "application/octet-stream"
+            }.getOrNull()?.takeIf { it.first.isNotEmpty() }
+        }
+    }
+}
+
+fun extensionForMimeType(mimeType: String, mediaType: String): String {
+    val lower = mimeType.lowercase()
+    return when {
+        "png" in lower -> "png"
+        "jpeg" in lower || "jpg" in lower -> "jpg"
+        "webp" in lower -> "webp"
+        "gif" in lower -> "gif"
+        "mp4" in lower -> "mp4"
+        "webm" in lower -> "webm"
+        "mov" in lower || "quicktime" in lower -> "mov"
+        mediaType.equals("VIDEO", ignoreCase = true) -> "mp4"
+        else -> "png"
+    }
+}
 
 @Composable
 fun GeneratedImage(
@@ -96,7 +163,7 @@ fun GeneratedImage(
     contentScale: ContentScale = ContentScale.Crop,
 ) {
     when {
-        isHttpImageUrl(imagePayload) -> {
+        isHttpImageUrl(imagePayload) || isLocalFilePath(imagePayload) -> {
             AsyncImage(
                 model = imagePayload,
                 contentDescription = contentDescription,
