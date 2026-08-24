@@ -49,6 +49,42 @@ val homeVideoTools = listOf(
     HomeToolItem("Video Ads", "Convert any link", Icons.Default.Share, "New", HomeToolDestination.CreateHubVideo),
 )
 
+data class HomeVideoFeature(
+    val id: String,
+    val label: String,
+    val description: String,
+    val tagline: String,
+    val tags: List<String>,
+    val rawResId: Int,
+)
+
+val homeVideoFeatures = listOf(
+    HomeVideoFeature(
+        "vid-frozen",
+        "FROZEN TIME",
+        "Girl in a Crowd",
+        "Give yourself superpowers. Get studio-grade results.",
+        listOf("Time Control", "VFX", "Cinematic"),
+        R.raw.vid_1
+    ),
+    HomeVideoFeature(
+        "vid-gravity",
+        "GRAVITY CONTROL",
+        "Girl Changes the World",
+        "From prompt to cinematic vision in seconds.",
+        listOf("Physics", "Action", "Premium"),
+        R.raw.vid_2
+    ),
+    HomeVideoFeature(
+        "vid-reality",
+        "REALITY REWRITE",
+        "Powerful Transformation",
+        "Bring impossible shots to life.",
+        listOf("Transformation", "Sci-Fi", "Advanced"),
+        R.raw.vid_3
+    ),
+)
+
 val homeTemplatePreviews = listOf(
     HomeTemplatePreview(
         id = "tpl-1",

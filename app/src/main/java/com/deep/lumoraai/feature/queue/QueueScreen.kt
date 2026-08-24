@@ -1,8 +1,13 @@
 package com.deep.lumoraai.feature.queue
 
-import com.deep.lumoraai.core.utils.GeneratedImage
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,38 +21,49 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.deep.lumoraai.R
-import com.deep.lumoraai.core.components.AppCard
-import com.deep.lumoraai.core.components.AppEmptyScreen
+import com.deep.lumoraai.core.components.AppButton
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.MediaViewerDialog
+import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.utils.GeneratedImage
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.ui.theme.tokens.Spacing
 import java.io.File
+import kotlinx.coroutines.delay
 
 @Composable
 fun QueueScreen(
@@ -58,7 +74,7 @@ fun QueueScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color(0xFF000000), // Pure Black background
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
@@ -72,13 +88,13 @@ fun QueueScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            QueueContent(uiState = uiState)
+            QueueContent(uiState = uiState, onNavigate = onNavigate)
         }
     }
 }
 
 @Composable
-private fun QueueContent(uiState: QueueUiState) {
+private fun QueueContent(uiState: QueueUiState, onNavigate: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -86,27 +102,47 @@ private fun QueueContent(uiState: QueueUiState) {
             .padding(horizontal = Spacing.containerMargin, vertical = Spacing.md),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg)
     ) {
-        QueueTopBar()
+        QueueTopBar(onNavigate = onNavigate)
+        
         Column {
-            Text("Active Jobs", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onSurface)
-            Text("Real-time status of your creative generations.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = "Active Jobs", 
+                style = MaterialTheme.typography.headlineLarge, 
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(Spacing.xs))
+            Box(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(3.dp)
+                    .background(Color(0xFF39FF14), RoundedCornerShape(1.5.dp)) // Neon Green accent
+            )
+            Spacer(modifier = Modifier.height(Spacing.sm))
+            Text(
+                text = "Real-time status of your creative generations.", 
+                style = MaterialTheme.typography.bodyMedium, 
+                color = Color(0xFF888888)
+            )
         }
         
         when (uiState) {
             is QueueUiState.Loading -> AppLoadingScreen(modifier = Modifier.height(200.dp))
             is QueueUiState.Success -> {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
-                    uiState.items.forEach { job -> JobCardItem(job = job) }
+                    uiState.items.forEachIndexed { index, job -> 
+                        AnimatedJobCard(job = job, index = index) 
+                    }
                 }
             }
             is QueueUiState.Error -> AppErrorScreen(message = uiState.message, modifier = Modifier.height(200.dp))
-            is QueueUiState.Empty -> AppEmptyScreen(title = "No Jobs", body = "No active or queued jobs.", modifier = Modifier.height(200.dp))
+            is QueueUiState.Empty -> QueueEmptyState(onNavigate = onNavigate)
         }
     }
 }
 
 @Composable
-private fun QueueTopBar() {
+private fun QueueTopBar(onNavigate: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -115,21 +151,98 @@ private fun QueueTopBar() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.width(Spacing.md))
-            Text("Lumora AI", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text("Lumora AI", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.width(Spacing.sm))
+            // Live badge
+            Row(
+                modifier = Modifier
+                    .background(Color(0xFF2D1B69), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Box(modifier = Modifier.size(6.dp).background(Color(0xFF39FF14), CircleShape))
+                Text("LIVE", color = Color(0xFFA78BFA), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
-            Spacer(modifier = Modifier.width(Spacing.lg))
-            Image(
-                painter = painterResource(id = R.drawable.user_avatar),
+            TextButton(onClick = { onNavigate(Screen.History.route) }) {
+                Icon(Icons.Default.List, contentDescription = "History", tint = Color(0xFFA78BFA), modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("History", color = Color(0xFFA78BFA), style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun QueueEmptyState(onNavigate: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .drawBehind {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0xFF7E50EF).copy(alpha = 0.5f), Color.Transparent),
+                            center = Offset(size.width / 2, size.height / 2),
+                            radius = size.width / 1.5f
+                        )
+                    )
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
                 contentDescription = null,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(MaterialTheme.shapes.extraLarge)
+                tint = Color(0xFF39FF14),
+                modifier = Modifier.size(64.dp)
             )
         }
+        Spacer(modifier = Modifier.height(Spacing.xl))
+        Text(
+            text = "All Clear", 
+            style = MaterialTheme.typography.headlineMedium, 
+            color = Color.White,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(Spacing.sm))
+        Text(
+            text = "No jobs in the pipeline. Start generating to see your work here.", 
+            style = MaterialTheme.typography.bodyMedium, 
+            color = Color(0xFF888888),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.padding(horizontal = Spacing.xl)
+        )
+        Spacer(modifier = Modifier.height(Spacing.xl))
+        AppButton(
+            text = "Start Creating",
+            onClick = { onNavigate(Screen.CreateHub.route) },
+            modifier = Modifier.border(1.dp, Color(0xFFA78BFA), RoundedCornerShape(24.dp))
+        )
+    }
+}
+
+@Composable
+private fun AnimatedJobCard(job: ActiveJobInfo, index: Int) {
+    val visible = remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        delay(index * 100L)
+        visible.value = true
+    }
+    
+    AnimatedVisibility(
+        visible = visible.value,
+        enter = fadeIn(tween(400)) + slideInVertically(tween(400), initialOffsetY = { it / 2 })
+    ) {
+        JobCardItem(job = job)
     }
 }
 
@@ -137,12 +250,8 @@ private fun QueueTopBar() {
 private fun JobCardItem(job: ActiveJobInfo) {
     val showMediaDialog = remember { mutableStateOf(false) }
     val isVideo = job.mediaType.equals("VIDEO", ignoreCase = true)
-    val mediaPath = job.localMediaPath
-        ?: job.videoUrl
-        ?: job.imageUrl
-    val canOpenMedia = job.isCompleted &&
-        !mediaPath.isNullOrBlank() &&
-        File(mediaPath).exists()
+    val mediaPath = job.localMediaPath ?: job.videoUrl ?: job.imageUrl
+    val canOpenMedia = job.isCompleted && !mediaPath.isNullOrBlank() && File(mediaPath).exists()
 
     if (showMediaDialog.value && canOpenMedia && mediaPath != null) {
         MediaViewerDialog(
@@ -153,8 +262,11 @@ private fun JobCardItem(job: ActiveJobInfo) {
         )
     }
 
-    AppCard(
+    Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D0D)), // Near black
+        border = BorderStroke(1.dp, Color(0xFF1A1A1A)), // Subtle border
         onClick = {
             if (canOpenMedia) {
                 showMediaDialog.value = true
@@ -162,7 +274,9 @@ private fun JobCardItem(job: ActiveJobInfo) {
         }
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.md),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -188,7 +302,7 @@ private fun JobThumbnail(job: ActiveJobInfo, isVideo: Boolean) {
     Box(
         modifier = Modifier
             .size(72.dp)
-            .clip(MaterialTheme.shapes.medium),
+            .clip(RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
         if (!thumbPath.isNullOrBlank()) {
@@ -206,6 +320,16 @@ private fun JobThumbnail(job: ActiveJobInfo, isVideo: Boolean) {
                 modifier = Modifier.fillMaxSize()
             )
         }
+        
+        // Purple gradient overlay for incomplete jobs
+        if (!job.isCompleted) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xFF7E50EF).copy(alpha = 0.4f))))
+            )
+        }
+        
         if (isVideo && job.isCompleted) {
             Box(
                 modifier = Modifier
@@ -233,19 +357,19 @@ private fun JobDetails(job: ActiveJobInfo) {
         ) {
             Box(
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f), MaterialTheme.shapes.extraSmall)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                    .background(Color(0xFF2D1B69), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text(job.badgeText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                Text(job.badgeText, style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA), fontWeight = FontWeight.Bold)
             }
             Text(
                 text = "•  ${job.statusText}",
                 style = MaterialTheme.typography.labelSmall,
-                color = if (job.isCompleted) Color(0xFFADF021) else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (job.isCompleted) Color(0xFF39FF14) else Color(0xFF888888)
             )
         }
-        Text(job.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
-        Text(job.subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(job.title, style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1)
+        Text(job.subtitle, style = MaterialTheme.typography.labelSmall, color = Color(0xFF888888))
     }
 }
 
@@ -259,14 +383,14 @@ private fun JobRightControl(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.extraLarge)
+                .background(Color(0xFF39FF14), CircleShape) // Neon green download
                 .clickable {},
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = "Download",
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = Color.Black,
                 modifier = Modifier.size(22.dp)
             )
         }
@@ -278,19 +402,19 @@ private fun JobRightControl(
             Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
                     progress = progressPercent ?: 0.25f,
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                    color = Color(0xFF39FF14), // Neon green
+                    trackColor = Color(0xFF1A1A1A), // Dimmed track
                     modifier = Modifier.size(36.dp),
                     strokeWidth = 3.dp
                 )
                 if (progressPercent != null) {
-                    Text("${(progressPercent * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text("${(progressPercent * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = Color.White)
                 }
             }
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Cancel",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = Color(0xFF888888),
                 modifier = Modifier
                     .size(16.dp)
                     .clickable(onClick = onCancel)

@@ -1,5 +1,7 @@
 package com.deep.lumoraai.feature.home
 
+import android.net.Uri
+import android.widget.VideoView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,13 +22,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -39,12 +49,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
@@ -118,13 +134,7 @@ private fun HomeContent(
             credits = uiState.credits,
             onNavigate = onNavigate
         )
-        HomeStatsRow(
-            creationCount = uiState.creationCount,
-            planLabel = uiState.planLabel,
-            credits = uiState.credits,
-            onNavigate = onNavigate
-        )
-        HomeTemplatesSection(onNavigate = onNavigate)
+        HomeVideoHeroSection(onNavigate = onNavigate)
         if (uiState.recentItems.isNotEmpty()) {
             HomeRecentlyUsedSection(items = uiState.recentItems)
         }
@@ -183,14 +193,32 @@ private fun HomeTopBar(
                     .size(22.dp)
                     .clickable { onNavigate(Screen.Notifications.route) }
             )
-            Image(
-                painter = painterResource(id = com.deep.lumoraai.R.drawable.user_avatar),
-                contentDescription = "Profile",
+            Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(18.dp))
+                    .size(40.dp)
+                    .clip(CircleShape)
                     .clickable { onNavigate(Screen.Profile.route) }
-            )
+                    .border(
+                        width = 2.dp,
+                        brush = Brush.linearGradient(colors = listOf(Color(0xFF7E50EF), Color(0xFF39FF14))),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Profile",
+                    tint = IntroPalette.TextPrimary,
+                    modifier = Modifier.size(32.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .align(Alignment.BottomEnd)
+                        .background(Color(0xFF39FF14), CircleShape)
+                        .border(1.5.dp, Color.Black, CircleShape)
+                )
+            }
         }
     }
 }
@@ -213,96 +241,208 @@ private fun CreditsChip(credits: Int, onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun HomeStatsRow(
-    creationCount: Int,
-    planLabel: String,
-    credits: Int,
-    onNavigate: (String) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(IntroPalette.SurfaceRaised, SectionShape)
-            .border(1.dp, IntroPalette.BorderSubtle, SectionShape)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        StatItem(label = "CREATIONS", value = creationCount.toString())
-        StatItem(label = "PLAN", value = planLabel)
-        StatItem(
-            label = "CREDITS",
-            value = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else credits.toString(),
-            onClick = { onNavigate(Screen.Credits.route) }
-        )
-    }
-}
 
 @Composable
-private fun StatItem(label: String, value: String, onClick: (() -> Unit)? = null) {
-    val modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = label, style = IntroTypography.statLabel)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = value, style = IntroTypography.statValue)
-    }
-}
-
-@Composable
-private fun HomeTemplatesSection(onNavigate: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+private fun HomeVideoHeroSection(onNavigate: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        VideoCarousel()
+        Button(
+            onClick = { onNavigate(createHubRoute(tab = 1)) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .align(Alignment.CenterHorizontally),
+            shape = RoundedCornerShape(50.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = IntroPalette.AccentLime
+            )
         ) {
-            Text(text = "Templates", style = IntroTypography.sectionTitle)
             Text(
-                text = "More",
-                style = IntroTypography.sectionLink,
-                modifier = Modifier.clickable { onNavigate(Screen.Templates.route) }
+                text = "Create Video Now",
+                color = Color.Black,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 0.3.sp
             )
         }
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(end = 4.dp)
+    }
+}
+
+@Composable
+private fun VideoCarousel() {
+    // Use Int.MAX_VALUE for infinite scrolling
+    val pageCount = Int.MAX_VALUE
+    val initialPage = pageCount / 2
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { pageCount }
+    )
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(520.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        androidx.compose.foundation.pager.HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentPadding = PaddingValues(horizontal = 0.dp),
+            pageSpacing = 0.dp
+        ) { page ->
+            val actualIndex = page % homeVideoFeatures.size
+            VideoCard(feature = homeVideoFeatures[actualIndex])
+        }
+        // Centered auto-scrolling indicator
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            items(homeTemplatePreviews, key = { it.id }) { template ->
-                HomeTemplateCard(
-                    template = template,
-                    onClick = { onNavigate(createHubRoute(prompt = template.prompt)) }
+            repeat(homeVideoFeatures.size) { index ->
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(
+                            if (index == pagerState.currentPage % homeVideoFeatures.size) IntroPalette.AccentLime else IntroPalette.BorderSubtle,
+                            RoundedCornerShape(4.dp)
+                        )
                 )
+                if (index < homeVideoFeatures.size - 1) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun HomeTemplateCard(template: HomeTemplatePreview, onClick: () -> Unit) {
-    Column(
+private fun VideoCard(feature: HomeVideoFeature) {
+    Box(
         modifier = Modifier
-            .width(140.dp)
-            .clickable(onClick = onClick)
+            .fillMaxSize()
+            .clip(CardShape)
+            .border(1.dp, IntroPalette.BorderSubtle, CardShape)
     ) {
-        Image(
-            painter = painterResource(id = template.imageRes),
-            contentDescription = template.title,
-            contentScale = ContentScale.Crop,
+        AndroidView(
+            factory = { ctx ->
+                VideoView(ctx).apply {
+                    val uri = Uri.parse(
+                        "android.resource://${ctx.packageName}/${feature.rawResId}"
+                    )
+                    setVideoURI(uri)
+                    setOnPreparedListener { mp ->
+                        mp.isLooping = true
+                        mp.setVolume(0f, 0f)
+                        start()
+                    }
+                }
+            },
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(0.75f)
+                .fillMaxSize()
                 .clip(CardShape)
-                .border(1.dp, IntroPalette.BorderSubtle, CardShape)
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = template.title,
-            style = IntroTypography.cardTitle,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+        
+        // Dark overlay for text readability
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.3f),
+                            Color.Black.copy(alpha = 0.6f)
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY
+                    )
+                )
         )
+        
+        // Centered text content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Main title - large and bold
+            Text(
+                text = feature.label,
+                color = Color.White,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center,
+                lineHeight = 52.sp,
+                letterSpacing = 1.2.sp
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Subtitle
+            Text(
+                text = feature.description,
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                lineHeight = 26.sp
+            )
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            // Tagline
+            Text(
+                text = feature.tagline,
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                lineHeight = 22.sp
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Tags/Features
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                feature.tags.forEachIndexed { index, tag ->
+                    Box(
+                        modifier = Modifier
+                            .border(
+                                width = 1.5.dp,
+                                color = Color.White.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = tag,
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    if (index < feature.tags.size - 1) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                }
+            }
+        }
     }
 }
+
 
 @Composable
 private fun HomeRecentlyUsedSection(items: List<HomeRecentItem>) {

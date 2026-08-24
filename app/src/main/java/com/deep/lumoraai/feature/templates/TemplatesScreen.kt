@@ -1,10 +1,14 @@
 package com.deep.lumoraai.feature.templates
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,17 +20,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,26 +46,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.BottomNavigationBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
-import android.content.ClipboardManager
-import android.content.ClipData
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.delay
-import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.components.LumoraIntroBackground
 import com.deep.lumoraai.core.navigation.createHubRoute
+import com.deep.lumoraai.core.theme.IntroPalette
+import com.deep.lumoraai.core.theme.IntroTypography
+import kotlinx.coroutines.delay
+
+private val TemplateSectionShape = RoundedCornerShape(20.dp)
+private val TemplateCardShape = RoundedCornerShape(16.dp)
+private val TemplateImageShape = RoundedCornerShape(14.dp)
 
 data class TemplateItem(
     val id: String,
@@ -72,6 +82,7 @@ fun TemplatesScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = IntroPalette.BackgroundBase,
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
@@ -84,8 +95,8 @@ fun TemplatesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
         ) {
+            LumoraIntroBackground()
             TemplatesContent(onNavigate = onNavigate)
         }
     }
@@ -94,7 +105,9 @@ fun TemplatesScreen(
 @Composable
 private fun TemplatesContent(onNavigate: (String) -> Unit) {
     val context = LocalContext.current
-    val clipboardManager = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager }
+    val clipboardManager = remember {
+        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    }
 
     val templateItems = remember {
         listOf(
@@ -134,9 +147,10 @@ private fun TemplatesContent(onNavigate: (String) -> Unit) {
 
     val filteredTemplates = remember(searchQuery, selectedFilter) {
         templateItems.filter { item ->
-            val matchesFilter = selectedFilter == "All Styles" || item.category.equals(selectedFilter, ignoreCase = true)
-            val matchesQuery = searchQuery.isBlank() || 
-                item.title.contains(searchQuery, ignoreCase = true) || 
+            val matchesFilter = selectedFilter == "All Styles" ||
+                item.category.equals(selectedFilter, ignoreCase = true)
+            val matchesQuery = searchQuery.isBlank() ||
+                item.title.contains(searchQuery, ignoreCase = true) ||
                 item.prompt.contains(searchQuery, ignoreCase = true)
             matchesFilter && matchesQuery
         }
@@ -146,14 +160,22 @@ private fun TemplatesContent(onNavigate: (String) -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        TemplatesTopBar()
-        TemplatesHeader()
-        TemplatesSearchBar(query = searchQuery, onQueryChange = { searchQuery = it })
-        FilterPillsHorizontal(selectedFilter = selectedFilter, onFilterSelect = { selectedFilter = it })
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 720.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            TemplatesTopBar()
+            TemplatesHeader()
+            TemplatesSearchBar(query = searchQuery, onQueryChange = { searchQuery = it })
+            FilterPillsHorizontal(
+                selectedFilter = selectedFilter,
+                onFilterSelect = { selectedFilter = it }
+            )
             filteredTemplates.forEach { item ->
                 TemplateCard(
                     item = item,
@@ -168,12 +190,20 @@ private fun TemplatesContent(onNavigate: (String) -> Unit) {
             }
             if (filteredTemplates.isEmpty()) {
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(150.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .background(IntroPalette.SurfaceRaised, TemplateSectionShape)
+                        .border(1.dp, IntroPalette.BorderSubtle, TemplateSectionShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No templates found matching your search.", color = Color.White.copy(alpha = 0.5f), fontSize = 14.sp)
+                    Text(
+                        text = "No templates found matching your search.",
+                        style = IntroTypography.body
+                    )
                 }
             }
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
@@ -181,24 +211,59 @@ private fun TemplatesContent(onNavigate: (String) -> Unit) {
 @Composable
 private fun TemplatesTopBar() {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Lumina AI", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Icon(Icons.Default.Menu, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = null,
+                tint = IntroPalette.AccentLime,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Lumora AI", style = IntroTypography.greetingName)
+        }
+        Icon(
+            Icons.Default.Menu,
+            contentDescription = "Open menu",
+            tint = IntroPalette.TextPrimary,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 
 @Composable
 private fun TemplatesHeader() {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Image Templates", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(IntroPalette.SurfaceRaised.copy(alpha = 0.78f), TemplateSectionShape)
+            .border(1.dp, IntroPalette.BorderSubtle, TemplateSectionShape)
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .background(IntroPalette.PrimaryButton.copy(alpha = 0.22f), RoundedCornerShape(8.dp))
+                .border(1.dp, IntroPalette.PrimaryButton.copy(alpha = 0.34f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 5.dp)
+        ) {
+            Text(
+                text = "Premium prompt library",
+                style = IntroTypography.badge.copy(color = IntroPalette.SecondaryText)
+            )
+        }
         Text(
-            text = "Accelerate your workflow with professional, AI-optimized prompts and layouts across cinematic styles.",
-            color = Color.White.copy(alpha = 0.6f),
-            fontSize = 14.sp,
-            lineHeight = 20.sp
+            text = "Image Templates",
+            style = IntroTypography.greetingName.copy(fontSize = 28.sp, lineHeight = 34.sp)
+        )
+        Text(
+            text = "Curated prompts for cinematic images, polished scenes, and fast creation.",
+            style = IntroTypography.body
         )
     }
 }
@@ -208,17 +273,31 @@ private fun TemplatesSearchBar(query: String, onQueryChange: (String) -> Unit) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        placeholder = { Text("Search templates...", color = Color.White.copy(alpha = 0.3f)) },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.4f)) },
-        modifier = Modifier.fillMaxWidth().height(52.dp),
+        placeholder = {
+            Text(
+                text = "Search templates...",
+                style = IntroTypography.body.copy(color = IntroPalette.TextLegal)
+            )
+        },
+        leadingIcon = {
+            Icon(
+                Icons.Default.Search,
+                contentDescription = null,
+                tint = IntroPalette.AccentLime.copy(alpha = 0.72f)
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(54.dp),
         shape = RoundedCornerShape(26.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF161838),
-            unfocusedContainerColor = Color(0xFF161838),
-            focusedBorderColor = Color(0xFFA855F7).copy(alpha = 0.5f),
-            unfocusedBorderColor = Color.White.copy(alpha = 0.05f),
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White
+            focusedContainerColor = IntroPalette.SurfaceRaised,
+            unfocusedContainerColor = IntroPalette.SurfaceRaised,
+            focusedBorderColor = IntroPalette.AccentLime.copy(alpha = 0.62f),
+            unfocusedBorderColor = IntroPalette.BorderSubtle,
+            focusedTextColor = IntroPalette.TextPrimary,
+            unfocusedTextColor = IntroPalette.TextPrimary,
+            cursorColor = IntroPalette.AccentLime
         ),
         singleLine = true
     )
@@ -228,7 +307,9 @@ private fun TemplatesSearchBar(query: String, onQueryChange: (String) -> Unit) {
 private fun FilterPillsHorizontal(selectedFilter: String, onFilterSelect: (String) -> Unit) {
     val filters = listOf("All Styles", "Wallpapers", "Anime", "Fantasy")
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         filters.forEach { filter ->
@@ -236,11 +317,18 @@ private fun FilterPillsHorizontal(selectedFilter: String, onFilterSelect: (Strin
             Box(
                 modifier = Modifier
                     .background(
-                        color = if (isSelected) Color(0xFFCFBDFF) else Color.White.copy(alpha = 0.05f),
+                        color = if (isSelected) IntroPalette.AccentLime else IntroPalette.SurfaceRaised,
                         shape = RoundedCornerShape(16.dp)
                     )
                     .border(
-                        BorderStroke(1.dp, if (isSelected) Color.Transparent else Color.White.copy(alpha = 0.1f)),
+                        BorderStroke(
+                            1.dp,
+                            if (isSelected) {
+                                IntroPalette.AccentLime.copy(alpha = 0.72f)
+                            } else {
+                                IntroPalette.BorderSubtle
+                            }
+                        ),
                         RoundedCornerShape(16.dp)
                     )
                     .clickable { onFilterSelect(filter) }
@@ -249,9 +337,9 @@ private fun FilterPillsHorizontal(selectedFilter: String, onFilterSelect: (Strin
             ) {
                 Text(
                     text = filter,
-                    color = if (isSelected) Color(0xFF0F1026) else Color.White.copy(alpha = 0.8f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    style = IntroTypography.creditsChip.copy(
+                        color = if (isSelected) Color.Black else IntroPalette.TextMuted
+                    )
                 )
             }
         }
@@ -275,20 +363,20 @@ private fun TemplateCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
+            .background(IntroPalette.SurfaceRaised.copy(alpha = 0.9f), TemplateCardShape)
+            .border(1.dp, IntroPalette.BorderSubtle, TemplateCardShape)
             .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .height(176.dp)
+                .clip(TemplateImageShape)
         ) {
             Image(
                 painter = painterResource(id = item.imageRes),
-                contentDescription = null,
+                contentDescription = item.title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
@@ -296,24 +384,41 @@ private fun TemplateCard(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
-                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                    .background(Color.Black.copy(alpha = 0.72f), RoundedCornerShape(8.dp))
+                    .border(1.dp, IntroPalette.AccentLime.copy(alpha = 0.28f), RoundedCornerShape(8.dp))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Text(item.category, color = Color(0xFFCFBDFF), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = item.category,
+                    style = IntroTypography.badge.copy(color = IntroPalette.AccentLime)
+                )
             }
         }
 
-        Text(item.title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = null,
+                tint = IntroPalette.PrimaryButton.copy(alpha = 0.92f),
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = item.title,
+                style = IntroTypography.sectionTitle,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
 
         Text(
             text = item.prompt,
-            color = Color.White.copy(alpha = 0.7f),
-            fontSize = 12.sp,
-            lineHeight = 18.sp,
+            style = IntroTypography.toolDescription.copy(color = IntroPalette.TextMuted),
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                .padding(10.dp)
+                .background(Color.Black.copy(alpha = 0.28f), RoundedCornerShape(12.dp))
+                .border(1.dp, IntroPalette.PrimaryButton.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+                .padding(12.dp)
         )
 
         Row(
@@ -325,32 +430,48 @@ private fun TemplateCard(
                     onCopyClick(item.prompt)
                     copied = true
                 },
-                modifier = Modifier.weight(1f).height(40.dp),
-                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp),
+                shape = RoundedCornerShape(22.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (copied) Color(0xFFADF021).copy(alpha = 0.15f) else Color.White.copy(alpha = 0.05f)
+                    containerColor = if (copied) {
+                        IntroPalette.AccentLime.copy(alpha = 0.2f)
+                    } else {
+                        IntroPalette.BackgroundBase
+                    }
                 ),
-                border = BorderStroke(1.dp, if (copied) Color(0xFFADF021).copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f))
+                border = BorderStroke(
+                    1.dp,
+                    if (copied) IntroPalette.AccentLime.copy(alpha = 0.6f) else IntroPalette.BorderSubtle
+                )
             ) {
+                Icon(
+                    imageVector = Icons.Outlined.ContentCopy,
+                    contentDescription = null,
+                    tint = if (copied) IntroPalette.AccentLime else IntroPalette.TextPrimary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = if (copied) "Copied!" else "Copy Prompt",
-                    color = if (copied) Color(0xFFADF021) else Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    text = if (copied) "Copied" else "Copy",
+                    style = IntroTypography.buttonLabel.copy(
+                        color = if (copied) IntroPalette.AccentLime else IntroPalette.TextPrimary
+                    )
                 )
             }
 
             Button(
                 onClick = { onCreateClick(item.prompt) },
-                modifier = Modifier.weight(1f).height(40.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCFBDFF))
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp),
+                shape = RoundedCornerShape(22.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = IntroPalette.AccentLime)
             ) {
                 Text(
-                    text = "Create with this",
-                    color = Color(0xFF0F1026),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Create",
+                    style = IntroTypography.buttonLabel.copy(color = Color.Black)
                 )
             }
         }

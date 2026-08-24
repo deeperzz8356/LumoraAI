@@ -63,18 +63,19 @@ fun LumoraIntroBackground(modifier: Modifier = Modifier) {
             )
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val gridWidth = 40.dp.toPx()
-            val gridHeight = 40.dp.toPx()
-            val lineColor = IntroPalette.GridLine.copy(alpha = 0.05f)
-            var x = 0f
-            while (x < size.width) {
-                drawLine(lineColor, Offset(x, 0f), Offset(x, size.height), 0.5.dp.toPx())
-                x += gridWidth
-            }
-            var y = 0f
-            while (y < size.height) {
-                drawLine(lineColor, Offset(0f, y), Offset(size.width, y), 0.5.dp.toPx())
-                y += gridHeight
+            // Draw random stars for a premium starry background
+            val starColor = Color.White
+            val random = java.util.Random(42) // Fixed seed for consistent starry pattern
+            for (i in 0 until 100) {
+                val x = random.nextFloat() * size.width
+                val y = random.nextFloat() * size.height
+                val radius = random.nextFloat() * 1.5.dp.toPx()
+                val alpha = random.nextFloat() * 0.3f + 0.1f // Reduced opacity for subtler sparkle
+                drawCircle(
+                    color = starColor.copy(alpha = alpha),
+                    radius = radius,
+                    center = Offset(x, y)
+                )
             }
         }
     }

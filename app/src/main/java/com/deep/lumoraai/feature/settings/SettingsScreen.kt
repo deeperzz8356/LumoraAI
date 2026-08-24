@@ -231,7 +231,22 @@ private fun LanguageSelectionDialog(
     onLanguageSelected: (String) -> Unit,
     onDismissRequest: () -> Unit
 ) {
-    val languages = listOf("English", "Spanish", "French", "German", "Chinese", "Japanese", "Korean", "Hindi")
+    val languages = listOf(
+        "English",
+        "Hindi", 
+        "Spanish",
+        "Dutch",
+        "Italian",
+        "Portuguese",
+        "Turkish",
+        "Thai",
+        "Vietnamese",
+        "Arabic",
+        "Korean",
+        "Japanese",
+        "Chinese (Simplified)",
+        "Chinese (Traditional)"
+    )
     
     AlertDialog(
         onDismissRequest = onDismissRequest,

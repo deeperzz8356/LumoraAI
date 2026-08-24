@@ -2,6 +2,7 @@ package com.deep.lumoraai.core.utils
 
 import android.graphics.BitmapFactory
 import android.util.Base64
+import android.util.Log
 import android.webkit.WebView
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
@@ -49,12 +50,34 @@ private fun extractFromJsonArray(array: JSONArray): String? {
 }
 
 fun extractGeneratedVideo(json: JSONObject): String? {
+    // Log for debugging
+    Log.d("extractGeneratedVideo", "Parsing video from JSON: ${json.toString().take(500)}")
+    
+    // First check nested data object
     json.optJSONObject("data")?.let { nested ->
         extractGeneratedVideo(nested)?.let { return it }
     }
-    return VIDEO_PAYLOAD_KEYS
-        .map { json.optString(it) }
-        .firstOrNull { it.isNotBlank() }
+    
+    // Check video-specific keys first
+    VIDEO_PAYLOAD_KEYS.forEach { key ->
+        json.optString(key).takeIf { it.isNotBlank() }?.let { 
+            Log.d("extractGeneratedVideo", "Found video URL in key '$key': $it")
+            return it 
+        }
+    }
+    
+    // Also check image_url keys (some backends use image_url for both images and videos)
+    IMAGE_PAYLOAD_KEYS.forEach { key ->
+        if (key != "url") { // Skip url as it's already in VIDEO_PAYLOAD_KEYS
+            json.optString(key).takeIf { it.isNotBlank() }?.let { 
+                Log.d("extractGeneratedVideo", "Found video URL in image key '$key' (fallback): $it")
+                return it 
+            }
+        }
+    }
+    
+    Log.d("extractGeneratedVideo", "No video URL found in response")
+    return null
 }
 
 fun JSONObject.isSuccessfulApiStatus(): Boolean {

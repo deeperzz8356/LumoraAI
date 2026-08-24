@@ -21,8 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -423,8 +421,6 @@ fun OnboardingFinalControls(
             .padding(horizontal = 24.dp)
     ) {
         OnboardingStartButton(onGetStarted = onGetStarted)
-        Spacer(modifier = Modifier.height(8.dp))
-        OnboardingUtilityButtons()
     }
 }
 
@@ -455,45 +451,4 @@ fun OnboardingStartArrow() {
     ) {
         Text(">>>", color = IntroPalette.PrimaryButton, fontWeight = FontWeight.Bold, fontSize = 12.sp)
     }
-}
-
-@Composable
-fun OnboardingUtilityButtons() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OnboardingSmallButton(
-                text = "Rate Us", 
-                icon = Icons.Default.Star,
-                modifier = Modifier.weight(1f)
-            )
-            OnboardingSmallButton(
-                text = "Share App", 
-                icon = Icons.Default.Share,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        OnboardingSmallButton(
-            text = "Privacy Policy", 
-            icon = Icons.Default.Lock,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-fun OnboardingSmallButton(
-    text: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    modifier: Modifier = Modifier
-) {
-    LumoraIntroSecondaryButton(
-        text = text,
-        onClick = { /* Action */ },
-        leadingIcon = icon,
-        modifier = modifier,
-        height = 48.dp
-    )
 }

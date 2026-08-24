@@ -21,6 +21,22 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -44,24 +60,8 @@ import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.MediaViewerDialog
 import com.deep.lumoraai.data.model.HistoryModel
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Star
 import coil.compose.AsyncImage
 import java.io.File
-
 import com.deep.lumoraai.core.navigation.Screen
 
 @Composable
@@ -100,7 +100,7 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         ProfileTopBar()
         ProfileHeader()
@@ -120,16 +120,38 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
 @Composable
 private fun ProfileTopBar() {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text("Lumina AI", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Image(
-            painter = painterResource(id = R.drawable.user_avatar),
-            contentDescription = null,
-            modifier = Modifier.size(36.dp).clip(CircleShape)
-        )
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .border(
+                    width = 2.dp,
+                    brush = Brush.linearGradient(colors = listOf(Color(0xFF7E50EF), Color(0xFF39FF14))),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            // Profile icon placeholder
+            Text(
+                text = "AT",
+                color = Color.Black,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                modifier = Modifier.align(Alignment.Center)
+            )
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .align(Alignment.BottomEnd)
+                    .background(Color(0xFF39FF14), CircleShape)
+                    .border(1.5.dp, Color.Black, CircleShape)
+            )
+        }
     }
 }
 
@@ -137,25 +159,47 @@ private fun ProfileTopBar() {
 private fun ProfileHeader() {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Box(contentAlignment = Alignment.BottomCenter) {
-            Image(
-                painter = painterResource(id = R.drawable.user_avatar),
-                contentDescription = null,
-                modifier = Modifier.size(80.dp).clip(CircleShape).border(2.dp, Color(0xFFA855F7), CircleShape)
-            )
+        Box(contentAlignment = Alignment.Center) {
             Box(
                 modifier = Modifier
-                    .background(Color(0xFFA855F7), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .size(90.dp)
+                    .clip(CircleShape)
+                    .border(
+                        width = 3.dp,
+                        brush = Brush.linearGradient(colors = listOf(Color(0xFF7E50EF), Color(0xFF39FF14))),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Text("PRO", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                // Profile image placeholder - using text instead of icon
+                Text(
+                    text = "AT",
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 32.sp,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+                Box(
+                    modifier = Modifier
+                        .size(18.dp)
+                        .align(Alignment.BottomEnd)
+                        .background(Color(0xFF39FF14), CircleShape)
+                        .border(2.dp, Color(0xFF1A1C29), CircleShape)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .background(Color(0xFFD4FF3B), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text("PRO", color = Color.Black, fontSize = 9.sp, fontWeight = FontWeight.Bold)
             }
         }
-        Text("Alex Thorne", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text("@alexthorne_creatives", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+        Text("Alex Thorne", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text("@alexthorne_creatives", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TagPill("Concept Artist")
             TagPill("Video Director")
@@ -184,12 +228,12 @@ private fun ProfileHeaderActions() {
         Button(
             onClick = {},
             modifier = Modifier.weight(1f).height(44.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7E50EF)),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4FF3B)),
             shape = RoundedCornerShape(22.dp)
         ) {
-            Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Edit, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(6.dp))
-            Text("Edit Profile", color = Color.White, fontSize = 13.sp)
+            Text("Edit Profile", color = Color.Black, fontSize = 13.sp)
         }
         Box(
             modifier = Modifier
@@ -399,7 +443,7 @@ private fun PurchaseHistoryCard() {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.List, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("PURCHASE HISTORY", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("PURCHASEHISTORY", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.sp)
         }
         PurchaseRow("Pro Annual Plan", "Nov 12, 2023 • Inv #6921", "$499.00")
         PurchaseRow("1,000 Credit Pack", "Oct 28, 2023 • Inv #7741", "$49.00")
@@ -440,7 +484,7 @@ private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text("PREFERENCES", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text("PREFERENCES", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.sp)
         PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
         PrefRow("Privacy Policy", Icons.Default.Share, Color.White)
         PrefRow("Terms of Service", Icons.Default.Info, Color.White)
@@ -452,14 +496,14 @@ private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit)
 @Composable
 private fun PrefRow(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, onClick: () -> Unit = {}) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(title, color = color, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(title, color = color, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
         Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
     }

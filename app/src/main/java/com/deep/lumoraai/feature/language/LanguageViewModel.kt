@@ -19,12 +19,17 @@ class LanguageViewModel : ViewModel() {
             LanguageModel("en", "English", "🇬🇧"),
             LanguageModel("hi", "Hindi", "🇮🇳"),
             LanguageModel("es", "Spanish", "🇪🇸"),
-            LanguageModel("fr", "French", "🇫🇷"),
-            LanguageModel("zh", "Chinese", "🇨🇳"),
+            LanguageModel("nl", "Dutch", "🇳🇱"),
+            LanguageModel("it", "Italian", "🇮🇹"),
+            LanguageModel("pt", "Portuguese", "🇵🇹"),
+            LanguageModel("tr", "Turkish", "🇹🇷"),
+            LanguageModel("th", "Thai", "🇹🇭"),
+            LanguageModel("vi", "Vietnamese", "🇻🇳"),
+            LanguageModel("ar", "Arabic", "🇸🇦"),
             LanguageModel("ko", "Korean", "🇰🇷"),
             LanguageModel("ja", "Japanese", "🇯🇵"),
-            LanguageModel("vi", "Vietnamese", "🇻🇳"),
-            LanguageModel("pt", "Portugal", "🇵🇹")
+            LanguageModel("zh", "Chinese (Simplified)", "🇨🇳"),
+            LanguageModel("zht", "Chinese (Traditional)", "🇹🇼")
         )
         uiState = LanguageUiState.Success(
             languages = languages,

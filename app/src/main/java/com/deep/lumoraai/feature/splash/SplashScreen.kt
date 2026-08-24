@@ -110,10 +110,23 @@ fun SplashBottomContent() {
             .fillMaxSize()
             .padding(bottom = 72.dp, start = Spacing.containerMargin, end = Spacing.containerMargin)
     ) {
+        SplashLogo()
+        Spacer(modifier = Modifier.height(48.dp))
         SplashTitleSection()
         Spacer(modifier = Modifier.height(64.dp))
         SplashLoader()
     }
+}
+
+@Composable
+fun SplashLogo() {
+    Image(
+        painter = painterResource(id = R.drawable.logo),
+        contentDescription = "Lumora AI Logo",
+        contentScale = ContentScale.Fit,
+        modifier = Modifier
+            .size(120.dp)
+    )
 }
 
 @Composable

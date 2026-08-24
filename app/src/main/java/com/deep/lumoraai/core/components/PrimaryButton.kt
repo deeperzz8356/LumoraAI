@@ -76,9 +76,22 @@ fun GradientButton(text: String, onClick: () -> Unit, modifier: Modifier = Modif
 
 @Composable
 fun AppToolbar(title: String, modifier: Modifier = Modifier, action: (@Composable () -> Unit)? = null) {
-    Row(modifier = modifier.fillMaxWidth().height(Dimension.ToolbarHeight).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(Dimension.ToolbarHeight)
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (action != null) {
+            Box(modifier = Modifier.width(48.dp)) {
+                action()
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+        }
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        if (action != null) action()
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
 
@@ -96,7 +109,7 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp)
-                .background(IntroPalette.SurfaceRaised)
+                .background(IntroPalette.PrimaryButton.copy(alpha = 0.3f))
                 .border(BorderStroke(1.dp, IntroPalette.BorderSubtle)),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
@@ -111,11 +124,11 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
             modifier = Modifier
                 .padding(bottom = 20.dp)
                 .size(60.dp)
-                .background(IntroPalette.PrimaryButton, CircleShape)
+                .background(IntroPalette.AccentLime, CircleShape)
                 .clickable { onSelected("createhub") },
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Create", tint = IntroPalette.TextPrimary, modifier = Modifier.size(28.dp))
+            Icon(Icons.Default.Add, contentDescription = "Create", tint = Color.Black, modifier = Modifier.size(28.dp))
         }
     }
 }

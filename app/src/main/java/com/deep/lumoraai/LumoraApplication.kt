@@ -4,6 +4,9 @@ import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
+import com.revenuecat.purchases.LogLevel
+import com.revenuecat.purchases.Purchases
+import com.revenuecat.purchases.PurchasesConfiguration
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +20,16 @@ class LumoraApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        
+        // Initialize RevenueCat
+        Purchases.logLevel = LogLevel.DEBUG
+        Purchases.configure(
+            PurchasesConfiguration.Builder(
+                context = this,
+                apiKey = "goog_placeholder_revenuecat_api_key" // Replace with real key in production
+            ).build()
+        )
+
         val appPreferences = AppPreferencesRepository.getInstance(this)
         registerActivityLifecycleCallbacks(
             object : ActivityLifecycleCallbacks {
