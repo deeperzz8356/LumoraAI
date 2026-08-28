@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -109,21 +110,21 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp)
-                .background(IntroPalette.PrimaryButton.copy(alpha = 0.3f))
-                .border(BorderStroke(1.dp, IntroPalette.BorderSubtle)),
+                .background(Color(0xFF11192B))
+                .border(BorderStroke(1.dp, Color(0xFF1B2A44))),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             NavItem(Icons.Default.Home, "Home", selected == "home", { onSelected("home") }, Modifier.weight(1f))
-            NavItem(Icons.Default.Search, "Explore", selected == "templates", { onSelected("templates") }, Modifier.weight(1f))
+            NavItem(Icons.Default.Search, "Templates", selected == "templates", { onSelected("templates") }, Modifier.weight(1f))
             Spacer(modifier = Modifier.width(72.dp))
-            NavItem(Icons.Default.List, "Queue", selected == "queue", { onSelected("queue") }, Modifier.weight(1f))
+            NavItem(Icons.Default.History, "History", selected == "history", { onSelected("history") }, Modifier.weight(1f))
             NavItem(Icons.Default.Person, "Profile", selected == "profile", { onSelected("profile") }, Modifier.weight(1f))
         }
         Box(
             modifier = Modifier
-                .padding(bottom = 20.dp)
-                .size(60.dp)
+                .padding(bottom = 26.dp)
+                .size(54.dp)
                 .background(IntroPalette.AccentLime, CircleShape)
                 .clickable { onSelected("createhub") },
             contentAlignment = Alignment.Center
@@ -141,7 +142,7 @@ private fun NavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val tint = if (isSelected) IntroPalette.IndicatorActive else IntroPalette.TextSubtle
+    val tint = if (isSelected) IntroPalette.AccentLime else Color(0xFF8A94A9)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

@@ -1,10 +1,24 @@
 package com.deep.lumoraai
 
+import android.content.Intent
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.deep.lumoraai.core.network.hasInternetConnection
 import com.deep.lumoraai.core.navigation.NavGraph
 import com.deep.lumoraai.core.theme.LumoraTheme
+import com.deep.lumoraai.feature.network.NoInternetScreen
 
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -15,7 +29,50 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             LumoraTheme {
-                NavGraph()
+                val context = LocalContext.current
+                var hasInternet by remember { mutableStateOf(context.hasInternetConnection()) }
+
+                DisposableEffect(context) {
+                    val connectivityManager =
+                        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                    val callback = object : ConnectivityManager.NetworkCallback() {
+                        override fun onAvailable(network: Network) {
+                            runOnUiThread { hasInternet = context.hasInternetConnection() }
+                        }
+
+                        override fun onLost(network: Network) {
+                            runOnUiThread { hasInternet = context.hasInternetConnection() }
+                        }
+
+                        override fun onCapabilitiesChanged(
+                            network: Network,
+                            networkCapabilities: android.net.NetworkCapabilities
+                        ) {
+                            runOnUiThread { hasInternet = context.hasInternetConnection() }
+                        }
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        connectivityManager.registerDefaultNetworkCallback(callback)
+                    }
+
+                    onDispose {
+                        runCatching { connectivityManager.unregisterNetworkCallback(callback) }
+                    }
+                }
+
+                if (hasInternet) {
+                    NavGraph()
+                } else {
+                    NoInternetScreen(
+                        onTurnOnNetwork = {
+                            startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+                        },
+                        onRetry = {
+                            hasInternet = context.hasInternetConnection()
+                        }
+                    )
+                }
             }
         }
     }

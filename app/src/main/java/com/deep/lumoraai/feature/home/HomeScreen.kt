@@ -1,7 +1,5 @@
 package com.deep.lumoraai.feature.home
 
-import android.net.Uri
-import android.widget.VideoView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -20,23 +17,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Compress
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -49,34 +43,36 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import coil.compose.AsyncImage
+import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.core.components.LumoraIntroBackground
-import com.deep.lumoraai.core.components.LumoraIntroPrimaryButton
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.createHubRoute
 import com.deep.lumoraai.core.restrictions.GenerationGate
-import com.deep.lumoraai.core.theme.IntroPalette
-import com.deep.lumoraai.core.theme.IntroTypography
 import kotlinx.coroutines.launch
 
-private val SectionShape = RoundedCornerShape(20.dp)
-private val CardShape = RoundedCornerShape(16.dp)
+private val HomeBackground = Color(0xFF081020)
+private val HomeCard = Color(0xFF10192D)
+private val HomeStroke = Color(0xFF1B2A44)
+private val Lime = Color(0xFFD6FF2F)
+private val Purple = Color(0xFF9C63FF)
+private val Pink = Color(0xFFFF3D9D)
+private val Cyan = Color(0xFF20E6F2)
+private val Muted = Color(0xFF94A0B8)
+private val CardShape = RoundedCornerShape(14.dp)
 
 @Composable
 fun HomeScreen(
@@ -90,16 +86,16 @@ fun HomeScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = IntroPalette.BackgroundBase,
+        containerColor = HomeBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = { BottomNavigationBar(emptyList(), "home", onNavigate) }
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(HomeBackground)
                 .padding(padding)
         ) {
-            LumoraIntroBackground()
             when (uiState) {
                 is HomeUiState.Loading -> AppLoadingScreen()
                 is HomeUiState.Error -> AppErrorScreen(message = uiState.message)
@@ -126,34 +122,19 @@ private fun HomeContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 18.dp)
+            .padding(top = 14.dp, bottom = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         HomeTopBar(
             userName = uiState.userName,
             credits = uiState.credits,
             onNavigate = onNavigate
         )
-        HomeVideoHeroSection(onNavigate = onNavigate)
-        if (uiState.recentItems.isNotEmpty()) {
-            HomeRecentlyUsedSection(items = uiState.recentItems)
-        }
-        HomeToolsSection(
-            title = "Image Tools",
-            icon = Icons.Default.Star,
-            tools = homeImageTools,
-            onNavigate = onNavigate,
-            onComingSoon = onComingSoon
-        )
-        HomeToolsSection(
-            title = "Video Tools",
-            icon = Icons.Default.PlayArrow,
-            tools = homeVideoTools,
-            onNavigate = onNavigate,
-            onComingSoon = onComingSoon
-        )
-        HomeUpgradeCard(onNavigate = onNavigate)
-        Spacer(modifier = Modifier.height(8.dp))
+        HomeHero()
+        MainCreateGrid(onNavigate = onNavigate, onComingSoon = onComingSoon)
+        ToolsSection(onNavigate = onNavigate, onComingSoon = onComingSoon)
+        Spacer(modifier = Modifier.height(2.dp))
     }
 }
 
@@ -168,55 +149,63 @@ private fun HomeTopBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = "Hello,", style = IntroTypography.greetingLabel)
-            Text(
-                text = userName,
-                style = IntroTypography.greetingName,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CreditsChip(
-                credits = credits,
-                onClick = { onNavigate(Screen.Credits.route) }
-            )
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = IntroPalette.TextPrimary,
-                modifier = Modifier
-                    .size(22.dp)
-                    .clickable { onNavigate(Screen.Notifications.route) }
-            )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(30.dp)
                     .clip(CircleShape)
+                    .border(1.dp, Color(0xFF2D77FF), CircleShape)
                     .clickable { onNavigate(Screen.Profile.route) }
-                    .border(
-                        width = 2.dp,
-                        brush = Brush.linearGradient(colors = listOf(Color(0xFF7E50EF), Color(0xFF39FF14))),
-                        shape = CircleShape
-                    ),
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.user_avatar),
+                    contentDescription = "Profile",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(
+                    text = "Hi, ${userName.ifBlank { "Alex" }}",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    lineHeight = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "Good Morning",
+                    color = Color.White.copy(alpha = 0.72f),
+                    fontSize = 10.sp,
+                    lineHeight = 12.sp
+                )
+            }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CreditsChip(credits = credits, onClick = { onNavigate(Screen.Credits.route) })
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clickable { onNavigate(Screen.Notifications.route) },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = "Profile",
-                    tint = IntroPalette.TextPrimary,
-                    modifier = Modifier.size(32.dp)
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = Color(0xFFDFF7F4),
+                    modifier = Modifier.size(20.dp)
                 )
                 Box(
                     modifier = Modifier
-                        .size(10.dp)
-                        .align(Alignment.BottomEnd)
-                        .background(Color(0xFF39FF14), CircleShape)
-                        .border(1.5.dp, Color.Black, CircleShape)
+                        .size(7.dp)
+                        .align(Alignment.TopEnd)
+                        .background(Lime, CircleShape)
                 )
             }
         }
@@ -228,441 +217,202 @@ private fun CreditsChip(credits: Int, onClick: () -> Unit) {
     val label = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
         "Unlimited"
     } else {
-        "$credits credits"
+        "$credits"
     }
-    Box(
+    Row(
         modifier = Modifier
-            .background(IntroPalette.SurfaceRaised, RoundedCornerShape(20.dp))
-            .border(1.dp, IntroPalette.BorderSubtle, RoundedCornerShape(20.dp))
+            .height(28.dp)
+            .clip(RoundedCornerShape(50))
+            .background(Color.White.copy(alpha = 0.05f))
+            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(text = label, style = IntroTypography.creditsChip)
-    }
-}
-
-
-@Composable
-private fun HomeVideoHeroSection(onNavigate: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        VideoCarousel()
-        Button(
-            onClick = { onNavigate(createHubRoute(tab = 1)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .align(Alignment.CenterHorizontally),
-            shape = RoundedCornerShape(50.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = IntroPalette.AccentLime
-            )
-        ) {
-            Text(
-                text = "Create Video Now",
-                color = Color.Black,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 0.3.sp
-            )
-        }
+        Text("◉", color = Lime, fontSize = 10.sp, lineHeight = 10.sp)
+        Text(label, color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
-private fun VideoCarousel() {
-    // Use Int.MAX_VALUE for infinite scrolling
-    val pageCount = Int.MAX_VALUE
-    val initialPage = pageCount / 2
-    val pagerState = androidx.compose.foundation.pager.rememberPagerState(
-        initialPage = initialPage,
-        pageCount = { pageCount }
-    )
-    
-    Column(
+private fun HomeHero() {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(520.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .height(118.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        androidx.compose.foundation.pager.HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            contentPadding = PaddingValues(horizontal = 0.dp),
-            pageSpacing = 0.dp
-        ) { page ->
-            val actualIndex = page % homeVideoFeatures.size
-            VideoCard(feature = homeVideoFeatures[actualIndex])
-        }
-        // Centered auto-scrolling indicator
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            repeat(homeVideoFeatures.size) { index ->
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(
-                            if (index == pagerState.currentPage % homeVideoFeatures.size) IntroPalette.AccentLime else IntroPalette.BorderSubtle,
-                            RoundedCornerShape(4.dp)
-                        )
-                )
-                if (index < homeVideoFeatures.size - 1) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                }
+        Column(modifier = Modifier.weight(1f)) {
+            Text("What will we", color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
+            Text("Create", color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Today?", color = Lime, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Turn ideas into stunning visuals", color = Muted, fontSize = 10.sp, lineHeight = 18.sp)
+            Row(modifier = Modifier.padding(top = 4.dp)) {
+                Box(modifier = Modifier.width(34.dp).height(2.dp).background(Lime))
+                Box(modifier = Modifier.width(34.dp).height(2.dp).background(Purple))
             }
         }
+        HeroPreviewArt()
     }
 }
 
 @Composable
-private fun VideoCard(feature: HomeVideoFeature) {
+private fun HeroPreviewArt() {
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .clip(CardShape)
-            .border(1.dp, IntroPalette.BorderSubtle, CardShape)
+            .width(92.dp)
+            .height(84.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(Color(0xFF6E35E7), Color(0xFF24163F), Color(0xFF10182D))
+                )
+            )
+            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp)),
+        contentAlignment = Alignment.Center
     ) {
-        AndroidView(
-            factory = { ctx ->
-                VideoView(ctx).apply {
-                    val uri = Uri.parse(
-                        "android.resource://${ctx.packageName}/${feature.rawResId}"
-                    )
-                    setVideoURI(uri)
-                    setOnPreparedListener { mp ->
-                        mp.isLooping = true
-                        mp.setVolume(0f, 0f)
-                        start()
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CardShape)
+        Image(
+            painter = painterResource(id = R.drawable.group_48096841),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
-        
-        // Dark overlay for text readability
-        Box(
+        Icon(
+            imageVector = Icons.Default.PlayArrow,
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.88f),
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.3f),
-                            Color.Black.copy(alpha = 0.6f)
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY
-                    )
-                )
+                .size(34.dp)
+                .shadow(10.dp, CircleShape)
         )
-        
-        // Centered text content
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Main title - large and bold
-            Text(
-                text = feature.label,
-                color = Color.White,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center,
-                lineHeight = 52.sp,
-                letterSpacing = 1.2.sp
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Subtitle
-            Text(
-                text = feature.description,
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                lineHeight = 26.sp
-            )
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            // Tagline
-            Text(
-                text = feature.tagline,
-                color = Color.White.copy(alpha = 0.9f),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                lineHeight = 22.sp
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Tags/Features
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                feature.tags.forEachIndexed { index, tag ->
-                    Box(
-                        modifier = Modifier
-                            .border(
-                                width = 1.5.dp,
-                                color = Color.White.copy(alpha = 0.7f),
-                                shape = RoundedCornerShape(20.dp)
-                            )
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = tag,
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    if (index < feature.tags.size - 1) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                }
-            }
-        }
     }
 }
 
-
 @Composable
-private fun HomeRecentlyUsedSection(items: List<HomeRecentItem>) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(text = "Recently Used", style = IntroTypography.sectionTitle)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items.forEach { item ->
-                RecentItemCard(item = item, modifier = Modifier.weight(1f))
-            }
+private fun MainCreateGrid(
+    onNavigate: (String) -> Unit,
+    onComingSoon: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
+            CreateActionCard("Text → Image", "DREAM IT", Icons.Default.AutoAwesome, Lime, { onNavigate(createHubRoute(tab = 0)) }, Modifier.weight(1f))
+            CreateActionCard("Img → Img", "REFINE IT", Icons.Default.Image, Purple, onComingSoon, Modifier.weight(1f))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
+            CreateActionCard("Img → Video", "ANIMATE IT", Icons.Default.Movie, Pink, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
+            CreateActionCard("Text → Video", "DIRECT IT", Icons.Default.PlayArrow, Cyan, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun RecentItemCard(item: HomeRecentItem, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.5f)
-                .clip(CardShape)
-                .border(1.dp, IntroPalette.BorderSubtle, CardShape)
-        ) {
-            if (!item.mediaUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = item.mediaUrl,
-                    contentDescription = item.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = item.fallbackImageRes),
-                    contentDescription = item.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = item.title,
-            style = IntroTypography.cardTitle,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Text(text = item.timeLabel, style = IntroTypography.cardSubtitle)
-    }
-}
-
-@Composable
-private fun HomeToolsSection(
+private fun CreateActionCard(
     title: String,
+    subtitle: String,
     icon: ImageVector,
-    tools: List<HomeToolItem>,
-    onNavigate: (String) -> Unit,
-    onComingSoon: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(IntroPalette.SurfaceRaised, SectionShape)
-            .border(1.dp, IntroPalette.BorderSubtle, SectionShape)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = IntroPalette.SecondaryText, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = title, style = IntroTypography.sectionTitle)
-        }
-        ToolsGrid(tools = tools, onNavigate = onNavigate, onComingSoon = onComingSoon)
-    }
-}
-
-@Composable
-private fun ToolsGrid(
-    tools: List<HomeToolItem>,
-    onNavigate: (String) -> Unit,
-    onComingSoon: () -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        for (i in tools.indices step 2) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ToolCardItem(
-                    info = tools[i],
-                    onNavigate = onNavigate,
-                    onComingSoon = onComingSoon,
-                    modifier = Modifier.weight(1f)
-                )
-                if (i + 1 < tools.size) {
-                    ToolCardItem(
-                        info = tools[i + 1],
-                        onNavigate = onNavigate,
-                        onComingSoon = onComingSoon,
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ToolCardItem(
-    info: HomeToolItem,
-    onNavigate: (String) -> Unit,
-    onComingSoon: () -> Unit,
+    accent: Color,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        onClick = { handleToolClick(info, onNavigate, onComingSoon) },
-        modifier = modifier.height(108.dp),
+        onClick = onClick,
+        modifier = modifier.height(91.dp),
         shape = CardShape,
-        color = IntroPalette.BackgroundBase,
-        border = BorderStroke(1.dp, IntroPalette.BorderSubtle)
+        color = HomeCard,
+        border = BorderStroke(1.dp, HomeStroke)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFF18243C)),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    info.icon,
-                    contentDescription = null,
-                    tint = IntroPalette.TextMuted,
-                    modifier = Modifier.size(20.dp)
-                )
-                if (info.badge != null) {
-                    ToolBadge(text = info.badge)
-                }
+                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(17.dp))
             }
-            Column {
+            Column(modifier = Modifier.align(Alignment.BottomStart)) {
                 Text(
-                    info.title,
-                    style = IntroTypography.toolTitle,
+                    text = title,
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    lineHeight = 15.sp,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    info.description,
-                    style = IntroTypography.toolDescription,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    text = subtitle,
+                    color = Color.White.copy(alpha = 0.58f),
+                    fontSize = 8.sp,
+                    lineHeight = 11.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .align(Alignment.BottomEnd)
+                    .border(1.dp, accent, CircleShape)
+            )
         }
     }
 }
 
-private fun handleToolClick(
-    info: HomeToolItem,
+@Composable
+private fun ToolsSection(
     onNavigate: (String) -> Unit,
     onComingSoon: () -> Unit,
 ) {
-    when (info.destination) {
-        HomeToolDestination.CreateHubImage -> onNavigate(createHubRoute(tab = 0))
-        HomeToolDestination.CreateHubVideo -> onNavigate(createHubRoute(tab = 1))
-        HomeToolDestination.Templates -> onNavigate(Screen.Templates.route)
-        HomeToolDestination.ComingSoon -> onComingSoon()
+    Column(verticalArrangement = Arrangement.spacedBy(13.dp)) {
+        Text("Tools", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+        Row(horizontalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
+            SmallToolCard("AI BG\nREPLACE", Icons.Default.AutoAwesome, Cyan, onComingSoon, Modifier.weight(1f))
+            SmallToolCard("PHOTO\nENHANCE", Icons.Default.Tune, Purple, onComingSoon, Modifier.weight(1f))
+            SmallToolCard("BG\nREMOVER", Icons.Default.PhotoCamera, Color(0xFF7D86FF), onComingSoon, Modifier.weight(1f))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
+            SmallToolCard("VIDEO ADS", Icons.Default.VideoLibrary, Pink, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
+            SmallToolCard("COMPRESS", Icons.Default.Compress, Lime, onComingSoon, Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
+        }
     }
 }
 
 @Composable
-private fun ToolBadge(text: String, modifier: Modifier = Modifier) {
-    val bgColor = when (text) {
-        "Popular" -> IntroPalette.PrimaryButton.copy(alpha = 0.25f)
-        "New" -> IntroPalette.AccentLime.copy(alpha = 0.2f)
-        else -> IntroPalette.SecondaryText.copy(alpha = 0.15f)
-    }
-    val textColor = when (text) {
-        "Popular" -> IntroPalette.SecondaryText
-        "New" -> IntroPalette.AccentLime
-        else -> IntroPalette.SecondaryText
-    }
-    Box(
-        modifier = modifier
-            .background(bgColor, RoundedCornerShape(6.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+private fun SmallToolCard(
+    title: String,
+    icon: ImageVector,
+    accent: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.aspectRatio(0.84f),
+        shape = CardShape,
+        color = HomeCard,
+        border = BorderStroke(1.dp, HomeStroke)
     ) {
-        Text(text = text, color = textColor, style = IntroTypography.badge)
-    }
-}
-
-@Composable
-private fun HomeUpgradeCard(onNavigate: (String) -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(IntroPalette.SurfaceRaised, SectionShape)
-            .border(1.dp, IntroPalette.BorderSubtle, SectionShape)
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(text = "Upgrade to Pro", style = IntroTypography.upgradeTitle)
-        Text(
-            text = "Unlock priority queue, HD output, and more credits every month.",
-            style = IntroTypography.body,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        LumoraIntroPrimaryButton(
-            text = "View plans",
-            onClick = { onNavigate(Screen.Subscription.route) }
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = title,
+                color = Color.White.copy(alpha = 0.78f),
+                fontSize = 8.sp,
+                lineHeight = 10.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }

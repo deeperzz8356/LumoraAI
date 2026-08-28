@@ -1,10 +1,12 @@
 package com.deep.lumoraai.core.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.feature.auth.AuthRoute
 import com.deep.lumoraai.feature.createhub.CreateHubRoute
 import com.deep.lumoraai.feature.credits.CreditsRoute
@@ -27,10 +29,12 @@ import com.google.firebase.auth.FirebaseAuth
 
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import kotlinx.coroutines.launch
 
 @Composable
 fun NavGraph(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
+    val coroutineScope = rememberCoroutineScope()
     fun next(screen: Screen) = { navController.goTo(screen.nextScreen().route) }
 
     NavHost(navController = navController, startDestination = Screen.Splash.route, modifier = modifier) {
@@ -44,7 +48,18 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
         composable(Screen.Language.route) { LanguageRoute(onNext = next(Screen.Language)) }
-        composable(Screen.Onboarding.route) { OnboardingRoute(onNext = next(Screen.Onboarding)) }
+        composable(Screen.Onboarding.route) {
+            OnboardingRoute(
+                onNext = {
+                    coroutineScope.launch {
+                        if (FirebaseAuth.getInstance().currentUser == null) {
+                            AuthRepository().loginAnonymouslyAndSync()
+                        }
+                        navController.goTo(Screen.Home.route)
+                    }
+                }
+            )
+        }
         composable(Screen.Auth.route) { AuthRoute(onNext = next(Screen.Auth)) }
         composable(Screen.Home.route) { HomeRoute(onNext = next(Screen.Home), onNavigate = { navController.goTo(it) }) }
         composable(

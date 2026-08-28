@@ -8,21 +8,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.theme.IntroPalette
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun CreateHubRoute(
@@ -32,36 +28,37 @@ fun CreateHubRoute(
     initialTab: Int = 0,
     viewModel: CreateHubViewModel = viewModel()
 ) {
-    val auth = FirebaseAuth.getInstance()
-    var showAuthDialog by remember { mutableStateOf(false) }
-    val user = auth.currentUser
+    val uiState = viewModel.uiState
 
-    // If user is not logged in, show auth dialog when trying to generate
-    if (showAuthDialog && user == null) {
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            CreateHubUiState.Generating -> onNavigate(Screen.Queue.route)
+            CreateHubUiState.TrialExpired -> {
+                onNavigate(Screen.Auth.route)
+                viewModel.load()
+            }
+            else -> Unit
+        }
+    }
+
+    if (uiState is CreateHubUiState.TrialExpired) {
         AuthDialog(
-            onDismiss = { showAuthDialog = false },
+            title = "Free trial finished",
+            message = GenerationGate.insufficientCreditsMessage(),
+            onDismiss = { viewModel.load() },
             onNavigateToAuth = { onNavigate(Screen.Auth.route) }
         )
     }
 
     CreateHubScreen(
-        uiState = viewModel.uiState,
+        uiState = uiState,
         initialPrompt = initialPrompt,
         initialTab = initialTab,
         onGenerateImage = { prompt, style, width, height, negativePrompt, sourceImageB64 -> 
-            if (user == null) {
-                showAuthDialog = true
-            } else {
-                viewModel.generateImage(prompt, style, width, height, negativePrompt, sourceImageB64)
-                onNavigate(Screen.Queue.route)
-            }
+            viewModel.generateImage(prompt, style, width, height, negativePrompt, sourceImageB64)
         },
         onGenerateVideo = { prompt, engine, sourceImage, motionStrength, cameraDir, duration ->
-            if (user == null) {
-                showAuthDialog = true
-            } else {
-                viewModel.generateVideo(prompt, engine, sourceImage, motionStrength, cameraDir, duration)
-            }
+            viewModel.generateVideo(prompt, engine, sourceImage, motionStrength, cameraDir, duration)
         },
         onResetState = { viewModel.load() },
         onNext = onNext, 
@@ -71,15 +68,17 @@ fun CreateHubRoute(
 
 @Composable
 fun AuthDialog(
+    title: String = "Login Required",
+    message: String = "Please login to generate images and videos. Your credits and history will be synced across devices.",
     onDismiss: () -> Unit,
     onNavigateToAuth: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Login Required", color = IntroPalette.TextPrimary) },
+        title = { Text(title, color = IntroPalette.TextPrimary) },
         text = { 
             Text(
-                "Please login to generate images and videos. Your credits and history will be synced across devices.",
+                message,
                 color = IntroPalette.TextMuted
             )
         },

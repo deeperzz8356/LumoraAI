@@ -3,13 +3,15 @@ package com.deep.lumoraai.feature.onboarding
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,27 +21,19 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -51,9 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.LumoraIntroBackground
-import com.deep.lumoraai.core.components.LumoraIntroLogo
-import com.deep.lumoraai.core.components.LumoraIntroPrimaryButton
-import com.deep.lumoraai.core.components.LumoraIntroSecondaryButton
 import com.deep.lumoraai.core.theme.IntroPalette
 
 @Composable
@@ -75,11 +66,10 @@ fun OnboardingScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding() // Ensures no overlap with status/nav bars
+                .systemBarsPadding()
         ) {
-            OnboardingTopBar(currentStep = currentStep, onSkip = onNext)
+            OnboardingTopBar(onSkip = onNext)
             
-            // Step Content takes up remaining space
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -89,89 +79,111 @@ fun OnboardingScreen(
                 StandardStepScreen(currentStep = page + 1)
             }
             
-            // Fixed Bottom Controls
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp)
-            ) {
-                if (currentStep < 5) {
-                    OnboardingControls(
-                        currentStep = currentStep,
-                        onNext = { 
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
+            OnboardingControls(
+                currentStep = currentStep,
+                isLastStep = currentStep == 5,
+                onNext = {
+                    if (currentStep < 5) {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }
-                    )
-                } else {
-                    OnboardingFinalControls(onGetStarted = onNext)
-                }
-            }
+                    } else {
+                        onNext()
+                    }
+                },
+                modifier = Modifier.padding(bottom = 28.dp)
+            )
         }
     }
 }
 
 @Composable
-fun OnboardingTopBar(currentStep: Int, onSkip: () -> Unit) {
-    Row(
+fun OnboardingTopBar(onSkip: () -> Unit) {
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .padding(horizontal = 24.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .height(58.dp)
     ) {
-        if (currentStep == 1 || currentStep == 5) {
-            LumoraIntroLogo()
-        } else {
-            Spacer(modifier = Modifier.size(1.dp))
+        OnboardingBrandMark(modifier = Modifier.align(Alignment.TopStart))
+        TextButton(
+            onClick = onSkip,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 10.dp, end = 10.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = "Skip",
+                style = MaterialTheme.typography.labelMedium,
+                color = IntroPalette.TextMuted
+            )
         }
-        if (currentStep < 5) {
-            TextButton(onClick = onSkip) {
-                Text(
-                    text = "Skip",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = IntroPalette.TextMuted
-                )
+    }
+}
+
+@Composable
+fun OnboardingBrandMark(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.size(width = 54.dp, height = 52.dp)) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val path = Path().apply {
+                moveTo(0f, 0f)
+                lineTo(size.width, 0f)
+                lineTo(size.width, size.height)
+                lineTo(0f, size.height * 0.84f)
+                close()
             }
-        } else {
-            Spacer(modifier = Modifier.size(1.dp))
+            drawPath(path = path, color = IntroPalette.AccentLime)
         }
+        Text(
+            text = "ai",
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            modifier = Modifier.align(Alignment.Center)
+        )
     }
 }
 
 @Composable
 fun StandardStepScreen(currentStep: Int) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Fixed height for title area so it doesn't shift the layout
-        Box(
-            modifier = Modifier.fillMaxWidth().height(110.dp),
-            contentAlignment = Alignment.Center
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val compactHeight = maxHeight < 620.dp
+        val imageAspectRatio = if (compactHeight) 0.92f else 0.8f
+        val imageTopSpacing = if (compactHeight) 12.dp else 22.dp
+        val descriptionTopSpacing = if (compactHeight) 18.dp else 28.dp
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            StepTitle(step = currentStep)
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Fixed height for image
-        Box(
-            modifier = Modifier.fillMaxWidth().height(320.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            StepIllustration(
-                step = currentStep,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        // Description (hidden on step 5 to prevent overlap with large controls)
-        if (currentStep != 5) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(if (compactHeight) 92.dp else 112.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                StepTitle(step = currentStep)
+            }
+
+            Spacer(modifier = Modifier.height(imageTopSpacing))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(imageAspectRatio)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                StepIllustration(
+                    step = currentStep,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            Spacer(modifier = Modifier.height(descriptionTopSpacing))
+
             StepDescription(step = currentStep)
         }
     }
@@ -198,13 +210,9 @@ fun StepTitle(step: Int, modifier: Modifier = Modifier) {
 @Composable
 fun StepOneTitle() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Next-Gen", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        }
-        Text("AI Text to Image", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Generation Tool", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = IntroPalette.SecondaryText)
-        }
+        Text("Next-Gen", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text("AI Text to Image", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text("Generation Tool", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = IntroPalette.SecondaryText)
     }
 }
 
@@ -215,22 +223,22 @@ fun StepTwoTitle() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("Cinematic ", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text("Cinematic ", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Box(
                 modifier = Modifier
                     .background(IntroPalette.AccentPink, RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text("Video", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Video", fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            UnderlinedText(text = "Generation", fontSize = 28.sp)
-            Text(" from Images", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            UnderlinedText(text = "Generation", fontSize = 24.sp)
+            Text(" from Images", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -247,17 +255,17 @@ fun StepThreeTitle() {
                     .background(IntroPalette.AccentPink, RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text("Generate", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Generate", fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
-            Text(" Videos", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(" Videos", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            UnderlinedText(text = "from Text", fontSize = 28.sp)
-            Text(" Prompts", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            UnderlinedText(text = "from Text", fontSize = 24.sp)
+            Text(" Prompts", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -269,30 +277,28 @@ fun StepFourTitle() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("AI-", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text("AI-", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Box(
                 modifier = Modifier
                     .background(IntroPalette.AccentPink, RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text("Powered", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Powered", fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
-        Spacer(modifier = Modifier.height(6.dp))
-        UnderlinedText(text = "Face Swap Technology", fontSize = 28.sp)
+        Spacer(modifier = Modifier.height(4.dp))
+        UnderlinedText(text = "Face Swap Technology", fontSize = 24.sp)
     }
 }
 
 @Composable
 fun StepFiveTitle() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("Welcome to", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Welcome to", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("AI- ", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Text("Background", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = IntroPalette.AccentPink)
-            Text(" Eraser", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text("AI- ", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text("Background", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = IntroPalette.AccentPink)
+            Text(" Eraser", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -338,7 +344,7 @@ fun StepDescription(step: Int, modifier: Modifier = Modifier) {
         textAlign = TextAlign.Center,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 8.dp),
         lineHeight = 20.sp
     )
 }
@@ -359,7 +365,7 @@ fun StepIllustration(step: Int, modifier: Modifier = Modifier) {
             painter = painterResource(id = imageRes),
             contentDescription = "Step $step",
             modifier = modifier,
-            contentScale = ContentScale.Fit
+            contentScale = ContentScale.Crop
         )
     }
 }
@@ -367,18 +373,23 @@ fun StepIllustration(step: Int, modifier: Modifier = Modifier) {
 @Composable
 fun OnboardingControls(
     currentStep: Int,
+    isLastStep: Boolean,
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = 22.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         OnboardingIndicators(currentStep = currentStep)
-        OnboardingNextButton(onNext = onNext)
+        if (isLastStep) {
+            OnboardingStartButton(onGetStarted = onNext)
+        } else {
+            OnboardingNextButton(onNext = onNext)
+        }
     }
 }
 
@@ -388,7 +399,7 @@ fun OnboardingIndicators(currentStep: Int) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        repeat(4) { idx ->
+        repeat(5) { idx ->
             val active = idx + 1 == currentStep
             Box(
                 modifier = Modifier
@@ -405,22 +416,16 @@ fun OnboardingIndicators(currentStep: Int) {
 
 @Composable
 fun OnboardingNextButton(onNext: () -> Unit) {
-    LumoraIntroPrimaryButton(text = "Next", onClick = onNext)
-}
-
-@Composable
-fun OnboardingFinalControls(
-    onGetStarted: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp)
+    Button(
+        onClick = onNext,
+        colors = ButtonDefaults.buttonColors(containerColor = IntroPalette.PrimaryButton),
+        modifier = Modifier
+            .width(82.dp)
+            .height(48.dp),
+        shape = RoundedCornerShape(24.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
     ) {
-        OnboardingStartButton(onGetStarted = onGetStarted)
+        Text("Next", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
     }
 }
 
@@ -429,8 +434,11 @@ fun OnboardingStartButton(onGetStarted: () -> Unit) {
     Button(
         onClick = onGetStarted,
         colors = ButtonDefaults.buttonColors(containerColor = IntroPalette.PrimaryButton),
-        modifier = Modifier.fillMaxWidth().height(56.dp),
-        shape = RoundedCornerShape(28.dp)
+        modifier = Modifier
+            .width(132.dp)
+            .height(48.dp),
+        shape = RoundedCornerShape(24.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

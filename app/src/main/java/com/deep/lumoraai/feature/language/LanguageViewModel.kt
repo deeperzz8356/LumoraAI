@@ -16,20 +16,18 @@ class LanguageViewModel : ViewModel() {
 
     private fun loadLanguages() {
         val languages = listOf(
-            LanguageModel("en", "English", "🇬🇧"),
-            LanguageModel("hi", "Hindi", "🇮🇳"),
-            LanguageModel("es", "Spanish", "🇪🇸"),
-            LanguageModel("nl", "Dutch", "🇳🇱"),
-            LanguageModel("it", "Italian", "🇮🇹"),
-            LanguageModel("pt", "Portuguese", "🇵🇹"),
-            LanguageModel("tr", "Turkish", "🇹🇷"),
-            LanguageModel("th", "Thai", "🇹🇭"),
-            LanguageModel("vi", "Vietnamese", "🇻🇳"),
-            LanguageModel("ar", "Arabic", "🇸🇦"),
-            LanguageModel("ko", "Korean", "🇰🇷"),
-            LanguageModel("ja", "Japanese", "🇯🇵"),
-            LanguageModel("zh", "Chinese (Simplified)", "🇨🇳"),
-            LanguageModel("zht", "Chinese (Traditional)", "🇹🇼")
+            LanguageModel("en", "English", "🇺🇸"),
+            LanguageModel("vi", "Tiếng Việt", "🇻🇳"),
+            LanguageModel("es", "Español", "🇪🇸"),
+            LanguageModel("fr", "Français", "🇫🇷"),
+            LanguageModel("de", "Deutsch", "🇩🇪"),
+            LanguageModel("it", "Italiano", "🇮🇹"),
+            LanguageModel("pt", "Português", "🇧🇷"),
+            LanguageModel("tr", "Türkçe", "🇹🇷"),
+            LanguageModel("ar", "العربية", "🇸🇦"),
+            LanguageModel("hi", "हिन्दी", "🇮🇳"),
+            LanguageModel("ko", "한국어", "🇰🇷"),
+            LanguageModel("zh", "中文", "🇨🇳")
         )
         uiState = LanguageUiState.Success(
             languages = languages,

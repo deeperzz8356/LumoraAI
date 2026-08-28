@@ -1,14 +1,10 @@
 package com.deep.lumoraai.feature.templates
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,25 +16,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,30 +37,88 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.components.AppEmptyScreen
+import com.deep.lumoraai.core.components.AppErrorScreen
+import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.core.components.LumoraIntroBackground
+import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.createHubRoute
-import com.deep.lumoraai.core.theme.IntroPalette
-import com.deep.lumoraai.core.theme.IntroTypography
-import kotlinx.coroutines.delay
 
-private val TemplateSectionShape = RoundedCornerShape(20.dp)
-private val TemplateCardShape = RoundedCornerShape(16.dp)
-private val TemplateImageShape = RoundedCornerShape(14.dp)
+private val TemplateBackground = Color(0xFF081020)
+private val TemplatePanel = Color(0xFF111A2D)
+private val TemplateCard = Color(0xFF0E172A)
+private val TemplateStroke = Color(0xFF1B2A44)
+private val TemplateSelected = Color(0xFF57647A)
+private val Lime = Color(0xFFD6FF2F)
+private val Muted = Color(0xFF9BA6BA)
 
-data class TemplateItem(
-    val id: String,
+private data class TemplateListItem(
     val title: String,
+    val subtitle: String,
     val prompt: String,
-    val category: String,
-    val imageRes: Int
+    val imageRes: Int,
+)
+
+private val imageTemplates = listOf(
+    TemplateListItem(
+        title = "Cyberpunk Portrait",
+        subtitle = "Generate neon-drenched, high-contrast futuristic...",
+        prompt = "A neon-drenched cyberpunk portrait, dramatic high-contrast lighting, futuristic city reflections, cinematic detail.",
+        imageRes = R.drawable.style_digital,
+    ),
+    TemplateListItem(
+        title = "Glass UI Mockups",
+        subtitle = "Create stunning, translucent interface designs with deep...",
+        prompt = "A polished glassmorphism UI mockup with translucent panels, glowing accents, deep shadows, premium app interface.",
+        imageRes = R.drawable.group_48096841,
+    ),
+    TemplateListItem(
+        title = "Ethereal Landscapes",
+        subtitle = "Generate otherworldly environments with crystalline...",
+        prompt = "An ethereal crystalline landscape with glowing water, misty mountains, luminous plants, surreal cinematic atmosphere.",
+        imageRes = R.drawable.style_fantasy,
+    ),
+    TemplateListItem(
+        title = "Quantum Mechanics",
+        subtitle = "Detailed macro photography of futuristic machinery...",
+        prompt = "Detailed macro photography of futuristic quantum machinery, glowing circuits, blue energy rings, ultra sharp mechanical detail.",
+        imageRes = R.drawable.style_anime,
+    ),
+)
+
+private val videoTemplates = listOf(
+    TemplateListItem(
+        title = "Cinematic Product Spin",
+        subtitle = "Turn objects into smooth rotating studio visuals...",
+        prompt = "A cinematic product spin video with glossy reflections, dramatic rim light, slow camera movement, premium studio style.",
+        imageRes = R.drawable.onboarding_3_ill,
+    ),
+    TemplateListItem(
+        title = "AI Character Reveal",
+        subtitle = "Create a dramatic animated character entrance...",
+        prompt = "A dramatic AI character reveal with glowing particles, slow push-in camera, neon atmosphere, cinematic motion.",
+        imageRes = R.drawable.onboarding_1_ill,
+    ),
+    TemplateListItem(
+        title = "Dream Travel Shot",
+        subtitle = "Animate surreal places with soft camera motion...",
+        prompt = "A dreamlike travel video through an otherworldly landscape, soft floating camera, glowing horizon, atmospheric movement.",
+        imageRes = R.drawable.onboarding_4_ill,
+    ),
+    TemplateListItem(
+        title = "Social Video Ad",
+        subtitle = "Generate punchy promotional clips with movement...",
+        prompt = "A punchy social media video ad with energetic motion, bright highlights, fast product reveal, premium visual polish.",
+        imageRes = R.drawable.onboarding_5_ill,
+    ),
 )
 
 @Composable
@@ -82,7 +130,7 @@ fun TemplatesScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = IntroPalette.BackgroundBase,
+        containerColor = TemplateBackground,
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
@@ -94,384 +142,233 @@ fun TemplatesScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(TemplateBackground)
                 .padding(padding)
         ) {
-            LumoraIntroBackground()
-            TemplatesContent(onNavigate = onNavigate)
+            when (uiState) {
+                is TemplatesUiState.Loading -> AppLoadingScreen()
+                is TemplatesUiState.Error -> AppErrorScreen(message = uiState.message)
+                is TemplatesUiState.Empty -> AppEmptyScreen(title = "No Templates", body = "Templates will appear here.")
+                is TemplatesUiState.Success -> TemplatesContent(onNavigate = onNavigate)
+            }
         }
     }
 }
 
 @Composable
 private fun TemplatesContent(onNavigate: (String) -> Unit) {
-    val context = LocalContext.current
-    val clipboardManager = remember {
-        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    }
-
-    val templateItems = remember {
-        listOf(
-            TemplateItem(
-                id = "tpl-1",
-                title = "Cyberpunk Cathedral",
-                prompt = "A breathtaking cyberpunk cathedral, neon glowing gothic architecture, flying cars hovering above, rain-slicked dark streets, hyper-detailed cyberpunk aesthetic.",
-                category = "Fantasy",
-                imageRes = R.drawable.style_digital
-            ),
-            TemplateItem(
-                id = "tpl-2",
-                title = "Fantasy Elven Valley",
-                prompt = "A mystical elven valley with waterfalls, glowing bioluminescent flora, ancient giant trees, ethereal sunlight filtering through leaves, fantasy scenery.",
-                category = "Fantasy",
-                imageRes = R.drawable.style_fantasy
-            ),
-            TemplateItem(
-                id = "tpl-3",
-                title = "Classic Anime Street",
-                prompt = "A peaceful Tokyo street in anime style, cherry blossoms falling, late afternoon warm sunlight casting long shadows, highly detailed retro anime vibe.",
-                category = "Anime",
-                imageRes = R.drawable.style_anime
-            ),
-            TemplateItem(
-                id = "tpl-4",
-                title = "Vibrant Cartoon Landscape",
-                prompt = "A colorful, vibrant cartoon meadow with rolling green hills, fluffy white clouds in a bright blue sky, whimsical trees, high-quality cartoon background.",
-                category = "Wallpapers",
-                imageRes = R.drawable.style_cartoon
-            )
-        )
-    }
-
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("All Styles") }
-
-    val filteredTemplates = remember(searchQuery, selectedFilter) {
-        templateItems.filter { item ->
-            val matchesFilter = selectedFilter == "All Styles" ||
-                item.category.equals(selectedFilter, ignoreCase = true)
-            val matchesQuery = searchQuery.isBlank() ||
-                item.title.contains(searchQuery, ignoreCase = true) ||
-                item.prompt.contains(searchQuery, ignoreCase = true)
-            matchesFilter && matchesQuery
-        }
-    }
+    var selectedType by remember { mutableStateOf("Image") }
+    val templates = if (selectedType == "Image") imageTemplates else videoTemplates
+    val targetTab = if (selectedType == "Image") 0 else 1
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 16.dp)
+            .padding(top = 14.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 720.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
-        ) {
-            TemplatesTopBar()
-            TemplatesHeader()
-            TemplatesSearchBar(query = searchQuery, onQueryChange = { searchQuery = it })
-            FilterPillsHorizontal(
-                selectedFilter = selectedFilter,
-                onFilterSelect = { selectedFilter = it }
-            )
-            filteredTemplates.forEach { item ->
-                TemplateCard(
+        TemplatesTopBar(onNavigate = onNavigate)
+        TemplateTypeTabs(selectedType = selectedType, onSelected = { selectedType = it })
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            templates.forEach { item ->
+                TemplateRow(
                     item = item,
-                    onCopyClick = { promptText ->
-                        val clip = ClipData.newPlainText("prompt", promptText)
-                        clipboardManager.setPrimaryClip(clip)
-                    },
-                    onCreateClick = { promptText ->
-                        onNavigate(createHubRoute(prompt = promptText))
+                    onClick = {
+                        onNavigate(createHubRoute(prompt = item.prompt, tab = targetTab))
                     }
                 )
             }
-            if (filteredTemplates.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .background(IntroPalette.SurfaceRaised, TemplateSectionShape)
-                        .border(1.dp, IntroPalette.BorderSubtle, TemplateSectionShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No templates found matching your search.",
-                        style = IntroTypography.body
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-private fun TemplatesTopBar() {
+private fun TemplatesTopBar(onNavigate: (String) -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.Star,
-                contentDescription = null,
-                tint = IntroPalette.AccentLime,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Lumora AI", style = IntroTypography.greetingName)
-        }
-        Icon(
-            Icons.Default.Menu,
-            contentDescription = "Open menu",
-            tint = IntroPalette.TextPrimary,
-            modifier = Modifier.size(24.dp)
-        )
-    }
-}
-
-@Composable
-private fun TemplatesHeader() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(IntroPalette.SurfaceRaised.copy(alpha = 0.78f), TemplateSectionShape)
-            .border(1.dp, IntroPalette.BorderSubtle, TemplateSectionShape)
-            .padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .background(IntroPalette.PrimaryButton.copy(alpha = 0.22f), RoundedCornerShape(8.dp))
-                .border(1.dp, IntroPalette.PrimaryButton.copy(alpha = 0.34f), RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 5.dp)
-        ) {
-            Text(
-                text = "Premium prompt library",
-                style = IntroTypography.badge.copy(color = IntroPalette.SecondaryText)
-            )
-        }
-        Text(
-            text = "Image Templates",
-            style = IntroTypography.greetingName.copy(fontSize = 28.sp, lineHeight = 34.sp)
-        )
-        Text(
-            text = "Curated prompts for cinematic images, polished scenes, and fast creation.",
-            style = IntroTypography.body
-        )
-    }
-}
-
-@Composable
-private fun TemplatesSearchBar(query: String, onQueryChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        placeholder = {
-            Text(
-                text = "Search templates...",
-                style = IntroTypography.body.copy(color = IntroPalette.TextLegal)
-            )
-        },
-        leadingIcon = {
-            Icon(
-                Icons.Default.Search,
-                contentDescription = null,
-                tint = IntroPalette.AccentLime.copy(alpha = 0.72f)
-            )
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(54.dp),
-        shape = RoundedCornerShape(26.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = IntroPalette.SurfaceRaised,
-            unfocusedContainerColor = IntroPalette.SurfaceRaised,
-            focusedBorderColor = IntroPalette.AccentLime.copy(alpha = 0.62f),
-            unfocusedBorderColor = IntroPalette.BorderSubtle,
-            focusedTextColor = IntroPalette.TextPrimary,
-            unfocusedTextColor = IntroPalette.TextPrimary,
-            cursorColor = IntroPalette.AccentLime
-        ),
-        singleLine = true
-    )
-}
-
-@Composable
-private fun FilterPillsHorizontal(selectedFilter: String, onFilterSelect: (String) -> Unit) {
-    val filters = listOf("All Styles", "Wallpapers", "Anime", "Fantasy")
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        filters.forEach { filter ->
-            val isSelected = selectedFilter == filter
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Box(
                 modifier = Modifier
-                    .background(
-                        color = if (isSelected) IntroPalette.AccentLime else IntroPalette.SurfaceRaised,
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                    .border(
-                        BorderStroke(
-                            1.dp,
-                            if (isSelected) {
-                                IntroPalette.AccentLime.copy(alpha = 0.72f)
-                            } else {
-                                IntroPalette.BorderSubtle
-                            }
-                        ),
-                        RoundedCornerShape(16.dp)
-                    )
-                    .clickable { onFilterSelect(filter) }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .border(1.dp, Color(0xFF2D77FF), CircleShape)
+                    .clickable { onNavigate(Screen.Profile.route) }
             ) {
-                Text(
-                    text = filter,
-                    style = IntroTypography.creditsChip.copy(
-                        color = if (isSelected) Color.Black else IntroPalette.TextMuted
-                    )
+                Image(
+                    painter = painterResource(id = R.drawable.user_avatar),
+                    contentDescription = "Profile",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun TemplateCard(
-    item: TemplateItem,
-    onCopyClick: (String) -> Unit,
-    onCreateClick: (String) -> Unit
-) {
-    var copied by remember { mutableStateOf(false) }
-    LaunchedEffect(copied) {
-        if (copied) {
-            delay(2000)
-            copied = false
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(IntroPalette.SurfaceRaised.copy(alpha = 0.9f), TemplateCardShape)
-            .border(1.dp, IntroPalette.BorderSubtle, TemplateCardShape)
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(176.dp)
-                .clip(TemplateImageShape)
-        ) {
-            Image(
-                painter = painterResource(id = item.imageRes),
-                contentDescription = item.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .background(Color.Black.copy(alpha = 0.72f), RoundedCornerShape(8.dp))
-                    .border(1.dp, IntroPalette.AccentLime.copy(alpha = 0.28f), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = item.category,
-                    style = IntroTypography.badge.copy(color = IntroPalette.AccentLime)
-                )
-            }
-        }
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
-                contentDescription = null,
-                tint = IntroPalette.PrimaryButton.copy(alpha = 0.92f),
-                modifier = Modifier.size(18.dp)
-            )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = item.title,
-                style = IntroTypography.sectionTitle,
+                text = "LUMORIA AI",
+                color = Color.White,
+                fontSize = 15.sp,
+                lineHeight = 18.sp,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
-
-        Text(
-            text = item.prompt,
-            style = IntroTypography.toolDescription.copy(color = IntroPalette.TextMuted),
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.28f), RoundedCornerShape(12.dp))
-                .border(1.dp, IntroPalette.PrimaryButton.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
-                .padding(12.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Button(
-                onClick = {
-                    onCopyClick(item.prompt)
-                    copied = true
-                },
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            CreditsPill(onClick = { onNavigate(Screen.Credits.route) })
+            Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(44.dp),
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (copied) {
-                        IntroPalette.AccentLime.copy(alpha = 0.2f)
-                    } else {
-                        IntroPalette.BackgroundBase
-                    }
-                ),
-                border = BorderStroke(
-                    1.dp,
-                    if (copied) IntroPalette.AccentLime.copy(alpha = 0.6f) else IntroPalette.BorderSubtle
-                )
+                    .size(28.dp)
+                    .clickable { onNavigate(Screen.Notifications.route) },
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = null,
-                    tint = if (copied) IntroPalette.AccentLime else IntroPalette.TextPrimary,
-                    modifier = Modifier.size(16.dp)
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = Color(0xFFDFF7F4),
+                    modifier = Modifier.size(19.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = if (copied) "Copied" else "Copy",
-                    style = IntroTypography.buttonLabel.copy(
-                        color = if (copied) IntroPalette.AccentLime else IntroPalette.TextPrimary
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .align(Alignment.TopEnd)
+                        .background(Lime, CircleShape)
                 )
             }
+        }
+    }
+}
 
-            Button(
-                onClick = { onCreateClick(item.prompt) },
+@Composable
+private fun CreditsPill(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .height(24.dp)
+            .clip(RoundedCornerShape(50))
+            .background(Color.White.copy(alpha = 0.05f))
+            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text("◉", color = Lime, fontSize = 9.sp, lineHeight = 9.sp)
+        Text("1,250", color = Lime, fontSize = 9.sp, lineHeight = 11.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun TemplateTypeTabs(selectedType: String, onSelected: (String) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(38.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(TemplatePanel)
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        TemplateTab(
+            label = "Image",
+            icon = Icons.Default.Image,
+            selected = selectedType == "Image",
+            onClick = { onSelected("Image") },
+            modifier = Modifier.weight(1f)
+        )
+        TemplateTab(
+            label = "Video",
+            icon = Icons.Default.VideoLibrary,
+            selected = selectedType == "Video",
+            onClick = { onSelected("Video") },
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun TemplateTab(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(7.dp))
+            .background(if (selected) TemplateSelected else Color.Transparent)
+            .clickable(onClick = onClick),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = Color.White.copy(alpha = 0.82f), modifier = Modifier.size(10.dp))
+        Spacer(modifier = Modifier.width(5.dp))
+        Text(
+            text = label,
+            color = Color.White.copy(alpha = 0.86f),
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun TemplateRow(item: TemplateListItem, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(74.dp),
+        shape = RoundedCornerShape(7.dp),
+        color = TemplateCard,
+        border = BorderStroke(1.dp, TemplateStroke)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(44.dp),
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = IntroPalette.AccentLime)
+                    .size(width = 56.dp, height = 58.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(Color.Black)
+            ) {
+                Image(
+                    painter = painterResource(id = item.imageRes),
+                    contentDescription = item.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Create",
-                    style = IntroTypography.buttonLabel.copy(color = Color.Black)
+                    text = item.title,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    lineHeight = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = item.subtitle,
+                    color = Muted,
+                    fontSize = 10.sp,
+                    lineHeight = 13.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

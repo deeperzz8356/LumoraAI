@@ -67,6 +67,10 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
 
         viewModelScope.launch {
             val isDev = appPreferences.isDeveloperModeEnabled()
+            if (!ensureTrialUser()) {
+                uiState = CreateHubUiState.Error("Could not start your free trial. Please try again.")
+                return@launch
+            }
             if (!isDev) {
                 val credits = fetchCreditsWithSync()
                 if (credits == null) {
@@ -74,7 +78,7 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
                     return@launch
                 }
                 if (!GenerationGate.canGenerateImage(credits, isDev)) {
-                    uiState = CreateHubUiState.Error(GenerationGate.insufficientCreditsMessage())
+                    uiState = CreateHubUiState.TrialExpired
                     return@launch
                 }
             } else {
@@ -99,6 +103,14 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
             result = generationRepository.getCredits()
         }
         return result.getOrNull()
+    }
+
+    private suspend fun ensureTrialUser(): Boolean {
+        return if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser != null) {
+            true
+        } else {
+            authRepository.loginAnonymouslyAndSync()
+        }
     }
 
     private fun startImageGeneration(
@@ -199,11 +211,18 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
 
         viewModelScope.launch {
             val isDev = appPreferences.isDeveloperModeEnabled()
+            if (!ensureTrialUser()) {
+                uiState = CreateHubUiState.Error("Could not start your free trial. Please try again.")
+                return@launch
+            }
             if (!isDev) {
-                val creditsResult = generationRepository.getCredits()
-                val credits = creditsResult.getOrDefault(0)
+                val credits = fetchCreditsWithSync()
+                if (credits == null) {
+                    uiState = CreateHubUiState.Error("Could not verify credits. Check your connection and try again.")
+                    return@launch
+                }
                 if (!GenerationGate.canGenerateVideo(credits, isDev)) {
-                    uiState = CreateHubUiState.Error(GenerationGate.insufficientCreditsMessage())
+                    uiState = CreateHubUiState.TrialExpired
                     return@launch
                 }
             }
