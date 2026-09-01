@@ -100,36 +100,36 @@ fun LanguageTopBar(onDone: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(64.dp)
             .background(LanguageTopBar)
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.Language,
             contentDescription = null,
             tint = Color.White,
-            modifier = Modifier.size(17.dp)
+            modifier = Modifier.size(24.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = "Language",
             color = Color.White,
-            fontSize = 14.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.weight(1f))
         Button(
             onClick = onDone,
-            modifier = Modifier.height(23.dp),
+            modifier = Modifier.height(36.dp),
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(containerColor = LanguageDone),
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
+            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp)
         ) {
             Text(
                 text = "Done",
                 color = Color.Black,
-                fontSize = 11.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -146,10 +146,10 @@ fun LanguageList(
     LazyColumn(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp)
-            .padding(top = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(9.dp),
-        contentPadding = PaddingValues(bottom = 20.dp)
+            .padding(horizontal = 18.dp)
+            .padding(top = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(bottom = 24.dp)
     ) {
         items(languages) { language ->
             LanguageItem(
@@ -170,21 +170,21 @@ fun LanguageItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(39.dp)
-            .clip(RoundedCornerShape(22.dp))
+            .height(58.dp)
+            .clip(RoundedCornerShape(16.dp))
             .background(LanguageRow)
             .clickable(onClick = onClick)
-            .padding(horizontal = 13.dp),
+            .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         LanguageRadioButton(isSelected = isSelected)
-        Spacer(modifier = Modifier.width(13.dp))
+        Spacer(modifier = Modifier.width(14.dp))
         LanguageFlagEmoji(emoji = language.flagEmoji)
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(18.dp))
         Text(
             text = language.name,
             color = Color.White,
-            fontSize = 15.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Normal,
             modifier = Modifier.weight(1f)
         )
@@ -195,10 +195,10 @@ fun LanguageItem(
 fun LanguageFlagEmoji(emoji: String) {
     Box(
         modifier = Modifier
-            .size(width = 26.dp, height = 18.dp),
+            .size(width = 32.dp, height = 24.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(emoji, fontSize = 21.sp)
+        Text(emoji, fontSize = 24.sp)
     }
 }
 

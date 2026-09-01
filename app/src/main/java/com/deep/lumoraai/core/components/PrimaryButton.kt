@@ -31,11 +31,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -124,12 +124,18 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
         Box(
             modifier = Modifier
                 .padding(bottom = 26.dp)
-                .size(54.dp)
+                .size(58.dp)
                 .background(IntroPalette.AccentLime, CircleShape)
                 .clickable { onSelected("createhub") },
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Create", tint = Color.Black, modifier = Modifier.size(28.dp))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = "Create", tint = Color.Black, modifier = Modifier.size(22.dp))
+                Text("Create", color = Color.Black, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -143,10 +149,13 @@ private fun NavItem(
     modifier: Modifier = Modifier
 ) {
     val tint = if (isSelected) IntroPalette.AccentLime else Color(0xFF8A94A9)
+    val isEnabled = !(label == "Home" && isSelected)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-        modifier = modifier.fillMaxHeight().clickable(onClick = onClick)
+        modifier = modifier
+            .fillMaxHeight()
+            .clickable(enabled = isEnabled, onClick = onClick)
     ) {
         Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.height(4.dp))

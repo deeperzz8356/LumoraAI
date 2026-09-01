@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Compress
 import androidx.compose.material.icons.filled.Image
@@ -66,7 +66,7 @@ import kotlinx.coroutines.launch
 
 private val HomeBackground = Color(0xFF081020)
 private val HomeCard = Color(0xFF10192D)
-private val HomeStroke = Color(0xFF1B2A44)
+private val HomeStroke = Color(0xFF172238)
 private val Lime = Color(0xFFD6FF2F)
 private val Purple = Color(0xFF9C63FF)
 private val Pink = Color(0xFFFF3D9D)
@@ -124,15 +124,16 @@ private fun HomeContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp)
             .padding(top = 14.dp, bottom = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         HomeTopBar(
             userName = uiState.userName,
             credits = uiState.credits,
             onNavigate = onNavigate
         )
-        HomeHero()
+        HomeHero(onExploreRecent = { onNavigate(Screen.History.route) })
         MainCreateGrid(onNavigate = onNavigate, onComingSoon = onComingSoon)
+        RecentCreationsSection(items = uiState.recentItems, onNavigate = onNavigate)
         ToolsSection(onNavigate = onNavigate, onComingSoon = onComingSoon)
         Spacer(modifier = Modifier.height(2.dp))
     }
@@ -203,7 +204,7 @@ private fun HomeTopBar(
                 )
                 Box(
                     modifier = Modifier
-                        .size(7.dp)
+                        .size(6.dp)
                         .align(Alignment.TopEnd)
                         .background(Lime, CircleShape)
                 )
@@ -230,47 +231,48 @@ private fun CreditsChip(credits: Int, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text("◉", color = Lime, fontSize = 10.sp, lineHeight = 10.sp)
+        Text("✦", color = Lime, fontSize = 11.sp, lineHeight = 11.sp)
         Text(label, color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
-private fun HomeHero() {
+private fun HomeHero(onExploreRecent: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(118.dp),
+            .height(90.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text("What will we", color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
-            Text("Create", color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Today?", color = Lime, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Turn ideas into stunning visuals", color = Muted, fontSize = 10.sp, lineHeight = 18.sp)
+            Text("Create", color = Color.White, fontSize = 25.sp, lineHeight = 27.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Today?", color = Lime, fontSize = 25.sp, lineHeight = 27.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Turn ideas into stunning visuals", color = Muted, fontSize = 10.sp, lineHeight = 16.sp)
             Row(modifier = Modifier.padding(top = 4.dp)) {
                 Box(modifier = Modifier.width(34.dp).height(2.dp).background(Lime))
                 Box(modifier = Modifier.width(34.dp).height(2.dp).background(Purple))
             }
         }
-        HeroPreviewArt()
+        HeroPreviewArt(onClick = onExploreRecent)
     }
 }
 
 @Composable
-private fun HeroPreviewArt() {
+private fun HeroPreviewArt(onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .width(92.dp)
-            .height(84.dp)
+            .width(78.dp)
+            .height(72.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(
                 Brush.radialGradient(
                     colors = listOf(Color(0xFF6E35E7), Color(0xFF24163F), Color(0xFF10182D))
                 )
             )
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp)),
+            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -284,7 +286,7 @@ private fun HeroPreviewArt() {
             contentDescription = null,
             tint = Color.White.copy(alpha = 0.88f),
             modifier = Modifier
-                .size(34.dp)
+                .size(30.dp)
                 .shadow(10.dp, CircleShape)
         )
     }
@@ -296,13 +298,14 @@ private fun MainCreateGrid(
     onComingSoon: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        Text("Create", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreateActionCard("Text → Image", "DREAM IT", Icons.Default.AutoAwesome, Lime, { onNavigate(createHubRoute(tab = 0)) }, Modifier.weight(1f))
-            CreateActionCard("Img → Img", "REFINE IT", Icons.Default.Image, Purple, onComingSoon, Modifier.weight(1f))
+            CreateActionCard("Text → Image", "Dream it", Icons.Default.AutoAwesome, Lime, { onNavigate(createHubRoute(tab = 0)) }, Modifier.weight(1f))
+            CreateActionCard("Img → Img", "Refine it", Icons.Default.Image, Purple, onComingSoon, Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreateActionCard("Img → Video", "ANIMATE IT", Icons.Default.Movie, Pink, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
-            CreateActionCard("Text → Video", "DIRECT IT", Icons.Default.PlayArrow, Cyan, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
+            CreateActionCard("Img → Video", "Animate it", Icons.Default.Movie, Pink, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
+            CreateActionCard("Text → Video", "Direct it", Icons.Default.PlayArrow, Cyan, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
         }
     }
 }
@@ -321,7 +324,7 @@ private fun CreateActionCard(
         modifier = modifier.height(91.dp),
         shape = CardShape,
         color = HomeCard,
-        border = BorderStroke(1.dp, HomeStroke)
+        border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.72f))
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
             Box(
@@ -353,10 +356,91 @@ private fun CreateActionCard(
             }
             Box(
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(22.dp)
                     .align(Alignment.BottomEnd)
-                    .border(1.dp, accent, CircleShape)
+                    .clip(CircleShape)
+                    .background(accent.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = accent, modifier = Modifier.size(15.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecentCreationsSection(
+    items: List<HomeRecentItem>,
+    onNavigate: (String) -> Unit,
+) {
+    if (items.isEmpty()) return
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Recent", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+            Text(
+                text = "View all",
+                color = Lime,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onNavigate(Screen.History.route) }
             )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            items.take(2).forEach { item ->
+                RecentCreationCard(item = item, onClick = { onNavigate(Screen.History.route) }, modifier = Modifier.weight(1f))
+            }
+            if (items.size == 1) {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecentCreationCard(
+    item: HomeRecentItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(66.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = HomeCard,
+        border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.58f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Image(
+                painter = painterResource(id = item.fallbackImageRes),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(9.dp))
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.title,
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    lineHeight = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(item.timeLabel, color = Muted, fontSize = 9.sp, lineHeight = 12.sp)
+            }
         }
     }
 }
@@ -366,16 +450,16 @@ private fun ToolsSection(
     onNavigate: (String) -> Unit,
     onComingSoon: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(13.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Tools", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
-        Row(horizontalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
-            SmallToolCard("AI BG\nREPLACE", Icons.Default.AutoAwesome, Cyan, onComingSoon, Modifier.weight(1f))
-            SmallToolCard("PHOTO\nENHANCE", Icons.Default.Tune, Purple, onComingSoon, Modifier.weight(1f))
-            SmallToolCard("BG\nREMOVER", Icons.Default.PhotoCamera, Color(0xFF7D86FF), onComingSoon, Modifier.weight(1f))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            SmallToolCard("AI BG", Icons.Default.AutoAwesome, Cyan, { onNavigate(Screen.BgStudio.route) }, Modifier.weight(1f))
+            SmallToolCard("Enhance", Icons.Default.Tune, Purple, { onNavigate(Screen.PhotoEnhance.route) }, Modifier.weight(1f))
+            SmallToolCard("Remove", Icons.Default.PhotoCamera, Color(0xFF7D86FF), onComingSoon, Modifier.weight(1f))
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
-            SmallToolCard("VIDEO ADS", Icons.Default.VideoLibrary, Pink, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
-            SmallToolCard("COMPRESS", Icons.Default.Compress, Lime, onComingSoon, Modifier.weight(1f))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            SmallToolCard("Promo Video", Icons.Default.VideoLibrary, Pink, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
+            SmallToolCard("Compress", Icons.Default.Compress, Lime, onComingSoon, Modifier.weight(1f))
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -391,27 +475,28 @@ private fun SmallToolCard(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.aspectRatio(0.84f),
+        modifier = modifier.height(50.dp),
         shape = CardShape,
         color = HomeCard,
-        border = BorderStroke(1.dp, HomeStroke)
+        border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.58f))
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.height(10.dp))
+            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(17.dp))
             Text(
                 text = title,
                 color = Color.White.copy(alpha = 0.78f),
-                fontSize = 8.sp,
-                lineHeight = 10.sp,
+                fontSize = 10.sp,
+                lineHeight = 12.sp,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Start,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
