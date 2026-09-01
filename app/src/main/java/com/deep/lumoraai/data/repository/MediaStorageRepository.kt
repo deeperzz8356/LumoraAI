@@ -7,7 +7,6 @@ import androidx.core.content.FileProvider
 import com.deep.lumoraai.core.utils.decodeMediaPayload
 import com.deep.lumoraai.core.utils.extensionForMimeType
 import com.deep.lumoraai.core.utils.isHttpImageUrl
-import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.data.model.SavedMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -51,14 +50,6 @@ class MediaStorageRepository private constructor(context: Context) {
             }
             bitmap.compress(format, quality, output)
         }
-        runCatching {
-            MediaGallerySaver.saveToGallery(
-                context = appContext,
-                filePath = file.absolutePath,
-                mimeType = mimeType,
-                mediaType = MEDIA_IMAGE,
-            )
-        }
         SavedMedia(
             id = id,
             localUri = Uri.fromFile(file),
@@ -88,14 +79,6 @@ class MediaStorageRepository private constructor(context: Context) {
         val extension = extensionForMimeType(mimeType, mediaType)
         val file = File(outputDir, "$id.$extension")
         file.writeBytes(bytes)
-        runCatching {
-            MediaGallerySaver.saveToGallery(
-                context = appContext,
-                filePath = file.absolutePath,
-                mimeType = mimeType,
-                mediaType = mediaType,
-            )
-        }
         val localUri = Uri.fromFile(file)
         return SavedMedia(
             id = id,

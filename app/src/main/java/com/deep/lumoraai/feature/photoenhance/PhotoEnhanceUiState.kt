@@ -12,6 +12,7 @@ enum class EnhanceOption(val label: String) {
 data class PhotoEnhanceUiState(
     val originalBitmap: Bitmap? = null,
     val enhancedBitmap: Bitmap? = null,
+    val credits: Int = 0,
     val resolution: EnhanceOption = EnhanceOption.Med,
     val sharpness: Float = 0.5f,
     val lighting: EnhanceOption = EnhanceOption.Med,

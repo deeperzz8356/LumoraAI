@@ -8,12 +8,14 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.local.room.LumoraDatabase
+import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import java.io.File
 
 class HistoryViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -63,6 +65,17 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
                 is HistoryUiState.Success -> current.copy(credits = credits)
                 is HistoryUiState.Empty -> current.copy(credits = credits)
                 else -> current
+            }
+        }
+    }
+
+    fun deleteItems(items: List<HistoryModel>) {
+        viewModelScope.launch {
+            items.forEach { item ->
+                item.mediaUrl
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { path -> runCatching { File(path).takeIf { it.exists() }?.delete() } }
+                historyRepository.deleteHistory(item.id)
             }
         }
     }

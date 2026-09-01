@@ -4,11 +4,13 @@ import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 
 data class TextToImageUiState(
     val prompt: String = "",
-    val selectedStyle: ImageStyle = ImageStyle.All,
+    val negativePrompt: String = "",
+    val selectedStyle: ImageStyle = ImageStyle.Photorealistic,
     val selectedModel: ImageModel = ImageModel.IMAGEN,
     val creativity: Float = 0.5f,
     val generations: Int = 2,
     val isGenerating: Boolean = false,
+    val isImprovingPrompt: Boolean = false,
     val generatedPath: String? = null,
     val generatedMimeType: String = "image/png",
     val error: String? = null,

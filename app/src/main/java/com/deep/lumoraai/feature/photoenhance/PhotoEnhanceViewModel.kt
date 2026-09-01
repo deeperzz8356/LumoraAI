@@ -15,10 +15,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.HistoryModel
+import com.deep.lumoraai.data.repository.AppPreferencesRepository
+import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
-import com.deep.lumoraai.core.utils.MediaGallerySaver
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,10 +39,16 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
     private val historyRepository = HistoryRepository(
         LumoraDatabase.getInstance(application).historyDao
     )
+    private val generationRepository = GenerationRepository()
+    private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val imagesDir = File(application.filesDir, "media/images").also { it.mkdirs() }
 
     var uiState: PhotoEnhanceUiState by mutableStateOf(PhotoEnhanceUiState())
         private set
+
+    init {
+        loadCredits()
+    }
 
     fun loadImage(uri: Uri) {
         viewModelScope.launch {
@@ -71,6 +80,18 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
 
     fun setLighting(option: EnhanceOption) {
         uiState = uiState.copy(lighting = option, savedPath = null)
+    }
+
+    private fun loadCredits() {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        viewModelScope.launch {
+            val credits = if (appPreferences.isDeveloperModeEnabled()) {
+                GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
+            } else {
+                generationRepository.getCredits().getOrDefault(0)
+            }
+            uiState = uiState.copy(credits = credits)
+        }
     }
 
     fun enhance() {
@@ -470,14 +491,6 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
         val file = File(imagesDir, "${UUID.randomUUID()}.jpg")
         file.outputStream().use { out ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 94, out)
-        }
-        viewModelScope.launch {
-            MediaGallerySaver.saveToGallery(
-                context = getApplication(),
-                filePath = file.absolutePath,
-                mimeType = "image/jpeg",
-                mediaType = "IMAGE",
-            )
         }
         return file.absolutePath
     }

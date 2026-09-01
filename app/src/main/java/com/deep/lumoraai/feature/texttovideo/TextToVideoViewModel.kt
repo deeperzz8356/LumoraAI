@@ -17,7 +17,7 @@ import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
-import com.deep.lumoraai.feature.imagetoimage.ImageStyle
+import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -69,7 +69,11 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
         uiState = uiState.copy(prompt = prompt.take(1000), error = null)
     }
 
-    fun selectStyle(style: ImageStyle) {
+    fun updateNegativePrompt(prompt: String) {
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null)
+    }
+
+    fun selectStyle(style: VideoStyle) {
         uiState = uiState.copy(selectedStyle = style)
     }
 
@@ -151,6 +155,28 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    fun improvePrompt() {
+        if (uiState.isImprovingPrompt || uiState.prompt.isBlank()) return
+
+        viewModelScope.launch {
+            uiState = uiState.copy(isImprovingPrompt = true, error = null)
+            val result = generationRepository.enhancePrompt(
+                prompt = uiState.prompt,
+                mediaType = "VIDEO",
+                style = uiState.selectedStyle.label,
+                negativePrompt = uiState.negativePrompt,
+            )
+            uiState = if (result.isSuccess) {
+                uiState.copy(prompt = result.getOrThrow().take(1000), isImprovingPrompt = false, error = null)
+            } else {
+                uiState.copy(
+                    isImprovingPrompt = false,
+                    error = result.exceptionOrNull()?.message ?: "Could not improve prompt."
+                )
+            }
+        }
+    }
+
     fun dismissError() {
         uiState = uiState.copy(error = null)
     }
@@ -204,7 +230,8 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
         } else {
             "Create a cinematic text-to-video scene with natural motion, camera movement, depth, and coherent subject action."
         }
-        return "$base User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label}. Motion strength: $motion%."
+        val negative = uiState.negativePrompt.takeIf { it.isNotBlank() }?.let { " Avoid: $it." }.orEmpty()
+        return "$base User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Motion strength: $motion%.$negative"
     }
 
     private fun currentTimestamp(): String =

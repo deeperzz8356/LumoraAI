@@ -18,6 +18,8 @@ fun ImageToImageRoute(
         onNavigate = onNavigate,
         onImageSelected = viewModel::loadImage,
         onPromptChanged = viewModel::updatePrompt,
+        onNegativePromptChanged = viewModel::updateNegativePrompt,
+        onImprovePrompt = viewModel::improvePrompt,
         onStyleSelected = viewModel::selectStyle,
         onSimilarityChanged = viewModel::setSimilarity,
         onGenerationsChanged = viewModel::setGenerations,
@@ -35,4 +37,3 @@ fun ImageToImageRoute(
         )
     }
 }
-

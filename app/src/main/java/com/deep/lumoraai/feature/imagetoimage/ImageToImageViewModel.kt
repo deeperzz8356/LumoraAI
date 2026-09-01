@@ -64,6 +64,10 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         uiState = uiState.copy(prompt = prompt.take(1000), error = null)
     }
 
+    fun updateNegativePrompt(prompt: String) {
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null)
+    }
+
     fun selectStyle(style: ImageStyle) {
         uiState = uiState.copy(selectedStyle = style)
     }
@@ -107,6 +111,28 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                 authRepository.syncCurrentUser()
             }
             startImageJob(source, isDev)
+        }
+    }
+
+    fun improvePrompt() {
+        if (uiState.isImprovingPrompt || uiState.prompt.isBlank()) return
+
+        viewModelScope.launch {
+            uiState = uiState.copy(isImprovingPrompt = true, error = null)
+            val result = generationRepository.enhancePrompt(
+                prompt = uiState.prompt,
+                mediaType = "IMAGE",
+                style = uiState.selectedStyle.label,
+                negativePrompt = uiState.negativePrompt,
+            )
+            uiState = if (result.isSuccess) {
+                uiState.copy(prompt = result.getOrThrow().take(1000), isImprovingPrompt = false, error = null)
+            } else {
+                uiState.copy(
+                    isImprovingPrompt = false,
+                    error = result.exceptionOrNull()?.message ?: "Could not improve prompt."
+                )
+            }
         }
     }
 
@@ -158,7 +184,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                 style = uiState.selectedStyle.label,
                 width = 1024,
                 height = 1024,
-                negativePrompt = "low quality, blurry, distorted face, extra limbs, bad anatomy",
+                negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy" },
                 sourceImageB64 = sourceImage,
                 developerMode = developerMode,
             ) { result ->
@@ -218,7 +244,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
 
     private fun buildPrompt(): String {
         val similarity = (uiState.similarity * 100).toInt()
-        return "Create a new image from the uploaded source. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label}. Preserve about $similarity% of the original composition and subject identity while improving the image."
+        return "Create a new image from the uploaded source. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Preserve about $similarity% of the original composition and subject identity while improving the image."
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {
@@ -248,4 +274,3 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }
-

@@ -25,7 +25,6 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
-import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.repository.HistoryRepository
@@ -107,7 +106,6 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 62, out)
                 }
                 val compressedBytes = output.length()
-                publishToGallery(output.absolutePath, "image/jpeg", "IMAGE")
                 saveToHistory(output.absolutePath, "IMAGE")
                 CompressionResult(
                     outputPath = output.absolutePath,
@@ -138,7 +136,6 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
             .addListener(object : Transformer.Listener {
                 override fun onCompleted(composition: Composition, exportResult: ExportResult) {
                     viewModelScope.launch {
-                        publishToGallery(output.absolutePath, "video/mp4", "VIDEO")
                         saveToHistory(output.absolutePath, "VIDEO")
                         uiState = uiState.copy(
                             isCompressing = false,
@@ -224,17 +221,6 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
 
     private fun currentTimestamp(): String =
         SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date())
-
-    private suspend fun publishToGallery(path: String, mimeType: String, type: String) {
-        runCatching {
-            MediaGallerySaver.saveToGallery(
-                context = getApplication(),
-                filePath = path,
-                mimeType = mimeType,
-                mediaType = type,
-            )
-        }
-    }
 
     private fun saveFileToDownloads(source: File, mimeType: String) {
         if (!source.exists()) error("Compressed file is missing.")

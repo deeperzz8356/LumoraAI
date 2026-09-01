@@ -23,7 +23,7 @@ import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
-import com.deep.lumoraai.feature.imagetoimage.ImageStyle
+import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -65,7 +65,11 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
         uiState = uiState.copy(prompt = prompt.take(1000), error = null)
     }
 
-    fun selectStyle(style: ImageStyle) {
+    fun updateNegativePrompt(prompt: String) {
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null)
+    }
+
+    fun selectStyle(style: VideoStyle) {
         uiState = uiState.copy(selectedStyle = style)
     }
 
@@ -151,6 +155,28 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun improvePrompt() {
+        if (uiState.isImprovingPrompt || uiState.prompt.isBlank()) return
+
+        viewModelScope.launch {
+            uiState = uiState.copy(isImprovingPrompt = true, error = null)
+            val result = generationRepository.enhancePrompt(
+                prompt = uiState.prompt,
+                mediaType = "VIDEO",
+                style = uiState.selectedStyle.label,
+                negativePrompt = uiState.negativePrompt,
+            )
+            uiState = if (result.isSuccess) {
+                uiState.copy(prompt = result.getOrThrow().take(1000), isImprovingPrompt = false, error = null)
+            } else {
+                uiState.copy(
+                    isImprovingPrompt = false,
+                    error = result.exceptionOrNull()?.message ?: "Could not improve prompt."
+                )
+            }
+        }
+    }
+
     fun dismissError() {
         uiState = uiState.copy(error = null)
     }
@@ -199,7 +225,8 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
 
     private fun buildPrompt(): String {
         val similarity = (uiState.similarity * 100).toInt()
-        return "Animate the uploaded source image into a cinematic video. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label}. Preserve about $similarity% of the original subject and composition while adding natural motion, camera movement, and depth."
+        val negative = uiState.negativePrompt.takeIf { it.isNotBlank() }?.let { " Avoid: $it." }.orEmpty()
+        return "Animate the uploaded source image into a video. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Preserve about $similarity% of the original subject and composition while adding natural motion, camera movement, and depth.$negative"
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {
@@ -229,4 +256,3 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }
-

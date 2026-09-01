@@ -19,6 +19,7 @@ import com.deep.lumoraai.core.utils.isSuccessfulApiStatus
 import com.deep.lumoraai.core.utils.formatGenerationErrorMessage
 import com.deep.lumoraai.core.utils.humanizeProviderError
 import com.deep.lumoraai.core.utils.parseGenerationFailure
+import com.deep.lumoraai.BuildConfig
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -32,6 +33,7 @@ class GenerationRepository {
     private val imageGenerateUrl = "https://lumoraai-backend-rlcy.onrender.com/api/v1/images/generate"
 
     companion object {
+        private const val GROQ_PROMPT_MODEL = "openai/gpt-oss-120b"
         private val generationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         private val _activeJobs = MutableStateFlow<List<ActiveJobInfo>>(emptyList())
         val activeJobs: StateFlow<List<ActiveJobInfo>> = _activeJobs.asStateFlow()
@@ -345,6 +347,92 @@ class GenerationRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun enhancePrompt(
+        prompt: String,
+        mediaType: String,
+        style: String,
+        negativePrompt: String? = null,
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val apiKey = BuildConfig.GROQ_PROMPT_API_KEY
+            if (apiKey.isBlank()) {
+                return@withContext Result.failure(Exception("Groq prompt enhancer key is not configured."))
+            }
+            val url = URL("https://api.groq.com/openai/v1/chat/completions")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Authorization", "Bearer $apiKey")
+            connection.doOutput = true
+            connection.connectTimeout = 30_000
+            connection.readTimeout = 60_000
+
+            val medium = if (mediaType.equals("VIDEO", ignoreCase = true)) "video" else "image"
+            val avoidLine = negativePrompt
+                ?.takeIf { it.isNotBlank() }
+                ?.let { "\nAvoid these negative prompt items: $it" }
+                .orEmpty()
+            val instruction = """
+                Rewrite the user's prompt into one polished production-ready prompt for an AI $medium generator.
+                Keep the user's intent, do not add extra concepts that change the subject, and keep it under 900 characters.
+                Return only the improved prompt, no markdown and no explanation.
+
+                Style: $style
+                User prompt: $prompt$avoidLine
+            """.trimIndent()
+
+            val jsonInputString = JSONObject().apply {
+                put("model", GROQ_PROMPT_MODEL)
+                put("temperature", 0.45)
+                put("max_tokens", 260)
+                put(
+                    "messages",
+                    org.json.JSONArray()
+                        .put(
+                            JSONObject().apply {
+                                put("role", "system")
+                                put("content", "You improve prompts for image and video generation. Return only the enhanced prompt.")
+                            }
+                        )
+                        .put(
+                            JSONObject().apply {
+                                put("role", "user")
+                                put("content", instruction)
+                            }
+                        )
+                )
+            }.toString()
+
+            OutputStreamWriter(connection.outputStream).use { writer ->
+                writer.write(jsonInputString)
+                writer.flush()
+            }
+
+            val responseCode = connection.responseCode
+            val responseBody = connection.readResponseBody()
+            if (responseCode in 200..299) {
+                val responseJson = JSONObject(responseBody)
+                val enhanced = responseJson
+                    .optJSONArray("choices")
+                    ?.optJSONObject(0)
+                    ?.optJSONObject("message")
+                    ?.optString("content")
+                    ?.trim()
+                    .orEmpty()
+                if (enhanced.isNotBlank()) {
+                    Result.success(enhanced.trim('"').take(1000))
+                } else {
+                    Result.failure(Exception(responseJson.parseApiMessage() ?: "Groq returned no enhanced prompt."))
+                }
+            } else {
+                Result.failure(Exception(responseBody.parseApiMessage() ?: "Groq prompt enhancer failed ($responseCode)."))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception(e.message ?: "Could not improve prompt."))
+        }
+    }
+
 }
 
 data class GenerationHistoryItem(

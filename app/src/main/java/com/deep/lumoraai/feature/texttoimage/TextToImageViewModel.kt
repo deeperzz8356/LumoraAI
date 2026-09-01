@@ -44,6 +44,10 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         uiState = uiState.copy(prompt = prompt.take(1000), error = null)
     }
 
+    fun updateNegativePrompt(prompt: String) {
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null)
+    }
+
     fun selectStyle(style: ImageStyle) {
         uiState = uiState.copy(selectedStyle = style)
     }
@@ -87,6 +91,28 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                 authRepository.syncCurrentUser()
             }
             startImageJob(developerMode = isDev)
+        }
+    }
+
+    fun improvePrompt() {
+        if (uiState.isImprovingPrompt || uiState.prompt.isBlank()) return
+
+        viewModelScope.launch {
+            uiState = uiState.copy(isImprovingPrompt = true, error = null)
+            val result = generationRepository.enhancePrompt(
+                prompt = uiState.prompt,
+                mediaType = "IMAGE",
+                style = uiState.selectedStyle.label,
+                negativePrompt = uiState.negativePrompt,
+            )
+            uiState = if (result.isSuccess) {
+                uiState.copy(prompt = result.getOrThrow().take(1000), isImprovingPrompt = false, error = null)
+            } else {
+                uiState.copy(
+                    isImprovingPrompt = false,
+                    error = result.exceptionOrNull()?.message ?: "Could not improve prompt."
+                )
+            }
         }
     }
 
@@ -138,7 +164,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                 style = uiState.selectedStyle.label,
                 width = 1024,
                 height = 1024,
-                negativePrompt = "low quality, blurry, distorted face, extra limbs, bad anatomy, watermark, text artifacts",
+                negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy, watermark, text artifacts" },
                 sourceImageB64 = null,
                 developerMode = developerMode,
             ) { result ->
@@ -198,7 +224,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
 
     private fun buildPrompt(): String {
         val creativity = (uiState.creativity * 100).toInt()
-        return "${uiState.prompt}. Style: ${uiState.selectedStyle.label}. Model intent: ${uiState.selectedModel.label}. Creativity level: $creativity%."
+        return "${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Creativity level: $creativity%."
     }
 
     private fun currentTimestamp(): String =

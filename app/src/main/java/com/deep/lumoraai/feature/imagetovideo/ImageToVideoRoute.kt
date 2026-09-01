@@ -18,8 +18,9 @@ fun ImageToVideoRoute(
         onNavigate = onNavigate,
         onImageSelected = viewModel::loadImage,
         onPromptChanged = viewModel::updatePrompt,
+        onNegativePromptChanged = viewModel::updateNegativePrompt,
+        onImprovePrompt = viewModel::improvePrompt,
         onStyleSelected = viewModel::selectStyle,
-        onEngineSelected = viewModel::selectEngine,
         onSimilarityChanged = viewModel::setSimilarity,
         onDurationChanged = viewModel::setDuration,
         onGenerationsChanged = viewModel::setGenerations,
@@ -37,4 +38,3 @@ fun ImageToVideoRoute(
         )
     }
 }
-

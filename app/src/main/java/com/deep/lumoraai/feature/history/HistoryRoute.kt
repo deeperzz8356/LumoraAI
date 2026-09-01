@@ -9,5 +9,10 @@ fun HistoryRoute(
     onNavigate: (String) -> Unit = {},
     viewModel: HistoryViewModel = viewModel()
 ) {
-    HistoryScreen(uiState = viewModel.uiState, onNext = onNext, onNavigate = onNavigate)
+    HistoryScreen(
+        uiState = viewModel.uiState,
+        onNext = onNext,
+        onNavigate = onNavigate,
+        onDeleteItems = viewModel::deleteItems,
+    )
 }
