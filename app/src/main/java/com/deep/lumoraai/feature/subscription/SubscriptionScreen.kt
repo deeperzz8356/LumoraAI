@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.subscription
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,12 +26,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,6 +40,15 @@ import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.feature.subscription.model.SubscriptionPlan
+
+// Theme colors matching Home/Profile pages
+private val SubBackground = Color(0xFF081020)
+private val SubCard = Color(0xFF10192D)
+private val SubStroke = Color(0xFF172238)
+private val Lime = Color(0xFFD6FF2F)
+private val Purple = Color(0xFF9C63FF)
+private val Muted = Color(0xFF94A0B8)
+private val CardShape = RoundedCornerShape(14.dp)
 
 @Composable
 fun SubscriptionScreen(
@@ -52,6 +62,7 @@ fun SubscriptionScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = SubBackground,
         topBar = {
             AppToolbar(
                 title = "Buy Subscription",
@@ -60,7 +71,7 @@ fun SubscriptionScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = Color.White
                         )
                     }
                 }
@@ -76,7 +87,7 @@ fun SubscriptionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = Lime)
                 }
             }
             is SubscriptionUiState.Error -> {
@@ -116,10 +127,11 @@ private fun SubscriptionContent(
     if (uiState.purchaseMessage != null) {
         AlertDialog(
             onDismissRequest = onClearMessage,
-            title = { Text("Subscription") },
-            text = { Text(uiState.purchaseMessage) },
+            containerColor = SubCard,
+            title = { Text("Subscription", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = { Text(uiState.purchaseMessage, color = Color.White) },
             confirmButton = {
-                TextButton(onClick = onClearMessage) { Text("OK") }
+                TextButton(onClick = onClearMessage) { Text("OK", color = Lime) }
             }
         )
     }
@@ -127,44 +139,47 @@ private fun SubscriptionContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
+            .background(SubBackground)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-                .border(1.dp, Color(0xFFA855F7).copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CardShape,
+            color = SubCard,
+            border = BorderStroke(1.dp, SubStroke.copy(alpha = 0.72f))
         ) {
-            Text(
-                "Unlock Lumora Pro",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                "Get more credits, faster generation, and premium creative tools.",
-                color = Color.White.copy(alpha = 0.6f),
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center
-            )
-            if (uiState.isDeveloperMode) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
-                    "Developer mode active — unlimited trial",
-                    color = Color(0xFFADF021),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
+                    "Unlock Lumora Pro",
+                    color = Color.White,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center
                 )
+                Text(
+                    "Get more credits, faster generation, and premium creative tools.",
+                    color = Muted,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center
+                )
+                if (uiState.isDeveloperMode) {
+                    Text(
+                        "Developer mode active — unlimited trial",
+                        color = Lime,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 
-        Text("Choose a plan", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Text("Choose a plan", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
 
         uiState.plans.forEach { plan ->
             SubscriptionPlanCard(
@@ -180,20 +195,21 @@ private fun SubscriptionContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-            shape = RoundedCornerShape(26.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA855F7))
+            shape = CardShape,
+            colors = ButtonDefaults.buttonColors(containerColor = Lime)
         ) {
             if (uiState.isPurchasing) {
                 CircularProgressIndicator(
                     modifier = Modifier.height(20.dp),
-                    color = Color.White,
+                    color = SubBackground,
                     strokeWidth = 2.dp
                 )
             } else {
                 Text(
                     if (uiState.isDeveloperMode) "Activate Plan (Dev)" else "Subscribe Now",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    color = SubBackground,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 16.sp
                 )
             }
         }
@@ -202,8 +218,10 @@ private fun SubscriptionContent(
             onClick = { onNavigate(Screen.Credits.route) },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Buy credit packs instead", color = Color(0xFFCFBDFF))
+            Text("Buy credit packs instead", color = Lime, fontWeight = FontWeight.Bold)
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
@@ -214,47 +232,49 @@ private fun SubscriptionPlanCard(
     onClick: () -> Unit
 ) {
     val borderColor = when {
-        isSelected -> Color(0xFFA855F7)
-        plan.highlighted -> Color(0xFFA855F7).copy(alpha = 0.6f)
-        else -> Color.White.copy(alpha = 0.08f)
+        isSelected -> Lime
+        plan.highlighted -> Lime.copy(alpha = 0.6f)
+        else -> SubStroke
     }
-    val backgroundColor = when {
-        isSelected -> Color(0xFFA855F7).copy(alpha = 0.15f)
-        plan.highlighted -> Color(0xFFA855F7).copy(alpha = 0.08f)
-        else -> Color(0xFF161838)
+    val accentColor = when {
+        isSelected -> Lime
+        plan.highlighted -> Purple
+        else -> Muted
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(backgroundColor, RoundedCornerShape(14.dp))
-            .border(1.dp, borderColor, RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = SubCard,
+        border = BorderStroke(1.dp, borderColor.copy(alpha = if (isSelected) 0.72f else 0.58f))
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column {
-                Text(plan.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text(plan.billingPeriod, color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(plan.price, color = Color(0xFFCFBDFF), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                if (isSelected) {
-                    Spacer(modifier = Modifier.padding(start = 8.dp))
-                    Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFFA855F7), modifier = Modifier.padding(start = 8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(plan.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(plan.billingPeriod, color = Muted, fontSize = 12.sp)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(plan.price, color = accentColor, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    if (isSelected) {
+                        Spacer(modifier = Modifier.padding(start = 8.dp))
+                        Icon(Icons.Default.Check, contentDescription = null, tint = Lime, modifier = Modifier.padding(start = 8.dp))
+                    }
                 }
             }
-        }
-        plan.features.forEach { feature ->
-            Text("• $feature", color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp)
-        }
-        if (plan.highlighted) {
-            Text("BEST VALUE", color = Color(0xFFADF021), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            plan.features.forEach { feature ->
+                Text("• $feature", color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp)
+            }
+            if (plan.highlighted) {
+                Text("BEST VALUE", color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

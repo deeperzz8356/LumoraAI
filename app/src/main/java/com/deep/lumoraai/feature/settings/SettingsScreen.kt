@@ -1,5 +1,7 @@
 package com.deep.lumoraai.feature.settings
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,10 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -34,6 +38,15 @@ import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.ui.theme.tokens.Spacing
 
+// Theme colors matching Home/Profile pages
+private val SettingsBackground = Color(0xFF081020)
+private val SettingsCard = Color(0xFF10192D)
+private val SettingsStroke = Color(0xFF172238)
+private val Lime = Color(0xFFD6FF2F)
+private val Purple = Color(0xFF9C63FF)
+private val Muted = Color(0xFF94A0B8)
+private val CardShape = RoundedCornerShape(14.dp)
+
 @Composable
 fun SettingsScreen(
     uiState: SettingsUiState,
@@ -44,7 +57,7 @@ fun SettingsScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = SettingsBackground,
         topBar = { AppToolbar(title = "Settings") },
         bottomBar = {
             BottomNavigationBar(
@@ -59,13 +72,14 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(SettingsBackground)
                 .padding(padding)
-                .padding(horizontal = Spacing.containerMargin, vertical = Spacing.md)
+                .padding(horizontal = 20.dp, vertical = 18.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(Spacing.xl)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Text("Account", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Account", style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                 
                 SettingsActionRow(
                     title = "Manage Profile",
@@ -92,8 +106,8 @@ fun SettingsScreen(
                 )
             }
             
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Text("Preferences", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Preferences", style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                 
                 SettingsActionRow(
                     title = "Language",
@@ -124,8 +138,8 @@ fun SettingsScreen(
             }
 
             if (uiState.isDevModeUnlocked) {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    Text("Developer", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Developer", style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                     SettingsToggleRow(
                         title = "Developer Mode",
                         subtitle = if (uiState.isDeveloperMode) "Unlimited trial — no restrictions" else "User mode — normal restrictions apply",
@@ -139,19 +153,19 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { viewModel.onVersionTapped() }
-                    .padding(vertical = Spacing.md),
+                    .padding(vertical = 18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "Version 1.0",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Muted
                 )
                 if (uiState.versionTapCount in 1..6) {
                     Text(
                         text = "${7 - uiState.versionTapCount} taps to unlock developer options",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        color = Muted.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -177,24 +191,31 @@ private fun SettingsToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    AppCard {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = SettingsCard,
+        border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(title, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
             }
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primary,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                    checkedThumbColor = Lime,
+                    checkedTrackColor = Lime.copy(alpha = 0.3f),
+                    uncheckedThumbColor = Muted,
+                    uncheckedTrackColor = SettingsStroke
                 )
             )
         }
@@ -207,20 +228,25 @@ private fun SettingsActionRow(
     subtitle: String,
     onClick: () -> Unit
 ) {
-    AppCard(
+    Surface(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        onClick = onClick
+        shape = CardShape,
+        color = SettingsCard,
+        border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(title, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
             }
-            Text(">", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(">", style = MaterialTheme.typography.titleLarge, color = Lime, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -250,9 +276,9 @@ private fun LanguageSelectionDialog(
     
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        containerColor = SettingsCard,
         title = {
-            Text(text = "Select Language", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = "Select Language", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
         },
         text = {
             LazyColumn {
@@ -262,17 +288,18 @@ private fun LanguageSelectionDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onLanguageSelected(language) }
-                            .padding(vertical = Spacing.md),
+                            .padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = language,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                            style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge
+                            color = if (isSelected) Lime else Color.White,
+                            style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                         )
                         if (isSelected) {
-                            Text("✓", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            Text("✓", style = MaterialTheme.typography.titleMedium, color = Lime, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -280,7 +307,7 @@ private fun LanguageSelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismissRequest) {
-                Text("Cancel", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Cancel", style = MaterialTheme.typography.labelLarge, color = Muted)
             }
         }
     )

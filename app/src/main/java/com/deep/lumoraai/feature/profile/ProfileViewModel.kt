@@ -6,7 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.local.room.LumoraDatabase
+import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -18,6 +20,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         private set
 
     private val generationRepository = GenerationRepository()
+    private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val historyRepository = HistoryRepository(
         LumoraDatabase.getInstance(application).historyDao
     )
@@ -50,10 +53,14 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
         if (user != null) {
             viewModelScope.launch {
-                val creditsResult = generationRepository.getCredits()
+                val credits = if (appPreferences.isDeveloperModeEnabled()) {
+                    GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
+                } else {
+                    generationRepository.getCredits().getOrDefault(0)
+                }
                 val currentSuccess = uiState as? ProfileUiState.Success
-                if (currentSuccess != null && creditsResult.isSuccess) {
-                    uiState = currentSuccess.copy(credits = creditsResult.getOrDefault(0))
+                if (currentSuccess != null) {
+                    uiState = currentSuccess.copy(credits = credits)
                 }
             }
         }

@@ -26,9 +26,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -83,9 +85,9 @@ fun PhotoEnhanceScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 22.dp)
+                .padding(horizontal = 20.dp)
                 .padding(top = 14.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(22.dp)
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             EnhanceTopBar(
                 onBack = onBack,
@@ -97,21 +99,13 @@ fun PhotoEnhanceScreen(
                 onUploadClick = { imagePicker.launch("image/*") }
             )
 
-            OptionSection(
-                title = "Resolution",
-                selected = uiState.resolution,
-                onSelected = onResolutionSelected
-            )
-
-            SharpnessSection(
+            EnhancementControls(
+                resolution = uiState.resolution,
                 sharpness = uiState.sharpness,
-                onSharpnessChanged = onSharpnessChanged
-            )
-
-            OptionSection(
-                title = "Lighting",
-                selected = uiState.lighting,
-                onSelected = onLightingSelected
+                lighting = uiState.lighting,
+                onResolutionSelected = onResolutionSelected,
+                onSharpnessChanged = onSharpnessChanged,
+                onLightingSelected = onLightingSelected
             )
 
             Button(
@@ -134,10 +128,17 @@ fun PhotoEnhanceScreen(
                     )
                 } else {
                     Text(
-                        text = "ENHANCE NOW",
+                        text = "Enhance Now",
                         color = Color.Black,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.ExtraBold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -177,10 +178,27 @@ private fun EnhanceTopBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(28.dp)
+                    .height(28.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Lime.copy(alpha = 0.12f))
+                    .border(1.dp, Lime.copy(alpha = 0.24f), RoundedCornerShape(50))
+                    .padding(horizontal = 11.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Free",
+                    color = Lime,
+                    fontSize = 12.sp,
+                    lineHeight = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
                     .clickable(onClick = onNotifications),
                 contentAlignment = Alignment.Center
             ) {
@@ -188,11 +206,11 @@ private fun EnhanceTopBar(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notifications",
                     tint = Color(0xFFDFF7F4),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(23.dp)
                 )
                 Box(
                     modifier = Modifier
-                        .size(7.dp)
+                        .size(6.dp)
                         .align(Alignment.TopEnd)
                         .background(Lime, CircleShape)
                 )
@@ -209,10 +227,10 @@ private fun UploadPanel(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(235.dp)
-            .clip(RoundedCornerShape(9.dp))
+            .height(254.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(EnhancePanel.copy(alpha = 0.55f))
-            .border(BorderStroke(1.dp, EnhanceStroke), RoundedCornerShape(9.dp))
+            .border(BorderStroke(1.dp, EnhanceStroke.copy(alpha = 0.78f)), RoundedCornerShape(14.dp))
             .clickable(enabled = !uiState.isEnhancing, onClick = onUploadClick),
         contentAlignment = Alignment.Center
     ) {
@@ -224,6 +242,23 @@ private fun UploadPanel(
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
             )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(12.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.Black.copy(alpha = 0.52f))
+                    .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(50))
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = if (uiState.enhancedBitmap != null) "Enhanced" else "Original",
+                    color = if (uiState.enhancedBitmap != null) Lime else Color.White,
+                    fontSize = 11.sp,
+                    lineHeight = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -244,7 +279,7 @@ private fun UploadPanel(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(58.dp)
                         .background(Color(0xFF10192D), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
@@ -259,7 +294,7 @@ private fun UploadPanel(
                 Text(
                     text = "Upload Image",
                     color = Color.White,
-                    fontSize = 16.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -275,20 +310,71 @@ private fun UploadPanel(
 }
 
 @Composable
+private fun EnhancementControls(
+    resolution: EnhanceOption,
+    sharpness: Float,
+    lighting: EnhanceOption,
+    onResolutionSelected: (EnhanceOption) -> Unit,
+    onSharpnessChanged: (Float) -> Unit,
+    onLightingSelected: (EnhanceOption) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(EnhancePanel.copy(alpha = 0.82f))
+            .border(1.dp, EnhanceStroke.copy(alpha = 0.64f), RoundedCornerShape(14.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Lime.copy(alpha = 0.13f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Tune, contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text("Enhancement", color = Color.White, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Sharper detail, cleaner tone, richer color", color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
+            }
+        }
+        OptionSection(
+            title = "Resolution",
+            selected = resolution,
+            onSelected = onResolutionSelected
+        )
+        SharpnessSection(
+            sharpness = sharpness,
+            onSharpnessChanged = onSharpnessChanged
+        )
+        OptionSection(
+            title = "Lighting",
+            selected = lighting,
+            onSelected = onLightingSelected
+        )
+    }
+}
+
+@Composable
 private fun OptionSection(
     title: String,
     selected: EnhanceOption,
     onSelected: (EnhanceOption) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(13.dp)) {
-        Text(title, color = Color.White, fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(title, color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(42.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .height(40.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(Color(0xFF171F33))
-                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(6.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(10.dp))
                 .padding(4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -298,7 +384,7 @@ private fun OptionSection(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(5.dp))
+                        .clip(RoundedCornerShape(8.dp))
                         .background(if (isSelected) Lime else Color.Transparent)
                         .clickable { onSelected(option) },
                     contentAlignment = Alignment.Center
@@ -326,8 +412,8 @@ private fun SharpnessSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Sharpness", color = Color.White, fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
-            Text("${(sharpness * 100).toInt()}%", color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("Detail Recovery", color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold)
+            Text("${(sharpness * 100).toInt()}%", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Slider(
             value = sharpness,

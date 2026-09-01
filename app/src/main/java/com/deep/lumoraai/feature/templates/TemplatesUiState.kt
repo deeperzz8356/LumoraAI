@@ -7,6 +7,7 @@ sealed interface TemplatesUiState {
     data class Success(
         val imageTemplates: List<TemplateListItem>,
         val videoTemplates: List<TemplateListItem>,
+        val credits: Int = 0,
     ) : TemplatesUiState
     data class Error(val message: String) : TemplatesUiState
     data object Empty : TemplatesUiState
