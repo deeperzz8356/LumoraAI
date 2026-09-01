@@ -418,13 +418,26 @@ private fun SquareToolButton(icon: androidx.compose.ui.graphics.vector.ImageVect
 
 @Composable
 private fun StatusMessage(status: BgStudioStatus, onDismissError: () -> Unit) {
-    if (status is BgStudioStatus.Error) {
-        Text(
+    when (status) {
+        is BgStudioStatus.Error -> Text(
             text = status.message,
             color = Color(0xFFFF7A7A),
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.clickable(onClick = onDismissError)
         )
+        BgStudioStatus.Completed -> Text(
+            text = "Saved to History and gallery.",
+            color = Lime,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold
+        )
+        BgStudioStatus.TrialExpired -> Text(
+            text = "Insufficient credits. Buy credits or enable developer mode.",
+            color = Color(0xFFFFC46B),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold
+        )
+        else -> Unit
     }
 }

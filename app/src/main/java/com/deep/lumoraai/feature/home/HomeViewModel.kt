@@ -1,6 +1,7 @@
 package com.deep.lumoraai.feature.home
 
 import android.app.Application
+import android.content.pm.ApplicationInfo
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -27,6 +28,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val historyDao = LumoraDatabase.getInstance(application).historyDao
     private val generationRepository = GenerationRepository()
     private val appPreferences = AppPreferencesRepository.getInstance(application)
+    private val isDebuggable = (application.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    private var homeCreditsTapCount = 0
+    private var latestCredits: Int? = null
 
     init {
         observeHomeData()
@@ -45,7 +49,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             historyDao.getAllHistory().collect { history ->
                 val recent = history.take(2).map { it.toRecentItem() }
-                val currentCredits = (uiState as? HomeUiState.Success)?.credits ?: 0
+                val currentCredits = latestCredits ?: (uiState as? HomeUiState.Success)?.credits ?: 0
                 uiState = HomeUiState.Success(
                     userName = name,
                     creationCount = history.size,
@@ -68,11 +72,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 generationRepository.getCredits().getOrDefault(0)
             }
+            latestCredits = credits
             val current = uiState
             if (current is HomeUiState.Success) {
                 uiState = current.copy(credits = credits)
             }
         }
+    }
+
+    fun onHomeCreditsTapped(): Boolean {
+        if (!isDebuggable) return false
+        homeCreditsTapCount += 1
+        if (homeCreditsTapCount < 10) return false
+
+        homeCreditsTapCount = 0
+        viewModelScope.launch {
+            appPreferences.unlockDevMode()
+            appPreferences.setDeveloperMode(true)
+            latestCredits = GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
+            val current = uiState
+            if (current is HomeUiState.Success) {
+                uiState = current.copy(credits = GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY)
+            }
+        }
+        return true
     }
 
     private fun HistoryEntity.toRecentItem(): HomeRecentItem =

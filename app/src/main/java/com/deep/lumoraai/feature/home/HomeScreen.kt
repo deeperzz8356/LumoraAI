@@ -56,6 +56,7 @@ import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.bgStudioRoute
 import com.deep.lumoraai.core.restrictions.GenerationGate
@@ -77,6 +78,7 @@ fun HomeScreen(
     uiState: HomeUiState,
     onNext: () -> Unit,
     onNavigate: (String) -> Unit = {},
+    onCreditsTapped: () -> Boolean = { false },
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -97,6 +99,7 @@ fun HomeScreen(
                 is HomeUiState.Success -> HomeContent(
                     uiState = uiState,
                     onNavigate = onNavigate,
+                    onCreditsTapped = onCreditsTapped,
                 )
             }
         }
@@ -107,6 +110,7 @@ fun HomeScreen(
 private fun HomeContent(
     uiState: HomeUiState.Success,
     onNavigate: (String) -> Unit,
+    onCreditsTapped: () -> Boolean,
 ) {
     Column(
         modifier = Modifier
@@ -119,7 +123,8 @@ private fun HomeContent(
         HomeTopBar(
             userName = uiState.userName,
             credits = uiState.credits,
-            onNavigate = onNavigate
+            onNavigate = onNavigate,
+            onCreditsTapped = onCreditsTapped
         )
         HomeHero(onExploreRecent = { onNavigate(Screen.History.route) })
         MainCreateGrid(onNavigate = onNavigate)
@@ -134,6 +139,7 @@ private fun HomeTopBar(
     userName: String,
     credits: Int,
     onNavigate: (String) -> Unit,
+    onCreditsTapped: () -> Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -179,7 +185,14 @@ private fun HomeTopBar(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CreditsChip(credits = credits, onClick = { onNavigate(Screen.Credits.route) })
+            CreditsChip(
+                credits = credits,
+                onClick = {
+                    if (!onCreditsTapped()) {
+                        onNavigate(Screen.Credits.route)
+                    }
+                }
+            )
             Box(
                 modifier = Modifier
                     .size(34.dp)
@@ -421,7 +434,14 @@ private fun RecentCreationCard(
                     .background(Color.Black),
                 contentAlignment = Alignment.Center
             ) {
-                if (!isVideo && mediaPath.isNotBlank() && mediaFile.exists()) {
+                if (isVideo && mediaPath.isNotBlank() && mediaFile.exists()) {
+                    VideoFirstFrameThumbnail(
+                        filePath = mediaPath,
+                        contentDescription = item.title,
+                        fallbackImageRes = item.fallbackImageRes,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else if (!isVideo && mediaPath.isNotBlank() && mediaFile.exists()) {
                     AsyncImage(
                         model = mediaFile,
                         contentDescription = item.title,

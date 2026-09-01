@@ -11,6 +11,7 @@ sealed interface BgStudioStatus {
     data object Idle : BgStudioStatus
     data object LoadingImage : BgStudioStatus
     data object Generating : BgStudioStatus
+    data object Completed : BgStudioStatus
     data object TrialExpired : BgStudioStatus
     data class Error(val message: String) : BgStudioStatus
 }

@@ -58,6 +58,7 @@ import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.MediaViewerDialog
+import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.utils.GeneratedImage
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -295,6 +296,7 @@ private fun JobCardItem(job: ActiveJobInfo) {
 @Composable
 private fun JobThumbnail(job: ActiveJobInfo, isVideo: Boolean) {
     val thumbPath = when {
+        isVideo && !job.localMediaPath.isNullOrBlank() -> job.localMediaPath
         !isVideo && !job.localMediaPath.isNullOrBlank() -> job.localMediaPath
         !isVideo && !job.imageUrl.isNullOrBlank() -> job.imageUrl
         else -> null
@@ -305,7 +307,14 @@ private fun JobThumbnail(job: ActiveJobInfo, isVideo: Boolean) {
             .clip(RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
-        if (!thumbPath.isNullOrBlank()) {
+        if (isVideo && !thumbPath.isNullOrBlank()) {
+            VideoFirstFrameThumbnail(
+                filePath = thumbPath,
+                contentDescription = null,
+                fallbackImageRes = job.imageRes,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (!thumbPath.isNullOrBlank()) {
             GeneratedImage(
                 imagePayload = thumbPath,
                 contentDescription = null,

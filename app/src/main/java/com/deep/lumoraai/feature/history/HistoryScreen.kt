@@ -64,6 +64,7 @@ import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.utils.MediaShareUtils
 import com.deep.lumoraai.data.model.HistoryModel
@@ -304,7 +305,14 @@ private fun HistoryTile(item: HistoryModel, onClick: () -> Unit) {
             .border(1.dp, HistoryStroke, RoundedCornerShape(6.dp))
             .clickable(enabled = mediaPath.isNotBlank()) { onClick() }
     ) {
-        if (!isVideo && mediaPath.isNotBlank() && file.exists()) {
+        if (isVideo && mediaPath.isNotBlank() && file.exists()) {
+            VideoFirstFrameThumbnail(
+                filePath = mediaPath,
+                contentDescription = item.title,
+                fallbackImageRes = fallbackRes,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (!isVideo && mediaPath.isNotBlank() && file.exists()) {
             AsyncImage(
                 model = file,
                 contentDescription = item.title,

@@ -9,5 +9,10 @@ fun HomeRoute(
     onNavigate: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
-    HomeScreen(uiState = viewModel.uiState, onNext = onNext, onNavigate = onNavigate)
+    HomeScreen(
+        uiState = viewModel.uiState,
+        onNext = onNext,
+        onNavigate = onNavigate,
+        onCreditsTapped = viewModel::onHomeCreditsTapped
+    )
 }

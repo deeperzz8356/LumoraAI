@@ -85,6 +85,11 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         }
 
         viewModelScope.launch {
+            if (uiState.mode == BgStudioMode.Remove) {
+                startLocalRemoveJob(bitmap)
+                return@launch
+            }
+
             val isDev = appPreferences.isDeveloperModeEnabled()
             if (!ensureTrialUser()) {
                 uiState = uiState.copy(status = BgStudioStatus.Error("Could not start your free trial. Please try again."))
@@ -205,8 +210,57 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    private fun startLocalRemoveJob(bitmap: Bitmap) {
+        uiState = uiState.copy(status = BgStudioStatus.Generating)
+        val jobTitle = "BG Remove ${shortTimestamp()}"
+        GenerationRepository.addJob(
+            ActiveJobInfo(
+                title = jobTitle,
+                subtitle = "Removing background on device...",
+                badgeText = "BG Studio",
+                statusText = "Processing",
+                progressPercent = 0.25f,
+                isCompleted = false,
+                imageRes = R.drawable.style_digital,
+                mediaType = MediaStorageRepository.MEDIA_IMAGE,
+            )
+        )
+
+        viewModelScope.launch {
+            val cutout = withContext(Dispatchers.Default) {
+                removeBorderConnectedBackground(bitmap)
+            }
+            val saved = mediaStorage.saveImageBitmap(cutout, mimeType = "image/png")
+            historyRepository.addHistory(
+                historyModel = HistoryModel(
+                    id = saved.id,
+                    title = jobTitle,
+                    createdAt = currentTimestamp(),
+                    type = MediaStorageRepository.MEDIA_IMAGE,
+                    mediaUrl = saved.filePath,
+                ),
+                type = MediaStorageRepository.MEDIA_IMAGE,
+                mediaUrl = saved.filePath,
+            )
+            uiState = uiState.copy(sourceBitmap = cutout, status = BgStudioStatus.Completed)
+            GenerationRepository.updateJob(jobTitle) { job ->
+                job.copy(
+                    progressPercent = 1.0f,
+                    statusText = "Completed",
+                    subtitle = "Saved to history",
+                    isCompleted = true,
+                    localMediaPath = saved.filePath,
+                    imageUrl = saved.filePath,
+                )
+            }
+        }
+    }
+
     private suspend fun persistGeneratedImage(payload: String, jobTitle: String) {
         val saved = mediaStorage.saveImageFromPayload(payload)
+        val preview = withContext(Dispatchers.IO) {
+            runCatching { BitmapFactory.decodeFile(saved.filePath) }.getOrNull()
+        }
         historyRepository.addHistory(
             historyModel = HistoryModel(
                 id = saved.id,
@@ -218,6 +272,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
             type = MediaStorageRepository.MEDIA_IMAGE,
             mediaUrl = saved.filePath,
         )
+        uiState = uiState.copy(sourceBitmap = preview ?: uiState.sourceBitmap, status = BgStudioStatus.Completed)
         GenerationRepository.updateJob(jobTitle) { job ->
             job.copy(
                 progressPercent = 1.0f,
@@ -262,10 +317,75 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
 
     private fun buildGenerationPrompt(mode: BgStudioMode, prompt: String): String =
         if (mode == BgStudioMode.Replace) {
-            "Keep the original subject exactly the same and replace only the background with: $prompt. Match perspective, lighting, shadows, depth of field, and reflections. Professional realistic composite."
+            "Edit the provided image. Keep the foreground subject, face, body, pose, clothing, and object details exactly the same. Replace only the background with: $prompt. Do not invent a new subject. Match perspective, lighting, shadows, depth of field, and reflections. Return a realistic composite."
         } else {
-            "Keep the original subject exactly the same and remove the background. Place the subject on a clean neutral studio background with natural lighting and soft shadow."
+            "Edit the provided image. Keep the foreground subject exactly the same and remove only the background. Return the subject as a clean transparent PNG cutout."
         }
+
+    private fun removeBorderConnectedBackground(source: Bitmap): Bitmap {
+        val width = source.width
+        val height = source.height
+        val pixels = IntArray(width * height)
+        source.getPixels(pixels, 0, width, 0, 0, width, height)
+
+        val visited = BooleanArray(pixels.size)
+        val queue = IntArray(pixels.size)
+        var head = 0
+        var tail = 0
+        val threshold = 46
+
+        fun enqueue(index: Int) {
+            if (!visited[index]) {
+                visited[index] = true
+                queue[tail++] = index
+            }
+        }
+
+        fun similar(a: Int, b: Int): Boolean {
+            val dr = android.graphics.Color.red(a) - android.graphics.Color.red(b)
+            val dg = android.graphics.Color.green(a) - android.graphics.Color.green(b)
+            val db = android.graphics.Color.blue(a) - android.graphics.Color.blue(b)
+            return dr * dr + dg * dg + db * db <= threshold * threshold
+        }
+
+        val samples = intArrayOf(
+            pixels[0],
+            pixels[width - 1],
+            pixels[(height - 1) * width],
+            pixels[pixels.lastIndex],
+        )
+
+        for (x in 0 until width) {
+            enqueue(x)
+            enqueue((height - 1) * width + x)
+        }
+        for (y in 0 until height) {
+            enqueue(y * width)
+            enqueue(y * width + width - 1)
+        }
+
+        while (head < tail) {
+            val index = queue[head++]
+            val color = pixels[index]
+            if (!samples.any { similar(color, it) }) continue
+            val x = index % width
+            val y = index / width
+            if (x > 0) enqueue(index - 1)
+            if (x < width - 1) enqueue(index + 1)
+            if (y > 0) enqueue(index - width)
+            if (y < height - 1) enqueue(index + width)
+        }
+
+        val output = IntArray(pixels.size)
+        for (i in pixels.indices) {
+            output[i] = if (visited[i] && samples.any { similar(pixels[i], it) }) {
+                pixels[i] and 0x00FFFFFF
+            } else {
+                pixels[i]
+            }
+        }
+        return Bitmap.createBitmap(output, width, height, Bitmap.Config.ARGB_8888)
+    }
 
     private fun currentTimestamp(): String =
         SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date())

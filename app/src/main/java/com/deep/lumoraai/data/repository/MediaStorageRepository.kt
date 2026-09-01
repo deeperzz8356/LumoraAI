@@ -1,6 +1,7 @@
 package com.deep.lumoraai.data.repository
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.core.content.FileProvider
 import com.deep.lumoraai.core.utils.decodeMediaPayload
@@ -27,6 +28,44 @@ class MediaStorageRepository private constructor(context: Context) {
 
     suspend fun saveVideoFromPayload(payload: String): SavedMedia = withContext(Dispatchers.IO) {
         savePayload(payload = payload, mediaType = MEDIA_VIDEO, outputDir = videosDir)
+    }
+
+    suspend fun saveImageBitmap(
+        bitmap: Bitmap,
+        mimeType: String = "image/png",
+        quality: Int = 100,
+    ): SavedMedia = withContext(Dispatchers.IO) {
+        val id = UUID.randomUUID().toString()
+        val extension = extensionForMimeType(mimeType, MEDIA_IMAGE)
+        val file = File(imagesDir, "$id.$extension")
+        file.outputStream().use { output ->
+            val format = when (mimeType.lowercase()) {
+                "image/jpeg", "image/jpg" -> Bitmap.CompressFormat.JPEG
+                "image/webp" -> if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    Bitmap.CompressFormat.WEBP_LOSSLESS
+                } else {
+                    @Suppress("DEPRECATION")
+                    Bitmap.CompressFormat.WEBP
+                }
+                else -> Bitmap.CompressFormat.PNG
+            }
+            bitmap.compress(format, quality, output)
+        }
+        runCatching {
+            MediaGallerySaver.saveToGallery(
+                context = appContext,
+                filePath = file.absolutePath,
+                mimeType = mimeType,
+                mediaType = MEDIA_IMAGE,
+            )
+        }
+        SavedMedia(
+            id = id,
+            localUri = Uri.fromFile(file),
+            filePath = file.absolutePath,
+            mimeType = mimeType,
+            mediaType = MEDIA_IMAGE,
+        )
     }
 
     fun deleteMedia(filePath: String): Boolean {
