@@ -77,10 +77,11 @@ private val Muted = Color(0xFF94A0B8)
 private val FilterIdle = Color(0xFF111A2D)
 
 private enum class HistoryFilter(val label: String) {
-    All("All"),
-    Images("Images"),
-    Videos("Videos"),
-    Upscale("Upscale"),
+    All("ALL"),
+    Images("IMAGE"),
+    Videos("VIDEO"),
+    Enhancer("ENHANCER"),
+    Compress("COMPRESS"),
 }
 
 @Composable
@@ -145,7 +146,8 @@ private fun HistoryGallery(
                 HistoryFilter.All -> true
                 HistoryFilter.Images -> !item.type.equals("VIDEO", ignoreCase = true)
                 HistoryFilter.Videos -> item.type.equals("VIDEO", ignoreCase = true)
-                HistoryFilter.Upscale -> item.title.contains("upscale", ignoreCase = true)
+                HistoryFilter.Enhancer -> item.title.contains("enhance", ignoreCase = true)
+                HistoryFilter.Compress -> item.title.contains("compress", ignoreCase = true)
             }
         }
     }
