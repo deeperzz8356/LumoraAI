@@ -41,6 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +65,17 @@ import coil.compose.AsyncImage
 import java.io.File
 import com.deep.lumoraai.core.navigation.Screen
 
+// Home page colors and styling (matching aesthetic)
+private val ProfileBackground = Color(0xFF081020)
+private val ProfileCard = Color(0xFF10192D)
+private val ProfileStroke = Color(0xFF172238)
+private val Lime = Color(0xFFD6FF2F)
+private val Purple = Color(0xFF9C63FF)
+private val Pink = Color(0xFFFF3D9D)
+private val Cyan = Color(0xFF20E6F2)
+private val Muted = Color(0xFF94A0B8)
+private val CardShape = RoundedCornerShape(14.dp)
+
 @Composable
 fun ProfileScreen(
     uiState: ProfileUiState,
@@ -74,6 +86,7 @@ fun ProfileScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = ProfileBackground,
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
@@ -85,8 +98,8 @@ fun ProfileScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(ProfileBackground)
                 .padding(padding)
-                .background(Brush.verticalGradient(listOf(Color(0xFF0F1026), Color(0xFF070714))))
         ) {
             ProfileContent(uiState = uiState, onSignOut = onSignOut, onNavigate = onNavigate)
         }
@@ -99,10 +112,10 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        ProfileTopBar()
+        ProfileTopBar(onNavigate = onNavigate)
         ProfileHeader()
         val credits = if (uiState is ProfileUiState.Success) uiState.credits else 0
         CreditsBalanceCard(credits = credits)
@@ -114,43 +127,49 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
         PurchaseHistoryCard()
         PreferencesList(onSignOut = onSignOut, onNavigate = onNavigate)
         SupportCard()
+        Spacer(modifier = Modifier.height(2.dp))
     }
 }
 
 @Composable
-private fun ProfileTopBar() {
+private fun ProfileTopBar(onNavigate: (String) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Lumina AI", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .border(
-                    width = 2.dp,
-                    brush = Brush.linearGradient(colors = listOf(Color(0xFF7E50EF), Color(0xFF39FF14))),
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            // Profile icon placeholder
-            Text(
-                text = "AT",
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Box(
                 modifier = Modifier
-                    .size(10.dp)
-                    .align(Alignment.BottomEnd)
-                    .background(Color(0xFF39FF14), CircleShape)
-                    .border(1.5.dp, Color.Black, CircleShape)
-            )
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .border(1.dp, Color(0xFF2D77FF), CircleShape)
+                    .clickable { onNavigate(Screen.Profile.route) }
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.user_avatar),
+                    contentDescription = "Profile",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(
+                    text = "Profile",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    lineHeight = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+                Text(
+                    text = "Account Settings",
+                    color = Color.White.copy(alpha = 0.72f),
+                    fontSize = 12.sp,
+                    lineHeight = 15.sp
+                )
+            }
         }
     }
 }
@@ -158,64 +177,28 @@ private fun ProfileTopBar() {
 @Composable
 private fun ProfileHeader() {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Box(
-                modifier = Modifier
-                    .size(90.dp)
-                    .clip(CircleShape)
-                    .border(
-                        width = 3.dp,
-                        brush = Brush.linearGradient(colors = listOf(Color(0xFF7E50EF), Color(0xFF39FF14))),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                // Profile image placeholder - using text instead of icon
-                Text(
-                    text = "AT",
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 32.sp,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(18.dp)
-                        .align(Alignment.BottomEnd)
-                        .background(Color(0xFF39FF14), CircleShape)
-                        .border(2.dp, Color(0xFF1A1C29), CircleShape)
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .background(Color(0xFFD4FF3B), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text("PRO", color = Color.Black, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-            }
+        Box(
+            modifier = Modifier
+                .size(68.dp)
+                .clip(CircleShape)
+                .border(1.dp, Color(0xFF2D77FF), CircleShape)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.user_avatar),
+                contentDescription = "Profile",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
         }
-        Text("Alex Thorne", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text("@alexthorne_creatives", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TagPill("Concept Artist")
-            TagPill("Video Director")
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Alex Thorne", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text("@alexthorne_creatives", color = Muted, fontSize = 12.sp)
         }
         ProfileHeaderActions()
-    }
-}
-
-@Composable
-private fun TagPill(text: String) {
-    Box(
-        modifier = Modifier
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-        Text(text, color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
     }
 }
 
@@ -225,84 +208,106 @@ private fun ProfileHeaderActions() {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Button(
+        Surface(
             onClick = {},
-            modifier = Modifier.weight(1f).height(44.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4FF3B)),
-            shape = RoundedCornerShape(22.dp)
-        ) {
-            Icon(Icons.Default.Edit, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text("Edit Profile", color = Color.Black, fontSize = 13.sp)
-        }
-        Box(
             modifier = Modifier
-                .size(44.dp)
-                .background(Color.White.copy(alpha = 0.05f), CircleShape)
-                .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape)
-                .clickable {},
-            contentAlignment = Alignment.Center
+                .weight(1f)
+                .height(44.dp),
+            shape = CardShape,
+            color = ProfileCard,
+            border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
         ) {
-            Icon(Icons.Default.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.Default.Edit, contentDescription = null, tint = Lime, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Edit Profile", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Surface(
+            onClick = {},
+            modifier = Modifier
+                .size(44.dp),
+            shape = CircleShape,
+            color = ProfileCard,
+            border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Share, contentDescription = null, tint = Purple, modifier = Modifier.size(18.dp))
+            }
         }
     }
 }
 
 @Composable
 private fun CreditsBalanceCard(credits: Int) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = ProfileCard,
+        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("Credits Balance", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
-            Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Credits Balance", color = Muted, fontSize = 12.sp)
+                Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+            }
+            Text("$credits LUM", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .background(Color.White.copy(alpha = 0.1f), CircleShape)
+            ) {
+                Box(modifier = Modifier.fillMaxWidth(0.6f).fillMaxHeight().background(Lime.copy(alpha = 0.5f), CircleShape))
+            }
+            Text("Next refill in 12 days", color = Muted, fontSize = 10.sp)
         }
-        Text("$credits LUM", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Box(
-            modifier = Modifier.fillMaxWidth().height(6.dp).background(Color.White.copy(alpha = 0.1f), CircleShape)
-        ) {
-            Box(modifier = Modifier.fillMaxWidth(0.6f).fillMaxHeight().background(Color(0xFFCFBDFF), CircleShape))
-        }
-        Text("Next refill in 12 days", color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
     }
 }
 
 @Composable
 private fun PlanCard(onNavigate: (String) -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = ProfileCard,
+        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
     ) {
-        Text("Active Plan", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column {
-                Text("Elite Pro", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("Billed annually • $499/yr", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-            }
+            Text("Active Plan", color = Muted, fontSize = 12.sp)
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { onNavigate(Screen.Subscription.route) }
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Manage Plan", color = Color(0xFFA855F7), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFFA855F7), modifier = Modifier.size(14.dp))
+                Column {
+                    Text("Elite Pro", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("Billed annually • $499/yr", color = Muted, fontSize = 11.sp)
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { onNavigate(Screen.Subscription.route) }
+                ) {
+                    Text("Manage Plan", color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Lime, modifier = Modifier.size(14.dp))
+                }
             }
         }
     }
@@ -310,20 +315,25 @@ private fun PlanCard(onNavigate: (String) -> Unit) {
 
 @Composable
 private fun BuyMoreCreditsCard(onNavigate: (String) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(12.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-            .clickable { onNavigate(Screen.Credits.route) }
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        onClick = { onNavigate(Screen.Credits.route) },
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = ProfileCard,
+        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
     ) {
-        Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-        Column {
-            Text("Buy More Credits", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Text("Instant refill for emergency generations.", color = Color.White.copy(alpha = 0.5f), fontSize = 9.sp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null, tint = Cyan, modifier = Modifier.size(18.dp))
+            Column {
+                Text("Buy More Credits", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("Instant refill for emergency generations.", color = Muted, fontSize = 9.sp)
+            }
         }
     }
 }
@@ -395,35 +405,36 @@ private fun CreationCard(
 ) {
     val isVideo = item.type.equals("VIDEO", ignoreCase = true)
     val path = item.mediaUrl
-    Box(
-        modifier = modifier
-            .height(100.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(100.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = ProfileCard,
+        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
     ) {
-        if (!isVideo && !path.isNullOrBlank() && File(path).exists()) {
-            AsyncImage(
-                model = File(path),
-                contentDescription = item.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF1C1F3A)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isVideo) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Video",
-                        tint = Color(0xFFCFBDFF),
-                        modifier = Modifier.size(28.dp)
-                    )
+        Box(contentAlignment = Alignment.Center) {
+            if (!isVideo && !path.isNullOrBlank() && File(path).exists()) {
+                AsyncImage(
+                    model = File(path),
+                    contentDescription = item.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isVideo) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Video",
+                            tint = Lime,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
             }
         }
@@ -432,29 +443,35 @@ private fun CreationCard(
 
 @Composable
 private fun PurchaseHistoryCard() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = ProfileCard,
+        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.List, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("PURCHASEHISTORY", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.sp)
-        }
-        PurchaseRow("Pro Annual Plan", "Nov 12, 2023 • Inv #6921", "$499.00")
-        PurchaseRow("1,000 Credit Pack", "Oct 28, 2023 • Inv #7741", "$49.00")
-        PurchaseRow("Early Adopter Credit Bonus", "Sep 15, 2023 • Promo", "FREE")
-        Button(
-            onClick = {},
-            modifier = Modifier.fillMaxWidth().height(44.dp),
-            shape = RoundedCornerShape(22.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.05f))
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text("Download All Receipts", color = Color.White, fontSize = 12.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.List, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("PURCHASE HISTORY", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.sp)
+            }
+            PurchaseRow("Pro Annual Plan", "Nov 12, 2023 • Inv #6921", "$499.00")
+            PurchaseRow("1,000 Credit Pack", "Oct 28, 2023 • Inv #7741", "$49.00")
+            PurchaseRow("Early Adopter Credit Bonus", "Sep 15, 2023 • Promo", "FREE")
+            Surface(
+                onClick = {},
+                modifier = Modifier.fillMaxWidth().height(44.dp),
+                shape = CardShape,
+                color = ProfileCard,
+                border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("Download All Receipts", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }
@@ -468,70 +485,87 @@ private fun PurchaseRow(title: String, desc: String, price: String) {
     ) {
         Column {
             Text(title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Text(desc, color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
+            Text(desc, color = Muted, fontSize = 10.sp)
         }
-        Text(price, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(price, color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
 private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = ProfileCard,
+        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
     ) {
-        Text("PREFERENCES", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.sp)
-        PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
-        PrefRow("Privacy Policy", Icons.Default.Share, Color.White)
-        PrefRow("Terms of Service", Icons.Default.Info, Color.White)
-        PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A))
-        PrefRow("Sign Out", Icons.Default.ExitToApp, Color(0xFFFF7A7A), onSignOut)
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text("PREFERENCES", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.sp)
+            PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
+            PrefRow("Privacy Policy", Icons.Default.Info, Color.White)
+            PrefRow("Terms of Service", Icons.Default.Info, Color.White)
+            PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A))
+            PrefRow("Sign Out", Icons.Default.ExitToApp, Color(0xFFFF7A7A), onSignOut)
+        }
     }
 }
 
 @Composable
 private fun PrefRow(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, onClick: () -> Unit = {}) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(12.dp))
-            Text(title, color = color, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(title, color = color, fontSize = 14.sp, fontWeight = FontWeight.Medium)
         }
-        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
+        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Muted, modifier = Modifier.size(16.dp))
     }
 }
 
 @Composable
 private fun SupportCard() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161838), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = ProfileCard,
+        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
     ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-            Text("Need Help?", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(2.dp))
-            Text("Our concierge support is available 24/7.", color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp, lineHeight = 14.sp)
-        }
-        Button(
-            onClick = {},
-            modifier = Modifier.height(36.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.05f))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Support Chat", color = Color.White, fontSize = 11.sp)
+            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                Text("Need Help?", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(2.dp))
+                Text("Our concierge support is available 24/7.", color = Muted, fontSize = 10.sp, lineHeight = 14.sp)
+            }
+            Surface(
+                onClick = {},
+                modifier = Modifier.height(36.dp),
+                shape = CardShape,
+                color = ProfileCard.copy(alpha = 0.5f),
+                border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                ) {
+                    Text("Support", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }
