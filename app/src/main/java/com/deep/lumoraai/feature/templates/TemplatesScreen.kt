@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -39,11 +40,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
@@ -100,6 +105,8 @@ fun TemplatesScreen(
 private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (String) -> Unit) {
     var selectedType by remember { mutableStateOf("Image") }
     val templates = if (selectedType == "Image") uiState.imageTemplates else uiState.videoTemplates
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -115,6 +122,10 @@ private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (Str
             templates.forEach { item ->
                 TemplateRow(
                     item = item,
+                    onCopy = {
+                        clipboard.setText(AnnotatedString(item.prompt))
+                        Toast.makeText(context, "Template prompt copied", Toast.LENGTH_SHORT).show()
+                    },
                     onClick = {
                         val route = when {
                             item.kind == TemplateKind.Image -> textToImageRoute(item.prompt)
@@ -264,7 +275,7 @@ private fun TemplateTab(
 }
 
 @Composable
-private fun TemplateRow(item: TemplateListItem, onClick: () -> Unit) {
+private fun TemplateRow(item: TemplateListItem, onCopy: () -> Unit, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         modifier = Modifier
@@ -315,6 +326,22 @@ private fun TemplateRow(item: TemplateListItem, onClick: () -> Unit) {
                     lineHeight = 13.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Lime.copy(alpha = 0.12f))
+                    .border(1.dp, Lime.copy(alpha = 0.28f), RoundedCornerShape(8.dp))
+                    .clickable(onClick = onCopy),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = "Copy template prompt",
+                    tint = Lime,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }

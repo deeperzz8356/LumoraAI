@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -78,7 +80,6 @@ fun HomeScreen(
     uiState: HomeUiState,
     onNext: () -> Unit,
     onNavigate: (String) -> Unit = {},
-    onCreditsTapped: () -> Boolean = { false },
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -99,7 +100,6 @@ fun HomeScreen(
                 is HomeUiState.Success -> HomeContent(
                     uiState = uiState,
                     onNavigate = onNavigate,
-                    onCreditsTapped = onCreditsTapped,
                 )
             }
         }
@@ -110,7 +110,6 @@ fun HomeScreen(
 private fun HomeContent(
     uiState: HomeUiState.Success,
     onNavigate: (String) -> Unit,
-    onCreditsTapped: () -> Boolean,
 ) {
     Column(
         modifier = Modifier
@@ -123,8 +122,7 @@ private fun HomeContent(
         HomeTopBar(
             userName = uiState.userName,
             credits = uiState.credits,
-            onNavigate = onNavigate,
-            onCreditsTapped = onCreditsTapped
+            onNavigate = onNavigate
         )
         HomeHero(onExploreRecent = { onNavigate(Screen.History.route) })
         MainCreateGrid(onNavigate = onNavigate)
@@ -139,7 +137,6 @@ private fun HomeTopBar(
     userName: String,
     credits: Int,
     onNavigate: (String) -> Unit,
-    onCreditsTapped: () -> Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -185,14 +182,7 @@ private fun HomeTopBar(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CreditsChip(
-                credits = credits,
-                onClick = {
-                    if (!onCreditsTapped()) {
-                        onNavigate(Screen.Credits.route)
-                    }
-                }
-            )
+            CreditsChip(credits = credits, onClick = { onNavigate(Screen.Credits.route) })
             Box(
                 modifier = Modifier
                     .size(34.dp)
@@ -392,12 +382,16 @@ private fun RecentCreationsSection(
                 modifier = Modifier.clickable { onNavigate(Screen.History.route) }
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            items.take(2).forEach { item ->
-                RecentCreationCard(item = item, onClick = { onNavigate(Screen.History.route) }, modifier = Modifier.weight(1f))
-            }
-            if (items.size == 1) {
-                Spacer(modifier = Modifier.weight(1f))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(items, key = { it.id }) { item ->
+                RecentCreationCard(
+                    item = item,
+                    onClick = { onNavigate(Screen.History.route) },
+                    modifier = Modifier.width(190.dp)
+                )
             }
         }
     }
