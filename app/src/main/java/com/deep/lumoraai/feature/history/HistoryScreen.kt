@@ -1,12 +1,12 @@
 package com.deep.lumoraai.feature.history
 
-import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +34,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -52,12 +52,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.AppEmptyScreen
@@ -65,6 +59,8 @@ import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
+import com.deep.lumoraai.core.components.ZoomableImageViewer
+import com.deep.lumoraai.core.components.ZoomableVideoPlayer
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.utils.MediaShareUtils
 import com.deep.lumoraai.data.model.HistoryModel
@@ -93,6 +89,7 @@ fun HistoryScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedItem by remember { mutableStateOf<HistoryModel?>(null) }
+    var selectedItemsList by remember { mutableStateOf<List<HistoryModel>>(emptyList()) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -115,8 +112,10 @@ fun HistoryScreen(
             if (viewing != null) {
                 HistoryMediaViewer(
                     item = viewing,
+                    itemsList = selectedItemsList,
                     onBack = { selectedItem = null },
-                    onNavigate = onNavigate
+                    onNavigate = onNavigate,
+                    onItemChanged = { selectedItem = it }
                 )
             } else {
                 when (uiState) {
@@ -126,7 +125,10 @@ fun HistoryScreen(
                     is HistoryUiState.Success -> HistoryGallery(
                         items = uiState.items,
                         onNavigate = onNavigate,
-                        onSelected = { selectedItem = it }
+                        onSelected = { item, list ->
+                            selectedItem = item
+                            selectedItemsList = list
+                        }
                     )
                 }
             }
@@ -138,7 +140,7 @@ fun HistoryScreen(
 private fun HistoryGallery(
     items: List<HistoryModel>,
     onNavigate: (String) -> Unit,
-    onSelected: (HistoryModel) -> Unit,
+    onSelected: (HistoryModel, List<HistoryModel>) -> Unit,
 ) {
     var selectedFilter by remember { mutableStateOf(HistoryFilter.All) }
     val filteredItems = remember(items, selectedFilter) {
@@ -169,7 +171,7 @@ private fun HistoryGallery(
             verticalArrangement = Arrangement.spacedBy(9.dp),
         ) {
             items(filteredItems, key = { it.id }) { item ->
-                HistoryTile(item = item, onClick = { onSelected(item) })
+                HistoryTile(item = item, onClick = { onSelected(item, filteredItems) })
             }
         }
     }
@@ -371,13 +373,18 @@ private fun HistoryTile(item: HistoryModel, onClick: () -> Unit) {
 @Composable
 private fun HistoryMediaViewer(
     item: HistoryModel,
+    itemsList: List<HistoryModel>,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
+    onItemChanged: (HistoryModel) -> Unit,
 ) {
     val context = LocalContext.current
     val isVideo = item.type.equals("VIDEO", ignoreCase = true)
     val mediaPath = item.mediaUrl.orEmpty()
     val file = remember(mediaPath) { File(mediaPath) }
+    var currentIndex by remember(item) { 
+        mutableStateOf(itemsList.indexOfFirst { it.id == item.id }.let { if (it < 0) 0 else it })
+    }
 
     Column(
         modifier = Modifier
@@ -422,13 +429,31 @@ private fun HistoryMediaViewer(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+        
+        // Scrollable media viewer with carousel support
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color.Black)
-                .border(1.dp, HistoryStroke, RoundedCornerShape(12.dp)),
+                .border(1.dp, HistoryStroke, RoundedCornerShape(12.dp))
+                .pointerInput(itemsList.size) {
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { _, dragAmount ->
+                            // Only detect if dragging more than 30 pixels
+                            if (dragAmount > 30 && currentIndex > 0) {
+                                // Swipe right = previous
+                                currentIndex--
+                                onItemChanged(itemsList[currentIndex])
+                            } else if (dragAmount < -30 && currentIndex < itemsList.size - 1) {
+                                // Swipe left = next
+                                currentIndex++
+                                onItemChanged(itemsList[currentIndex])
+                            }
+                        }
+                    )
+                },
             contentAlignment = Alignment.Center
         ) {
             if (!file.exists()) {
@@ -439,16 +464,22 @@ private fun HistoryMediaViewer(
                     modifier = Modifier.padding(16.dp)
                 )
             } else if (isVideo) {
-                HistoryVideoPlayer(filePath = mediaPath)
+                ZoomableVideoPlayer(
+                    filePath = mediaPath,
+                    modifier = Modifier.fillMaxSize(),
+                    showControls = true,
+                    enableGestureDetection = false  // Parent handles carousel swipe
+                )
             } else {
-                AsyncImage(
-                    model = file,
-                    contentDescription = item.title,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
+                ZoomableImageViewer(
+                    filePath = mediaPath,
+                    modifier = Modifier.fillMaxSize(),
+                    showControls = true,
+                    enableGestureDetection = false  // Parent handles carousel swipe
                 )
             }
         }
+        
         Text(
             text = item.createdAt,
             color = Muted,
@@ -478,35 +509,3 @@ private fun HistoryEmpty(onNavigate: (String) -> Unit) {
     }
 }
 
-@OptIn(UnstableApi::class)
-@Composable
-private fun HistoryVideoPlayer(filePath: String) {
-    val context = LocalContext.current
-    val exoPlayer = remember(filePath) {
-        ExoPlayer.Builder(context).build().apply {
-            setMediaItem(MediaItem.fromUri(Uri.fromFile(File(filePath))))
-            repeatMode = Player.REPEAT_MODE_ALL
-            playWhenReady = true
-            prepare()
-        }
-    }
-
-    DisposableEffect(filePath) {
-        onDispose { exoPlayer.release() }
-    }
-
-    AndroidView(
-        factory = { ctx ->
-            PlayerView(ctx).apply {
-                player = exoPlayer
-                useController = true
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                layoutParams = android.widget.FrameLayout.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
-                )
-            }
-        },
-        modifier = Modifier.fillMaxSize()
-    )
-}
