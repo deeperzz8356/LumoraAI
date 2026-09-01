@@ -431,6 +431,7 @@ private fun HistoryMediaViewer(
         )
         
         // Scrollable media viewer with carousel support
+        var lastSwipeIndex by remember { mutableStateOf(-1) }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -440,16 +441,27 @@ private fun HistoryMediaViewer(
                 .border(1.dp, HistoryStroke, RoundedCornerShape(12.dp))
                 .pointerInput(itemsList.size) {
                     detectHorizontalDragGestures(
+                        onDragEnd = {
+                            // Reset the swipe tracker when drag ends
+                            lastSwipeIndex = -1
+                        },
                         onHorizontalDrag = { _, dragAmount ->
-                            // Only detect if dragging more than 30 pixels
-                            if (dragAmount > 30 && currentIndex > 0) {
-                                // Swipe right = previous
-                                currentIndex--
-                                onItemChanged(itemsList[currentIndex])
-                            } else if (dragAmount < -30 && currentIndex < itemsList.size - 1) {
-                                // Swipe left = next
-                                currentIndex++
-                                onItemChanged(itemsList[currentIndex])
+                            // Only navigate if dragging more than 50 pixels threshold
+                            // and we haven't already navigated for this drag
+                            if (dragAmount > 50 && lastSwipeIndex != currentIndex) {
+                                // Swipe right = previous (only if not at start)
+                                if (currentIndex > 0) {
+                                    currentIndex--
+                                    lastSwipeIndex = currentIndex
+                                    onItemChanged(itemsList[currentIndex])
+                                }
+                            } else if (dragAmount < -50 && lastSwipeIndex != currentIndex) {
+                                // Swipe left = next (only if not at end)
+                                if (currentIndex < itemsList.size - 1) {
+                                    currentIndex++
+                                    lastSwipeIndex = currentIndex
+                                    onItemChanged(itemsList[currentIndex])
+                                }
                             }
                         }
                     )
