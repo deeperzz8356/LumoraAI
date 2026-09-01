@@ -27,6 +27,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -140,9 +142,12 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
         lighting: EnhanceOption,
     ): Bitmap {
         val scaled = upscale(source, resolution)
-        val lit = applyLighting(scaled, lighting)
-        val deblurred = applyDeblur(lit, sharpness)
-        return applyLocalContrast(deblurred, sharpness)
+        val denoised = applyEdgePreservingDenoise(scaled, sharpness)
+        val lit = applyLighting(denoised, lighting)
+        val balanced = applyAutoToneAndVibrance(lit, lighting)
+        val deblurred = applyDeblur(balanced, sharpness)
+        val detailed = applyLocalContrast(deblurred, sharpness)
+        return applyEdgeAwareSharpen(detailed, sharpness)
     }
 
     private fun upscale(source: Bitmap, resolution: EnhanceOption): Bitmap {
@@ -227,15 +232,17 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
         val softBlur = gaussianBlur(input, width, height)
         val strongBlur = gaussianBlur(softBlur, width, height)
         val output = IntArray(input.size)
-        val strength = 0.95f + amount * 2.25f
+        val strength = 1.15f + amount * 2.85f
 
         for (i in input.indices) {
             val original = input[i]
             val blur = strongBlur[i]
+            val edge = edgeAmount(input, width, height, i)
+            val localStrength = strength * (0.58f + edge * 0.62f)
             val a = original ushr 24
-            val r = unsharpChannel(original.red(), blur.red(), strength)
-            val g = unsharpChannel(original.green(), blur.green(), strength)
-            val b = unsharpChannel(original.blue(), blur.blue(), strength)
+            val r = unsharpChannel(original.red(), blur.red(), localStrength)
+            val g = unsharpChannel(original.green(), blur.green(), localStrength)
+            val b = unsharpChannel(original.blue(), blur.blue(), localStrength)
             output[i] = (a shl 24) or (r shl 16) or (g shl 8) or b
         }
 
@@ -274,6 +281,90 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
         return output
     }
 
+    private fun applyEdgePreservingDenoise(source: Bitmap, amount: Float): Bitmap {
+        if (source.width < 3 || source.height < 3) return source
+        val width = source.width
+        val height = source.height
+        val input = IntArray(width * height)
+        val output = IntArray(width * height)
+        source.getPixels(input, 0, width, 0, 0, width, height)
+        input.copyInto(output)
+
+        val blend = (0.18f - amount * 0.08f).coerceIn(0.08f, 0.18f)
+        for (y in 1 until height - 1) {
+            for (x in 1 until width - 1) {
+                val index = y * width + x
+                val center = input[index]
+                val edge = edgeAmount(input, width, height, index)
+                if (edge > 0.34f) continue
+
+                var r = 0
+                var g = 0
+                var b = 0
+                var count = 0
+                for (dy in -1..1) {
+                    for (dx in -1..1) {
+                        val sample = input[(y + dy) * width + x + dx]
+                        r += sample.red()
+                        g += sample.green()
+                        b += sample.blue()
+                        count++
+                    }
+                }
+
+                val localBlend = blend * (1f - edge)
+                output[index] =
+                    ((center ushr 24) shl 24) or
+                        (lerpChannel(center.red(), r / count, localBlend) shl 16) or
+                        (lerpChannel(center.green(), g / count, localBlend) shl 8) or
+                        lerpChannel(center.blue(), b / count, localBlend)
+            }
+        }
+        return Bitmap.createBitmap(output, width, height, Bitmap.Config.ARGB_8888)
+    }
+
+    private fun applyAutoToneAndVibrance(source: Bitmap, lighting: EnhanceOption): Bitmap {
+        val width = source.width
+        val height = source.height
+        val input = IntArray(width * height)
+        val output = IntArray(width * height)
+        source.getPixels(input, 0, width, 0, 0, width, height)
+
+        var minLum = 255
+        var maxLum = 0
+        input.forEach { color ->
+            val lum = luminance(color)
+            minLum = minOf(minLum, lum)
+            maxLum = maxOf(maxLum, lum)
+        }
+
+        val range = max(1, maxLum - minLum)
+        val toneStrength = when (lighting) {
+            EnhanceOption.Low -> 0.36f
+            EnhanceOption.Med -> 0.46f
+            EnhanceOption.High -> 0.56f
+            EnhanceOption.Ultra -> 0.62f
+        }
+        val vibrance = when (lighting) {
+            EnhanceOption.Low -> 0.06f
+            EnhanceOption.Med -> 0.10f
+            EnhanceOption.High -> 0.14f
+            EnhanceOption.Ultra -> 0.18f
+        }
+
+        for (i in input.indices) {
+            val color = input[i]
+            val a = color ushr 24
+            val r = toneChannel(color.red(), minLum, range, toneStrength)
+            val g = toneChannel(color.green(), minLum, range, toneStrength)
+            val b = toneChannel(color.blue(), minLum, range, toneStrength)
+            val boosted = boostVibrance(r, g, b, vibrance)
+            output[i] = (a shl 24) or (boosted[0] shl 16) or (boosted[1] shl 8) or boosted[2]
+        }
+
+        return Bitmap.createBitmap(output, width, height, Bitmap.Config.ARGB_8888)
+    }
+
     private fun applyLocalContrast(source: Bitmap, amount: Float): Bitmap {
         val width = source.width
         val height = source.height
@@ -281,16 +372,51 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
         val output = IntArray(width * height)
         source.getPixels(input, 0, width, 0, 0, width, height)
         val blur = gaussianBlur(input, width, height)
-        val strength = 0.18f + amount * 0.42f
+        val strength = 0.24f + amount * 0.58f
 
         for (i in input.indices) {
             val original = input[i]
             val base = blur[i]
+            val edge = edgeAmount(input, width, height, i)
+            val localStrength = strength * (0.72f + edge * 0.48f)
             val a = original ushr 24
-            val r = (original.red() + (original.red() - base.red()) * strength).roundToInt().coerceIn(0, 255)
-            val g = (original.green() + (original.green() - base.green()) * strength).roundToInt().coerceIn(0, 255)
-            val b = (original.blue() + (original.blue() - base.blue()) * strength).roundToInt().coerceIn(0, 255)
+            val r = (original.red() + (original.red() - base.red()) * localStrength).roundToInt().coerceIn(0, 255)
+            val g = (original.green() + (original.green() - base.green()) * localStrength).roundToInt().coerceIn(0, 255)
+            val b = (original.blue() + (original.blue() - base.blue()) * localStrength).roundToInt().coerceIn(0, 255)
             output[i] = (a shl 24) or (r shl 16) or (g shl 8) or b
+        }
+        return Bitmap.createBitmap(output, width, height, Bitmap.Config.ARGB_8888)
+    }
+
+    private fun applyEdgeAwareSharpen(source: Bitmap, amount: Float): Bitmap {
+        if (amount <= 0.01f || source.width < 3 || source.height < 3) return source
+        val width = source.width
+        val height = source.height
+        val input = IntArray(width * height)
+        val output = IntArray(width * height)
+        source.getPixels(input, 0, width, 0, 0, width, height)
+        input.copyInto(output)
+
+        val strength = 0.22f + amount * 0.74f
+        for (y in 1 until height - 1) {
+            for (x in 1 until width - 1) {
+                val index = y * width + x
+                val center = input[index]
+                val edge = edgeAmount(input, width, height, index)
+                if (edge < 0.05f) continue
+
+                val left = input[index - 1]
+                val right = input[index + 1]
+                val top = input[index - width]
+                val bottom = input[index + width]
+                val localStrength = strength * edge.coerceIn(0.18f, 1f)
+
+                val a = center ushr 24
+                val r = sharpenChannel(center.red(), left.red(), right.red(), top.red(), bottom.red(), localStrength)
+                val g = sharpenChannel(center.green(), left.green(), right.green(), top.green(), bottom.green(), localStrength)
+                val b = sharpenChannel(center.blue(), left.blue(), right.blue(), top.blue(), bottom.blue(), localStrength)
+                output[index] = (a shl 24) or (r shl 16) or (g shl 8) or b
+            }
         }
         return Bitmap.createBitmap(output, width, height, Bitmap.Config.ARGB_8888)
     }
@@ -302,6 +428,39 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
         val blurred = (left + right + top + bottom) / 4f
         return (center + (center - blurred) * strength).roundToInt().coerceIn(0, 255)
     }
+
+    private fun toneChannel(value: Int, minLum: Int, range: Int, strength: Float): Int {
+        val normalized = ((value - minLum).toFloat() / range).coerceIn(0f, 1f)
+        val stretched = (normalized * 255f).roundToInt()
+        return lerpChannel(value, stretched, strength)
+    }
+
+    private fun boostVibrance(r: Int, g: Int, b: Int, amount: Float): IntArray {
+        val maxChannel = max(r, max(g, b))
+        val average = (r + g + b) / 3f
+        val saturationGap = ((maxChannel - average) / 255f).coerceIn(0f, 1f)
+        val adaptive = amount * (1f - saturationGap)
+        return intArrayOf(
+            (average + (r - average) * (1f + adaptive)).roundToInt().coerceIn(0, 255),
+            (average + (g - average) * (1f + adaptive)).roundToInt().coerceIn(0, 255),
+            (average + (b - average) * (1f + adaptive)).roundToInt().coerceIn(0, 255),
+        )
+    }
+
+    private fun edgeAmount(input: IntArray, width: Int, height: Int, index: Int): Float {
+        val x = index % width
+        val y = index / width
+        if (x == 0 || y == 0 || x == width - 1 || y == height - 1) return 0f
+        val horizontal = abs(luminance(input[index - 1]) - luminance(input[index + 1]))
+        val vertical = abs(luminance(input[index - width]) - luminance(input[index + width]))
+        return ((horizontal + vertical) / 255f).coerceIn(0f, 1f)
+    }
+
+    private fun luminance(color: Int): Int =
+        (color.red() * 0.299f + color.green() * 0.587f + color.blue() * 0.114f).roundToInt()
+
+    private fun lerpChannel(start: Int, end: Int, amount: Float): Int =
+        (start + (end - start) * amount).roundToInt().coerceIn(0, 255)
 
     private fun Int.red(): Int = this shr 16 and 0xFF
     private fun Int.green(): Int = this shr 8 and 0xFF

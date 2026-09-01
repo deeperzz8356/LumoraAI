@@ -1,7 +1,6 @@
 package com.deep.lumoraai.feature.history
 
 import androidx.annotation.OptIn
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,7 +24,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
@@ -58,6 +56,7 @@ import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.components.ZoomableImageViewer
 import com.deep.lumoraai.core.components.ZoomableVideoPlayer
@@ -109,10 +108,12 @@ fun HistoryScreen(
                 .padding(padding)
         ) {
             val viewing = selectedItem
+            val credits = (uiState as? HistoryUiState.Success)?.credits ?: 0
             if (viewing != null) {
                 HistoryMediaViewer(
                     item = viewing,
                     itemsList = selectedItemsList,
+                    credits = credits,
                     onBack = { selectedItem = null },
                     onNavigate = onNavigate,
                     onItemChanged = { selectedItem = it }
@@ -120,10 +121,11 @@ fun HistoryScreen(
             } else {
                 when (uiState) {
                     HistoryUiState.Loading -> AppLoadingScreen()
-                    HistoryUiState.Empty -> HistoryEmpty(onNavigate = onNavigate)
+                    is HistoryUiState.Empty -> HistoryEmpty(credits = uiState.credits, onNavigate = onNavigate)
                     is HistoryUiState.Error -> AppErrorScreen(message = uiState.message)
                     is HistoryUiState.Success -> HistoryGallery(
                         items = uiState.items,
+                        credits = uiState.credits,
                         onNavigate = onNavigate,
                         onSelected = { item, list ->
                             selectedItem = item
@@ -139,6 +141,7 @@ fun HistoryScreen(
 @Composable
 private fun HistoryGallery(
     items: List<HistoryModel>,
+    credits: Int,
     onNavigate: (String) -> Unit,
     onSelected: (HistoryModel, List<HistoryModel>) -> Unit,
 ) {
@@ -162,7 +165,7 @@ private fun HistoryGallery(
             .padding(top = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        HistoryTopBar(onNavigate = onNavigate)
+        HistoryTopBar(credits = credits, onNavigate = onNavigate)
         FilterRow(selectedFilter = selectedFilter, onSelected = { selectedFilter = it })
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
@@ -178,79 +181,13 @@ private fun HistoryGallery(
 }
 
 @Composable
-private fun HistoryTopBar(onNavigate: (String) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, Color(0xFF2D77FF), CircleShape)
-                    .clickable { onNavigate(Screen.Profile.route) }
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.user_avatar),
-                    contentDescription = "Profile",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "LUMORIA AI",
-                color = Color.White,
-                fontSize = 15.sp,
-                lineHeight = 18.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            CreditsPill(onClick = { onNavigate(Screen.Credits.route) })
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { onNavigate(Screen.Notifications.route) },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications",
-                    tint = Color(0xFFDFF7F4),
-                    modifier = Modifier.size(19.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .align(Alignment.TopEnd)
-                        .background(Lime, CircleShape)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CreditsPill(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .height(24.dp)
-            .clip(RoundedCornerShape(50))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text("◉", color = Lime, fontSize = 9.sp, lineHeight = 9.sp)
-        Text("1,250", color = Lime, fontSize = 9.sp, lineHeight = 11.sp, fontWeight = FontWeight.Bold)
-    }
+private fun HistoryTopBar(credits: Int, onNavigate: (String) -> Unit) {
+    LumoraTopBar(
+        credits = credits,
+        onProfileClick = { onNavigate(Screen.Profile.route) },
+        onCreditsClick = { onNavigate(Screen.Credits.route) },
+        onNotificationsClick = { onNavigate(Screen.Notifications.route) },
+    )
 }
 
 @Composable
@@ -374,6 +311,7 @@ private fun HistoryTile(item: HistoryModel, onClick: () -> Unit) {
 private fun HistoryMediaViewer(
     item: HistoryModel,
     itemsList: List<HistoryModel>,
+    credits: Int,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     onItemChanged: (HistoryModel) -> Unit,
@@ -393,7 +331,7 @@ private fun HistoryMediaViewer(
             .padding(top = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        HistoryTopBar(onNavigate = onNavigate)
+        HistoryTopBar(credits = credits, onNavigate = onNavigate)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -504,7 +442,7 @@ private fun HistoryMediaViewer(
 }
 
 @Composable
-private fun HistoryEmpty(onNavigate: (String) -> Unit) {
+private fun HistoryEmpty(credits: Int, onNavigate: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -512,7 +450,7 @@ private fun HistoryEmpty(onNavigate: (String) -> Unit) {
             .padding(top = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        HistoryTopBar(onNavigate = onNavigate)
+        HistoryTopBar(credits = credits, onNavigate = onNavigate)
         FilterRow(selectedFilter = HistoryFilter.All, onSelected = {})
         AppEmptyScreen(
             title = "No Creations Yet",

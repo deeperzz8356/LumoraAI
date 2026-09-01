@@ -1,7 +1,6 @@
 package com.deep.lumoraai.feature.profile
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -51,13 +50,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.components.MediaViewerDialog
 import com.deep.lumoraai.data.model.HistoryModel
 import coil.compose.AsyncImage
@@ -102,9 +100,9 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        ProfileTopBar()
-        ProfileHeader()
         val credits = if (uiState is ProfileUiState.Success) uiState.credits else 0
+        ProfileTopBar(credits = credits, onNavigate = onNavigate)
+        ProfileHeader(uiState = uiState)
         CreditsBalanceCard(credits = credits)
         PlanCard(onNavigate = onNavigate)
         BuyMoreCreditsCard(onNavigate = onNavigate)
@@ -118,45 +116,33 @@ private fun ProfileContent(uiState: ProfileUiState, onSignOut: () -> Unit, onNav
 }
 
 @Composable
-private fun ProfileTopBar() {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text("Lumina AI", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .border(
-                    width = 2.dp,
-                    brush = Brush.linearGradient(colors = listOf(Color(0xFF7E50EF), Color(0xFF39FF14))),
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            // Profile icon placeholder
-            Text(
-                text = "AT",
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .align(Alignment.BottomEnd)
-                    .background(Color(0xFF39FF14), CircleShape)
-                    .border(1.5.dp, Color.Black, CircleShape)
-            )
-        }
-    }
+private fun ProfileTopBar(credits: Int, onNavigate: (String) -> Unit) {
+    LumoraTopBar(
+        credits = credits,
+        onProfileClick = { },
+        onCreditsClick = { onNavigate(Screen.Credits.route) },
+        onNotificationsClick = { onNavigate(Screen.Notifications.route) },
+    )
 }
 
 @Composable
-private fun ProfileHeader() {
+private fun ProfileHeader(uiState: ProfileUiState) {
+    val items = (uiState as? ProfileUiState.Success)?.items.orEmpty()
+    val displayName = items.getOrNull(0).orEmpty().ifBlank { "Creator" }
+    val handle = items.getOrNull(1).orEmpty().ifBlank { "Guest account" }
+    val plan = items.getOrNull(2).orEmpty().ifBlank { "Free Tier" }
+    val planBadge = when {
+        plan.contains("guest", ignoreCase = true) || plan.contains("free", ignoreCase = true) -> "FREE"
+        plan.contains("premium", ignoreCase = true) || plan.contains("pro", ignoreCase = true) -> "PRO"
+        else -> plan.uppercase().take(8)
+    }
+    val initials = displayName
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .joinToString("") { it.first().uppercase() }
+        .ifBlank { "LA" }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -176,7 +162,7 @@ private fun ProfileHeader() {
             ) {
                 // Profile image placeholder - using text instead of icon
                 Text(
-                    text = "AT",
+                    text = initials,
                     color = Color.Black,
                     fontWeight = FontWeight.Bold,
                     fontSize = 32.sp,
@@ -195,11 +181,11 @@ private fun ProfileHeader() {
                     .background(Color(0xFFD4FF3B), RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Text("PRO", color = Color.Black, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text(planBadge, color = Color.Black, fontSize = 9.sp, fontWeight = FontWeight.Bold)
             }
         }
-        Text("Alex Thorne", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text("@alexthorne_creatives", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
+        Text(displayName, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(handle, color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TagPill("Concept Artist")
             TagPill("Video Director")

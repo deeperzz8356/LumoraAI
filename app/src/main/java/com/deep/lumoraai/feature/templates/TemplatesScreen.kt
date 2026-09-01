@@ -23,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -49,11 +48,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.widget.Toast
-import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.promoVideoRoute
 import com.deep.lumoraai.core.navigation.textToImageRoute
@@ -116,7 +115,7 @@ private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (Str
             .padding(top = 14.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        TemplatesTopBar(onNavigate = onNavigate)
+        TemplatesTopBar(credits = uiState.credits, onNavigate = onNavigate)
         TemplateTypeTabs(selectedType = selectedType, onSelected = { selectedType = it })
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             templates.forEach { item ->
@@ -142,79 +141,13 @@ private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (Str
 }
 
 @Composable
-private fun TemplatesTopBar(onNavigate: (String) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, Color(0xFF2D77FF), CircleShape)
-                    .clickable { onNavigate(Screen.Profile.route) }
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.user_avatar),
-                    contentDescription = "Profile",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "LUMORIA AI",
-                color = Color.White,
-                fontSize = 15.sp,
-                lineHeight = 18.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            CreditsPill(onClick = { onNavigate(Screen.Credits.route) })
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { onNavigate(Screen.Notifications.route) },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications",
-                    tint = Color(0xFFDFF7F4),
-                    modifier = Modifier.size(19.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .align(Alignment.TopEnd)
-                        .background(Lime, CircleShape)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CreditsPill(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .height(24.dp)
-            .clip(RoundedCornerShape(50))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text("◉", color = Lime, fontSize = 9.sp, lineHeight = 9.sp)
-        Text("1,250", color = Lime, fontSize = 9.sp, lineHeight = 11.sp, fontWeight = FontWeight.Bold)
-    }
+private fun TemplatesTopBar(credits: Int, onNavigate: (String) -> Unit) {
+    LumoraTopBar(
+        credits = credits,
+        onProfileClick = { onNavigate(Screen.Profile.route) },
+        onCreditsClick = { onNavigate(Screen.Credits.route) },
+        onNotificationsClick = { onNavigate(Screen.Notifications.route) },
+    )
 }
 
 @Composable
@@ -330,18 +263,17 @@ private fun TemplateRow(item: TemplateListItem, onCopy: () -> Unit, onClick: () 
             }
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Lime.copy(alpha = 0.12f))
-                    .border(1.dp, Lime.copy(alpha = 0.28f), RoundedCornerShape(8.dp))
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.055f))
                     .clickable(onClick = onCopy),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.ContentCopy,
                     contentDescription = "Copy template prompt",
-                    tint = Lime,
-                    modifier = Modifier.size(16.dp)
+                    tint = Lime.copy(alpha = 0.95f),
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
