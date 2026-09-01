@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 
@@ -84,7 +83,6 @@ fun TextToVideoScreen(
             TopBar(
                 title = uiState.title,
                 onBack = onBack,
-                onCredits = { onNavigate(Screen.Credits.route) },
                 onNotifications = { onNavigate(Screen.Notifications.route) }
             )
 
@@ -93,8 +91,8 @@ fun TextToVideoScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
-                    .padding(top = 25.dp, bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    .padding(top = 18.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 ModelPanel(selectedEngine = uiState.selectedEngine, onEngineSelected = onEngineSelected)
                 PromptPanel(
@@ -116,7 +114,7 @@ fun TextToVideoScreen(
                     enabled = !uiState.isGenerating,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(64.dp),
+                        .height(52.dp),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Lime,
@@ -126,7 +124,7 @@ fun TextToVideoScreen(
                     if (uiState.isGenerating) {
                         CircularProgressIndicator(color = Color.Black, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
                     } else {
-                        Text("✦ Generate Now", color = Color.Black, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                        Text("✦ Generate Now", color = Color.Black, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
                     }
                 }
                 if (uiState.error != null) {
@@ -148,13 +146,12 @@ fun TextToVideoScreen(
 private fun TopBar(
     title: String,
     onBack: () -> Unit,
-    onCredits: () -> Unit,
     onNotifications: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(76.dp)
+            .height(60.dp)
             .background(Color(0xFF0B1426))
             .border(1.dp, Color.White.copy(alpha = 0.06f))
             .padding(horizontal = 20.dp),
@@ -167,56 +164,34 @@ private fun TopBar(
                 contentDescription = "Back",
                 tint = Color.White,
                 modifier = Modifier
-                    .size(31.dp)
+                    .size(23.dp)
                     .clickable(onClick = onBack)
             )
-            Spacer(modifier = Modifier.width(13.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = title,
                 color = Color.White,
-                fontSize = 31.sp,
-                lineHeight = 35.sp,
+                fontSize = 21.sp,
+                lineHeight = 25.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(28.dp), verticalAlignment = Alignment.CenterVertically) {
-            CreditsPill(credits = 1250, onClick = onCredits)
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clickable(onClick = onNotifications),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color(0xFFDFF7F4), modifier = Modifier.size(20.dp))
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .clickable(onClick = onNotifications),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color(0xFFDFF7F4), modifier = Modifier.size(30.dp))
-                Box(
-                    modifier = Modifier
-                        .size(9.dp)
-                        .align(Alignment.TopEnd)
-                        .background(Color(0xFFC8FFFF), CircleShape)
-                )
-            }
+                    .size(6.dp)
+                    .align(Alignment.TopEnd)
+                    .background(Lime, CircleShape)
+            )
         }
-    }
-}
-
-@Composable
-private fun CreditsPill(credits: Int, onClick: () -> Unit) {
-    val label = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else "$credits"
-    Row(
-        modifier = Modifier
-            .height(43.dp)
-            .clip(RoundedCornerShape(50))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        Text("◉", color = Lime, fontSize = 18.sp, lineHeight = 18.sp)
-        Text(label, color = Lime, fontSize = 19.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -225,17 +200,17 @@ private fun ModelPanel(selectedEngine: VideoEngine, onEngineSelected: (VideoEngi
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(95.dp)
+            .height(62.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Panel)
             .padding(horizontal = 29.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Model", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text("Model", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Row(
             modifier = Modifier
-                .height(45.dp)
+                .height(38.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color(0xFF192238))
                 .border(1.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(12.dp))
@@ -246,7 +221,7 @@ private fun ModelPanel(selectedEngine: VideoEngine, onEngineSelected: (VideoEngi
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Veo 2.5", color = Lime, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+            Text("Veo 2.5", color = Lime, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Icon(Icons.Default.ExpandMore, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
         }
     }
@@ -257,7 +232,7 @@ private fun PromptPanel(prompt: String, promptHint: String, onPromptChanged: (St
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(326.dp)
+            .height(180.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Panel)
             .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
@@ -269,8 +244,8 @@ private fun PromptPanel(prompt: String, promptHint: String, onPromptChanged: (St
                 Text(
                     text = promptHint,
                     color = Muted.copy(alpha = 0.65f),
-                    fontSize = 24.sp,
-                    lineHeight = 34.sp
+                    fontSize = 18.sp,
+                    lineHeight = 26.sp
                 )
             },
             modifier = Modifier
@@ -290,8 +265,8 @@ private fun PromptPanel(prompt: String, promptHint: String, onPromptChanged: (St
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(start = 29.dp, bottom = 28.dp),
-            horizontalArrangement = Arrangement.spacedBy(13.dp)
+                .padding(start = 20.dp, bottom = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             SquareButton(icon = Icons.Default.AutoAwesome, onClick = {})
             SquareButton(icon = Icons.Default.Tune, onClick = {})
@@ -299,11 +274,11 @@ private fun PromptPanel(prompt: String, promptHint: String, onPromptChanged: (St
         Text(
             text = "${prompt.length}/1000",
             color = Color.White.copy(alpha = 0.78f),
-            fontSize = 17.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 28.dp, bottom = 32.dp)
+                .padding(end = 20.dp, bottom = 24.dp)
         )
     }
 }
@@ -312,27 +287,27 @@ private fun PromptPanel(prompt: String, promptHint: String, onPromptChanged: (St
 private fun SquareButton(icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(55.dp)
+            .size(42.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(Color(0xFF1B263B))
             .border(1.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(10.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = null, tint = Lime, modifier = Modifier.size(32.dp))
+        Icon(icon, contentDescription = null, tint = Lime, modifier = Modifier.size(24.dp))
     }
 }
 
 @Composable
 private fun StyleSection(selected: ImageStyle, onSelected: (ImageStyle) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(21.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Style", color = Color.White, fontSize = 27.sp, fontWeight = FontWeight.Bold)
-            Text("More ›", color = Lime, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            Text("Style", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            Text("More ›", color = Lime, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -342,24 +317,24 @@ private fun StyleSection(selected: ImageStyle, onSelected: (ImageStyle) -> Unit)
                 val isSelected = selected == style
                 Box(
                     modifier = Modifier
-                        .height(48.dp)
+                        .height(36.dp)
                         .clip(RoundedCornerShape(50))
                         .background(if (isSelected) Lime.copy(alpha = 0.16f) else Panel)
                         .border(1.dp, if (isSelected) Lime else Color.Transparent, RoundedCornerShape(50))
                         .clickable { onSelected(style) }
-                        .padding(horizontal = 28.dp),
+                        .padding(horizontal = 20.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = style.label,
                         color = if (isSelected) Lime else Color.White.copy(alpha = 0.72f),
-                        fontSize = 18.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(21.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
             StyleCard(R.drawable.style_anime, selected = selected == ImageStyle.All, onClick = { onSelected(ImageStyle.All) })
             StyleCard(R.drawable.style_digital, selected = selected == ImageStyle.MyStyle, onClick = { onSelected(ImageStyle.MyStyle) })
             StyleCard(R.drawable.style_fantasy, selected = selected == ImageStyle.Concept, onClick = { onSelected(ImageStyle.Concept) })
@@ -371,8 +346,8 @@ private fun StyleSection(selected: ImageStyle, onSelected: (ImageStyle) -> Unit)
 private fun StyleCard(imageRes: Int, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .width(184.dp)
-            .height(153.dp)
+            .width(124.dp)
+            .height(100.dp)
             .clip(RoundedCornerShape(9.dp))
             .border(2.dp, if (selected) Lime else Color.Transparent, RoundedCornerShape(9.dp))
             .clickable(onClick = onClick)
@@ -382,12 +357,12 @@ private fun StyleCard(imageRes: Int, selected: Boolean, onClick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(12.dp)
-                    .size(41.dp)
+                    .padding(8.dp)
+                    .size(30.dp)
                     .background(Lime, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(27.dp))
+                Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(19.dp))
             }
         }
     }
@@ -408,8 +383,8 @@ private fun ControlsPanel(
             .clip(RoundedCornerShape(16.dp))
             .background(Panel)
             .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
-            .padding(horizontal = 29.dp, vertical = 29.dp),
-        verticalArrangement = Arrangement.spacedBy(19.dp)
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         SliderBlock("Motion", "${(motion * 100).toInt()}%", motion, onMotionChanged)
         Divider()
@@ -420,20 +395,20 @@ private fun ControlsPanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("No. of Generations", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            Text("No. of Generations", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Row(
                 modifier = Modifier
-                    .height(64.dp)
+                    .height(48.dp)
                     .clip(RoundedCornerShape(50))
                     .background(Color(0xFF182137))
                     .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(50))
-                    .padding(horizontal = 28.dp),
+                    .padding(horizontal = 24.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(32.dp)
             ) {
-                Text("−", color = Color.White.copy(alpha = 0.72f), fontSize = 32.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onGenerationsChanged(generations - 1) })
-                Text("$generations", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                Text("+", color = Lime, fontSize = 32.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onGenerationsChanged(generations + 1) })
+                Text("−", color = Color.White.copy(alpha = 0.72f), fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onGenerationsChanged(generations - 1) })
+                Text("$generations", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("+", color = Lime, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onGenerationsChanged(generations + 1) })
             }
         }
     }
@@ -443,8 +418,8 @@ private fun ControlsPanel(
 private fun SliderBlock(label: String, valueText: String, value: Float, onValueChange: (Float) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-            Text(valueText, color = Lime, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            Text(label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(valueText, color = Lime, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
         Slider(
             value = value.coerceIn(0f, 1f),

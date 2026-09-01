@@ -36,10 +36,10 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
     var uiState: TextToVideoUiState by mutableStateOf(TextToVideoUiState())
         private set
 
-    fun configure(isPromo: Boolean) {
-        if (isPromoMode == isPromo) return
+    fun configure(isPromo: Boolean, initialPrompt: String? = null) {
+        val modeChanged = isPromoMode != isPromo
         isPromoMode = isPromo
-        uiState = if (isPromo) {
+        val modeState = if (isPromo) {
             uiState.copy(
                 title = "Promo Video",
                 promptHint = "Describe the product, offer, or ad video you want...",
@@ -55,6 +55,13 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                 error = null,
                 generatedPath = null,
             )
+        }
+        uiState = if (!initialPrompt.isNullOrBlank()) {
+            modeState.copy(prompt = initialPrompt.take(1000), error = null, generatedPath = null)
+        } else if (modeChanged) {
+            modeState
+        } else {
+            uiState
         }
     }
 

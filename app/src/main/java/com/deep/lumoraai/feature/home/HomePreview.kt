@@ -28,8 +28,8 @@ fun HomeWithRecentPreview() {
         HomeScreen(
             uiState = previewState.copy(
                 recentItems = listOf(
-                    HomeRecentItem("1", "Fantasy Portrait", "2h ago", null, com.deep.lumoraai.R.drawable.style_fantasy),
-                    HomeRecentItem("2", "Product Render", "Yesterday", null, com.deep.lumoraai.R.drawable.style_digital),
+                    HomeRecentItem("1", "Fantasy Portrait", "2h ago", "IMAGE", null, com.deep.lumoraai.R.drawable.style_fantasy),
+                    HomeRecentItem("2", "Product Render", "Yesterday", "IMAGE", null, com.deep.lumoraai.R.drawable.style_digital),
                 )
             ),
             onNext = {}

@@ -9,9 +9,8 @@ fun NavHostController.goTo(route: String) {
         Screen.BgStudio.route -> bgStudioRoute()
         else -> route
     }
-    val destinationBase = destination.substringBefore("?")
     val currentBase = currentDestination?.route?.substringBefore("?")
-    if (currentBase == destinationBase) return
+    if (!destination.contains("?") && currentBase == destination) return
     navigate(destination) { launchSingleTop = true }
 }
 
@@ -26,6 +25,30 @@ fun createHubRoute(prompt: String? = null, tab: Int = 0): String =
 
 fun bgStudioRoute(mode: String = "replace"): String =
     "${Screen.BgStudio.route}?mode=${Uri.encode(mode)}"
+
+fun textToImageRoute(prompt: String? = null): String =
+    buildString {
+        append(Screen.TextToImage.route)
+        if (!prompt.isNullOrBlank()) {
+            append("?prompt=${Uri.encode(prompt)}")
+        }
+    }
+
+fun textToVideoRoute(prompt: String? = null): String =
+    buildString {
+        append(Screen.TextToVideo.route)
+        if (!prompt.isNullOrBlank()) {
+            append("?prompt=${Uri.encode(prompt)}")
+        }
+    }
+
+fun promoVideoRoute(prompt: String? = null): String =
+    buildString {
+        append(Screen.PromoVideo.route)
+        if (!prompt.isNullOrBlank()) {
+            append("?prompt=${Uri.encode(prompt)}")
+        }
+    }
 
 fun Screen.nextScreen(): Screen {
     val index = navigationSequence.indexOfFirst { it.route == route }

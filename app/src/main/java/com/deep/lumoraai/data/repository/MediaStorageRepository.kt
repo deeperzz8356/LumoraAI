@@ -6,6 +6,7 @@ import androidx.core.content.FileProvider
 import com.deep.lumoraai.core.utils.decodeMediaPayload
 import com.deep.lumoraai.core.utils.extensionForMimeType
 import com.deep.lumoraai.core.utils.isHttpImageUrl
+import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.data.model.SavedMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -37,7 +38,7 @@ class MediaStorageRepository private constructor(context: Context) {
         return FileProvider.getUriForFile(appContext, AUTHORITY, file)
     }
 
-    private fun savePayload(payload: String, mediaType: String, outputDir: File): SavedMedia {
+    private suspend fun savePayload(payload: String, mediaType: String, outputDir: File): SavedMedia {
         val id = UUID.randomUUID().toString()
         val (bytes, mimeType) = if (isHttpImageUrl(payload)) {
             downloadRemote(payload, defaultMime = if (mediaType == MEDIA_VIDEO) "video/mp4" else "image/png")
@@ -48,6 +49,14 @@ class MediaStorageRepository private constructor(context: Context) {
         val extension = extensionForMimeType(mimeType, mediaType)
         val file = File(outputDir, "$id.$extension")
         file.writeBytes(bytes)
+        runCatching {
+            MediaGallerySaver.saveToGallery(
+                context = appContext,
+                filePath = file.absolutePath,
+                mimeType = mimeType,
+                mediaType = mediaType,
+            )
+        }
         val localUri = Uri.fromFile(file)
         return SavedMedia(
             id = id,

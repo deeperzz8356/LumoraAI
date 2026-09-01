@@ -33,13 +33,10 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,7 +59,8 @@ import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.bgStudioRoute
 import com.deep.lumoraai.core.restrictions.GenerationGate
-import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
+import java.io.File
 
 private val HomeBackground = Color(0xFF081020)
 private val HomeCard = Color(0xFF10192D)
@@ -81,13 +79,9 @@ fun HomeScreen(
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = HomeBackground,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = { BottomNavigationBar(emptyList(), "home", onNavigate) }
     ) { padding ->
         Box(
@@ -103,9 +97,6 @@ fun HomeScreen(
                 is HomeUiState.Success -> HomeContent(
                     uiState = uiState,
                     onNavigate = onNavigate,
-                    onComingSoon = {
-                        scope.launch { snackbarHostState.showSnackbar("Coming soon") }
-                    }
                 )
             }
         }
@@ -116,7 +107,6 @@ fun HomeScreen(
 private fun HomeContent(
     uiState: HomeUiState.Success,
     onNavigate: (String) -> Unit,
-    onComingSoon: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -132,9 +122,9 @@ private fun HomeContent(
             onNavigate = onNavigate
         )
         HomeHero(onExploreRecent = { onNavigate(Screen.History.route) })
-        MainCreateGrid(onNavigate = onNavigate, onComingSoon = onComingSoon)
+        MainCreateGrid(onNavigate = onNavigate)
         RecentCreationsSection(items = uiState.recentItems, onNavigate = onNavigate)
-        ToolsSection(onNavigate = onNavigate, onComingSoon = onComingSoon)
+        ToolsSection(onNavigate = onNavigate)
         Spacer(modifier = Modifier.height(2.dp))
     }
 }
@@ -295,7 +285,6 @@ private fun HeroPreviewArt(onClick: () -> Unit) {
 @Composable
 private fun MainCreateGrid(
     onNavigate: (String) -> Unit,
-    onComingSoon: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
         Text("Create", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
@@ -407,6 +396,10 @@ private fun RecentCreationCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isVideo = item.mediaType.equals("VIDEO", ignoreCase = true)
+    val mediaPath = item.mediaUrl.orEmpty()
+    val mediaFile = remember(mediaPath) { File(mediaPath) }
+
     Surface(
         onClick = onClick,
         modifier = modifier.height(78.dp),
@@ -421,14 +414,39 @@ private fun RecentCreationCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(9.dp)
         ) {
-            Image(
-                painter = painterResource(id = item.fallbackImageRes),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
+            Box(
                 modifier = Modifier
                     .size(58.dp)
                     .clip(RoundedCornerShape(9.dp))
-            )
+                    .background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!isVideo && mediaPath.isNotBlank() && mediaFile.exists()) {
+                    AsyncImage(
+                        model = mediaFile,
+                        contentDescription = item.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = item.fallbackImageRes),
+                        contentDescription = item.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                if (isVideo) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(Color.Black.copy(alpha = 0.45f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    }
+                }
+            }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.title,
@@ -448,56 +466,126 @@ private fun RecentCreationCard(
 @Composable
 private fun ToolsSection(
     onNavigate: (String) -> Unit,
-    onComingSoon: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Tools", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            SmallToolCard("AI BG", Icons.Default.AutoAwesome, Cyan, { onNavigate(bgStudioRoute("replace")) }, Modifier.weight(1f))
-            SmallToolCard("Enhance", Icons.Default.Tune, Purple, { onNavigate(Screen.PhotoEnhance.route) }, Modifier.weight(1f))
-            SmallToolCard("Remove", Icons.Default.PhotoCamera, Color(0xFF7D86FF), { onNavigate(bgStudioRoute("remove")) }, Modifier.weight(1f))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            ToolBentoCard(
+                title = "AI Background Replace",
+                subtitle = "Generate a new scene",
+                icon = Icons.Default.AutoAwesome,
+                accent = Cyan,
+                onClick = { onNavigate(bgStudioRoute("replace")) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(116.dp),
+                prominent = true
+            )
+            ToolBentoCard(
+                title = "Photo Enhancer",
+                subtitle = "Improve quality",
+                icon = Icons.Default.Tune,
+                accent = Purple,
+                onClick = { onNavigate(Screen.PhotoEnhance.route) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(116.dp),
+                prominent = true
+            )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            SmallToolCard("Promo Video", Icons.Default.VideoLibrary, Pink, { onNavigate(Screen.PromoVideo.route) }, Modifier.weight(1f))
-            SmallToolCard("Compress", Icons.Default.Compress, Lime, { onNavigate(Screen.Compress.route) }, Modifier.weight(1f))
-            Spacer(modifier = Modifier.weight(1f))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            ToolBentoCard(
+                title = "Promo Videos",
+                subtitle = "Ad-ready clips",
+                icon = Icons.Default.VideoLibrary,
+                accent = Pink,
+                onClick = { onNavigate(Screen.PromoVideo.route) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(116.dp),
+                prominent = true
+            )
+            ToolBentoCard(
+                title = "Remove Background",
+                subtitle = "Cut subject",
+                icon = Icons.Default.PhotoCamera,
+                accent = Color(0xFF7D86FF),
+                onClick = { onNavigate(bgStudioRoute("remove")) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(116.dp),
+                prominent = true
+            )
         }
+        ToolBentoCard(
+            title = "Compress",
+            subtitle = "Images and videos",
+            icon = Icons.Default.Compress,
+            accent = Lime,
+            onClick = { onNavigate(Screen.Compress.route) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(116.dp),
+            prominent = true
+        )
     }
 }
 
 @Composable
-private fun SmallToolCard(
+private fun ToolBentoCard(
     title: String,
+    subtitle: String,
     icon: ImageVector,
     accent: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    prominent: Boolean = false,
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(64.dp),
+        modifier = modifier,
         shape = CardShape,
         color = HomeCard,
         border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.58f))
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(if (prominent) 14.dp else 12.dp)
         ) {
-            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(22.dp))
-            Text(
-                text = title,
-                color = Color.White.copy(alpha = 0.78f),
-                fontSize = 13.sp,
-                lineHeight = 16.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Start,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Box(
+                modifier = Modifier
+                    .size(if (prominent) 38.dp else 32.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(accent.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(if (prominent) 23.dp else 19.dp))
+            }
+            Column(
+                modifier = Modifier.align(Alignment.BottomStart),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = title,
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontSize = if (prominent) 15.sp else 14.sp,
+                    lineHeight = if (prominent) 18.sp else 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Start,
+                    maxLines = if (prominent) 2 else 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtitle,
+                    color = Muted,
+                    fontSize = if (prominent) 11.sp else 11.sp,
+                    lineHeight = if (prominent) 13.sp else 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }

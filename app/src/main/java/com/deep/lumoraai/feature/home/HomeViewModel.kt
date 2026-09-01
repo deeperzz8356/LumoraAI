@@ -80,6 +80,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             id = id,
             title = title,
             timeLabel = formatRelativeTime(createdAt),
+            mediaType = type,
             mediaUrl = mediaUrl,
             fallbackImageRes = when (type.uppercase()) {
                 "VIDEO" -> R.drawable.style_digital

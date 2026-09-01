@@ -10,10 +10,11 @@ fun TextToVideoRoute(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     isPromo: Boolean = false,
+    initialPrompt: String? = null,
     viewModel: TextToVideoViewModel = viewModel()
 ) {
-    LaunchedEffect(isPromo) {
-        viewModel.configure(isPromo = isPromo)
+    LaunchedEffect(isPromo, initialPrompt) {
+        viewModel.configure(isPromo = isPromo, initialPrompt = initialPrompt)
     }
 
     val uiState = viewModel.uiState

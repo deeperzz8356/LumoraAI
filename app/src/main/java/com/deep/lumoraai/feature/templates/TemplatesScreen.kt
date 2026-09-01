@@ -50,7 +50,9 @@ import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.navigation.createHubRoute
+import com.deep.lumoraai.core.navigation.promoVideoRoute
+import com.deep.lumoraai.core.navigation.textToImageRoute
+import com.deep.lumoraai.core.navigation.textToVideoRoute
 
 private val TemplateBackground = Color(0xFF081020)
 private val TemplatePanel = Color(0xFF111A2D)
@@ -59,67 +61,6 @@ private val TemplateStroke = Color(0xFF1B2A44)
 private val TemplateSelected = Color(0xFF57647A)
 private val Lime = Color(0xFFD6FF2F)
 private val Muted = Color(0xFF9BA6BA)
-
-private data class TemplateListItem(
-    val title: String,
-    val subtitle: String,
-    val prompt: String,
-    val imageRes: Int,
-)
-
-private val imageTemplates = listOf(
-    TemplateListItem(
-        title = "Cyberpunk Portrait",
-        subtitle = "Generate neon-drenched, high-contrast futuristic...",
-        prompt = "A neon-drenched cyberpunk portrait, dramatic high-contrast lighting, futuristic city reflections, cinematic detail.",
-        imageRes = R.drawable.style_digital,
-    ),
-    TemplateListItem(
-        title = "Glass UI Mockups",
-        subtitle = "Create stunning, translucent interface designs with deep...",
-        prompt = "A polished glassmorphism UI mockup with translucent panels, glowing accents, deep shadows, premium app interface.",
-        imageRes = R.drawable.group_48096841,
-    ),
-    TemplateListItem(
-        title = "Ethereal Landscapes",
-        subtitle = "Generate otherworldly environments with crystalline...",
-        prompt = "An ethereal crystalline landscape with glowing water, misty mountains, luminous plants, surreal cinematic atmosphere.",
-        imageRes = R.drawable.style_fantasy,
-    ),
-    TemplateListItem(
-        title = "Quantum Mechanics",
-        subtitle = "Detailed macro photography of futuristic machinery...",
-        prompt = "Detailed macro photography of futuristic quantum machinery, glowing circuits, blue energy rings, ultra sharp mechanical detail.",
-        imageRes = R.drawable.style_anime,
-    ),
-)
-
-private val videoTemplates = listOf(
-    TemplateListItem(
-        title = "Cinematic Product Spin",
-        subtitle = "Turn objects into smooth rotating studio visuals...",
-        prompt = "A cinematic product spin video with glossy reflections, dramatic rim light, slow camera movement, premium studio style.",
-        imageRes = R.drawable.onboarding_3_ill,
-    ),
-    TemplateListItem(
-        title = "AI Character Reveal",
-        subtitle = "Create a dramatic animated character entrance...",
-        prompt = "A dramatic AI character reveal with glowing particles, slow push-in camera, neon atmosphere, cinematic motion.",
-        imageRes = R.drawable.onboarding_1_ill,
-    ),
-    TemplateListItem(
-        title = "Dream Travel Shot",
-        subtitle = "Animate surreal places with soft camera motion...",
-        prompt = "A dreamlike travel video through an otherworldly landscape, soft floating camera, glowing horizon, atmospheric movement.",
-        imageRes = R.drawable.onboarding_4_ill,
-    ),
-    TemplateListItem(
-        title = "Social Video Ad",
-        subtitle = "Generate punchy promotional clips with movement...",
-        prompt = "A punchy social media video ad with energetic motion, bright highlights, fast product reveal, premium visual polish.",
-        imageRes = R.drawable.onboarding_5_ill,
-    ),
-)
 
 @Composable
 fun TemplatesScreen(
@@ -149,17 +90,16 @@ fun TemplatesScreen(
                 is TemplatesUiState.Loading -> AppLoadingScreen()
                 is TemplatesUiState.Error -> AppErrorScreen(message = uiState.message)
                 is TemplatesUiState.Empty -> AppEmptyScreen(title = "No Templates", body = "Templates will appear here.")
-                is TemplatesUiState.Success -> TemplatesContent(onNavigate = onNavigate)
+                is TemplatesUiState.Success -> TemplatesContent(uiState = uiState, onNavigate = onNavigate)
             }
         }
     }
 }
 
 @Composable
-private fun TemplatesContent(onNavigate: (String) -> Unit) {
+private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (String) -> Unit) {
     var selectedType by remember { mutableStateOf("Image") }
-    val templates = if (selectedType == "Image") imageTemplates else videoTemplates
-    val targetTab = if (selectedType == "Image") 0 else 1
+    val templates = if (selectedType == "Image") uiState.imageTemplates else uiState.videoTemplates
 
     Column(
         modifier = Modifier
@@ -176,7 +116,13 @@ private fun TemplatesContent(onNavigate: (String) -> Unit) {
                 TemplateRow(
                     item = item,
                     onClick = {
-                        onNavigate(createHubRoute(prompt = item.prompt, tab = targetTab))
+                        val route = when {
+                            item.kind == TemplateKind.Image -> textToImageRoute(item.prompt)
+                            item.title.contains("Promo", ignoreCase = true) ||
+                                item.title.contains("Ad", ignoreCase = true) -> promoVideoRoute(item.prompt)
+                            else -> textToVideoRoute(item.prompt)
+                        }
+                        onNavigate(route)
                     }
                 )
             }

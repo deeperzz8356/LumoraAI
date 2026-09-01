@@ -112,7 +112,6 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(IntroPalette.BackgroundBase)
             .navigationBarsPadding()
             .height(88.dp),
         contentAlignment = Alignment.BottomCenter

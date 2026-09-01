@@ -17,6 +17,7 @@ data class HomeRecentItem(
     val id: String,
     val title: String,
     val timeLabel: String,
+    val mediaType: String,
     val mediaUrl: String? = null,
     val fallbackImageRes: Int,
 )

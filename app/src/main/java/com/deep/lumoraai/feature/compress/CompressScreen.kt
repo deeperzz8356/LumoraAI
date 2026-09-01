@@ -1,6 +1,9 @@
 package com.deep.lumoraai.feature.compress
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -36,16 +39,22 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.navigation.Screen
+import androidx.core.content.ContextCompat
 
 private val CompressBackground = Color(0xFF081020)
 private val CompressPanel = Color(0xFF121A2E)
@@ -64,8 +73,30 @@ fun CompressScreen(
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    var permissionDenied by remember { mutableStateOf(false) }
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) onFileSelected(uri)
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        if (result.values.all { it }) {
+            permissionDenied = false
+            filePicker.launch("*/*")
+        } else {
+            permissionDenied = true
+        }
+    }
+    val openPickerWithPermission = {
+        val permissions = mediaReadPermissions()
+        val hasPermission = permissions.isEmpty() || permissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+        if (hasPermission) {
+            permissionDenied = false
+            filePicker.launch("*/*")
+        } else {
+            permissionLauncher.launch(permissions)
+        }
     }
 
     Box(
@@ -87,23 +118,34 @@ fun CompressScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 15.dp)
+                    .padding(horizontal = 22.dp)
                     .padding(top = 14.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 if (uiState.result == null) {
                     UploadPanel(
                         uiState = uiState,
-                        onClick = { filePicker.launch("*/*") }
+                        onClick = openPickerWithPermission
                     )
+
+                    if (permissionDenied) {
+                        Text(
+                            text = "Allow photo and video access to choose a file.",
+                            color = Color(0xFFFFC46B),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                    }
 
                     Button(
                         onClick = onCompress,
                         enabled = uiState.selectedUri != null && !uiState.isCompressing,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(8.dp),
+                            .height(49.dp),
+                        shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Lime,
                             disabledContainerColor = Lime.copy(alpha = 0.35f)
@@ -143,7 +185,7 @@ fun CompressScreen(
                 }
 
                 if (uiState.result == null) {
-                    Spacer(modifier = Modifier.height(300.dp))
+                    Spacer(modifier = Modifier.height(220.dp))
                 }
             }
         }
@@ -158,10 +200,7 @@ private fun CompressTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(40.dp)
-            .background(Color(0xFF0B1426))
-            .border(1.dp, Color(0xFF0D8BFF))
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = 22.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -171,15 +210,15 @@ private fun CompressTopBar(
                 contentDescription = "Back",
                 tint = Color.White,
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(22.dp)
                     .clickable(onClick = onBack)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Compress",
                 color = Color.White,
-                fontSize = 16.sp,
-                lineHeight = 20.sp,
+                fontSize = 20.sp,
+                lineHeight = 24.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -195,11 +234,11 @@ private fun CompressTopBar(
                 imageVector = Icons.Default.Notifications,
                 contentDescription = "Notifications",
                 tint = Color(0xFFDFF7F4),
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(19.dp)
             )
             Box(
                 modifier = Modifier
-                    .size(6.dp)
+                    .size(7.dp)
                     .align(Alignment.TopEnd)
                     .background(Lime, CircleShape)
             )
@@ -216,9 +255,9 @@ private fun UploadPanel(
         modifier = Modifier
             .fillMaxWidth()
             .height(235.dp)
-            .clip(RoundedCornerShape(9.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(CompressPanel.copy(alpha = 0.55f))
-            .border(BorderStroke(1.dp, CompressStroke), RoundedCornerShape(9.dp))
+            .border(BorderStroke(2.dp, Color(0xFF566B58)), RoundedCornerShape(16.dp))
             .clickable(enabled = !uiState.isCompressing, onClick = onClick)
             .padding(18.dp),
         contentAlignment = Alignment.Center
@@ -226,7 +265,7 @@ private fun UploadPanel(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(64.dp)
                     .background(Color(0xFF10192D), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -234,15 +273,15 @@ private fun UploadPanel(
                     imageVector = Icons.Default.CloudUpload,
                     contentDescription = null,
                     tint = Lime,
-                    modifier = Modifier.size(25.dp)
+                    modifier = Modifier.size(27.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
             Text(
                 text = uiState.fileName.ifBlank { "Drag and drop or tap to select a file" },
                 color = if (uiState.fileName.isBlank()) Muted else Color.White,
-                fontSize = 13.sp,
-                lineHeight = 17.sp,
+                fontSize = if (uiState.fileName.isBlank()) 13.sp else 15.sp,
+                lineHeight = 19.sp,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -253,7 +292,7 @@ private fun UploadPanel(
                 Text(
                     text = if (uiState.mimeType.startsWith("video/")) "Video selected" else "Image selected",
                     color = Muted,
-                    fontSize = 11.sp,
+                    fontSize = 14.sp,
                     textAlign = TextAlign.Center
                 )
             }
@@ -403,3 +442,15 @@ private fun savedPercent(result: CompressionResult): Int {
     val saved = ((result.originalBytes - result.compressedBytes).coerceAtLeast(0L) * 100f) / result.originalBytes
     return saved.toInt().coerceIn(0, 100)
 }
+
+private fun mediaReadPermissions(): Array<String> =
+    when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> arrayOf(
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_VIDEO,
+        )
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+        )
+        else -> emptyArray()
+    }

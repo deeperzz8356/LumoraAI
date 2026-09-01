@@ -51,7 +51,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.restrictions.GenerationGate
 
 private val StudioBackground = Color(0xFF081020)
 private val StudioPanel = Color(0xFF121A2E)
@@ -90,7 +89,6 @@ fun BgStudioScreen(
         ) {
             StudioTopBar(
                 onBack = onBack,
-                onCredits = { onNavigate(Screen.Credits.route) },
                 onNotifications = { onNavigate(Screen.Notifications.route) }
             )
 
@@ -125,7 +123,6 @@ fun BgStudioScreen(
 @Composable
 private fun StudioTopBar(
     onBack: () -> Unit,
-    onCredits: () -> Unit,
     onNotifications: () -> Unit,
 ) {
     Row(
@@ -158,47 +155,25 @@ private fun StudioTopBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            CreditsPill(credits = 1250, onClick = onCredits)
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clickable(onClick = onNotifications),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = "Notifications",
+                tint = Color(0xFFDFF7F4),
+                modifier = Modifier.size(20.dp)
+            )
             Box(
                 modifier = Modifier
-                    .size(28.dp)
-                    .clickable(onClick = onNotifications),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications",
-                    tint = Color(0xFFDFF7F4),
-                    modifier = Modifier.size(20.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .align(Alignment.TopEnd)
-                        .background(Lime, CircleShape)
-                )
-            }
+                    .size(6.dp)
+                    .align(Alignment.TopEnd)
+                    .background(Lime, CircleShape)
+            )
         }
-    }
-}
-
-@Composable
-private fun CreditsPill(credits: Int, onClick: () -> Unit) {
-    val label = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else "$credits"
-    Row(
-        modifier = Modifier
-            .height(28.dp)
-            .clip(RoundedCornerShape(50))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text("◉", color = Lime, fontSize = 10.sp, lineHeight = 10.sp)
-        Text(label, color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold)
     }
 }
 

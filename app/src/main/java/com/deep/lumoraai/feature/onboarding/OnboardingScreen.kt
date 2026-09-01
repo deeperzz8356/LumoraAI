@@ -435,17 +435,17 @@ fun OnboardingStartButton(onGetStarted: () -> Unit) {
         onClick = onGetStarted,
         colors = ButtonDefaults.buttonColors(containerColor = IntroPalette.PrimaryButton),
         modifier = Modifier
-            .width(132.dp)
-            .height(48.dp),
-        shape = RoundedCornerShape(24.dp),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
+            .width(164.dp)
+            .height(52.dp),
+        shape = RoundedCornerShape(26.dp),
+        contentPadding = PaddingValues(start = 18.dp, end = 6.dp, top = 0.dp, bottom = 0.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Let's Start", color = Color.White, fontWeight = FontWeight.Bold)
+            Text("Let's Start", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
             OnboardingStartArrow()
         }
     }
@@ -457,6 +457,6 @@ fun OnboardingStartArrow() {
         modifier = Modifier.size(40.dp).background(Color.White, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Text(">>>", color = IntroPalette.PrimaryButton, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+        Text(">>", color = IntroPalette.PrimaryButton, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
     }
 }

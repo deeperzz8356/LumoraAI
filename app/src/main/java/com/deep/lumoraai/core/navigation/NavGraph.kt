@@ -106,10 +106,21 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 initialTab = tab
             )
         }
-        composable(Screen.TextToImage.route) {
+        composable(
+            route = Screen.TextToImage.route + "?prompt={prompt}",
+            arguments = listOf(
+                navArgument("prompt") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val prompt = backStackEntry.arguments?.getString("prompt")
             TextToImageRoute(
                 onBack = { navController.popBackStack() },
-                onNavigate = { navController.goTo(it) }
+                onNavigate = { navController.goTo(it) },
+                initialPrompt = prompt,
             )
         }
         composable(Screen.ImageToImage.route) {
@@ -152,17 +163,39 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 onNavigate = { navController.goTo(it) }
             )
         }
-        composable(Screen.TextToVideo.route) {
+        composable(
+            route = Screen.TextToVideo.route + "?prompt={prompt}",
+            arguments = listOf(
+                navArgument("prompt") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val prompt = backStackEntry.arguments?.getString("prompt")
             TextToVideoRoute(
                 onBack = { navController.popBackStack() },
-                onNavigate = { navController.goTo(it) }
+                onNavigate = { navController.goTo(it) },
+                initialPrompt = prompt,
             )
         }
-        composable(Screen.PromoVideo.route) {
+        composable(
+            route = Screen.PromoVideo.route + "?prompt={prompt}",
+            arguments = listOf(
+                navArgument("prompt") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val prompt = backStackEntry.arguments?.getString("prompt")
             TextToVideoRoute(
                 onBack = { navController.popBackStack() },
                 onNavigate = { navController.goTo(it) },
                 isPromo = true,
+                initialPrompt = prompt,
             )
         }
         composable(Screen.Templates.route) { TemplatesRoute(onNext = next(Screen.Templates), onNavigate = { navController.goTo(it) }) }

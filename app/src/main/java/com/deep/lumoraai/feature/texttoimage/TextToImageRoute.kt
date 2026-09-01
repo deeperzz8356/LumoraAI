@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.texttoimage
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.deep.lumoraai.core.components.MediaViewerDialog
@@ -8,8 +9,13 @@ import com.deep.lumoraai.core.components.MediaViewerDialog
 fun TextToImageRoute(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
+    initialPrompt: String? = null,
     viewModel: TextToImageViewModel = viewModel()
 ) {
+    LaunchedEffect(initialPrompt) {
+        viewModel.applyTemplatePrompt(initialPrompt)
+    }
+
     val uiState = viewModel.uiState
 
     TextToImageScreen(

@@ -35,6 +35,11 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     var uiState: TextToImageUiState by mutableStateOf(TextToImageUiState())
         private set
 
+    fun applyTemplatePrompt(prompt: String?) {
+        if (prompt.isNullOrBlank()) return
+        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null)
+    }
+
     fun updatePrompt(prompt: String) {
         uiState = uiState.copy(prompt = prompt.take(1000), error = null)
     }
