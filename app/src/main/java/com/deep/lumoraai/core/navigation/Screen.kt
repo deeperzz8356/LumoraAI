@@ -7,6 +7,8 @@ sealed class Screen(val route: String, val title: String) {
     data object Auth : Screen("auth", "Auth")
     data object Home : Screen("home", "Home")
     data object CreateHub : Screen("createhub", "Create Hub")
+    data object BgStudio : Screen("bgstudio", "Bg Studio")
+    data object PhotoEnhance : Screen("photoenhance", "Photo Enhancer")
     data object TextToImage : Screen("texttoimage", "Text To Image")
     data object ImageToVideo : Screen("imagetovideo", "Image To Video")
     data object TextToVideo : Screen("texttovideo", "Text To Video")
@@ -28,6 +30,8 @@ val navigationSequence = listOf(
     Screen.Auth,
     Screen.Home,
     Screen.CreateHub,
+    Screen.BgStudio,
+    Screen.PhotoEnhance,
     Screen.TextToImage,
     Screen.ImageToVideo,
     Screen.TextToVideo,

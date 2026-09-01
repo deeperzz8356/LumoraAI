@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.feature.auth.AuthRoute
+import com.deep.lumoraai.feature.bgstudio.BgStudioRoute
 import com.deep.lumoraai.feature.createhub.CreateHubRoute
 import com.deep.lumoraai.feature.credits.CreditsRoute
 import com.deep.lumoraai.feature.history.HistoryRoute
@@ -16,6 +17,7 @@ import com.deep.lumoraai.feature.imagetovideo.ImageToVideoRoute
 import com.deep.lumoraai.feature.language.LanguageRoute
 import com.deep.lumoraai.feature.notifications.NotificationsRoute
 import com.deep.lumoraai.feature.onboarding.OnboardingRoute
+import com.deep.lumoraai.feature.photoenhance.PhotoEnhanceRoute
 import com.deep.lumoraai.feature.profile.ProfileRoute
 import com.deep.lumoraai.feature.queue.QueueRoute
 import com.deep.lumoraai.feature.result.ResultRoute
@@ -86,6 +88,18 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
         composable(Screen.TextToImage.route) { TextToImageRoute(onNext = next(Screen.TextToImage)) }
+        composable(Screen.BgStudio.route) {
+            BgStudioRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
+        composable(Screen.PhotoEnhance.route) {
+            PhotoEnhanceRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
         composable(Screen.ImageToVideo.route) { ImageToVideoRoute(onNext = next(Screen.ImageToVideo)) }
         composable(Screen.TextToVideo.route) { TextToVideoRoute(onNext = next(Screen.TextToVideo)) }
         composable(Screen.Templates.route) { TemplatesRoute(onNext = next(Screen.Templates), onNavigate = { navController.goTo(it) }) }
