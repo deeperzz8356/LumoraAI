@@ -1,5 +1,10 @@
 package com.deep.lumoraai.core.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,6 +44,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,6 +104,11 @@ fun AppToolbar(title: String, modifier: Modifier = Modifier, action: (@Composabl
 
 @Composable
 fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (String) -> Unit, modifier: Modifier = Modifier) {
+    val centerSize by animateDpAsState(
+        targetValue = if (selected == "createhub") 62.dp else 58.dp,
+        animationSpec = tween(180, easing = FastOutSlowInEasing),
+        label = "centerCreateSize"
+    )
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -124,7 +135,7 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
         Box(
             modifier = Modifier
                 .padding(bottom = 26.dp)
-                .size(58.dp)
+                .size(centerSize)
                 .background(IntroPalette.AccentLime, CircleShape)
                 .clickable { onSelected("createhub") },
             contentAlignment = Alignment.Center
@@ -148,7 +159,21 @@ private fun NavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val tint = if (isSelected) IntroPalette.AccentLime else Color(0xFF8A94A9)
+    val tint by animateColorAsState(
+        targetValue = if (isSelected) IntroPalette.AccentLime else Color(0xFF8A94A9),
+        animationSpec = tween(180, easing = FastOutSlowInEasing),
+        label = "navTint"
+    )
+    val iconSize by animateDpAsState(
+        targetValue = if (isSelected) 26.dp else 24.dp,
+        animationSpec = tween(180, easing = FastOutSlowInEasing),
+        label = "navIconSize"
+    )
+    val labelAlpha by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0.74f,
+        animationSpec = tween(180, easing = FastOutSlowInEasing),
+        label = "navLabelAlpha"
+    )
     val isEnabled = !(label == "Home" && isSelected)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -157,9 +182,9 @@ private fun NavItem(
             .fillMaxHeight()
             .clickable(enabled = isEnabled, onClick = onClick)
     ) {
-        Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(24.dp))
+        Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(iconSize))
         Spacer(modifier = Modifier.height(4.dp))
-        Text(label, style = IntroTypography.navLabel.copy(color = tint))
+        Text(label, style = IntroTypography.navLabel.copy(color = tint.copy(alpha = labelAlpha)))
     }
 }
 

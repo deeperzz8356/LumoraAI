@@ -1,4 +1,4 @@
-package com.deep.lumoraai.feature.imagetovideo
+package com.deep.lumoraai.feature.imagetoimage
 
 import android.app.Application
 import android.graphics.Bitmap
@@ -22,18 +22,17 @@ import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
-import com.deep.lumoraai.feature.createhub.model.VideoEngine
-import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class ImageToVideoViewModel(application: Application) : AndroidViewModel(application) {
+class ImageToImageViewModel(application: Application) : AndroidViewModel(application) {
 
     private val generationRepository = GenerationRepository()
     private val authRepository = AuthRepository()
@@ -42,7 +41,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
     private var sourceImageB64: String? = null
 
-    var uiState: ImageToVideoUiState by mutableStateOf(ImageToVideoUiState())
+    var uiState: ImageToImageUiState by mutableStateOf(ImageToImageUiState())
         private set
 
     fun loadImage(uri: Uri) {
@@ -69,16 +68,8 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
         uiState = uiState.copy(selectedStyle = style)
     }
 
-    fun selectEngine(engine: VideoEngine) {
-        uiState = uiState.copy(selectedEngine = engine)
-    }
-
     fun setSimilarity(value: Float) {
         uiState = uiState.copy(similarity = value.coerceIn(0f, 1f))
-    }
-
-    fun setDuration(value: Int) {
-        uiState = uiState.copy(duration = value.coerceIn(5, 15))
     }
 
     fun setGenerations(value: Int) {
@@ -92,7 +83,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             return
         }
         if (uiState.prompt.isBlank()) {
-            uiState = uiState.copy(error = "Describe the video you want to generate.")
+            uiState = uiState.copy(error = "Describe the image you want to generate.")
             return
         }
 
@@ -108,46 +99,14 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                if (!GenerationGate.canGenerateVideo(credits, isDev)) {
+                if (!GenerationGate.canGenerateImage(credits, isDev)) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
-            }
-
-            uiState = uiState.copy(isGenerating = true, error = null)
-            val prompt = buildPrompt()
-            val jobTitle = "Image 2 Video ${shortTimestamp()}"
-            GenerationRepository.addJob(
-                ActiveJobInfo(
-                    title = jobTitle,
-                    subtitle = "Animating source image...",
-                    badgeText = "Image 2 Video",
-                    statusText = "Queued",
-                    progressPercent = 0.1f,
-                    isCompleted = false,
-                    imageRes = R.drawable.style_digital,
-                    mediaType = MediaStorageRepository.MEDIA_VIDEO,
-                )
-            )
-
-            val result = generationRepository.generateVideo(
-                prompt = prompt,
-                engine = uiState.selectedEngine.modelId,
-                sourceImageB64 = source,
-                motionStrength = (uiState.similarity * 100).toInt().coerceIn(20, 90),
-                duration = uiState.duration,
-                developerMode = isDev,
-            )
-
-            if (result.isSuccess) {
-                persistGeneratedVideo(result.getOrThrow(), jobTitle, prompt)
             } else {
-                val message = result.exceptionOrNull()?.message ?: "Failed to generate video."
-                uiState = uiState.copy(isGenerating = false, error = message)
-                GenerationRepository.updateJob(jobTitle) { job ->
-                    job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
-                }
+                authRepository.syncCurrentUser()
             }
+            startImageJob(source, isDev)
         }
     }
 
@@ -159,17 +118,77 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
         uiState = uiState.copy(generatedPath = null)
     }
 
-    private suspend fun persistGeneratedVideo(payload: String, jobTitle: String, prompt: String) {
-        val saved = mediaStorage.saveVideoFromPayload(payload)
+    private fun startImageJob(sourceImage: String, developerMode: Boolean) {
+        val prompt = buildPrompt()
+        val jobTitle = "Image 2 Image ${shortTimestamp()}"
+        uiState = uiState.copy(isGenerating = true, error = null)
+        GenerationRepository.addJob(
+            ActiveJobInfo(
+                title = jobTitle,
+                subtitle = "Refining source image...",
+                badgeText = "Image 2 Image",
+                statusText = "Queued",
+                progressPercent = 0.0f,
+                isCompleted = false,
+                imageRes = R.drawable.style_anime,
+                mediaType = MediaStorageRepository.MEDIA_IMAGE,
+            )
+        )
+
+        viewModelScope.launch {
+            val progressJob = launch {
+                val steps = listOf(
+                    0.18f to "Reading source image...",
+                    0.42f to "Applying style direction...",
+                    0.70f to "Balancing similarity...",
+                    0.90f to "Finishing image..."
+                )
+                for (step in steps) {
+                    delay(1800)
+                    GenerationRepository.updateJob(jobTitle) { job ->
+                        job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
+                    }
+                }
+            }
+
+            GenerationRepository.runImageGeneration(
+                repository = generationRepository,
+                jobTitle = jobTitle,
+                prompt = prompt,
+                style = uiState.selectedStyle.label,
+                width = 1024,
+                height = 1024,
+                negativePrompt = "low quality, blurry, distorted face, extra limbs, bad anatomy",
+                sourceImageB64 = sourceImage,
+                developerMode = developerMode,
+            ) { result ->
+                progressJob.cancel()
+                viewModelScope.launch {
+                    if (result.isSuccess) {
+                        persistGeneratedImage(result.getOrThrow(), jobTitle, prompt)
+                    } else {
+                        val message = result.exceptionOrNull()?.message ?: "Could not generate image."
+                        uiState = uiState.copy(isGenerating = false, error = message)
+                        GenerationRepository.updateJob(jobTitle) { job ->
+                            job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun persistGeneratedImage(payload: String, jobTitle: String, prompt: String) {
+        val saved = mediaStorage.saveImageFromPayload(payload)
         historyRepository.addHistory(
             historyModel = HistoryModel(
                 id = saved.id,
                 title = prompt,
                 createdAt = currentTimestamp(),
-                type = MediaStorageRepository.MEDIA_VIDEO,
+                type = MediaStorageRepository.MEDIA_IMAGE,
                 mediaUrl = saved.filePath,
             ),
-            type = MediaStorageRepository.MEDIA_VIDEO,
+            type = MediaStorageRepository.MEDIA_IMAGE,
             mediaUrl = saved.filePath,
         )
         uiState = uiState.copy(isGenerating = false, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
@@ -180,7 +199,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                 subtitle = "Saved to device",
                 isCompleted = true,
                 localMediaPath = saved.filePath,
-                videoUrl = saved.filePath,
+                imageUrl = saved.filePath,
             )
         }
     }
@@ -199,7 +218,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
 
     private fun buildPrompt(): String {
         val similarity = (uiState.similarity * 100).toInt()
-        return "Animate the uploaded source image into a cinematic video. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label}. Preserve about $similarity% of the original subject and composition while adding natural motion, camera movement, and depth."
+        return "Create a new image from the uploaded source. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label}. Preserve about $similarity% of the original composition and subject identity while improving the image."
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {

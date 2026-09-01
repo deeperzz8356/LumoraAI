@@ -1,5 +1,14 @@
 package com.deep.lumoraai.core.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -9,10 +18,12 @@ import androidx.navigation.compose.rememberNavController
 import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.feature.auth.AuthRoute
 import com.deep.lumoraai.feature.bgstudio.BgStudioRoute
+import com.deep.lumoraai.feature.compress.CompressRoute
 import com.deep.lumoraai.feature.createhub.CreateHubRoute
 import com.deep.lumoraai.feature.credits.CreditsRoute
 import com.deep.lumoraai.feature.history.HistoryRoute
 import com.deep.lumoraai.feature.home.HomeRoute
+import com.deep.lumoraai.feature.imagetoimage.ImageToImageRoute
 import com.deep.lumoraai.feature.imagetovideo.ImageToVideoRoute
 import com.deep.lumoraai.feature.language.LanguageRoute
 import com.deep.lumoraai.feature.notifications.NotificationsRoute
@@ -39,7 +50,15 @@ fun NavGraph(modifier: Modifier = Modifier) {
     val coroutineScope = rememberCoroutineScope()
     fun next(screen: Screen) = { navController.goTo(screen.nextScreen().route) }
 
-    NavHost(navController = navController, startDestination = Screen.Splash.route, modifier = modifier) {
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Splash.route,
+        modifier = modifier,
+        enterTransition = { lumoraEnterTransition() },
+        exitTransition = { lumoraExitTransition() },
+        popEnterTransition = { lumoraPopEnterTransition() },
+        popExitTransition = { lumoraPopExitTransition() },
+    ) {
         composable(Screen.Splash.route) {
             SplashRoute(
                 onNext = {
@@ -87,11 +106,32 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 initialTab = tab
             )
         }
-        composable(Screen.TextToImage.route) { TextToImageRoute(onNext = next(Screen.TextToImage)) }
-        composable(Screen.BgStudio.route) {
-            BgStudioRoute(
+        composable(Screen.TextToImage.route) {
+            TextToImageRoute(
                 onBack = { navController.popBackStack() },
                 onNavigate = { navController.goTo(it) }
+            )
+        }
+        composable(Screen.ImageToImage.route) {
+            ImageToImageRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
+        composable(
+            route = Screen.BgStudio.route + "?mode={mode}",
+            arguments = listOf(
+                navArgument("mode") {
+                    type = NavType.StringType
+                    defaultValue = "replace"
+                }
+            )
+        ) { backStackEntry ->
+            val mode = backStackEntry.arguments?.getString("mode") ?: "replace"
+            BgStudioRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) },
+                initialMode = mode,
             )
         }
         composable(Screen.PhotoEnhance.route) {
@@ -100,8 +140,31 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 onNavigate = { navController.goTo(it) }
             )
         }
-        composable(Screen.ImageToVideo.route) { ImageToVideoRoute(onNext = next(Screen.ImageToVideo)) }
-        composable(Screen.TextToVideo.route) { TextToVideoRoute(onNext = next(Screen.TextToVideo)) }
+        composable(Screen.Compress.route) {
+            CompressRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
+        composable(Screen.ImageToVideo.route) {
+            ImageToVideoRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
+        composable(Screen.TextToVideo.route) {
+            TextToVideoRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
+        composable(Screen.PromoVideo.route) {
+            TextToVideoRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) },
+                isPromo = true,
+            )
+        }
         composable(Screen.Templates.route) { TemplatesRoute(onNext = next(Screen.Templates), onNavigate = { navController.goTo(it) }) }
         composable(Screen.Queue.route) { QueueRoute(onNext = next(Screen.Queue), onNavigate = { navController.goTo(it) }) }
         composable(Screen.Result.route) { ResultRoute(onNext = next(Screen.Result)) }
@@ -136,3 +199,43 @@ fun NavGraph(modifier: Modifier = Modifier) {
         composable(Screen.Settings.route) { SettingsRoute(onNext = next(Screen.Settings), onNavigate = { navController.goTo(it) }) }
     }
 }
+
+private const val NavTransitionMillis = 260
+
+private fun AnimatedContentTransitionScope<*>.lumoraEnterTransition(): EnterTransition =
+    slideIntoContainer(
+        AnimatedContentTransitionScope.SlideDirection.Start,
+        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
+    ) + fadeIn(tween(180)) + scaleIn(
+        initialScale = 0.985f,
+        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
+    )
+
+private fun AnimatedContentTransitionScope<*>.lumoraExitTransition(): ExitTransition =
+    slideOutOfContainer(
+        AnimatedContentTransitionScope.SlideDirection.Start,
+        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing),
+        targetOffset = { it / 5 }
+    ) + fadeOut(tween(150)) + scaleOut(
+        targetScale = 0.99f,
+        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
+    )
+
+private fun AnimatedContentTransitionScope<*>.lumoraPopEnterTransition(): EnterTransition =
+    slideIntoContainer(
+        AnimatedContentTransitionScope.SlideDirection.End,
+        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing),
+        initialOffset = { it / 5 }
+    ) + fadeIn(tween(180)) + scaleIn(
+        initialScale = 0.99f,
+        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
+    )
+
+private fun AnimatedContentTransitionScope<*>.lumoraPopExitTransition(): ExitTransition =
+    slideOutOfContainer(
+        AnimatedContentTransitionScope.SlideDirection.End,
+        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
+    ) + fadeOut(tween(150)) + scaleOut(
+        targetScale = 0.985f,
+        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
+    )

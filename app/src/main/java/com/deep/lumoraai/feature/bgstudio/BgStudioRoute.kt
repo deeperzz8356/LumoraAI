@@ -9,9 +9,20 @@ import com.deep.lumoraai.core.navigation.Screen
 fun BgStudioRoute(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
+    initialMode: String = "replace",
     viewModel: BgStudioViewModel = viewModel()
 ) {
     val uiState = viewModel.uiState
+
+    LaunchedEffect(initialMode) {
+        viewModel.selectMode(
+            if (initialMode.equals("remove", ignoreCase = true)) {
+                BgStudioMode.Remove
+            } else {
+                BgStudioMode.Replace
+            }
+        )
+    }
 
     LaunchedEffect(uiState.status) {
         when (uiState.status) {

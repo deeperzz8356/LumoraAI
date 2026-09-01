@@ -50,7 +50,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.restrictions.GenerationGate
 
 private val EnhanceBackground = Color(0xFF081020)
 private val EnhancePanel = Color(0xFF121A2E)
@@ -89,9 +88,7 @@ fun PhotoEnhanceScreen(
             verticalArrangement = Arrangement.spacedBy(22.dp)
         ) {
             EnhanceTopBar(
-                credits = 1250,
                 onBack = onBack,
-                onCredits = { onNavigate(Screen.Credits.route) },
                 onNotifications = { onNavigate(Screen.Notifications.route) }
             )
 
@@ -152,9 +149,7 @@ fun PhotoEnhanceScreen(
 
 @Composable
 private fun EnhanceTopBar(
-    credits: Int,
     onBack: () -> Unit,
-    onCredits: () -> Unit,
     onNotifications: () -> Unit,
 ) {
     Row(
@@ -183,7 +178,6 @@ private fun EnhanceTopBar(
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            CreditsPill(credits = credits, onClick = onCredits)
             Box(
                 modifier = Modifier
                     .size(28.dp)
@@ -204,25 +198,6 @@ private fun EnhanceTopBar(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun CreditsPill(credits: Int, onClick: () -> Unit) {
-    val label = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else "$credits"
-    Row(
-        modifier = Modifier
-            .height(28.dp)
-            .clip(RoundedCornerShape(50))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text("◉", color = Lime, fontSize = 10.sp, lineHeight = 10.sp)
-        Text(label, color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold)
     }
 }
 

@@ -54,7 +54,7 @@ fun SplashScreen(
 ) {
     LaunchedEffect(isReady) {
         if (isReady) {
-            delay(3000)
+            delay(1400)
             onNext()
         }
     }

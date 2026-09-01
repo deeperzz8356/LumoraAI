@@ -1,5 +1,9 @@
-package com.deep.lumoraai.feature.texttovideo
+package com.deep.lumoraai.feature.imagetoimage
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,11 +27,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,38 +46,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
-import com.deep.lumoraai.feature.createhub.model.VideoEngine
-import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 
 private val ScreenBg = Color(0xFF081020)
 private val Panel = Color(0xFF151D31)
+private val Stroke = Color(0xFF26364F)
 private val Lime = Color(0xFFD6FF2F)
 private val Muted = Color(0xFF9AA5B8)
 
 @Composable
-fun TextToVideoScreen(
-    uiState: TextToVideoUiState,
+fun ImageToImageScreen(
+    uiState: ImageToImageUiState,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
+    onImageSelected: (Uri) -> Unit,
     onPromptChanged: (String) -> Unit,
     onStyleSelected: (ImageStyle) -> Unit,
-    onEngineSelected: (VideoEngine) -> Unit,
-    onMotionChanged: (Float) -> Unit,
-    onDurationChanged: (Int) -> Unit,
+    onSimilarityChanged: (Float) -> Unit,
     onGenerationsChanged: (Int) -> Unit,
     onGenerate: () -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) onImageSelected(uri)
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -82,7 +90,6 @@ fun TextToVideoScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopBar(
-                title = uiState.title,
                 onBack = onBack,
                 onCredits = { onNavigate(Screen.Credits.route) },
                 onNotifications = { onNavigate(Screen.Notifications.route) }
@@ -93,22 +100,20 @@ fun TextToVideoScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
-                    .padding(top = 25.dp, bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    .padding(top = 28.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(26.dp)
             ) {
-                ModelPanel(selectedEngine = uiState.selectedEngine, onEngineSelected = onEngineSelected)
+                UploadPanel(uiState = uiState, onUpload = { imagePicker.launch("image/*") })
                 PromptPanel(
                     prompt = uiState.prompt,
-                    promptHint = uiState.promptHint,
-                    onPromptChanged = onPromptChanged
+                    onPromptChanged = onPromptChanged,
+                    onUpload = { imagePicker.launch("image/*") }
                 )
                 StyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
                 ControlsPanel(
-                    motion = uiState.motion,
-                    duration = uiState.duration,
+                    similarity = uiState.similarity,
                     generations = uiState.generations,
-                    onMotionChanged = onMotionChanged,
-                    onDurationChanged = onDurationChanged,
+                    onSimilarityChanged = onSimilarityChanged,
                     onGenerationsChanged = onGenerationsChanged
                 )
                 Button(
@@ -146,7 +151,6 @@ fun TextToVideoScreen(
 
 @Composable
 private fun TopBar(
-    title: String,
     onBack: () -> Unit,
     onCredits: () -> Unit,
     onNotifications: () -> Unit,
@@ -172,10 +176,10 @@ private fun TopBar(
             )
             Spacer(modifier = Modifier.width(13.dp))
             Text(
-                text = title,
+                text = "Image 2 Image",
                 color = Color.White,
-                fontSize = 31.sp,
-                lineHeight = 35.sp,
+                fontSize = 32.sp,
+                lineHeight = 36.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -221,43 +225,59 @@ private fun CreditsPill(credits: Int, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ModelPanel(selectedEngine: VideoEngine, onEngineSelected: (VideoEngine) -> Unit) {
-    Row(
+private fun UploadPanel(uiState: ImageToImageUiState, onUpload: () -> Unit) {
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(95.dp)
+            .height(492.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Panel)
-            .padding(horizontal = 29.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .background(Panel.copy(alpha = 0.55f))
+            .border(BorderStroke(2.dp, Color(0xFF566B58)), RoundedCornerShape(16.dp))
+            .clickable(enabled = !uiState.isGenerating, onClick = onUpload),
+        contentAlignment = Alignment.Center
     ) {
-        Text("Model", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Row(
-            modifier = Modifier
-                .height(45.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF192238))
-                .border(1.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(12.dp))
-                .clickable {
-                    onEngineSelected(if (selectedEngine == VideoEngine.FAST_DRAFT) VideoEngine.VEO_ULTRA else VideoEngine.FAST_DRAFT)
+        val bitmap = uiState.sourceBitmap
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Source image",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .size(112.dp)
+                        .background(Color(0xFF111A2D), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.CloudUpload, contentDescription = null, tint = Lime, modifier = Modifier.size(43.dp))
                 }
-                .padding(horizontal = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text("Veo 2.5", color = Lime, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-            Icon(Icons.Default.ExpandMore, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.height(38.dp))
+                Text("Upload Image", color = Color.White, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(21.dp))
+                Text(
+                    text = "Drag and drop or tap to select a file",
+                    color = Muted,
+                    fontSize = 23.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun PromptPanel(prompt: String, promptHint: String, onPromptChanged: (String) -> Unit) {
+private fun PromptPanel(
+    prompt: String,
+    onPromptChanged: (String) -> Unit,
+    onUpload: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(326.dp)
+            .height(256.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Panel)
             .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
@@ -267,7 +287,7 @@ private fun PromptPanel(prompt: String, promptHint: String, onPromptChanged: (St
             onValueChange = onPromptChanged,
             placeholder = {
                 Text(
-                    text = promptHint,
+                    text = "Describe the image you want to generate...",
                     color = Muted.copy(alpha = 0.65f),
                     fontSize = 24.sp,
                     lineHeight = 34.sp
@@ -293,7 +313,7 @@ private fun PromptPanel(prompt: String, promptHint: String, onPromptChanged: (St
                 .padding(start = 29.dp, bottom = 28.dp),
             horizontalArrangement = Arrangement.spacedBy(13.dp)
         ) {
-            SquareButton(icon = Icons.Default.AutoAwesome, onClick = {})
+            SquareButton(icon = Icons.Default.Upload, onClick = onUpload)
             SquareButton(icon = Icons.Default.Tune, onClick = {})
         }
         Text(
@@ -377,7 +397,12 @@ private fun StyleCard(imageRes: Int, selected: Boolean, onClick: () -> Unit) {
             .border(2.dp, if (selected) Lime else Color.Transparent, RoundedCornerShape(9.dp))
             .clickable(onClick = onClick)
     ) {
-        Image(painter = painterResource(id = imageRes), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        Image(
+            painter = painterResource(id = imageRes),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
         if (selected) {
             Box(
                 modifier = Modifier
@@ -395,11 +420,9 @@ private fun StyleCard(imageRes: Int, selected: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun ControlsPanel(
-    motion: Float,
-    duration: Int,
+    similarity: Float,
     generations: Int,
-    onMotionChanged: (Float) -> Unit,
-    onDurationChanged: (Int) -> Unit,
+    onSimilarityChanged: (Float) -> Unit,
     onGenerationsChanged: (Int) -> Unit,
 ) {
     Column(
@@ -409,12 +432,27 @@ private fun ControlsPanel(
             .background(Panel)
             .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
             .padding(horizontal = 29.dp, vertical = 29.dp),
-        verticalArrangement = Arrangement.spacedBy(19.dp)
+        verticalArrangement = Arrangement.spacedBy(26.dp)
     ) {
-        SliderBlock("Motion", "${(motion * 100).toInt()}%", motion, onMotionChanged)
-        Divider()
-        SliderBlock("Duration", "${duration}s", (duration - 5) / 10f, { onDurationChanged((5 + it * 10).toInt()) })
-        Divider()
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Image Similarity", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            Text("${(similarity * 100).toInt()}%", color = Lime, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+        }
+        Slider(
+            value = similarity,
+            onValueChange = onSimilarityChanged,
+            colors = SliderDefaults.colors(
+                thumbColor = Lime,
+                activeTrackColor = Lime.copy(alpha = 0.58f),
+                inactiveTrackColor = Color.White.copy(alpha = 0.13f)
+            )
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color.White.copy(alpha = 0.06f))
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -439,31 +477,3 @@ private fun ControlsPanel(
     }
 }
 
-@Composable
-private fun SliderBlock(label: String, valueText: String, value: Float, onValueChange: (Float) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-            Text(valueText, color = Lime, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-        }
-        Slider(
-            value = value.coerceIn(0f, 1f),
-            onValueChange = onValueChange,
-            colors = SliderDefaults.colors(
-                thumbColor = Lime,
-                activeTrackColor = Lime.copy(alpha = 0.58f),
-                inactiveTrackColor = Color.White.copy(alpha = 0.13f)
-            )
-        )
-    }
-}
-
-@Composable
-private fun Divider() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(Color.White.copy(alpha = 0.06f))
-    )
-}

@@ -60,7 +60,7 @@ import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.navigation.createHubRoute
+import com.deep.lumoraai.core.navigation.bgStudioRoute
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import kotlinx.coroutines.launch
 
@@ -122,9 +122,9 @@ private fun HomeContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp)
-            .padding(top = 14.dp, bottom = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 20.dp)
+            .padding(top = 18.dp, bottom = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         HomeTopBar(
             userName = uiState.userName,
@@ -153,7 +153,7 @@ private fun HomeTopBar(
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Box(
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(38.dp)
                     .clip(CircleShape)
                     .border(1.dp, Color(0xFF2D77FF), CircleShape)
                     .clickable { onNavigate(Screen.Profile.route) }
@@ -165,13 +165,13 @@ private fun HomeTopBar(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(
                     text = "Hi, ${userName.ifBlank { "Alex" }}",
                     color = Color.White,
-                    fontSize = 16.sp,
-                    lineHeight = 18.sp,
+                    fontSize = 18.sp,
+                    lineHeight = 21.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -179,8 +179,8 @@ private fun HomeTopBar(
                 Text(
                     text = "Good Morning",
                     color = Color.White.copy(alpha = 0.72f),
-                    fontSize = 10.sp,
-                    lineHeight = 12.sp
+                    fontSize = 12.sp,
+                    lineHeight = 15.sp
                 )
             }
         }
@@ -192,7 +192,7 @@ private fun HomeTopBar(
             CreditsChip(credits = credits, onClick = { onNavigate(Screen.Credits.route) })
             Box(
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(34.dp)
                     .clickable { onNavigate(Screen.Notifications.route) },
                 contentAlignment = Alignment.Center
             ) {
@@ -200,7 +200,7 @@ private fun HomeTopBar(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notifications",
                     tint = Color(0xFFDFF7F4),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(23.dp)
                 )
                 Box(
                     modifier = Modifier
@@ -227,12 +227,12 @@ private fun CreditsChip(credits: Int, onClick: () -> Unit) {
             .background(Color.White.copy(alpha = 0.05f))
             .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text("✦", color = Lime, fontSize = 11.sp, lineHeight = 11.sp)
-        Text(label, color = Lime, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text("✦", color = Lime, fontSize = 13.sp, lineHeight = 13.sp)
+        Text(label, color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -241,15 +241,15 @@ private fun HomeHero(onExploreRecent: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(90.dp),
+            .height(132.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("What will we", color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
-            Text("Create", color = Color.White, fontSize = 25.sp, lineHeight = 27.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Today?", color = Lime, fontSize = 25.sp, lineHeight = 27.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Turn ideas into stunning visuals", color = Muted, fontSize = 10.sp, lineHeight = 16.sp)
+            Text("What will we", color = Muted, fontSize = 14.sp, lineHeight = 18.sp)
+            Text("Create", color = Color.White, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Today?", color = Lime, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Turn ideas into stunning visuals", color = Muted, fontSize = 13.sp, lineHeight = 20.sp)
             Row(modifier = Modifier.padding(top = 4.dp)) {
                 Box(modifier = Modifier.width(34.dp).height(2.dp).background(Lime))
                 Box(modifier = Modifier.width(34.dp).height(2.dp).background(Purple))
@@ -263,8 +263,8 @@ private fun HomeHero(onExploreRecent: () -> Unit) {
 private fun HeroPreviewArt(onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .width(78.dp)
-            .height(72.dp)
+            .width(106.dp)
+            .height(98.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(
                 Brush.radialGradient(
@@ -286,7 +286,7 @@ private fun HeroPreviewArt(onClick: () -> Unit) {
             contentDescription = null,
             tint = Color.White.copy(alpha = 0.88f),
             modifier = Modifier
-                .size(30.dp)
+                .size(34.dp)
                 .shadow(10.dp, CircleShape)
         )
     }
@@ -298,14 +298,14 @@ private fun MainCreateGrid(
     onComingSoon: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-        Text("Create", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Create", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreateActionCard("Text → Image", "Dream it", Icons.Default.AutoAwesome, Lime, { onNavigate(createHubRoute(tab = 0)) }, Modifier.weight(1f))
-            CreateActionCard("Img → Img", "Refine it", Icons.Default.Image, Purple, onComingSoon, Modifier.weight(1f))
+            CreateActionCard("Text → Image", "Dream it", Icons.Default.AutoAwesome, Lime, { onNavigate(Screen.TextToImage.route) }, Modifier.weight(1f))
+            CreateActionCard("Img → Img", "Refine it", Icons.Default.Image, Purple, { onNavigate(Screen.ImageToImage.route) }, Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreateActionCard("Img → Video", "Animate it", Icons.Default.Movie, Pink, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
-            CreateActionCard("Text → Video", "Direct it", Icons.Default.PlayArrow, Cyan, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
+            CreateActionCard("Img → Video", "Animate it", Icons.Default.Movie, Pink, { onNavigate(Screen.ImageToVideo.route) }, Modifier.weight(1f))
+            CreateActionCard("Text → Video", "Direct it", Icons.Default.PlayArrow, Cyan, { onNavigate(Screen.TextToVideo.route) }, Modifier.weight(1f))
         }
     }
 }
@@ -321,7 +321,7 @@ private fun CreateActionCard(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(91.dp),
+        modifier = modifier.height(118.dp),
         shape = CardShape,
         color = HomeCard,
         border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.72f))
@@ -329,19 +329,19 @@ private fun CreateActionCard(
         Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
             Box(
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(36.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(Color(0xFF18243C)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(17.dp))
+                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(21.dp))
             }
             Column(modifier = Modifier.align(Alignment.BottomStart)) {
                 Text(
                     text = title,
                     color = Color.White,
-                    fontSize = 12.sp,
-                    lineHeight = 15.sp,
+                    fontSize = 16.sp,
+                    lineHeight = 20.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -349,8 +349,8 @@ private fun CreateActionCard(
                 Text(
                     text = subtitle,
                     color = Color.White.copy(alpha = 0.58f),
-                    fontSize = 8.sp,
-                    lineHeight = 11.sp,
+                    fontSize = 12.sp,
+                    lineHeight = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -381,11 +381,11 @@ private fun RecentCreationsSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Recent", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Recent", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
             Text(
                 text = "View all",
                 color = Lime,
-                fontSize = 11.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { onNavigate(Screen.History.route) }
             )
@@ -409,7 +409,7 @@ private fun RecentCreationCard(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(66.dp),
+        modifier = modifier.height(78.dp),
         shape = RoundedCornerShape(12.dp),
         color = HomeCard,
         border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.58f))
@@ -426,20 +426,20 @@ private fun RecentCreationCard(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(58.dp)
                     .clip(RoundedCornerShape(9.dp))
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.title,
                     color = Color.White,
-                    fontSize = 11.sp,
-                    lineHeight = 13.sp,
+                    fontSize = 13.sp,
+                    lineHeight = 16.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(item.timeLabel, color = Muted, fontSize = 9.sp, lineHeight = 12.sp)
+                Text(item.timeLabel, color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
             }
         }
     }
@@ -451,15 +451,15 @@ private fun ToolsSection(
     onComingSoon: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Tools", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Tools", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            SmallToolCard("AI BG", Icons.Default.AutoAwesome, Cyan, { onNavigate(Screen.BgStudio.route) }, Modifier.weight(1f))
+            SmallToolCard("AI BG", Icons.Default.AutoAwesome, Cyan, { onNavigate(bgStudioRoute("replace")) }, Modifier.weight(1f))
             SmallToolCard("Enhance", Icons.Default.Tune, Purple, { onNavigate(Screen.PhotoEnhance.route) }, Modifier.weight(1f))
-            SmallToolCard("Remove", Icons.Default.PhotoCamera, Color(0xFF7D86FF), onComingSoon, Modifier.weight(1f))
+            SmallToolCard("Remove", Icons.Default.PhotoCamera, Color(0xFF7D86FF), { onNavigate(bgStudioRoute("remove")) }, Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            SmallToolCard("Promo Video", Icons.Default.VideoLibrary, Pink, { onNavigate(createHubRoute(tab = 1)) }, Modifier.weight(1f))
-            SmallToolCard("Compress", Icons.Default.Compress, Lime, onComingSoon, Modifier.weight(1f))
+            SmallToolCard("Promo Video", Icons.Default.VideoLibrary, Pink, { onNavigate(Screen.PromoVideo.route) }, Modifier.weight(1f))
+            SmallToolCard("Compress", Icons.Default.Compress, Lime, { onNavigate(Screen.Compress.route) }, Modifier.weight(1f))
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -475,7 +475,7 @@ private fun SmallToolCard(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(50.dp),
+        modifier = modifier.height(64.dp),
         shape = CardShape,
         color = HomeCard,
         border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.58f))
@@ -487,12 +487,12 @@ private fun SmallToolCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(17.dp))
+            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(22.dp))
             Text(
                 text = title,
                 color = Color.White.copy(alpha = 0.78f),
-                fontSize = 10.sp,
-                lineHeight = 12.sp,
+                fontSize = 13.sp,
+                lineHeight = 16.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Start,
                 maxLines = 1,

@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,7 +58,7 @@ private val StudioPanel = Color(0xFF121A2E)
 private val StudioField = Color(0xFF151D31)
 private val StudioStroke = Color(0xFF25344C)
 private val Lime = Color(0xFFD6FF2F)
-private val Muted = Color(0xFF8E9AB0)
+private val Muted = Color(0xFF9AA5B8)
 
 @Composable
 fun BgStudioScreen(
@@ -86,50 +87,37 @@ fun BgStudioScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(top = 12.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             StudioTopBar(
                 onBack = onBack,
                 onCredits = { onNavigate(Screen.Credits.route) },
                 onNotifications = { onNavigate(Screen.Notifications.route) }
             )
-            ModeSwitch(selectedMode = uiState.mode, onModeSelected = onModeSelected)
-            SourceImagePanel(
-                uiState = uiState,
-                onUpload = { imagePicker.launch("image/*") }
-            )
-            PromptPanel(
-                prompt = uiState.prompt,
-                onPromptChanged = onPromptChanged,
-                onUpload = { imagePicker.launch("image/*") }
-            )
-            Button(
-                onClick = onCreate,
-                enabled = !isBusy,
+
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(41.dp),
-                shape = RoundedCornerShape(9.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Lime,
-                    disabledContainerColor = Lime.copy(alpha = 0.35f)
-                )
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 28.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                if (isBusy) {
-                    CircularProgressIndicator(color = Color.Black, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-                } else {
-                    Text(
-                        text = "CREATE ϟ",
-                        color = Color.Black,
-                        fontSize = 12.sp,
-                        letterSpacing = 1.sp,
-                        fontWeight = FontWeight.ExtraBold
+                ModeSwitch(selectedMode = uiState.mode, onModeSelected = onModeSelected)
+
+                if (uiState.mode == BgStudioMode.Replace) {
+                    SourceImagePanel(uiState = uiState, onUpload = { imagePicker.launch("image/*") })
+                    PromptPanel(
+                        prompt = uiState.prompt,
+                        onPromptChanged = onPromptChanged,
+                        onUpload = { imagePicker.launch("image/*") }
                     )
+                    StudioPrimaryButton(text = "CREATE ϟ", isBusy = isBusy, enabled = !isBusy, onClick = onCreate)
+                } else {
+                    RemoveBackgroundPanel(uiState = uiState, onUpload = { imagePicker.launch("image/*") })
+                    StudioPrimaryButton(text = "✂  REMOVE BACKGROUND", isBusy = isBusy, enabled = !isBusy, onClick = onCreate)
                 }
+
+                StatusMessage(status = uiState.status, onDismissError = onDismissError)
             }
-            StatusMessage(status = uiState.status, onDismissError = onDismissError)
         }
     }
 }
@@ -141,7 +129,12 @@ private fun StudioTopBar(
     onNotifications: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .background(Color(0xFF0B1426))
+            .border(1.dp, Color.White.copy(alpha = 0.06f))
+            .padding(horizontal = 19.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -151,15 +144,15 @@ private fun StudioTopBar(
                 contentDescription = "Back",
                 tint = Color.White,
                 modifier = Modifier
-                    .size(22.dp)
+                    .size(23.dp)
                     .clickable(onClick = onBack)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Bg Studio",
                 color = Color.White,
-                fontSize = 20.sp,
-                lineHeight = 24.sp,
+                fontSize = 21.sp,
+                lineHeight = 25.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -181,7 +174,7 @@ private fun StudioTopBar(
                 )
                 Box(
                     modifier = Modifier
-                        .size(7.dp)
+                        .size(6.dp)
                         .align(Alignment.TopEnd)
                         .background(Lime, CircleShape)
                 )
@@ -234,7 +227,7 @@ private fun ModeSwitch(selectedMode: BgStudioMode, onModeSelected: (BgStudioMode
                 Text(
                     text = mode.label,
                     color = if (selected) Color.Black else Muted,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -247,7 +240,7 @@ private fun SourceImagePanel(uiState: BgStudioUiState, onUpload: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(284.dp)
+            .height(293.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(StudioPanel)
             .border(BorderStroke(1.dp, StudioStroke), RoundedCornerShape(8.dp))
@@ -272,7 +265,7 @@ private fun SourceImagePanel(uiState: BgStudioUiState, onUpload: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.42f)),
+                    .background(Color.Black.copy(alpha = 0.26f)),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -280,6 +273,63 @@ private fun SourceImagePanel(uiState: BgStudioUiState, onUpload: () -> Unit) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Upload source image", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RemoveBackgroundPanel(uiState: BgStudioUiState, onUpload: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(335.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(StudioPanel)
+            .border(BorderStroke(1.dp, StudioStroke), RoundedCornerShape(8.dp))
+            .clickable(onClick = onUpload),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(188.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color.Black),
+            contentAlignment = Alignment.Center
+        ) {
+            val bitmap = uiState.sourceBitmap
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Source subject",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Image(
+                    painter = androidx.compose.ui.res.painterResource(id = R.drawable.style_fantasy),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.Black.copy(alpha = 0.62f))
+                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(50))
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text("✦", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = if (bitmap == null) "Tap to select subject" else "Subject Detected",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -294,7 +344,7 @@ private fun PromptPanel(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(134.dp)
+            .height(140.dp)
             .clip(RoundedCornerShape(9.dp))
             .background(StudioField)
             .border(1.dp, Color.White.copy(alpha = 0.04f), RoundedCornerShape(9.dp))
@@ -335,11 +385,45 @@ private fun PromptPanel(
         Text(
             text = "${prompt.length}/1000",
             color = Color.White.copy(alpha = 0.74f),
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 14.dp, bottom = 14.dp)
         )
+    }
+}
+
+@Composable
+private fun StudioPrimaryButton(
+    text: String,
+    isBusy: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(43.dp),
+        shape = RoundedCornerShape(9.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Lime,
+            disabledContainerColor = Lime.copy(alpha = 0.35f)
+        )
+    ) {
+        if (isBusy) {
+            CircularProgressIndicator(color = Color.Black, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+        } else {
+            Text(
+                text = text,
+                color = Color.Black,
+                fontSize = 13.sp,
+                letterSpacing = 1.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 

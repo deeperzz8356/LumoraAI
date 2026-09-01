@@ -1,30 +1,204 @@
 package com.deep.lumoraai.feature.texttoimage
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import com.deep.lumoraai.data.repository.FakeRepository
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.R
+import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.data.local.room.LumoraDatabase
+import com.deep.lumoraai.data.model.ActiveJobInfo
+import com.deep.lumoraai.data.model.HistoryModel
+import com.deep.lumoraai.data.repository.AppPreferencesRepository
+import com.deep.lumoraai.data.repository.AuthRepository
+import com.deep.lumoraai.data.repository.GenerationRepository
+import com.deep.lumoraai.data.repository.HistoryRepository
+import com.deep.lumoraai.data.repository.MediaStorageRepository
+import com.deep.lumoraai.feature.imagetoimage.ImageStyle
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-class TextToImageViewModel(
-    private val repository: FakeRepository = FakeRepository()
-) : ViewModel() {
-    var uiState: TextToImageUiState by mutableStateOf(TextToImageUiState.Loading)
+class TextToImageViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val generationRepository = GenerationRepository()
+    private val authRepository = AuthRepository()
+    private val appPreferences = AppPreferencesRepository.getInstance(application)
+    private val mediaStorage = MediaStorageRepository.getInstance(application)
+    private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
+
+    var uiState: TextToImageUiState by mutableStateOf(TextToImageUiState())
         private set
 
-    init { load() }
-
-    fun load() {
-        val items = when ("texttoimage") {
-            "templates" -> repository.getTemplates().map { it.title }
-            "history" -> repository.getHistory().map { it.title }
-            "credits" -> repository.getCredits().map { "${it.label}: ${it.amount}" }
-            "notifications" -> repository.getNotifications().map { it.title }
-            "queue" -> repository.getQueue().map { it.title }
-            "result" -> repository.getResults().map { it.title }
-            "profile" -> listOf(repository.getProfile().name, repository.getProfile().plan, "${repository.getProfile().credits} credits")
-            else -> listOf("Text To Image ready", "Fake data only", "No Firebase, AI, Room, Retrofit, or network")
-        }
-        uiState = if (items.isEmpty()) TextToImageUiState.Empty else TextToImageUiState.Success(items)
+    fun updatePrompt(prompt: String) {
+        uiState = uiState.copy(prompt = prompt.take(1000), error = null)
     }
+
+    fun selectStyle(style: ImageStyle) {
+        uiState = uiState.copy(selectedStyle = style)
+    }
+
+    fun selectModel(model: ImageModel) {
+        uiState = uiState.copy(selectedModel = model)
+    }
+
+    fun setCreativity(value: Float) {
+        uiState = uiState.copy(creativity = value.coerceIn(0f, 1f))
+    }
+
+    fun setGenerations(value: Int) {
+        uiState = uiState.copy(generations = value.coerceIn(1, 4))
+    }
+
+    fun generate() {
+        if (uiState.isGenerating) return
+        if (uiState.prompt.isBlank()) {
+            uiState = uiState.copy(error = "Describe the image you want to generate.")
+            return
+        }
+
+        viewModelScope.launch {
+            val isDev = appPreferences.isDeveloperModeEnabled()
+            if (!ensureTrialUser()) {
+                uiState = uiState.copy(error = "Could not start your free trial. Please try again.")
+                return@launch
+            }
+            if (!isDev) {
+                val credits = fetchCreditsWithSync()
+                if (credits == null) {
+                    uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
+                    return@launch
+                }
+                if (!GenerationGate.canGenerateImage(credits, isDev)) {
+                    uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
+                    return@launch
+                }
+            } else {
+                authRepository.syncCurrentUser()
+            }
+            startImageJob(developerMode = isDev)
+        }
+    }
+
+    fun dismissError() {
+        uiState = uiState.copy(error = null)
+    }
+
+    fun clearResult() {
+        uiState = uiState.copy(generatedPath = null)
+    }
+
+    private fun startImageJob(developerMode: Boolean) {
+        val prompt = buildPrompt()
+        val jobTitle = "Text 2 Image ${shortTimestamp()}"
+        uiState = uiState.copy(isGenerating = true, error = null)
+        GenerationRepository.addJob(
+            ActiveJobInfo(
+                title = jobTitle,
+                subtitle = "Generating image...",
+                badgeText = "Text 2 Image",
+                statusText = "Queued",
+                progressPercent = 0.0f,
+                isCompleted = false,
+                imageRes = R.drawable.style_anime,
+                mediaType = MediaStorageRepository.MEDIA_IMAGE,
+            )
+        )
+
+        viewModelScope.launch {
+            val progressJob = launch {
+                val steps = listOf(
+                    0.18f to "Reading prompt...",
+                    0.42f to "Composing style...",
+                    0.68f to "Rendering details...",
+                    0.90f to "Finishing image..."
+                )
+                for (step in steps) {
+                    delay(1800)
+                    GenerationRepository.updateJob(jobTitle) { job ->
+                        job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
+                    }
+                }
+            }
+
+            GenerationRepository.runImageGeneration(
+                repository = generationRepository,
+                jobTitle = jobTitle,
+                prompt = prompt,
+                style = uiState.selectedStyle.label,
+                width = 1024,
+                height = 1024,
+                negativePrompt = "low quality, blurry, distorted face, extra limbs, bad anatomy, watermark, text artifacts",
+                sourceImageB64 = null,
+                developerMode = developerMode,
+            ) { result ->
+                progressJob.cancel()
+                viewModelScope.launch {
+                    if (result.isSuccess) {
+                        persistGeneratedImage(result.getOrThrow(), jobTitle, prompt)
+                    } else {
+                        val message = result.exceptionOrNull()?.message ?: "Could not generate image."
+                        uiState = uiState.copy(isGenerating = false, error = message)
+                        GenerationRepository.updateJob(jobTitle) { job ->
+                            job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun persistGeneratedImage(payload: String, jobTitle: String, prompt: String) {
+        val saved = mediaStorage.saveImageFromPayload(payload)
+        historyRepository.addHistory(
+            historyModel = HistoryModel(
+                id = saved.id,
+                title = prompt,
+                createdAt = currentTimestamp(),
+                type = MediaStorageRepository.MEDIA_IMAGE,
+                mediaUrl = saved.filePath,
+            ),
+            type = MediaStorageRepository.MEDIA_IMAGE,
+            mediaUrl = saved.filePath,
+        )
+        uiState = uiState.copy(isGenerating = false, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
+        GenerationRepository.updateJob(jobTitle) { job ->
+            job.copy(
+                progressPercent = 1.0f,
+                statusText = "Completed",
+                subtitle = "Saved to device",
+                isCompleted = true,
+                localMediaPath = saved.filePath,
+                imageUrl = saved.filePath,
+            )
+        }
+    }
+
+    private suspend fun ensureTrialUser(): Boolean =
+        FirebaseAuth.getInstance().currentUser != null || authRepository.loginAnonymouslyAndSync()
+
+    private suspend fun fetchCreditsWithSync(): Int? {
+        var result = generationRepository.getCredits()
+        if (result.isFailure) {
+            authRepository.syncCurrentUser()
+            result = generationRepository.getCredits()
+        }
+        return result.getOrNull()
+    }
+
+    private fun buildPrompt(): String {
+        val creativity = (uiState.creativity * 100).toInt()
+        return "${uiState.prompt}. Style: ${uiState.selectedStyle.label}. Model intent: ${uiState.selectedModel.label}. Creativity level: $creativity%."
+    }
+
+    private fun currentTimestamp(): String =
+        SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date())
+
+    private fun shortTimestamp(): String =
+        SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }

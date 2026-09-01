@@ -1,8 +1,20 @@
 package com.deep.lumoraai.feature.texttovideo
 
-sealed interface TextToVideoUiState {
-    data object Loading : TextToVideoUiState
-    data class Success(val items: List<String>) : TextToVideoUiState
-    data class Error(val message: String) : TextToVideoUiState
-    data object Empty : TextToVideoUiState
-}
+import com.deep.lumoraai.feature.createhub.model.VideoEngine
+import com.deep.lumoraai.feature.imagetoimage.ImageStyle
+
+data class TextToVideoUiState(
+    val title: String = "Text 2 Video",
+    val promptHint: String = "Describe the video you want to generate...",
+    val jobBadge: String = "Text 2 Video",
+    val prompt: String = "",
+    val selectedStyle: ImageStyle = ImageStyle.All,
+    val selectedEngine: VideoEngine = VideoEngine.FAST_DRAFT,
+    val motion: Float = 0.5f,
+    val duration: Int = 5,
+    val generations: Int = 2,
+    val isGenerating: Boolean = false,
+    val generatedPath: String? = null,
+    val generatedMimeType: String = "video/mp4",
+    val error: String? = null,
+)

@@ -9,9 +9,12 @@ sealed class Screen(val route: String, val title: String) {
     data object CreateHub : Screen("createhub", "Create Hub")
     data object BgStudio : Screen("bgstudio", "Bg Studio")
     data object PhotoEnhance : Screen("photoenhance", "Photo Enhancer")
+    data object Compress : Screen("compress", "Compress")
+    data object ImageToImage : Screen("imagetoimage", "Image 2 Image")
     data object TextToImage : Screen("texttoimage", "Text To Image")
     data object ImageToVideo : Screen("imagetovideo", "Image To Video")
     data object TextToVideo : Screen("texttovideo", "Text To Video")
+    data object PromoVideo : Screen("promovideo", "Promo Video")
     data object Templates : Screen("templates", "Templates")
     data object Queue : Screen("queue", "Queue")
     data object Result : Screen("result", "Result")
@@ -32,9 +35,12 @@ val navigationSequence = listOf(
     Screen.CreateHub,
     Screen.BgStudio,
     Screen.PhotoEnhance,
+    Screen.Compress,
+    Screen.ImageToImage,
     Screen.TextToImage,
     Screen.ImageToVideo,
     Screen.TextToVideo,
+    Screen.PromoVideo,
     Screen.Templates,
     Screen.Queue,
     Screen.Result,

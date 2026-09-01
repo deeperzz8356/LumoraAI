@@ -1,27 +1,25 @@
-package com.deep.lumoraai.feature.imagetovideo
+package com.deep.lumoraai.feature.imagetoimage
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.deep.lumoraai.core.components.MediaViewerDialog
 
 @Composable
-fun ImageToVideoRoute(
+fun ImageToImageRoute(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
-    viewModel: ImageToVideoViewModel = viewModel()
+    viewModel: ImageToImageViewModel = viewModel()
 ) {
     val uiState = viewModel.uiState
 
-    ImageToVideoScreen(
+    ImageToImageScreen(
         uiState = uiState,
         onBack = onBack,
         onNavigate = onNavigate,
         onImageSelected = viewModel::loadImage,
         onPromptChanged = viewModel::updatePrompt,
         onStyleSelected = viewModel::selectStyle,
-        onEngineSelected = viewModel::selectEngine,
         onSimilarityChanged = viewModel::setSimilarity,
-        onDurationChanged = viewModel::setDuration,
         onGenerationsChanged = viewModel::setGenerations,
         onGenerate = viewModel::generate,
         onDismissError = viewModel::dismissError,
@@ -30,9 +28,9 @@ fun ImageToVideoRoute(
     if (uiState.generatedPath != null) {
         MediaViewerDialog(
             filePath = uiState.generatedPath,
-            mediaType = "VIDEO",
+            mediaType = "IMAGE",
             mimeType = uiState.generatedMimeType,
-            title = "Video Ready",
+            title = "Image Ready",
             onDismiss = viewModel::clearResult,
         )
     }

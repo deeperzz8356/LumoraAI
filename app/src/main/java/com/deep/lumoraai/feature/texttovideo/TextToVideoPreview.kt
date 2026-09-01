@@ -5,28 +5,45 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.deep.lumoraai.core.theme.LumoraTheme
 
-private val previewState = TextToVideoUiState.Success(listOf("Text To Video fake item", "Preview data", "Compile-only screen"))
+private val previewState = TextToVideoUiState()
+
+@Composable
+private fun PreviewContent() {
+    TextToVideoScreen(
+        uiState = previewState,
+        onBack = {},
+        onNavigate = {},
+        onPromptChanged = {},
+        onStyleSelected = {},
+        onEngineSelected = {},
+        onMotionChanged = {},
+        onDurationChanged = {},
+        onGenerationsChanged = {},
+        onGenerate = {},
+        onDismissError = {},
+    )
+}
 
 @Preview(name = "Text To Video Light Preview", showBackground = true)
 @Composable
 fun TextToVideoLightPreview() {
-    LumoraTheme(darkTheme = false) { TextToVideoScreen(uiState = previewState, onNext = {}) }
+    LumoraTheme(darkTheme = false) { PreviewContent() }
 }
 
 @Preview(name = "Text To Video Dark Preview", showBackground = true)
 @Composable
 fun TextToVideoDarkPreview() {
-    LumoraTheme(darkTheme = true) { TextToVideoScreen(uiState = previewState, onNext = {}) }
+    LumoraTheme(darkTheme = true) { PreviewContent() }
 }
 
 @Preview(name = "Text To Video Tablet Preview", device = Devices.TABLET, showBackground = true)
 @Composable
 fun TextToVideoTabletPreview() {
-    LumoraTheme(darkTheme = true) { TextToVideoScreen(uiState = previewState, onNext = {}) }
+    LumoraTheme(darkTheme = true) { PreviewContent() }
 }
 
 @Preview(name = "Text To Video Landscape Preview", widthDp = 891, heightDp = 411, showBackground = true)
 @Composable
 fun TextToVideoLandscapePreview() {
-    LumoraTheme(darkTheme = true) { TextToVideoScreen(uiState = previewState, onNext = {}) }
+    LumoraTheme(darkTheme = true) { PreviewContent() }
 }
