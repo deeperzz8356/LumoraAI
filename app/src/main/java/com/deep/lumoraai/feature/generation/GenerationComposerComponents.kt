@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,14 +40,18 @@ import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
@@ -617,6 +620,71 @@ fun GenerateNowButton(
 }
 
 @Composable
+fun GeneratedMediaLoading(
+    isVisible: Boolean,
+    mediaType: String,
+    modifier: Modifier = Modifier,
+) {
+    if (!isVisible) return
+
+    val isVideo = mediaType.equals("VIDEO", ignoreCase = true)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(GenerationPanel)
+            .border(1.dp, GenerationLime.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(GenerationLime.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = GenerationLime,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(25.dp)
+                )
+                Icon(
+                    imageVector = if (isVideo) Icons.Default.AutoAwesome else Icons.Default.Tune,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (isVideo) "Video is generating" else "Image is generating",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    text = "Rendering in the queue. Your result will load here when ready.",
+                    color = GenerationMuted,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp
+                )
+            }
+        }
+        LinearProgressIndicator(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(5.dp)
+                .clip(CircleShape),
+            color = GenerationLime,
+            trackColor = Color.White.copy(alpha = 0.1f)
+        )
+    }
+}
+
+@Composable
 fun GeneratedMediaResult(
     filePath: String?,
     mediaType: String,
@@ -691,7 +759,6 @@ fun GeneratedMediaResult(
                     fontSize = 12.sp
                 )
             }
-            ResultActionIcon(Icons.Default.Edit, "Edit", onClick = onEdit)
         }
 
         Box(
@@ -729,19 +796,24 @@ fun GeneratedMediaResult(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            ResultActionButton(Icons.Default.ThumbDown, "Dislike", modifier = Modifier.weight(1f)) {
+            ResultActionIcon(Icons.Default.Edit, "Edit", onClick = onEdit)
+            ResultActionIcon(Icons.Default.ThumbUp, "Like") {
+                saveGeneratedFeedback(context, filePath, mediaType, "Like")
+                Toast.makeText(context, "Glad you liked it.", Toast.LENGTH_SHORT).show()
+            }
+            ResultActionIcon(Icons.Default.ThumbDown, "Dislike") {
                 saveGeneratedFeedback(context, filePath, mediaType, "Dislike")
                 Toast.makeText(context, "Noted.", Toast.LENGTH_SHORT).show()
             }
-            ResultActionButton(Icons.Default.Feedback, "Feedback", modifier = Modifier.weight(1f)) {
+            ResultActionIcon(Icons.Default.Feedback, "Feedback") {
                 showFeedback = true
             }
-            ResultActionButton(Icons.Default.Share, "Share", enabled = exists, modifier = Modifier.weight(1f)) {
+            ResultActionIcon(Icons.Default.Share, "Share", enabled = exists) {
                 MediaShareUtils.shareMedia(context, filePath, mimeType)
             }
-            ResultActionButton(Icons.Default.Download, "Download", enabled = exists, modifier = Modifier.weight(1f)) {
+            ResultActionIcon(Icons.Default.Download, "Download", enabled = exists) {
                 if (MediaGallerySaver.hasWritePermission(context)) {
                     scope.launch {
                         val result = MediaGallerySaver.saveToGallery(context, filePath, mimeType, mediaType)
@@ -817,44 +889,19 @@ private fun ResultActionIcon(
     icon: ImageVector,
     contentDescription: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     Box(
         modifier = modifier
             .size(40.dp)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.58f))
+            .background(Color.Black.copy(alpha = if (enabled) 0.58f else 0.26f))
             .border(1.dp, Color.White.copy(alpha = 0.14f), CircleShape)
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = contentDescription, tint = Color.White, modifier = Modifier.size(21.dp))
-    }
-}
-
-@Composable
-private fun ResultActionButton(
-    icon: ImageVector,
-    label: String,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = modifier
-            .height(42.dp)
-            .widthIn(min = 0.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (enabled) Color(0xFF1B263B) else Color(0xFF1B263B).copy(alpha = 0.42f))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(icon, contentDescription = label, tint = if (enabled) GenerationLime else Color.White.copy(alpha = 0.35f), modifier = Modifier.size(17.dp))
-        Spacer(modifier = Modifier.width(5.dp))
-        Text(label, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Icon(icon, contentDescription = contentDescription, tint = if (enabled) Color.White else Color.White.copy(alpha = 0.35f), modifier = Modifier.size(21.dp))
     }
 }
 
@@ -863,6 +910,8 @@ private fun FeedbackDialog(
     onDismiss: () -> Unit,
     onSubmit: (String) -> Unit,
 ) {
+    val options = listOf("Prompt mismatch", "Low quality", "Composition issue", "Style issue", "Motion issue", "Other")
+    var selected by remember { mutableStateOf(setOf<String>()) }
     var draft by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -872,25 +921,60 @@ private fun FeedbackDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("What should be better in this result?", color = GenerationMuted, fontSize = 13.sp)
-                OutlinedTextField(
-                    value = draft,
-                    onValueChange = { draft = it.take(400) },
-                    minLines = 3,
-                    placeholder = { Text("Style, quality, composition, motion...") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF10182A),
-                        unfocusedContainerColor = Color(0xFF10182A),
-                        focusedBorderColor = GenerationLime.copy(alpha = 0.8f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = GenerationLime
+                options.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable {
+                                selected = if (option in selected) selected - option else selected + option
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = option in selected,
+                            onCheckedChange = { checked ->
+                                selected = if (checked) selected + option else selected - option
+                            },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = GenerationLime,
+                                uncheckedColor = GenerationMuted,
+                                checkmarkColor = Color.Black
+                            )
+                        )
+                        Text(option, color = Color.White, fontSize = 13.sp)
+                    }
+                }
+                if ("Other" in selected) {
+                    OutlinedTextField(
+                        value = draft,
+                        onValueChange = { draft = it.take(400) },
+                        minLines = 3,
+                        placeholder = { Text("Tell us what felt off...") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF10182A),
+                            unfocusedContainerColor = Color(0xFF10182A),
+                            focusedBorderColor = GenerationLime.copy(alpha = 0.8f),
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            cursorColor = GenerationLime
+                        )
                     )
-                )
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSubmit(draft.ifBlank { "General feedback" }) }) {
+            TextButton(
+                onClick = {
+                    val reason = buildString {
+                        append(selected.ifEmpty { setOf("General feedback") }.joinToString())
+                        if ("Other" in selected && draft.isNotBlank()) append(": $draft")
+                    }
+                    onSubmit(reason)
+                }
+            ) {
                 Text("Send", color = GenerationLime, fontWeight = FontWeight.Bold)
             }
         },

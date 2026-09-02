@@ -139,7 +139,7 @@ private fun ProfileContent(
         }
 
         CreationsSection(generations = generations, onNavigate = onNavigate)
-        PurchaseHistoryCard()
+        PurchaseHistoryCard(credits = credits, onNavigate = onNavigate)
         PreferencesList(onSignOut = onSignOut, onNavigate = onNavigate)
         SupportCard()
         Spacer(modifier = Modifier.height(2.dp))
@@ -365,33 +365,51 @@ private fun CreationCard(item: HistoryModel, modifier: Modifier = Modifier, onCl
 }
 
 @Composable
-private fun PurchaseHistoryCard() {
+private fun PurchaseHistoryCard(credits: Int, onNavigate: (String) -> Unit) {
     InfoCard(title = "Purchase History", icon = Icons.AutoMirrored.Filled.List) {
-        PurchaseRow("Pro Annual Plan", "Nov 12, 2023", "$499.00")
-        PurchaseRow("1,000 Credit Pack", "Oct 28, 2023", "$49.00")
-        PurchaseRow("Early Adopter Bonus", "Sep 15, 2023", "FREE")
+        PurchaseRow("Current balance", "$credits LUM credits available", "Credits") { onNavigate(Screen.Credits.route) }
+        PurchaseRow("Subscription receipts", "Plan status and billing actions", "Plan") { onNavigate(Screen.Subscription.route) }
+        PurchaseRow("Creation usage", "Open saved renders and downloads", "History") { onNavigate(Screen.History.route) }
     }
 }
 
 @Composable
-private fun PurchaseRow(title: String, desc: String, price: String) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1f)) {
+private fun PurchaseRow(title: String, desc: String, price: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(end = 10.dp)) {
             Text(title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(desc, color = Muted, fontSize = 10.sp)
+            Text(desc, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Text(price, color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(price, color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Lime, modifier = Modifier.size(14.dp))
+        }
     }
 }
 
 @Composable
 private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit) {
-    InfoCard(title = "Preferences", icon = Icons.Default.Settings) {
-        PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
-        PrefRow("Privacy Policy", Icons.Default.Info, Color.White)
-        PrefRow("Terms of Service", Icons.Default.Info, Color.White)
-        PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A))
-        PrefRow("Sign Out", Icons.AutoMirrored.Filled.ExitToApp, Color(0xFFFF7A7A), onClick = onSignOut)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = ProfileCard,
+        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
+            PrefRow("Privacy Policy", Icons.Default.Info, Color.White)
+            PrefRow("Terms of Service", Icons.Default.Info, Color.White)
+            PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A))
+            PrefRow("Sign Out", Icons.AutoMirrored.Filled.ExitToApp, Color(0xFFFF7A7A), onClick = onSignOut)
+        }
     }
 }
 

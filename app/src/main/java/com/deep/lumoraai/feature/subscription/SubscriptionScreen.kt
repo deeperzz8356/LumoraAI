@@ -133,10 +133,12 @@ private fun SubscriptionContent(
         PageTopBar(title = "Subscription", subtitle = "Upgrade your studio", onBack = onBack)
         ProHero(isDeveloperMode = uiState.isDeveloperMode)
 
-        Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            FeatureTile("Faster", "priority runs", Icons.Default.FlashOn, Lime, Modifier.weight(1f))
-            FeatureTile("Storage", "history sync", Icons.Default.CloudDone, Cyan, Modifier.weight(1f))
-            FeatureTile("Tools", "Pro access", Icons.Default.LockOpen, Purple, Modifier.weight(1f))
+        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
+                FeatureTile("Faster", "priority runs", Icons.Default.FlashOn, Lime, Modifier.weight(1f))
+                FeatureTile("Storage", "history sync", Icons.Default.CloudDone, Cyan, Modifier.weight(1f))
+            }
+            FeatureTile("Tools", "Pro access", Icons.Default.LockOpen, Purple, Modifier.fillMaxWidth())
         }
 
         Text("Choose Plan", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
@@ -274,19 +276,18 @@ private fun SubscriptionPlanCard(
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(plan.name, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (plan.highlighted) {
-                            Text(
-                                "Best value",
-                                color = Color.Black,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier.clip(RoundedCornerShape(50)).background(Lime).padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
-                    }
+                    Text(plan.name, color = Color.White, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(plan.billingPeriod, color = Muted, fontSize = 12.sp)
+                    if (plan.highlighted) {
+                        Text(
+                            "Best value",
+                            color = Color.Black,
+                            fontSize = 10.sp,
+                            lineHeight = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier.padding(top = 5.dp).clip(RoundedCornerShape(50)).background(Lime).padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(plan.price, color = accent, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
@@ -300,7 +301,7 @@ private fun SubscriptionPlanCard(
             plan.features.forEach { feature ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Default.Check, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
-                    Text(feature, color = Color.White.copy(alpha = 0.76f), fontSize = 13.sp, lineHeight = 17.sp)
+                    Text(feature, color = Color.White.copy(alpha = 0.76f), fontSize = 13.sp, lineHeight = 17.sp, modifier = Modifier.weight(1f))
                 }
             }
         }

@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.feature.generation.GenerateNowButton
+import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
 import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
 import com.deep.lumoraai.feature.generation.GenerationErrorText
@@ -24,6 +26,7 @@ import com.deep.lumoraai.feature.generation.GenerationTopBar
 import com.deep.lumoraai.feature.generation.ImageStyleSection
 import com.deep.lumoraai.feature.generation.PromptComposerCard
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
+import kotlinx.coroutines.delay
 
 @Composable
 fun TextToImageScreen(
@@ -41,6 +44,15 @@ fun TextToImageScreen(
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(uiState.isGenerating, uiState.generatedPath) {
+        if (uiState.isGenerating || uiState.generatedPath != null) {
+            delay(160)
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -57,7 +69,7 @@ fun TextToImageScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 20.dp)
                     .padding(top = 18.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
@@ -82,6 +94,10 @@ fun TextToImageScreen(
                     isGenerating = uiState.isGenerating,
                     enabled = uiState.generatedPath == null,
                     onClick = onGenerate
+                )
+                GeneratedMediaLoading(
+                    isVisible = uiState.isGenerating && uiState.generatedPath == null,
+                    mediaType = "IMAGE"
                 )
                 GeneratedMediaResult(
                     filePath = uiState.generatedPath,

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -234,32 +235,32 @@ private fun CreditPackageCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f).padding(end = 10.dp)) {
                 AccentIcon(Icons.Default.CheckCircle, accent)
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (badge != null) {
-                            Text(
-                                badge,
-                                color = if (highlighted) Color.Black else accent,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
-                                    .background(if (highlighted) Lime else accent.copy(alpha = 0.14f))
-                                    .padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
+                    Text(title, color = Color.White, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(credits, color = Muted, fontSize = 12.sp, lineHeight = 15.sp)
+                    if (badge != null) {
+                        Text(
+                            badge,
+                            color = if (highlighted) Color.Black else accent,
+                            fontSize = 10.sp,
+                            lineHeight = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier
+                                .padding(top = 5.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(if (highlighted) Lime else accent.copy(alpha = 0.14f))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
                     }
-                    Text(credits, color = Muted, fontSize = 12.sp)
                 }
             }
             Button(
                 onClick = onBuy,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
-                modifier = Modifier.height(40.dp)
+                modifier = Modifier.height(40.dp).widthIn(min = 82.dp)
             ) {
                 Text(price, color = if (accent == Lime) Color.Black else Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
             }

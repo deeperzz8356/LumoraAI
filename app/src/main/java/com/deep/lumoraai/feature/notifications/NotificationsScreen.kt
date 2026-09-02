@@ -237,7 +237,7 @@ private fun NotificationHero(
         border = BorderStroke(1.dp, Lime.copy(alpha = 0.32f))
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            Column(modifier = Modifier.fillMaxWidth(0.76f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text(if (notificationsEnabled) "Inbox Live" else "Notifications Off", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
                 Text("$unreadCount unread", color = Color.White, fontSize = 36.sp, lineHeight = 40.sp, fontWeight = FontWeight.ExtraBold)
                 Text(
@@ -245,7 +245,9 @@ private fun NotificationHero(
                     else "Enable alerts in Settings for generation updates.",
                     color = Muted,
                     fontSize = 12.sp,
-                    lineHeight = 16.sp
+                    lineHeight = 16.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             Row(
@@ -321,7 +323,7 @@ private fun NotificationCard(
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                         if (!item.isRead) Box(modifier = Modifier.size(7.dp).background(Lime, CircleShape))
-                        Text(item.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(item.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     }
                     Text(item.message, color = Muted, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Text(item.timeLabel, color = Color.White.copy(alpha = 0.48f), fontSize = 10.sp, fontWeight = FontWeight.Bold)
