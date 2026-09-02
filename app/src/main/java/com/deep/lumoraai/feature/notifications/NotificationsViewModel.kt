@@ -1,108 +1,235 @@
 package com.deep.lumoraai.feature.notifications
 
+import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.deep.lumoraai.core.notification.NotificationManager
-import com.deep.lumoraai.data.local.room.entity.NotificationEntity
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.CompletionNotificationEvent
+import com.deep.lumoraai.core.utils.LumoraNotificationCenter
+import com.deep.lumoraai.data.local.room.LumoraDatabase
+import com.deep.lumoraai.data.model.ActiveJobInfo
+import com.deep.lumoraai.data.model.HistoryModel
+import com.deep.lumoraai.data.repository.AppPreferencesRepository
+import com.deep.lumoraai.data.repository.FakeRepository
+import com.deep.lumoraai.data.repository.GenerationRepository
+import com.deep.lumoraai.data.repository.HistoryRepository
+import com.deep.lumoraai.data.repository.SettingsRepository
+import com.deep.lumoraai.feature.notifications.model.NotificationModel
+import com.deep.lumoraai.feature.notifications.model.NotificationType
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class NotificationsViewModel @Inject constructor(
-    private val notificationManager: NotificationManager
-) : ViewModel() {
+class NotificationsViewModel(application: Application) : AndroidViewModel(application) {
+    private val appContext = application.applicationContext
+    private val prefs = appContext.getSharedPreferences("lumora_notifications", Context.MODE_PRIVATE)
+    private val settingsRepository = SettingsRepository(appContext)
+    private val appPreferences = AppPreferencesRepository.getInstance(appContext)
+    private val generationRepository = GenerationRepository()
+    private val fakeRepository = FakeRepository()
+    private val historyRepository = HistoryRepository(
+        LumoraDatabase.getInstance(appContext).historyDao
+    )
+
+    private var activeJobs: List<ActiveJobInfo> = emptyList()
+    private var historyItems: List<HistoryModel> = emptyList()
+    private var credits: Int? = null
 
     var uiState: NotificationsUiState by mutableStateOf(NotificationsUiState.Loading)
         private set
 
-    private val _notifications = MutableStateFlow<List<NotificationEntity>>(emptyList())
-    val notifications: StateFlow<List<NotificationEntity>> = _notifications.asStateFlow()
-
-    private val _unreadCount = MutableStateFlow(0)
-    val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
-
     init {
-        loadNotifications()
-        observeUnreadCount()
+        load()
+        observeJobs()
+        observeHistory()
+        observeCompletionEvents()
     }
 
-    private fun loadNotifications() {
+    fun load() {
+        rebuild()
+        loadCredits()
+    }
+
+    fun markAllRead() {
+        val current = uiState as? NotificationsUiState.Success ?: return
+        persistSet(KEY_READ_IDS, current.items.map { it.id }.toSet())
+        rebuild()
+    }
+
+    fun markRead(id: String) {
+        updateSet(KEY_READ_IDS) { it + id }
+        rebuild()
+    }
+
+    fun dismiss(id: String) {
+        updateSet(KEY_DISMISSED_IDS) { it + id }
+        rebuild()
+    }
+
+    fun clearDismissed() {
+        prefs.edit().remove(KEY_DISMISSED_IDS).apply()
+        rebuild()
+    }
+
+    private fun observeJobs() {
         viewModelScope.launch {
-            try {
-                notificationManager.getAllNotifications().collect { notificationList ->
-                    _notifications.value = notificationList
-                    uiState = if (notificationList.isEmpty()) {
-                        NotificationsUiState.Empty
-                    } else {
-                        NotificationsUiState.Success(notificationList.map { it.title })
-                    }
+            GenerationRepository.activeJobs.collect { jobs ->
+                activeJobs = jobs
+                rebuild()
+            }
+        }
+    }
+
+    private fun observeHistory() {
+        viewModelScope.launch {
+            historyRepository.getHistory()
+                .catch { historyItems = emptyList() }
+                .collect { items ->
+                    historyItems = items
+                    rebuild()
                 }
-            } catch (e: Exception) {
-                uiState = NotificationsUiState.Error(e.message ?: "Unknown error")
+        }
+    }
+
+    private fun observeCompletionEvents() {
+        viewModelScope.launch {
+            LumoraNotificationCenter.eventsVersion.collect {
+                rebuild()
             }
         }
     }
 
-    private fun observeUnreadCount() {
+    private fun loadCredits() {
+        val user = FirebaseAuth.getInstance().currentUser ?: run {
+            credits = null
+            rebuild()
+            return
+        }
+
         viewModelScope.launch {
-            notificationManager.getUnreadCount().collect { count ->
-                _unreadCount.value = count
+            credits = if (appPreferences.isDeveloperModeEnabled()) {
+                GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
+            } else {
+                generationRepository.getCredits().getOrNull()
             }
+            rebuild()
         }
     }
 
-    fun markAsRead(notificationId: String) {
-        viewModelScope.launch {
-            notificationManager.markAsRead(notificationId)
+    private fun rebuild() {
+        val readIds = prefs.getStringSet(KEY_READ_IDS, emptySet()).orEmpty()
+        val dismissedIds = prefs.getStringSet(KEY_DISMISSED_IDS, emptySet()).orEmpty()
+        val notificationsEnabled = settingsRepository.notificationsEnabled
+
+        val generated = buildList {
+            addAll(activeJobs.map(::jobNotification))
+            addAll(LumoraNotificationCenter.completionEvents(appContext).map(::completionNotification))
+            addAll(historyItems.take(5).mapIndexed(::historyNotification))
+            credits?.let { add(creditNotification(it)) }
+            addAll(fakeRepository.getNotifications().mapIndexed(::systemNotification))
+            if (!notificationsEnabled) add(disabledNotification())
+        }
+            .distinctBy { it.id }
+            .filterNot { it.id in dismissedIds }
+            .map { it.copy(isRead = it.id in readIds) }
+            .sortedWith(compareBy<NotificationModel> { it.isRead }.thenBy { it.type.ordinal })
+
+        uiState = if (generated.isEmpty()) {
+            NotificationsUiState.Empty(notificationsEnabled = notificationsEnabled)
+        } else {
+            NotificationsUiState.Success(
+                items = generated,
+                unreadCount = generated.count { !it.isRead },
+                notificationsEnabled = notificationsEnabled
+            )
         }
     }
 
-    fun markAllAsRead() {
-        viewModelScope.launch {
-            notificationManager.markAllAsRead()
-        }
+    private fun jobNotification(job: ActiveJobInfo): NotificationModel {
+        val progress = job.progressPercent?.coerceIn(0f, 1f)
+        val percent = progress?.let { (it * 100).toInt() }
+        val done = job.isCompleted
+        val route = if (done) Screen.History.route else Screen.Queue.route
+        return NotificationModel(
+            id = "job:${job.title}:${job.statusText}",
+            title = if (done) "${job.title} is ready" else job.title,
+            message = if (done) "Your ${job.mediaType.lowercase()} finished rendering." else "${job.statusText}${percent?.let { " - $it%" }.orEmpty()}",
+            timeLabel = if (done) "Ready now" else "In progress",
+            type = NotificationType.Generation,
+            route = route,
+            progress = if (done) null else progress
+        )
     }
 
-    fun deleteNotification(notificationId: String) {
-        viewModelScope.launch {
-            notificationManager.deleteNotification(notificationId)
-        }
+    private fun historyNotification(index: Int, item: HistoryModel): NotificationModel =
+        NotificationModel(
+            id = "history:${item.id}",
+            title = "${item.title.ifBlank { "Creation" }} saved",
+            message = "Your ${item.type.lowercase()} is available in History.",
+            timeLabel = item.createdAt.ifBlank { if (index == 0) "Recent" else "Saved" },
+            type = NotificationType.Generation,
+            route = Screen.History.route
+        )
+
+    private fun completionNotification(event: CompletionNotificationEvent): NotificationModel =
+        NotificationModel(
+            id = event.id,
+            title = event.title,
+            message = event.message,
+            timeLabel = "Just now",
+            type = NotificationType.Generation,
+            route = event.route
+        )
+
+    private fun creditNotification(balance: Int): NotificationModel {
+        val isUnlimited = balance >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
+        val isLow = !isUnlimited && balance <= 10
+        return NotificationModel(
+            id = "credits:$balance",
+            title = if (isLow) "Credits running low" else "Credits balance updated",
+            message = if (isUnlimited) "Developer mode is active with unlimited credits." else "You have $balance LUM credits available.",
+            timeLabel = "Now",
+            type = NotificationType.Credits,
+            route = if (isLow) Screen.Credits.route else Screen.Profile.route
+        )
     }
 
-    fun clearAllNotifications() {
-        viewModelScope.launch {
-            notificationManager.clearAllNotifications()
-        }
+    private fun systemNotification(index: Int, item: com.deep.lumoraai.data.model.NotificationModel): NotificationModel =
+        NotificationModel(
+            id = "system:${item.id}",
+            title = item.title,
+            message = item.message,
+            timeLabel = if (index == 0) "Today" else "Earlier",
+            type = NotificationType.System,
+            route = Screen.Home.route
+        )
+
+    private fun disabledNotification(): NotificationModel =
+        NotificationModel(
+            id = "settings:notifications-disabled",
+            title = "Push notifications are off",
+            message = "Turn them on in Settings to keep up with generation updates.",
+            timeLabel = "Action needed",
+            type = NotificationType.Account,
+            route = Screen.Settings.route
+        )
+
+    private fun updateSet(key: String, block: (Set<String>) -> Set<String>) {
+        val current = prefs.getStringSet(key, emptySet()).orEmpty()
+        persistSet(key, block(current))
     }
 
-    fun getNotificationsByType(type: String) {
-        viewModelScope.launch {
-            notificationManager.getNotificationsByType(type).collect { notificationList ->
-                _notifications.value = notificationList
-            }
-        }
+    private fun persistSet(key: String, values: Set<String>) {
+        prefs.edit().putStringSet(key, values).apply()
     }
 
-    fun getUnreadNotifications() {
-        viewModelScope.launch {
-            notificationManager.getUnreadNotifications().collect { notificationList ->
-                _notifications.value = notificationList
-            }
-        }
-    }
-
-    fun loadAllNotifications() {
-        viewModelScope.launch {
-            notificationManager.getAllNotifications().collect { notificationList ->
-                _notifications.value = notificationList
-            }
-        }
+    companion object {
+        private const val KEY_READ_IDS = "read_ids"
+        private const val KEY_DISMISSED_IDS = "dismissed_ids"
     }
 }

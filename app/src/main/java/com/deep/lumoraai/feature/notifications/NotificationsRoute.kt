@@ -11,10 +11,9 @@ import javax.inject.Inject
 
 @Composable
 fun NotificationsRoute(
-    onNext: () -> Unit,
-    onNavigate: ((String) -> Unit)? = null,
-    viewModel: NotificationsViewModel = hiltViewModel(),
-    notificationManager: NotificationManager? = null
+    onBack: () -> Unit,
+    onNavigate: (String) -> Unit,
+    viewModel: NotificationsViewModel = hiltViewModel()
 ) {
     val uiState = viewModel.uiState
     val notifications by viewModel.notifications.collectAsState()
@@ -25,7 +24,8 @@ fun NotificationsRoute(
         uiState = uiState,
         unreadCount = unreadCount,
         notifications = notifications,
-        onNext = onNext,
+        onBack = onBack,
+        onNavigate = onNavigate,
         onMarkAsRead = { viewModel.markAsRead(it) },
         onDelete = { viewModel.deleteNotification(it) },
         onClearAll = { viewModel.clearAllNotifications() },
@@ -39,14 +39,23 @@ fun NotificationsRoute(
                 if (actionUrl.startsWith("com.deep.lumoraai://result")) {
                     // Extract resultId from deep link
                     val resultId = actionUrl.substringAfterLast("resultId=")
-                    onNavigate?.invoke("com.deep.lumoraai.feature.result.ResultRoute?resultId=$resultId")
+                    onNavigate("com.deep.lumoraai.feature.result.ResultRoute?resultId=$resultId")
                 } else {
                     // Generic deep link handling
-                    onNavigate?.invoke(actionUrl)
+                    onNavigate(actionUrl)
                 }
             }
-        },
-        notificationManager = notificationManager,
-        scope = scope
+        }
     )
 }
+        onNavigate = onNavigate,
+        onMarkAllRead = viewModel::markAllRead,
+        onNotificationClicked = { notification ->
+            viewModel.markRead(notification.id)
+            onNavigate(notification.route)
+        },
+        onDismissNotification = viewModel::dismiss,
+        onClearDismissed = viewModel::clearDismissed
+    )
+}
+>>>>>>> 90a37500dfd4ddd4805fe522188a43a851bcf9e3

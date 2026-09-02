@@ -13,9 +13,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
@@ -281,6 +283,13 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 mediaUrl = saved.filePath,
             )
             uiState = uiState.copy(sourceBitmap = cutout, status = BgStudioStatus.Completed)
+            LumoraNotificationCenter.notifyCompletion(
+                context = getApplication<Application>(),
+                title = "Background ready",
+                message = "Your background removal has finished.",
+                route = Screen.History.route,
+                mediaType = MediaStorageRepository.MEDIA_IMAGE,
+            )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(
                     progressPercent = 1.0f,
@@ -319,6 +328,13 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
             mediaUrl = saved.filePath,
         )
         uiState = uiState.copy(sourceBitmap = preview ?: uiState.sourceBitmap, status = BgStudioStatus.Completed)
+        LumoraNotificationCenter.notifyCompletion(
+            context = getApplication<Application>(),
+            title = "Background ready",
+            message = "Your background edit has finished.",
+            route = Screen.History.route,
+            mediaType = MediaStorageRepository.MEDIA_IMAGE,
+        )
         GenerationRepository.updateJob(jobTitle) { job ->
             job.copy(
                 progressPercent = 1.0f,

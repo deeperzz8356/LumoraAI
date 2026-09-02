@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.texttoimage
 
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 
 data class TextToImageUiState(
@@ -7,6 +8,7 @@ data class TextToImageUiState(
     val negativePrompt: String = "",
     val selectedStyle: ImageStyle = ImageStyle.Photorealistic,
     val selectedModel: ImageModel = ImageModel.IMAGEN,
+    val aspectRatio: GenerationAspectRatio = GenerationAspectRatio.Portrait,
     val creativity: Float = 0.5f,
     val generations: Int = 2,
     val isGenerating: Boolean = false,

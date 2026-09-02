@@ -16,12 +16,14 @@ private fun PreviewContent() {
         onImageSelected = {},
         onPromptChanged = {},
         onNegativePromptChanged = {},
+        onAspectRatioChanged = {},
         onImprovePrompt = {},
         onStyleSelected = {},
         onSimilarityChanged = {},
         onDurationChanged = {},
         onGenerationsChanged = {},
         onGenerate = {},
+        onEditResult = {},
         onDismissError = {},
     )
 }

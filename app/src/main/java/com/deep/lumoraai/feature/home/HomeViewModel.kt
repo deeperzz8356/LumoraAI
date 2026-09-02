@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.GuestIdentity
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.local.room.entity.HistoryEntity
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
@@ -36,7 +37,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun observeHomeData() {
         val user = FirebaseAuth.getInstance().currentUser
-        val name = user?.displayName ?: user?.email?.substringBefore("@") ?: "Creator"
+        val name = GuestIdentity.displayName(getApplication(), user)
         val planLabel = when {
             user == null -> "Free"
             user.isAnonymous -> "Guest"

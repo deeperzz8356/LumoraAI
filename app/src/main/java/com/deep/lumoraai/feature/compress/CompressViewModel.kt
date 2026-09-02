@@ -25,8 +25,10 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
+import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
+import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.repository.HistoryRepository
@@ -141,6 +143,15 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                         resultId = historyId,
                         displayName = "Compress"
                     )
+                    
+                    // Also send via notification center
+                    LumoraNotificationCenter.notifyCompletion(
+                        context = getApplication<Application>(),
+                        title = "Compression complete",
+                        message = "Your compressed image is ready.",
+                        route = Screen.History.route,
+                        mediaType = "IMAGE",
+                    )
                 }
                 uiState.copy(isCompressing = false, result = compressionResult)
             },
@@ -191,6 +202,13 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                                 originalBytes = originalBytes,
                                 compressedBytes = output.length(),
                             )
+                        )
+                        LumoraNotificationCenter.notifyCompletion(
+                            context = getApplication<Application>(),
+                            title = "Compression complete",
+                            message = "Your compressed video is ready.",
+                            route = Screen.History.route,
+                            mediaType = "VIDEO",
                         )
                     }
                 }

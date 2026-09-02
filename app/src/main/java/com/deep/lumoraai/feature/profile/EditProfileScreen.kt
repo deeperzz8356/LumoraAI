@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -44,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.AppToolbar
+import com.deep.lumoraai.core.utils.GuestIdentity
+import com.google.firebase.auth.FirebaseAuth
 
 // Theme colors matching Home/Profile pages
 private val EditBackground = Color(0xFF081020)
@@ -59,12 +62,16 @@ fun EditProfileScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val fullName = remember { mutableStateOf("Alex Thorne") }
-    val username = remember { mutableStateOf("alexthorne_creatives") }
-    val email = remember { mutableStateOf("alex@lumora.ai") }
-    val bio = remember { mutableStateOf("Concept Artist | Video Director") }
-    val location = remember { mutableStateOf("San Francisco, CA") }
-    val website = remember { mutableStateOf("alexthorne.com") }
+    val context = LocalContext.current
+    val user = FirebaseAuth.getInstance().currentUser
+    val resolvedName = GuestIdentity.displayName(context, user)
+    val resolvedSubtitle = GuestIdentity.subtitle(context, user)
+    val fullName = remember(resolvedName) { mutableStateOf(resolvedName) }
+    val username = remember(resolvedSubtitle) { mutableStateOf(resolvedSubtitle.removePrefix("@")) }
+    val email = remember(user?.email) { mutableStateOf(user?.email.orEmpty()) }
+    val bio = remember { mutableStateOf("") }
+    val location = remember { mutableStateOf("") }
+    val website = remember { mutableStateOf("") }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),

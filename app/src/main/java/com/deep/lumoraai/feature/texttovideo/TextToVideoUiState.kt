@@ -1,6 +1,7 @@
 package com.deep.lumoraai.feature.texttovideo
 
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 
 data class TextToVideoUiState(
@@ -11,6 +12,7 @@ data class TextToVideoUiState(
     val negativePrompt: String = "",
     val selectedStyle: VideoStyle = VideoStyle.CinematicFilm,
     val selectedEngine: VideoEngine = VideoEngine.FAST_DRAFT,
+    val aspectRatio: GenerationAspectRatio = GenerationAspectRatio.Story,
     val motion: Float = 0.5f,
     val duration: Int = 5,
     val generations: Int = 2,

@@ -15,11 +15,13 @@ private fun PreviewContent() {
         onNavigate = {},
         onPromptChanged = {},
         onNegativePromptChanged = {},
+        onAspectRatioChanged = {},
         onImprovePrompt = {},
         onStyleSelected = {},
         onCreativityChanged = {},
         onGenerationsChanged = {},
         onGenerate = {},
+        onEditResult = {},
         onDismissError = {},
     )
 }

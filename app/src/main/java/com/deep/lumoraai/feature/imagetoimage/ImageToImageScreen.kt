@@ -10,15 +10,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.feature.generation.GenerateNowButton
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
+import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
+import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
 import com.deep.lumoraai.feature.generation.GenerationErrorText
 import com.deep.lumoraai.feature.generation.GenerationScreenBg
@@ -26,6 +33,7 @@ import com.deep.lumoraai.feature.generation.GenerationTopBar
 import com.deep.lumoraai.feature.generation.ImageStyleSection
 import com.deep.lumoraai.feature.generation.PromptComposerCard
 import com.deep.lumoraai.feature.generation.UploadImagePanel
+import kotlinx.coroutines.delay
 
 @Composable
 fun ImageToImageScreen(
@@ -35,16 +43,27 @@ fun ImageToImageScreen(
     onImageSelected: (Uri) -> Unit,
     onPromptChanged: (String) -> Unit,
     onNegativePromptChanged: (String) -> Unit,
+    onAspectRatioChanged: (GenerationAspectRatio) -> Unit,
     onImprovePrompt: () -> Unit,
     onStyleSelected: (ImageStyle) -> Unit,
     onSimilarityChanged: (Float) -> Unit,
     onGenerationsChanged: (Int) -> Unit,
     onGenerate: () -> Unit,
+    onEditResult: () -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scrollState = rememberScrollState()
+    val showAdvancedSettings = remember { mutableStateOf(false) }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) onImageSelected(uri)
+    }
+
+    LaunchedEffect(uiState.isGenerating, uiState.generatedPath) {
+        if (uiState.isGenerating || uiState.generatedPath != null) {
+            delay(160)
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
     }
 
     Box(
@@ -63,7 +82,8 @@ fun ImageToImageScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
+                    .imePadding()
                     .padding(horizontal = 20.dp)
                     .padding(top = 18.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
@@ -81,16 +101,39 @@ fun ImageToImageScreen(
                     onPromptChanged = onPromptChanged,
                     onImprovePrompt = onImprovePrompt,
                     onNegativePromptChanged = onNegativePromptChanged,
-                    onUpload = { imagePicker.launch("image/*") }
+                    onUpload = { imagePicker.launch("image/*") },
+                    isSettingsOpen = showAdvancedSettings.value,
+                    onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                 )
+                if (showAdvancedSettings.value) {
+                    GenerationControlsPanel(
+                        mediaType = "Image",
+                        selectedAspectRatio = uiState.aspectRatio,
+                        onAspectRatioSelected = onAspectRatioChanged,
+                        negativePrompt = uiState.negativePrompt,
+                        onNegativePromptChanged = onNegativePromptChanged,
+                        similarity = uiState.similarity,
+                        onSimilarityChanged = onSimilarityChanged,
+                        generations = uiState.generations,
+                        onGenerationsChanged = onGenerationsChanged
+                    )
+                }
                 ImageStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
-                GenerationControlsPanel(
-                    similarity = uiState.similarity,
-                    onSimilarityChanged = onSimilarityChanged,
-                    generations = uiState.generations,
-                    onGenerationsChanged = onGenerationsChanged
+                GenerateNowButton(
+                    isGenerating = uiState.isGenerating,
+                    enabled = uiState.generatedPath == null,
+                    onClick = onGenerate
                 )
-                GenerateNowButton(isGenerating = uiState.isGenerating, onClick = onGenerate)
+                GeneratedMediaLoading(
+                    isVisible = uiState.isGenerating && uiState.generatedPath == null,
+                    mediaType = "IMAGE"
+                )
+                GeneratedMediaResult(
+                    filePath = uiState.generatedPath,
+                    mediaType = "IMAGE",
+                    mimeType = uiState.generatedMimeType,
+                    onEdit = onEditResult
+                )
                 GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
                 Spacer(modifier = Modifier.height(72.dp))
             }

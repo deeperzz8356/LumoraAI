@@ -9,14 +9,17 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.deep.lumoraai.core.components.AppShell
 import com.deep.lumoraai.data.repository.AuthRepository
+import com.deep.lumoraai.core.utils.GuestIdentity
 import com.deep.lumoraai.feature.auth.AuthRoute
 import com.deep.lumoraai.feature.aitools.AIToolsRoute
 import com.deep.lumoraai.feature.bgstudio.BgStudioRoute
@@ -31,6 +34,8 @@ import com.deep.lumoraai.feature.language.LanguageRoute
 import com.deep.lumoraai.feature.notifications.NotificationsRoute
 import com.deep.lumoraai.feature.onboarding.OnboardingRoute
 import com.deep.lumoraai.feature.photoenhance.PhotoEnhanceRoute
+import com.deep.lumoraai.feature.profile.EDIT_PROFILE_ROUTE
+import com.deep.lumoraai.feature.profile.EditProfileScreen
 import com.deep.lumoraai.feature.profile.ProfileRoute
 import com.deep.lumoraai.feature.queue.QueueRoute
 import com.deep.lumoraai.feature.result.ResultRoute
@@ -50,10 +55,21 @@ import androidx.navigation.NavType
 import kotlinx.coroutines.launch
 
 @Composable
-fun NavGraph(modifier: Modifier = Modifier) {
+fun NavGraph(
+    modifier: Modifier = Modifier,
+    notificationRoute: String? = null,
+    onNotificationRouteConsumed: () -> Unit = {},
+) {
     val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     fun next(screen: Screen) = { navController.goTo(screen.nextScreen().route) }
+
+    LaunchedEffect(notificationRoute) {
+        val route = notificationRoute?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+        navController.goTo(route)
+        onNotificationRouteConsumed()
+    }
 
     NavHost(
         navController = navController,
@@ -73,13 +89,38 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 }
             )
         }
-        composable(Screen.Language.route) { LanguageRoute(onNext = next(Screen.Language)) }
+        composable(
+            route = Screen.Language.route + "?source={source}",
+            arguments = listOf(
+                navArgument("source") {
+                    type = NavType.StringType
+                    defaultValue = "onboarding"
+                }
+            )
+        ) { backStackEntry ->
+            val source = backStackEntry.arguments?.getString("source")
+            LanguageRoute(
+                onNext = {
+                    if (source == "settings") {
+                        navController.popBackStack()
+                    } else {
+                        navController.goTo(Screen.Onboarding.route)
+                    }
+                }
+            )
+        }
         composable(Screen.Onboarding.route) {
             OnboardingRoute(
                 onNext = {
                     coroutineScope.launch {
                         if (FirebaseAuth.getInstance().currentUser == null) {
-                            AuthRepository().loginAnonymouslyAndSync()
+                            if (GuestIdentity.isTrialExhausted(context)) {
+                                navController.goTo(Screen.Auth.route)
+                                return@launch
+                            } else {
+                                GuestIdentity.markTrialStarted(context)
+                                AuthRepository().loginAnonymouslyAndSync()
+                            }
                         }
                         navController.goTo(Screen.Home.route)
                     }
@@ -217,7 +258,12 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(Screen.Notifications.route) { NotificationsRoute(onNext = next(Screen.Notifications), onNavigate = { navController.goTo(it) }) }
+        composable(Screen.Notifications.route) {
+            NotificationsRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
         composable(Screen.Subscription.route) {
             SubscriptionRoute(
                 onNavigate = { navController.goTo(it) },

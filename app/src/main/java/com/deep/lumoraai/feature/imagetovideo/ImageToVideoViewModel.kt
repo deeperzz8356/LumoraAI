@@ -13,9 +13,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
@@ -25,6 +27,7 @@ import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -91,6 +94,10 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
 
     fun setGenerations(value: Int) {
         uiState = uiState.copy(generations = value.coerceIn(1, 4))
+    }
+
+    fun setAspectRatio(value: GenerationAspectRatio) {
+        uiState = uiState.copy(aspectRatio = value)
     }
 
     fun generate() {
@@ -223,6 +230,13 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             mediaUrl = saved.filePath,
         )
         uiState = uiState.copy(isGenerating = false, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
+        LumoraNotificationCenter.notifyCompletion(
+            context = getApplication<Application>(),
+            title = "Video ready",
+            message = "Your Image 2 Video creation has finished.",
+            route = Screen.History.route,
+            mediaType = MediaStorageRepository.MEDIA_VIDEO,
+        )
         GenerationRepository.updateJob(jobTitle) { job ->
             job.copy(
                 progressPercent = 1.0f,
@@ -258,7 +272,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
     private fun buildPrompt(): String {
         val similarity = (uiState.similarity * 100).toInt()
         val negative = uiState.negativePrompt.takeIf { it.isNotBlank() }?.let { " Avoid: $it." }.orEmpty()
-        return "Animate the uploaded source image into a video. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Preserve about $similarity% of the original subject and composition while adding natural motion, camera movement, and depth.$negative"
+        return "Animate the uploaded source image into a video. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original subject and composition while adding natural motion, camera movement, and depth.$negative"
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {
