@@ -73,20 +73,6 @@ fun CreditsScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = CredBackground,
-        topBar = {
-            AppToolbar(
-                title = Screen.Credits.title,
-                action = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-                }
-            )
-        },
         bottomBar = { BottomNavigationBar(emptyList(), "credits", onNavigate) }
     ) { padding ->
         Box(

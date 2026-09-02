@@ -26,6 +26,7 @@ object LumoraNotificationCenter {
     private const val CHANNEL_ID = "lumora_completion_updates"
     private const val CHANNEL_NAME = "Generation updates"
     private const val MAX_STORED_EVENTS = 80
+    private const val EVENT_TTL_MILLIS = 6L * 60L * 60L * 1000L
     private val _eventsVersion = MutableStateFlow(0)
     val eventsVersion: StateFlow<Int> = _eventsVersion.asStateFlow()
 
@@ -72,10 +73,16 @@ object LumoraNotificationCenter {
 
     fun completionEvents(context: Context): List<CompletionNotificationEvent> {
         val prefs = context.applicationContext.getSharedPreferences(COMPLETION_PREFS, Context.MODE_PRIVATE)
-        return prefs.getStringSet(KEY_COMPLETION_EVENTS, emptySet())
-            .orEmpty()
+        val stored = prefs.getStringSet(KEY_COMPLETION_EVENTS, emptySet()).orEmpty()
+        val cutoff = System.currentTimeMillis() - EVENT_TTL_MILLIS
+        val fresh = stored
             .mapNotNull(::decodeEvent)
+            .filter { it.createdAtMillis >= cutoff }
             .sortedByDescending { it.createdAtMillis }
+        if (fresh.size != stored.size) {
+            prefs.edit().putStringSet(KEY_COMPLETION_EVENTS, fresh.map(::encodeEvent).toSet()).apply()
+        }
+        return fresh
     }
 
     private fun storeCompletionEvent(

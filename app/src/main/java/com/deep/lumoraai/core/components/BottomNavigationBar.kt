@@ -1,9 +1,9 @@
 package com.deep.lumoraai.core.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateDpAsState
-import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -114,7 +114,7 @@ private fun ResponsiveBottomNav(
             )
             Spacer(modifier = Modifier.width(72.dp))
             NavItem(
-                icon = Icons.Default.Search,
+                icon = Icons.Default.AutoAwesome,
                 label = "AI Tools",
                 isSelected = selected == "aitools",
                 onClick = { onSelected("aitools") },

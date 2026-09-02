@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.BuildConfig
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.combine
@@ -64,6 +65,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun onVersionTapped() {
+        if (!BuildConfig.DEBUG) return
         val current = uiState
         val newCount = current.versionTapCount + 1
         uiState = current.copy(versionTapCount = newCount)

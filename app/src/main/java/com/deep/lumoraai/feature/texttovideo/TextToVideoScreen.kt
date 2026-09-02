@@ -19,8 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.feature.generation.GenerateNowButton
+import com.deep.lumoraai.feature.generation.GenerationAspectRatioSection
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
+import com.deep.lumoraai.feature.generation.GenerationCountSection
 import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
 import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
@@ -93,6 +96,14 @@ fun TextToVideoScreen(
                     isSettingsOpen = showAdvancedSettings.value,
                     onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                 )
+                GenerationAspectRatioSection(
+                    selected = uiState.aspectRatio,
+                    onSelected = onAspectRatioChanged
+                )
+                GenerationCountSection(
+                    generations = uiState.generations,
+                    onGenerationsChanged = onGenerationsChanged
+                )
                 if (showAdvancedSettings.value) {
                     GenerationControlsPanel(
                         mediaType = "Video",
@@ -112,6 +123,7 @@ fun TextToVideoScreen(
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
                     enabled = uiState.generatedPath == null,
+                    creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
                     onClick = onGenerate
                 )
                 GeneratedMediaLoading(

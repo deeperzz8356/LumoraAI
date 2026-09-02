@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -106,33 +105,6 @@ fun HistoryScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = HistoryBackground,
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(56.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "History",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFF18243C).copy(alpha = 0.8f))
-                        .clickable { onNavigate(Screen.Profile.route) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color(0xFF20E6F2), modifier = Modifier.size(20.dp))
-                }
-            }
-        },
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
@@ -263,6 +235,7 @@ private fun HistoryGallery(
 private fun HistoryTopBar(credits: Int, onNavigate: (String) -> Unit) {
     LumoraTopBar(
         credits = credits,
+        title = "History",
         onProfileClick = { onNavigate(Screen.Profile.route) },
         onCreditsClick = { onNavigate(Screen.Credits.route) },
         onNotificationsClick = { onNavigate(Screen.Notifications.route) },

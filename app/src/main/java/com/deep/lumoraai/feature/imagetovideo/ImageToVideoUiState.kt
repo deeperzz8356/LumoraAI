@@ -14,7 +14,7 @@ data class ImageToVideoUiState(
     val aspectRatio: GenerationAspectRatio = GenerationAspectRatio.Story,
     val similarity: Float = 0.5f,
     val duration: Int = 5,
-    val generations: Int = 2,
+    val generations: Int = 1,
     val isGenerating: Boolean = false,
     val isImprovingPrompt: Boolean = false,
     val generatedPath: String? = null,

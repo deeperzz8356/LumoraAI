@@ -1,18 +1,13 @@
 package com.deep.lumoraai.core.navigation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,8 +29,6 @@ import com.deep.lumoraai.feature.language.LanguageRoute
 import com.deep.lumoraai.feature.notifications.NotificationsRoute
 import com.deep.lumoraai.feature.onboarding.OnboardingRoute
 import com.deep.lumoraai.feature.photoenhance.PhotoEnhanceRoute
-import com.deep.lumoraai.feature.profile.EDIT_PROFILE_ROUTE
-import com.deep.lumoraai.feature.profile.EditProfileScreen
 import com.deep.lumoraai.feature.profile.ProfileRoute
 import com.deep.lumoraai.feature.queue.QueueRoute
 import com.deep.lumoraai.feature.result.ResultRoute
@@ -74,11 +67,11 @@ fun NavGraph(
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route,
-        modifier = modifier,
-        enterTransition = { lumoraEnterTransition() },
-        exitTransition = { lumoraExitTransition() },
-        popEnterTransition = { lumoraPopEnterTransition() },
-        popExitTransition = { lumoraPopExitTransition() },
+        modifier = modifier.background(Color(0xFF081020)),
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None },
     ) {
         composable(Screen.Splash.route) {
             SplashRoute(
@@ -148,6 +141,7 @@ fun NavGraph(
             CreateHubRoute(
                 onNext = next(Screen.CreateHub),
                 onNavigate = { navController.goTo(it) },
+                onBack = { navController.popBackStack() },
                 initialPrompt = prompt,
                 initialTab = tab
             )
@@ -299,43 +293,3 @@ fun NavGraph(
         }
     }
 }
-
-private const val NavTransitionMillis = 260
-
-private fun AnimatedContentTransitionScope<*>.lumoraEnterTransition(): EnterTransition =
-    slideIntoContainer(
-        AnimatedContentTransitionScope.SlideDirection.Start,
-        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
-    ) + fadeIn(tween(180)) + scaleIn(
-        initialScale = 0.985f,
-        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
-    )
-
-private fun AnimatedContentTransitionScope<*>.lumoraExitTransition(): ExitTransition =
-    slideOutOfContainer(
-        AnimatedContentTransitionScope.SlideDirection.Start,
-        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing),
-        targetOffset = { it / 5 }
-    ) + fadeOut(tween(150)) + scaleOut(
-        targetScale = 0.99f,
-        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
-    )
-
-private fun AnimatedContentTransitionScope<*>.lumoraPopEnterTransition(): EnterTransition =
-    slideIntoContainer(
-        AnimatedContentTransitionScope.SlideDirection.End,
-        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing),
-        initialOffset = { it / 5 }
-    ) + fadeIn(tween(180)) + scaleIn(
-        initialScale = 0.99f,
-        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
-    )
-
-private fun AnimatedContentTransitionScope<*>.lumoraPopExitTransition(): ExitTransition =
-    slideOutOfContainer(
-        AnimatedContentTransitionScope.SlideDirection.End,
-        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
-    ) + fadeOut(tween(150)) + scaleOut(
-        targetScale = 0.985f,
-        animationSpec = tween(NavTransitionMillis, easing = FastOutSlowInEasing)
-    )

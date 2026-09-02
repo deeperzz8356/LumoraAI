@@ -11,18 +11,13 @@ import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.utils.CompletionNotificationEvent
 import com.deep.lumoraai.core.utils.LumoraNotificationCenter
-import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
-import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
-import com.deep.lumoraai.data.repository.FakeRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
-import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.SettingsRepository
 import com.deep.lumoraai.feature.notifications.model.NotificationModel
 import com.deep.lumoraai.feature.notifications.model.NotificationType
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 class NotificationsViewModel(application: Application) : AndroidViewModel(application) {
@@ -31,13 +26,8 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
     private val settingsRepository = SettingsRepository(appContext)
     private val appPreferences = AppPreferencesRepository.getInstance(appContext)
     private val generationRepository = GenerationRepository()
-    private val fakeRepository = FakeRepository()
-    private val historyRepository = HistoryRepository(
-        LumoraDatabase.getInstance(appContext).historyDao
-    )
 
     private var activeJobs: List<ActiveJobInfo> = emptyList()
-    private var historyItems: List<HistoryModel> = emptyList()
     private var credits: Int? = null
 
     var uiState: NotificationsUiState by mutableStateOf(NotificationsUiState.Loading)
@@ -46,7 +36,6 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
     init {
         load()
         observeJobs()
-        observeHistory()
         observeCompletionEvents()
     }
 
@@ -85,17 +74,6 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    private fun observeHistory() {
-        viewModelScope.launch {
-            historyRepository.getHistory()
-                .catch { historyItems = emptyList() }
-                .collect { items ->
-                    historyItems = items
-                    rebuild()
-                }
-        }
-    }
-
     private fun observeCompletionEvents() {
         viewModelScope.launch {
             LumoraNotificationCenter.eventsVersion.collect {
@@ -129,9 +107,9 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
         val generated = buildList {
             addAll(activeJobs.map(::jobNotification))
             addAll(LumoraNotificationCenter.completionEvents(appContext).map(::completionNotification))
-            addAll(historyItems.take(5).mapIndexed(::historyNotification))
-            credits?.let { add(creditNotification(it)) }
-            addAll(fakeRepository.getNotifications().mapIndexed(::systemNotification))
+            credits?.takeIf { it < GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY && it <= 10 }?.let {
+                add(creditNotification(it))
+            }
             if (!notificationsEnabled) add(disabledNotification())
         }
             .distinctBy { it.id }
@@ -166,16 +144,6 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
         )
     }
 
-    private fun historyNotification(index: Int, item: HistoryModel): NotificationModel =
-        NotificationModel(
-            id = "history:${item.id}",
-            title = "${item.title.ifBlank { "Creation" }} saved",
-            message = "Your ${item.type.lowercase()} is available in History.",
-            timeLabel = item.createdAt.ifBlank { if (index == 0) "Recent" else "Saved" },
-            type = NotificationType.Generation,
-            route = Screen.History.route
-        )
-
     private fun completionNotification(event: CompletionNotificationEvent): NotificationModel =
         NotificationModel(
             id = event.id,
@@ -198,16 +166,6 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
             route = if (isLow) Screen.Credits.route else Screen.Profile.route
         )
     }
-
-    private fun systemNotification(index: Int, item: com.deep.lumoraai.data.model.NotificationModel): NotificationModel =
-        NotificationModel(
-            id = "system:${item.id}",
-            title = item.title,
-            message = item.message,
-            timeLabel = if (index == 0) "Today" else "Earlier",
-            type = NotificationType.System,
-            route = Screen.Home.route
-        )
 
     private fun disabledNotification(): NotificationModel =
         NotificationModel(

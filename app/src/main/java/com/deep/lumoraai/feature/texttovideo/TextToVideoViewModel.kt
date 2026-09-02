@@ -19,6 +19,7 @@ import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -85,6 +86,10 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
         uiState = uiState.copy(selectedEngine = engine)
     }
 
+    fun setAspectRatio(value: GenerationAspectRatio) {
+        uiState = uiState.copy(aspectRatio = value)
+    }
+
     fun setMotion(value: Float) {
         uiState = uiState.copy(motion = value.coerceIn(0f, 1f))
     }
@@ -116,7 +121,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                if (!GenerationGate.canGenerateVideo(credits, isDev)) {
+                if (!GenerationGate.canGenerateVideo(credits, isDev, uiState.generations)) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
@@ -265,7 +270,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             "Create a cinematic text-to-video scene with natural motion, camera movement, depth, and coherent subject action."
         }
         val negative = uiState.negativePrompt.takeIf { it.isNotBlank() }?.let { " Avoid: $it." }.orEmpty()
-        return "$base User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Motion strength: $motion%.$negative"
+        return "$base User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Format: ${uiState.aspectRatio.promptHint}. Motion strength: $motion%.$negative"
     }
 
     private fun currentTimestamp(): String =

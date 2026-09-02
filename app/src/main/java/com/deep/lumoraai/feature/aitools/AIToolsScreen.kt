@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -43,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.bgStudioRoute
 
@@ -59,39 +59,13 @@ private val BlueAccent = Color(0xFF7D86FF)
 
 @Composable
 fun AIToolsScreen(
+    credits: Int,
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = AIToolsBackground,
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(56.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "AI Tools",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFF18243C).copy(alpha = 0.8f))
-                        .clickable { onNavigate(Screen.Profile.route) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Person, contentDescription = "Profile", tint = Cyan, modifier = Modifier.size(20.dp))
-                }
-            }
-        },
         bottomBar = { BottomNavigationBar(emptyList(), "aitools", onNavigate) }
     ) { padding ->
         Box(
@@ -100,13 +74,14 @@ fun AIToolsScreen(
                 .background(AIToolsBackground)
                 .padding(padding)
         ) {
-            AIToolsContent(onNavigate = onNavigate)
+            AIToolsContent(credits = credits, onNavigate = onNavigate)
         }
     }
 }
 
 @Composable
 private fun AIToolsContent(
+    credits: Int,
     onNavigate: (String) -> Unit,
 ) {
     Column(
@@ -117,13 +92,12 @@ private fun AIToolsContent(
             .padding(top = 18.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header
-        Text(
-            "AI Tools",
-            color = Color.White,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-            lineHeight = 32.sp
+        LumoraTopBar(
+            credits = credits,
+            title = "AI Tools",
+            onProfileClick = { onNavigate(Screen.Profile.route) },
+            onCreditsClick = { onNavigate(Screen.Credits.route) },
+            onNotificationsClick = { onNavigate(Screen.Notifications.route) },
         )
         Text(
             "Explore all the powerful tools to transform your content",
@@ -133,66 +107,6 @@ private fun AIToolsContent(
             lineHeight = 18.sp
         )
 
-        // Main Creation Tools
-        Text(
-            "Create",
-            color = Color.White,
-            fontSize = 21.sp,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(11.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            AIToolCard(
-                title = "Text → Image",
-                subtitle = "Dream it",
-                icon = Icons.Default.AutoAwesome,
-                accent = Lime,
-                onClick = { onNavigate(Screen.TextToImage.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(118.dp)
-            )
-            AIToolCard(
-                title = "Image → Image",
-                subtitle = "Refine it",
-                icon = Icons.Default.Image,
-                accent = Purple,
-                onClick = { onNavigate(Screen.ImageToImage.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(118.dp)
-            )
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(11.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            AIToolCard(
-                title = "Image → Video",
-                subtitle = "Animate it",
-                icon = Icons.Default.Movie,
-                accent = Pink,
-                onClick = { onNavigate(Screen.ImageToVideo.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(118.dp)
-            )
-            AIToolCard(
-                title = "Text → Video",
-                subtitle = "Direct it",
-                icon = Icons.Default.PlayArrow,
-                accent = Cyan,
-                onClick = { onNavigate(Screen.TextToVideo.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(118.dp)
-            )
-        }
-
-        // Tools Section
         Text(
             "Tools",
             color = Color.White,

@@ -201,7 +201,7 @@ private fun ProfileHero(name: String, subtitle: String, plan: String, onNavigate
                     }
                     Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         MiniAction("Edit", Icons.Default.Edit, Lime, onClick = {
-                            onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else EDIT_PROFILE_ROUTE)
+                            onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
                         })
                         MiniAction("Share", Icons.Default.Share, Purple, onClick = {
                             val text = "${name.ifBlank { "Lumora Creator" }} on LumoraAI"

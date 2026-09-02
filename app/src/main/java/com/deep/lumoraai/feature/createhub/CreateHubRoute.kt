@@ -26,6 +26,7 @@ import com.deep.lumoraai.core.utils.GuestIdentity
 fun CreateHubRoute(
     onNext: () -> Unit,
     onNavigate: (String) -> Unit,
+    onBack: () -> Unit = onNext,
     initialPrompt: String? = null,
     initialTab: Int = 0,
     viewModel: CreateHubViewModel = viewModel()
@@ -66,7 +67,8 @@ fun CreateHubRoute(
         },
         onResetState = { viewModel.load() },
         onNext = onNext, 
-        onNavigate = onNavigate
+        onNavigate = onNavigate,
+        onBack = onBack
     )
 }
 

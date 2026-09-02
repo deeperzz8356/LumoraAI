@@ -493,10 +493,6 @@ fun GenerationControlsPanel(
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
-        AspectRatioSelector(
-            selected = selectedAspectRatio,
-            onSelected = onAspectRatioSelected
-        )
         NegativePromptField(value = negativePrompt, onValueChange = onNegativePromptChanged)
         GenerationDivider()
         if (similarity != null && onSimilarityChanged != null) {
@@ -515,12 +511,11 @@ fun GenerationControlsPanel(
             SliderBlock("Duration", "${duration}s", (duration - 5) / 10f, { onDurationChanged((5 + it * 10).toInt()) })
             GenerationDivider()
         }
-        GenerationStepper(generations = generations, onGenerationsChanged = onGenerationsChanged)
     }
 }
 
 @Composable
-private fun AspectRatioSelector(
+fun GenerationAspectRatioSection(
     selected: GenerationAspectRatio,
     onSelected: (GenerationAspectRatio) -> Unit,
 ) {
@@ -608,7 +603,7 @@ private fun SliderBlock(label: String, valueText: String, value: Float, onValueC
 }
 
 @Composable
-private fun GenerationStepper(generations: Int, onGenerationsChanged: (Int) -> Unit) {
+fun GenerationCountSection(generations: Int, onGenerationsChanged: (Int) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -646,6 +641,7 @@ private fun GenerationDivider() {
 fun GenerateNowButton(
     isGenerating: Boolean,
     enabled: Boolean = true,
+    creditCost: Int? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -666,7 +662,14 @@ fun GenerateNowButton(
         } else {
             Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.Black, modifier = Modifier.size(21.dp))
             Spacer(modifier = Modifier.width(9.dp))
-            Text("Generate Now", color = Color.Black, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+            Text(
+                text = creditCost?.let { "Generate Now (-$it Credits)" } ?: "Generate Now",
+                color = Color.Black,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

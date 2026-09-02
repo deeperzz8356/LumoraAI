@@ -1,4 +1,5 @@
 import java.util.Properties
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,6 +20,7 @@ val localProperties = Properties().apply {
 android {
     namespace = "com.deep.lumoraai"
     compileSdk = 35
+    val apkBaseName = "LumoraAI"
 
     defaultConfig {
         applicationId = "com.deep.lumoraai"
@@ -33,6 +35,12 @@ android {
             "GROQ_PROMPT_API_KEY",
             "\"${localProperties.getProperty("GROQ_PROMPT_API_KEY", "")}\""
         )
+    }
+
+    applicationVariants.all {
+        outputs.all {
+            (this as BaseVariantOutputImpl).outputFileName = "$apkBaseName-${versionName}.apk"
+        }
     }
 
     buildTypes {

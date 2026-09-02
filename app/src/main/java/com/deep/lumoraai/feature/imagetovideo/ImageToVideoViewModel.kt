@@ -123,7 +123,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                if (!GenerationGate.canGenerateVideo(credits, isDev)) {
+                if (!GenerationGate.canGenerateVideo(credits, isDev, uiState.generations)) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }

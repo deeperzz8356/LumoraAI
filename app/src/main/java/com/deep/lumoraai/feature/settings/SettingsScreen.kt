@@ -29,7 +29,6 @@ import com.deep.lumoraai.core.components.AppCard
 import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.feature.profile.EDIT_PROFILE_ROUTE
 import com.deep.lumoraai.ui.theme.tokens.Spacing
 import com.google.firebase.auth.FirebaseAuth
 
@@ -79,7 +78,7 @@ fun SettingsScreen(
                     subtitle = "Update your personal information",
                     onClick = {
                         val user = FirebaseAuth.getInstance().currentUser
-                        onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else EDIT_PROFILE_ROUTE)
+                        onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
                     }
                 )
                 

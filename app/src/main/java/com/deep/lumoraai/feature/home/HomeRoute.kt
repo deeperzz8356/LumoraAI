@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.deep.lumoraai.core.notification.NotificationViewModel
+import com.deep.lumoraai.core.navigation.Screen
 
 @Composable
 fun HomeRoute(
@@ -22,7 +23,7 @@ fun HomeRoute(
         onNavigate = onNavigate,
         unreadCount = unreadCount,
         onNotificationClick = {
-            onNavigate("com.deep.lumoraai.feature.notifications.NotificationsRoute")
+            onNavigate(Screen.Notifications.route)
         }
     )
 }

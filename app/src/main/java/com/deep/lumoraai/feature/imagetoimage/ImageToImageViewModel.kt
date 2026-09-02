@@ -114,7 +114,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                if (!GenerationGate.canGenerateImage(credits, isDev)) {
+                if (!GenerationGate.canGenerateImage(credits, isDev, uiState.generations)) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }

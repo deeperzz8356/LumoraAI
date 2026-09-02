@@ -144,6 +144,7 @@ private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (Str
 private fun TemplatesTopBar(credits: Int, onNavigate: (String) -> Unit) {
     LumoraTopBar(
         credits = credits,
+        title = "Templates",
         onProfileClick = { onNavigate(Screen.Profile.route) },
         onCreditsClick = { onNavigate(Screen.Credits.route) },
         onNotificationsClick = { onNavigate(Screen.Notifications.route) },

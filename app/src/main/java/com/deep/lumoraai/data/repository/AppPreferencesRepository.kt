@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
+import com.deep.lumoraai.BuildConfig
 import com.deep.lumoraai.data.local.PreferenceKeys
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -22,19 +23,20 @@ class AppPreferencesRepository private constructor(context: Context) {
 
     val isDeveloperMode: Flow<Boolean> = dataStore.data
         .catch { if (it is IOException) emit(androidx.datastore.preferences.core.emptyPreferences()) else throw it }
-        .map { it[PreferenceKeys.IS_DEVELOPER_MODE] ?: false }
+        .map { BuildConfig.DEBUG && (it[PreferenceKeys.IS_DEVELOPER_MODE] ?: false) }
 
     val isDevModeUnlocked: Flow<Boolean> = dataStore.data
         .catch { if (it is IOException) emit(androidx.datastore.preferences.core.emptyPreferences()) else throw it }
-        .map { it[PreferenceKeys.DEV_MODE_UNLOCKED] ?: false }
+        .map { BuildConfig.DEBUG && (it[PreferenceKeys.DEV_MODE_UNLOCKED] ?: false) }
 
     suspend fun setDeveloperMode(enabled: Boolean) {
         dataStore.edit { prefs ->
-            prefs[PreferenceKeys.IS_DEVELOPER_MODE] = enabled
+            prefs[PreferenceKeys.IS_DEVELOPER_MODE] = enabled && BuildConfig.DEBUG
         }
     }
 
     suspend fun unlockDevMode() {
+        if (!BuildConfig.DEBUG) return
         dataStore.edit { prefs ->
             prefs[PreferenceKeys.DEV_MODE_UNLOCKED] = true
         }
