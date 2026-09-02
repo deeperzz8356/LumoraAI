@@ -98,7 +98,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
 
     // OneSignal Push Notifications
-    implementation("com.onesignal:OneSignal:5.1.5")
+    implementation("com.onesignal:OneSignal:5.6.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
