@@ -20,6 +20,7 @@ private fun PreviewContent() {
         onCreativityChanged = {},
         onGenerationsChanged = {},
         onGenerate = {},
+        onEditResult = {},
         onDismissError = {},
     )
 }

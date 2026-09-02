@@ -15,7 +15,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
@@ -129,6 +131,13 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
 
             uiState = result.fold(
                 onSuccess = { (bitmap, path) ->
+                    LumoraNotificationCenter.notifyCompletion(
+                        context = getApplication<Application>(),
+                        title = "Enhancement ready",
+                        message = "Your enhanced photo has been saved.",
+                        route = Screen.History.route,
+                        mediaType = "IMAGE",
+                    )
                     uiState.copy(enhancedBitmap = bitmap, savedPath = path, isEnhancing = false)
                 },
                 onFailure = { error ->

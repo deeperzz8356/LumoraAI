@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.feature.generation.GenerateNowButton
+import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
 import com.deep.lumoraai.feature.generation.GenerationErrorText
 import com.deep.lumoraai.feature.generation.GenerationScreenBg
@@ -36,6 +37,7 @@ fun TextToImageScreen(
     onCreativityChanged: (Float) -> Unit,
     onGenerationsChanged: (Int) -> Unit,
     onGenerate: () -> Unit,
+    onEditResult: () -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -76,7 +78,17 @@ fun TextToImageScreen(
                     generations = uiState.generations,
                     onGenerationsChanged = onGenerationsChanged
                 )
-                GenerateNowButton(isGenerating = uiState.isGenerating, onClick = onGenerate)
+                GenerateNowButton(
+                    isGenerating = uiState.isGenerating,
+                    enabled = uiState.generatedPath == null,
+                    onClick = onGenerate
+                )
+                GeneratedMediaResult(
+                    filePath = uiState.generatedPath,
+                    mediaType = "IMAGE",
+                    mimeType = uiState.generatedMimeType,
+                    onEdit = onEditResult
+                )
                 GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
                 Spacer(modifier = Modifier.height(72.dp))
             }

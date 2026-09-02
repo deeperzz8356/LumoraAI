@@ -2,7 +2,6 @@ package com.deep.lumoraai.feature.imagetovideo
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.deep.lumoraai.core.components.MediaViewerDialog
 
 @Composable
 fun ImageToVideoRoute(
@@ -25,16 +24,7 @@ fun ImageToVideoRoute(
         onDurationChanged = viewModel::setDuration,
         onGenerationsChanged = viewModel::setGenerations,
         onGenerate = viewModel::generate,
+        onEditResult = viewModel::clearResult,
         onDismissError = viewModel::dismissError,
     )
-
-    if (uiState.generatedPath != null) {
-        MediaViewerDialog(
-            filePath = uiState.generatedPath,
-            mediaType = "VIDEO",
-            mimeType = uiState.generatedMimeType,
-            title = "Video Ready",
-            onDismiss = viewModel::clearResult,
-        )
-    }
 }

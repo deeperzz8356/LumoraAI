@@ -24,9 +24,12 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var notificationRoute by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_LumoraAI)
         super.onCreate(savedInstanceState)
+        notificationRoute = intent.getStringExtra(NOTIFICATION_ROUTE_EXTRA)
         setContent {
             LumoraTheme {
                 val context = LocalContext.current
@@ -62,7 +65,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 if (hasInternet) {
-                    NavGraph()
+                    NavGraph(
+                        notificationRoute = notificationRoute,
+                        onNotificationRouteConsumed = { notificationRoute = null }
+                    )
                 } else {
                     NoInternetScreen(
                         onTurnOnNetwork = {
@@ -75,5 +81,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        notificationRoute = intent.getStringExtra(NOTIFICATION_ROUTE_EXTRA)
+    }
+
+    companion object {
+        const val NOTIFICATION_ROUTE_EXTRA = "lumora_destination_route"
     }
 }

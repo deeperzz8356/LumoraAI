@@ -21,6 +21,7 @@ private fun PreviewContent() {
         onDurationChanged = {},
         onGenerationsChanged = {},
         onGenerate = {},
+        onEditResult = {},
         onDismissError = {},
     )
 }

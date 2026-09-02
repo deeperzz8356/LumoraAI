@@ -3,7 +3,6 @@ package com.deep.lumoraai.feature.texttoimage
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.deep.lumoraai.core.components.MediaViewerDialog
 
 @Composable
 fun TextToImageRoute(
@@ -29,16 +28,7 @@ fun TextToImageRoute(
         onCreativityChanged = viewModel::setCreativity,
         onGenerationsChanged = viewModel::setGenerations,
         onGenerate = viewModel::generate,
+        onEditResult = viewModel::clearResult,
         onDismissError = viewModel::dismissError,
     )
-
-    if (uiState.generatedPath != null) {
-        MediaViewerDialog(
-            filePath = uiState.generatedPath,
-            mediaType = "IMAGE",
-            mimeType = uiState.generatedMimeType,
-            title = "Image Ready",
-            onDismiss = viewModel::clearResult,
-        )
-    }
 }

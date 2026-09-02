@@ -8,6 +8,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
@@ -198,6 +200,13 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             mediaUrl = saved.filePath,
         )
         uiState = uiState.copy(isGenerating = false, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
+        LumoraNotificationCenter.notifyCompletion(
+            context = getApplication<Application>(),
+            title = "Image ready",
+            message = "Your Text 2 Image creation has finished.",
+            route = Screen.History.route,
+            mediaType = MediaStorageRepository.MEDIA_IMAGE,
+        )
         GenerationRepository.updateJob(jobTitle) { job ->
             job.copy(
                 progressPercent = 1.0f,

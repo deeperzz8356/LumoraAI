@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -45,10 +46,20 @@ import androidx.navigation.NavType
 import kotlinx.coroutines.launch
 
 @Composable
-fun NavGraph(modifier: Modifier = Modifier) {
+fun NavGraph(
+    modifier: Modifier = Modifier,
+    notificationRoute: String? = null,
+    onNotificationRouteConsumed: () -> Unit = {},
+) {
     val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
     fun next(screen: Screen) = { navController.goTo(screen.nextScreen().route) }
+
+    LaunchedEffect(notificationRoute) {
+        val route = notificationRoute?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+        navController.goTo(route)
+        onNotificationRouteConsumed()
+    }
 
     NavHost(
         navController = navController,
@@ -211,7 +222,12 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(Screen.Notifications.route) { NotificationsRoute(onNext = next(Screen.Notifications)) }
+        composable(Screen.Notifications.route) {
+            NotificationsRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
         composable(Screen.Subscription.route) {
             SubscriptionRoute(
                 onNavigate = { navController.goTo(it) },

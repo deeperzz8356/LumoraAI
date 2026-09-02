@@ -25,6 +25,8 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
+import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.repository.HistoryRepository
@@ -117,7 +119,16 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
         }
 
         uiState = result.fold(
-            onSuccess = { uiState.copy(isCompressing = false, result = it) },
+            onSuccess = {
+                LumoraNotificationCenter.notifyCompletion(
+                    context = getApplication<Application>(),
+                    title = "Compression complete",
+                    message = "Your compressed image is ready.",
+                    route = Screen.History.route,
+                    mediaType = "IMAGE",
+                )
+                uiState.copy(isCompressing = false, result = it)
+            },
             onFailure = { uiState.copy(isCompressing = false, error = it.message ?: "Could not compress this image.") },
         )
     }
@@ -145,6 +156,13 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                                 originalBytes = originalBytes,
                                 compressedBytes = output.length(),
                             )
+                        )
+                        LumoraNotificationCenter.notifyCompletion(
+                            context = getApplication<Application>(),
+                            title = "Compression complete",
+                            message = "Your compressed video is ready.",
+                            route = Screen.History.route,
+                            mediaType = "VIDEO",
                         )
                     }
                 }

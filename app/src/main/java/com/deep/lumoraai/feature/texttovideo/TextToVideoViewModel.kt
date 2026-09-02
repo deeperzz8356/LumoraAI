@@ -7,7 +7,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
@@ -199,6 +201,13 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             mediaUrl = saved.filePath,
         )
         uiState = uiState.copy(isGenerating = false, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
+        LumoraNotificationCenter.notifyCompletion(
+            context = getApplication<Application>(),
+            title = "Video ready",
+            message = "Your ${uiState.jobBadge} creation has finished.",
+            route = Screen.History.route,
+            mediaType = MediaStorageRepository.MEDIA_VIDEO,
+        )
         GenerationRepository.updateJob(jobTitle) { job ->
             job.copy(
                 progressPercent = 1.0f,

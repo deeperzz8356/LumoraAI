@@ -115,7 +115,7 @@ fun MediaViewerDialog(
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun LocalVideoPlayer(filePath: String) {
+fun LocalVideoPlayer(filePath: String) {
     val context = LocalContext.current
     val exoPlayer = remember(filePath) {
         ExoPlayer.Builder(context).build().apply {

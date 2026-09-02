@@ -6,7 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
@@ -303,6 +305,13 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
             } else {
                 uiState = CreateHubUiState.ImageGenerated(saved.filePath, saved.mimeType)
             }
+            LumoraNotificationCenter.notifyCompletion(
+                context = getApplication<Application>(),
+                title = if (mediaType == MediaStorageRepository.MEDIA_VIDEO) "Video ready" else "Image ready",
+                message = "Your $badgeText creation has finished.",
+                route = Screen.History.route,
+                mediaType = mediaType,
+            )
 
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(
