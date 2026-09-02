@@ -13,6 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.notification.NotificationManager
+import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -32,6 +34,7 @@ import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 class ImageToVideoViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -40,6 +43,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
     private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val mediaStorage = MediaStorageRepository.getInstance(application)
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
     private var sourceImageB64: String? = null
 
     var uiState: ImageToVideoUiState by mutableStateOf(ImageToVideoUiState())
@@ -118,6 +122,17 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                 }
             }
 
+            val taskId = UUID.randomUUID().toString()
+            
+            // Send task start notification
+            launch {
+                notificationManager.sendTaskStartNotification(
+                    taskType = TaskNotificationHelper.IMAGE_TO_VIDEO,
+                    taskId = taskId,
+                    displayName = "Image to Video"
+                )
+            }
+
             uiState = uiState.copy(isGenerating = true, error = null)
             val prompt = buildPrompt()
             val jobTitle = "Image 2 Video ${shortTimestamp()}"
@@ -144,12 +159,21 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             )
 
             if (result.isSuccess) {
-                persistGeneratedVideo(result.getOrThrow(), jobTitle, prompt)
+                persistGeneratedVideo(result.getOrThrow(), jobTitle, prompt, taskId)
             } else {
                 val message = result.exceptionOrNull()?.message ?: "Failed to generate video."
                 uiState = uiState.copy(isGenerating = false, error = message)
                 GenerationRepository.updateJob(jobTitle) { job ->
                     job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                }
+                // Send task failure notification
+                launch {
+                    notificationManager.sendTaskFailureNotification(
+                        taskType = TaskNotificationHelper.IMAGE_TO_VIDEO,
+                        taskId = taskId,
+                        displayName = "Image to Video",
+                        errorMessage = message
+                    )
                 }
             }
         }
@@ -185,7 +209,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
         uiState = uiState.copy(generatedPath = null)
     }
 
-    private suspend fun persistGeneratedVideo(payload: String, jobTitle: String, prompt: String) {
+    private suspend fun persistGeneratedVideo(payload: String, jobTitle: String, prompt: String, taskId: String) {
         val saved = mediaStorage.saveVideoFromPayload(payload)
         historyRepository.addHistory(
             historyModel = HistoryModel(
@@ -209,6 +233,14 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                 videoUrl = saved.filePath,
             )
         }
+        
+        // Send task complete notification
+        notificationManager.sendTaskCompleteNotification(
+            taskType = TaskNotificationHelper.IMAGE_TO_VIDEO,
+            taskId = taskId,
+            resultId = saved.id,
+            displayName = "Image to Video"
+        )
     }
 
     private suspend fun ensureTrialUser(): Boolean =

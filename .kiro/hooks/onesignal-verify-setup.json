@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "OneSignal Integration Verification",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "agent",
+        "prompt": "The OneSignal SDK integration is now complete. Key verification points: 1) OneSignalManager.kt contains the full SDK initialization with App ID 77db9255-b035-4690-8b63-8a6b8375f12b, 2) MainActivity.kt includes a push subscription observer that shows a verification dialog when the device receives a real subscription ID, 3) NotificationConfig.kt has the correct App ID configured. The app is ready to build and test. When building, ensure AndroidManifest.xml has INTERNET and POST_NOTIFICATIONS permissions (already present). The verification dialog will appear on first launch after OneSignal registration completes."
+      }
+    }
+  ]
+}

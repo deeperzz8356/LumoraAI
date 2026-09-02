@@ -31,12 +31,8 @@ fun AppShell(
     onNavigate: (String) -> Unit,
     onBackClick: (() -> Unit)? = null,
     showBottomNav: Boolean = true,
-    notificationViewModel: NotificationViewModel = hiltViewModel(),
     content: @Composable (PaddingValues) -> Unit
 ) {
-    // Get unread notification count
-    val unreadCount by notificationViewModel.unreadCount.collectAsState()
-    
     // Responsive design: show bottom nav only on mobile screens
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp
@@ -51,7 +47,7 @@ fun AppShell(
             UserHeaderBar(
                 title = title,
                 userCredits = userCredits,
-                unreadNotificationCount = unreadCount,
+                unreadNotificationCount = 0, // TODO: Get from NotificationViewModel
                 onNotifications = onNotifications,
                 onBackClick = onBackClick
             )

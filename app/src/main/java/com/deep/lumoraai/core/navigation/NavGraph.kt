@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.deep.lumoraai.core.components.AppShell
 import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.feature.auth.AuthRoute
 import com.deep.lumoraai.feature.aitools.AIToolsRoute

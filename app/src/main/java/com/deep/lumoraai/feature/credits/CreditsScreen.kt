@@ -62,7 +62,7 @@ fun CreditsScreen(
         containerColor = CredBackground,
         topBar = {
             AppToolbar(
-                title = "Credits",
+                title = Screen.Credits.title,
                 action = {
                     IconButton(onClick = onBack) {
                         Icon(

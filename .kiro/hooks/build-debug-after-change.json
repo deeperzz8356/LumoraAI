@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Build Debug After Task completion",
+      "trigger": "PostTaskcompletion",
+      "description": "Automatically builds a debug APK whenever a file is saved in the project",
+      "action": {
+        "type": "command",
+        "command": "cd f:\\LumoraAI && .\\gradlew.bat assembleDebug installDebug",
+        "timeout": 300
+      }
+    }
+  ]
+}

@@ -7,6 +7,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.notification.NotificationManager
+import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -23,6 +25,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 class TextToVideoViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -31,6 +34,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
     private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val mediaStorage = MediaStorageRepository.getInstance(application)
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
     private var isPromoMode = false
 
     var uiState: TextToVideoUiState by mutableStateOf(TextToVideoUiState())
@@ -118,6 +122,19 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                 }
             }
 
+            val taskType = if (isPromoMode) TaskNotificationHelper.PROMO_VIDEO else TaskNotificationHelper.TEXT_TO_VIDEO
+            val displayName = if (isPromoMode) "Promo Video" else "Text to Video"
+            val taskId = UUID.randomUUID().toString()
+            
+            // Send task start notification
+            launch {
+                notificationManager.sendTaskStartNotification(
+                    taskType = taskType,
+                    taskId = taskId,
+                    displayName = displayName
+                )
+            }
+
             uiState = uiState.copy(isGenerating = true, error = null)
             val prompt = buildPrompt()
             val jobTitle = "${uiState.jobBadge} ${shortTimestamp()}"
@@ -144,12 +161,21 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             )
 
             if (result.isSuccess) {
-                persistGeneratedVideo(result.getOrThrow(), jobTitle, prompt)
+                persistGeneratedVideo(result.getOrThrow(), jobTitle, prompt, taskId, taskType, displayName)
             } else {
                 val message = result.exceptionOrNull()?.message ?: "Failed to generate video."
                 uiState = uiState.copy(isGenerating = false, error = message)
                 GenerationRepository.updateJob(jobTitle) { job ->
                     job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                }
+                // Send task failure notification
+                launch {
+                    notificationManager.sendTaskFailureNotification(
+                        taskType = taskType,
+                        taskId = taskId,
+                        displayName = displayName,
+                        errorMessage = message
+                    )
                 }
             }
         }
@@ -185,7 +211,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
         uiState = uiState.copy(generatedPath = null)
     }
 
-    private suspend fun persistGeneratedVideo(payload: String, jobTitle: String, prompt: String) {
+    private suspend fun persistGeneratedVideo(payload: String, jobTitle: String, prompt: String, taskId: String, taskType: String, displayName: String) {
         val saved = mediaStorage.saveVideoFromPayload(payload)
         historyRepository.addHistory(
             historyModel = HistoryModel(
@@ -209,6 +235,14 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                 videoUrl = saved.filePath,
             )
         }
+        
+        // Send task complete notification
+        notificationManager.sendTaskCompleteNotification(
+            taskType = taskType,
+            taskId = taskId,
+            resultId = saved.id,
+            displayName = displayName
+        )
     }
 
     private suspend fun ensureTrialUser(): Boolean =

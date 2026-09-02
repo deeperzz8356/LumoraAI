@@ -13,6 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.notification.NotificationManager
+import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -31,6 +33,7 @@ import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 import kotlin.math.roundToInt
 
 class BgStudioViewModel(application: Application) : AndroidViewModel(application) {
@@ -42,6 +45,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
     private val historyRepository = HistoryRepository(
         LumoraDatabase.getInstance(application).historyDao
     )
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
 
     private var sourceImageB64: String? = null
 
@@ -146,6 +150,19 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
     ) {
         uiState = uiState.copy(status = BgStudioStatus.Generating)
 
+        val taskType = if (uiState.mode == BgStudioMode.Replace) TaskNotificationHelper.BG_REPLACE else TaskNotificationHelper.BG_REMOVE
+        val displayName = if (uiState.mode == BgStudioMode.Replace) "Background Replace" else "Background Remove"
+        val taskId = UUID.randomUUID().toString()
+        
+        // Send task start notification
+        viewModelScope.launch {
+            notificationManager.sendTaskStartNotification(
+                taskType = taskType,
+                taskId = taskId,
+                displayName = displayName
+            )
+        }
+
         val jobTitle = if (uiState.mode == BgStudioMode.Replace) {
             "BG Replace ${shortTimestamp()}"
         } else {
@@ -197,12 +214,21 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 progressJob.cancel()
                 viewModelScope.launch {
                     if (result.isSuccess) {
-                        persistGeneratedImage(result.getOrThrow(), jobTitle)
+                        persistGeneratedImage(result.getOrThrow(), jobTitle, taskId, taskType, displayName)
                     } else {
                         val message = result.exceptionOrNull()?.message ?: "Could not replace background."
                         uiState = uiState.copy(status = BgStudioStatus.Error(message))
                         GenerationRepository.updateJob(jobTitle) { job ->
                             job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                        }
+                        // Send task failure notification
+                        launch {
+                            notificationManager.sendTaskFailureNotification(
+                                taskType = taskType,
+                                taskId = taskId,
+                                displayName = displayName,
+                                errorMessage = message
+                            )
                         }
                     }
                 }
@@ -212,6 +238,18 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
 
     private fun startLocalRemoveJob(bitmap: Bitmap) {
         uiState = uiState.copy(status = BgStudioStatus.Generating)
+        
+        val taskId = UUID.randomUUID().toString()
+        
+        // Send task start notification
+        viewModelScope.launch {
+            notificationManager.sendTaskStartNotification(
+                taskType = TaskNotificationHelper.BG_REMOVE,
+                taskId = taskId,
+                displayName = "Background Remove"
+            )
+        }
+        
         val jobTitle = "BG Remove ${shortTimestamp()}"
         GenerationRepository.addJob(
             ActiveJobInfo(
@@ -253,10 +291,18 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                     imageUrl = saved.filePath,
                 )
             }
+            
+            // Send task complete notification
+            notificationManager.sendTaskCompleteNotification(
+                taskType = TaskNotificationHelper.BG_REMOVE,
+                taskId = taskId,
+                resultId = saved.id,
+                displayName = "Background Remove"
+            )
         }
     }
 
-    private suspend fun persistGeneratedImage(payload: String, jobTitle: String) {
+    private suspend fun persistGeneratedImage(payload: String, jobTitle: String, taskId: String, taskType: String, displayName: String) {
         val saved = mediaStorage.saveImageFromPayload(payload)
         val preview = withContext(Dispatchers.IO) {
             runCatching { BitmapFactory.decodeFile(saved.filePath) }.getOrNull()
@@ -283,6 +329,14 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 imageUrl = saved.filePath,
             )
         }
+        
+        // Send task complete notification
+        notificationManager.sendTaskCompleteNotification(
+            taskType = taskType,
+            taskId = taskId,
+            resultId = saved.id,
+            displayName = displayName
+        )
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {

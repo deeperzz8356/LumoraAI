@@ -206,12 +206,21 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                 progressJob.cancel()
                 viewModelScope.launch {
                     if (result.isSuccess) {
-                        persistGeneratedImage(result.getOrThrow(), jobTitle, prompt)
+                        persistGeneratedImage(result.getOrThrow(), jobTitle, prompt, taskId)
                     } else {
                         val message = result.exceptionOrNull()?.message ?: "Could not generate image."
                         uiState = uiState.copy(isGenerating = false, error = message)
                         GenerationRepository.updateJob(jobTitle) { job ->
                             job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                        }
+                        // Send task failure notification
+                        launch {
+                            notificationManager.sendTaskFailureNotification(
+                                taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
+                                taskId = taskId,
+                                displayName = "Image to Image",
+                                errorMessage = message
+                            )
                         }
                     }
                 }
@@ -219,7 +228,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    private suspend fun persistGeneratedImage(payload: String, jobTitle: String, prompt: String) {
+    private suspend fun persistGeneratedImage(payload: String, jobTitle: String, prompt: String, taskId: String) {
         val saved = mediaStorage.saveImageFromPayload(payload)
         historyRepository.addHistory(
             historyModel = HistoryModel(
@@ -243,6 +252,14 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                 imageUrl = saved.filePath,
             )
         }
+        
+        // Send task complete notification
+        notificationManager.sendTaskCompleteNotification(
+            taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
+            taskId = taskId,
+            resultId = saved.id,
+            displayName = "Image to Image"
+        )
     }
 
     private suspend fun ensureTrialUser(): Boolean =

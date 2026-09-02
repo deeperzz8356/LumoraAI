@@ -15,6 +15,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.core.notification.NotificationManager
+import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.HistoryModel
@@ -41,6 +43,7 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
     )
     private val generationRepository = GenerationRepository()
     private val appPreferences = AppPreferencesRepository.getInstance(application)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
     private val imagesDir = File(application.filesDir, "media/images").also { it.mkdirs() }
 
     var uiState: PhotoEnhanceUiState by mutableStateOf(PhotoEnhanceUiState())
@@ -101,6 +104,17 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
             return
         }
 
+        val taskId = UUID.randomUUID().toString()
+        
+        // Send task start notification
+        viewModelScope.launch {
+            notificationManager.sendTaskStartNotification(
+                taskType = TaskNotificationHelper.PHOTO_ENHANCE,
+                taskId = taskId,
+                displayName = "Photo Enhance"
+            )
+        }
+
         viewModelScope.launch {
             uiState = uiState.copy(isEnhancing = true, error = null, savedPath = null)
             val result = withContext(Dispatchers.Default) {
@@ -112,9 +126,10 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
                         lighting = uiState.lighting,
                     )
                     val savedPath = saveEnhancedBitmap(enhanced)
+                    val historyId = UUID.randomUUID().toString()
                     historyRepository.addHistory(
                         historyModel = HistoryModel(
-                            id = UUID.randomUUID().toString(),
+                            id = historyId,
                             title = "Photo Enhance",
                             createdAt = currentTimestamp(),
                             type = "IMAGE",
@@ -123,18 +138,38 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
                         type = "IMAGE",
                         mediaUrl = savedPath,
                     )
-                    enhanced to savedPath
+                    enhanced to savedPath to historyId
                 }
             }
 
             uiState = result.fold(
-                onSuccess = { (bitmap, path) ->
+                onSuccess = { (bitmapAndPath, historyId) ->
+                    val (bitmap, path) = bitmapAndPath
+                    // Send task complete notification
+                    launch {
+                        notificationManager.sendTaskCompleteNotification(
+                            taskType = TaskNotificationHelper.PHOTO_ENHANCE,
+                            taskId = taskId,
+                            resultId = historyId,
+                            displayName = "Photo Enhance"
+                        )
+                    }
                     uiState.copy(enhancedBitmap = bitmap, savedPath = path, isEnhancing = false)
                 },
                 onFailure = { error ->
+                    val errorMsg = error.message ?: "Could not enhance this image."
+                    // Send task failure notification
+                    launch {
+                        notificationManager.sendTaskFailureNotification(
+                            taskType = TaskNotificationHelper.PHOTO_ENHANCE,
+                            taskId = taskId,
+                            displayName = "Photo Enhance",
+                            errorMessage = errorMsg
+                        )
+                    }
                     uiState.copy(
                         isEnhancing = false,
-                        error = error.message ?: "Could not enhance this image."
+                        error = errorMsg
                     )
                 }
             )

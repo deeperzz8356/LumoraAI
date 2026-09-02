@@ -1,51 +1,23 @@
 package com.deep.lumoraai.feature.settings
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.deep.lumoraai.core.components.AppCard
-import com.deep.lumoraai.core.components.AppToolbar
-import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.ui.theme.tokens.Spacing
 
 // Theme colors matching Home/Profile pages
 private val SettingsBackground = Color(0xFF081020)
-private val SettingsCard = Color(0xFF10192D)
-private val SettingsStroke = Color(0xFF172238)
-private val Lime = Color(0xFFD6FF2F)
-private val Purple = Color(0xFF9C63FF)
-private val Muted = Color(0xFF94A0B8)
-private val CardShape = RoundedCornerShape(14.dp)
 
 @Composable
 fun SettingsScreen(
@@ -55,260 +27,32 @@ fun SettingsScreen(
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = SettingsBackground,
-        topBar = { AppToolbar(title = "Settings") },
-        bottomBar = {
-            BottomNavigationBar(
-                items = emptyList(),
-                selected = "settings",
-                onSelected = onNavigate
-            )
-        }
-    ) { padding ->
-        var showLanguageDialog by remember { mutableStateOf(false) }
-        
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(SettingsBackground)
-                .padding(padding)
-                .padding(horizontal = 20.dp, vertical = 18.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Account", style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-                
-                SettingsActionRow(
-                    title = "Manage Profile",
-                    subtitle = "Update your personal information",
-                    onClick = { onNavigate(com.deep.lumoraai.core.navigation.Screen.EditProfile.route) }
-                )
-                
-                SettingsActionRow(
-                    title = "Subscription & Billing",
-                    subtitle = "Manage your Pro plan",
-                    onClick = { onNavigate(com.deep.lumoraai.core.navigation.Screen.Subscription.route) }
-                )
-                
-                SettingsActionRow(
-                    title = "Privacy & Security",
-                    subtitle = "Protect your account data",
-                    onClick = { onNavigate(com.deep.lumoraai.core.navigation.Screen.PrivacySecurity.route) }
-                )
-                
-                SettingsActionRow(
-                    title = "Help & Support",
-                    subtitle = "Contact us for assistance",
-                    onClick = { onNavigate(com.deep.lumoraai.core.navigation.Screen.HelpSupport.route) }
-                )
-            }
-            
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Preferences", style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-                
-                SettingsActionRow(
-                    title = "Language",
-                    subtitle = uiState.selectedLanguage,
-                    onClick = { showLanguageDialog = true }
-                )
-                
-                SettingsToggleRow(
-                    title = "Dark Mode",
-                    subtitle = "Use dark theme across the app",
-                    checked = uiState.isDarkMode,
-                    onCheckedChange = { viewModel.toggleDarkMode(it) }
-                )
-                
-                SettingsToggleRow(
-                    title = "Push Notifications",
-                    subtitle = "Receive updates on generated tasks",
-                    checked = uiState.notificationsEnabled,
-                    onCheckedChange = { viewModel.toggleNotifications(it) }
-                )
-                
-                SettingsToggleRow(
-                    title = "High Quality Mode",
-                    subtitle = "Generate images in higher resolution (uses more credits)",
-                    checked = uiState.highQualityMode,
-                    onCheckedChange = { viewModel.toggleHighQualityMode(it) }
-                )
-            }
-
-            if (uiState.isDevModeUnlocked) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Developer", style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-                    SettingsToggleRow(
-                        title = "Developer Mode",
-                        subtitle = if (uiState.isDeveloperMode) "Unlimited trial — no restrictions" else "User mode — normal restrictions apply",
-                        checked = uiState.isDeveloperMode,
-                        onCheckedChange = { viewModel.toggleDeveloperMode(it) }
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { viewModel.onVersionTapped() }
-                    .padding(vertical = 18.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Version 1.0",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Muted
-                )
-                if (uiState.versionTapCount in 1..6) {
-                    Text(
-                        text = "${7 - uiState.versionTapCount} taps to unlock developer options",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Muted.copy(alpha = 0.6f)
-                    )
-                }
-            }
-        }
-        
-        if (showLanguageDialog) {
-            LanguageSelectionDialog(
-                currentLanguage = uiState.selectedLanguage,
-                onLanguageSelected = { 
-                    viewModel.setLanguage(it)
-                    showLanguageDialog = false 
-                },
-                onDismissRequest = { showLanguageDialog = false }
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingsToggleRow(
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = SettingsCard,
-        border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(SettingsBackground)
+            .padding(horizontal = 20.dp, vertical = 18.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
-            }
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Lime,
-                    checkedTrackColor = Lime.copy(alpha = 0.3f),
-                    uncheckedThumbColor = Muted,
-                    uncheckedTrackColor = SettingsStroke
-                )
-            )
-        }
+        Text(
+            "Account", 
+            style = MaterialTheme.typography.titleLarge, 
+            color = Color.White, 
+            fontSize = 21.sp, 
+            fontWeight = FontWeight.ExtraBold
+        )
+        
+        Text(
+            "Login / Signup - Access your account or create a new one",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White
+        )
+        
+        Text(
+            "Settings content will be restored here...",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
     }
-}
-
-@Composable
-private fun SettingsActionRow(
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = SettingsCard,
-        border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
-            }
-            Text(">", style = MaterialTheme.typography.titleLarge, color = Lime, fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-@Composable
-private fun LanguageSelectionDialog(
-    currentLanguage: String,
-    onLanguageSelected: (String) -> Unit,
-    onDismissRequest: () -> Unit
-) {
-    val languages = listOf(
-        "English",
-        "Hindi", 
-        "Spanish",
-        "Dutch",
-        "Italian",
-        "Portuguese",
-        "Turkish",
-        "Thai",
-        "Vietnamese",
-        "Arabic",
-        "Korean",
-        "Japanese",
-        "Chinese (Simplified)",
-        "Chinese (Traditional)"
-    )
-    
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        containerColor = SettingsCard,
-        title = {
-            Text(text = "Select Language", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-        },
-        text = {
-            LazyColumn {
-                items(languages) { language ->
-                    val isSelected = language == currentLanguage
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onLanguageSelected(language) }
-                            .padding(vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = language,
-                            color = if (isSelected) Lime else Color.White,
-                            style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
-                        if (isSelected) {
-                            Text("✓", style = MaterialTheme.typography.titleMedium, color = Lime, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismissRequest) {
-                Text("Cancel", style = MaterialTheme.typography.labelLarge, color = Muted)
-            }
-        }
-    )
 }

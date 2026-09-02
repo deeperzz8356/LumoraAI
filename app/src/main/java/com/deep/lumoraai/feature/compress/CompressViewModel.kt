@@ -25,6 +25,8 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
+import com.deep.lumoraai.core.notification.NotificationManager
+import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.repository.HistoryRepository
@@ -42,6 +44,7 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
     private val resolver = application.contentResolver
     private val outputDir = File(application.filesDir, "media/compressed").also { it.mkdirs() }
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
 
     var uiState: CompressUiState by mutableStateOf(CompressUiState())
         private set
@@ -67,12 +70,23 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
         }
         val mimeType = uiState.mimeType
 
+        val taskId = UUID.randomUUID().toString()
+        
+        // Send task start notification
+        viewModelScope.launch {
+            notificationManager.sendTaskStartNotification(
+                taskType = TaskNotificationHelper.COMPRESS,
+                taskId = taskId,
+                displayName = "Compress"
+            )
+        }
+
         viewModelScope.launch {
             uiState = uiState.copy(isCompressing = true, error = null, result = null)
             if (mimeType.startsWith("image/")) {
-                compressImage(uri)
+                compressImage(uri, taskId)
             } else {
-                compressVideo(uri)
+                compressVideo(uri, taskId)
             }
         }
     }
@@ -96,7 +110,7 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private suspend fun compressImage(uri: Uri) {
+    private suspend fun compressImage(uri: Uri, taskId: String) {
         val result = withContext(Dispatchers.IO) {
             runCatching {
                 val originalBytes = fileSize(uri)
@@ -106,24 +120,48 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 62, out)
                 }
                 val compressedBytes = output.length()
-                saveToHistory(output.absolutePath, "IMAGE")
+                val historyId = UUID.randomUUID().toString()
+                saveToHistory(output.absolutePath, "IMAGE", historyId)
                 CompressionResult(
                     outputPath = output.absolutePath,
                     mimeType = "image/jpeg",
                     originalBytes = originalBytes,
                     compressedBytes = compressedBytes,
-                )
+                ) to historyId
             }
         }
 
         uiState = result.fold(
-            onSuccess = { uiState.copy(isCompressing = false, result = it) },
-            onFailure = { uiState.copy(isCompressing = false, error = it.message ?: "Could not compress this image.") },
+            onSuccess = { (compressionResult, historyId) ->
+                // Send task complete notification
+                viewModelScope.launch {
+                    notificationManager.sendTaskCompleteNotification(
+                        taskType = TaskNotificationHelper.COMPRESS,
+                        taskId = taskId,
+                        resultId = historyId,
+                        displayName = "Compress"
+                    )
+                }
+                uiState.copy(isCompressing = false, result = compressionResult)
+            },
+            onFailure = { error ->
+                val errorMsg = error.message ?: "Could not compress this image."
+                // Send task failure notification
+                viewModelScope.launch {
+                    notificationManager.sendTaskFailureNotification(
+                        taskType = TaskNotificationHelper.COMPRESS,
+                        taskId = taskId,
+                        displayName = "Compress",
+                        errorMessage = errorMsg
+                    )
+                }
+                uiState.copy(isCompressing = false, error = errorMsg)
+            },
         )
     }
 
     @OptIn(UnstableApi::class)
-    private fun compressVideo(uri: Uri) {
+    private fun compressVideo(uri: Uri, taskId: String) {
         val originalBytes = fileSize(uri)
         val output = File(outputDir, "compressed_${UUID.randomUUID()}.mp4")
         val transformer = Transformer.Builder(getApplication())
@@ -136,7 +174,15 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
             .addListener(object : Transformer.Listener {
                 override fun onCompleted(composition: Composition, exportResult: ExportResult) {
                     viewModelScope.launch {
-                        saveToHistory(output.absolutePath, "VIDEO")
+                        val historyId = UUID.randomUUID().toString()
+                        saveToHistory(output.absolutePath, "VIDEO", historyId)
+                        // Send task complete notification
+                        notificationManager.sendTaskCompleteNotification(
+                            taskType = TaskNotificationHelper.COMPRESS,
+                            taskId = taskId,
+                            resultId = historyId,
+                            displayName = "Compress"
+                        )
                         uiState = uiState.copy(
                             isCompressing = false,
                             result = CompressionResult(
@@ -155,9 +201,19 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                     exportException: ExportException
                 ) {
                     if (output.exists()) output.delete()
+                    val errorMsg = exportException.message ?: "Could not compress this video."
+                    // Send task failure notification
+                    viewModelScope.launch {
+                        notificationManager.sendTaskFailureNotification(
+                            taskType = TaskNotificationHelper.COMPRESS,
+                            taskId = taskId,
+                            displayName = "Compress",
+                            errorMessage = errorMsg
+                        )
+                    }
                     uiState = uiState.copy(
                         isCompressing = false,
-                        error = exportException.message ?: "Could not compress this video."
+                        error = errorMsg
                     )
                 }
             })
@@ -205,10 +261,10 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private suspend fun saveToHistory(path: String, type: String) {
+    private suspend fun saveToHistory(path: String, type: String, historyId: String) {
         historyRepository.addHistory(
             historyModel = HistoryModel(
-                id = UUID.randomUUID().toString(),
+                id = historyId,
                 title = if (type == "VIDEO") "Compressed Video" else "Compressed Image",
                 createdAt = currentTimestamp(),
                 type = type,
