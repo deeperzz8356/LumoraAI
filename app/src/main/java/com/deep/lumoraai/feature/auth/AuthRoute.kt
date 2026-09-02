@@ -6,6 +6,8 @@ import android.content.ContextWrapper
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.credentials.Credential
@@ -18,6 +20,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.deep.lumoraai.core.utils.GuestIdentity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -29,6 +32,7 @@ fun AuthRoute(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uiState = viewModel.uiState
+    val guestTrialExhausted = remember { mutableStateOf(GuestIdentity.isTrialExhausted(context)) }
 
     LaunchedEffect(Unit) {
         viewModel.resetState()
@@ -46,9 +50,19 @@ fun AuthRoute(
         onEmailSignIn = { email, password, isSignUp ->
             viewModel.signInWithEmail(email, password, isSignUp)
         },
-        onGuestSignIn = { viewModel.signInAnonymously() },
+        onGuestSignIn = {
+            if (GuestIdentity.isTrialExhausted(context)) {
+                guestTrialExhausted.value = true
+                Toast.makeText(context, "Free trial finished. Please sign in or create an account.", Toast.LENGTH_LONG).show()
+                viewModel.showEmailForm(false)
+            } else {
+                GuestIdentity.markTrialStarted(context)
+                viewModel.signInAnonymously()
+            }
+        },
         onEmailOptionClick = { isSignUp -> viewModel.showEmailForm(isSignUp) },
-        onBack = { viewModel.resetState() }
+        onBack = { viewModel.resetState() },
+        allowGuestSignIn = !guestTrialExhausted.value
     )
 }
 

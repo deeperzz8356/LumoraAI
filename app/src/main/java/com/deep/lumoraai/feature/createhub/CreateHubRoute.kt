@@ -13,12 +13,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.theme.IntroPalette
+import com.deep.lumoraai.core.utils.GuestIdentity
 
 @Composable
 fun CreateHubRoute(
@@ -28,12 +30,14 @@ fun CreateHubRoute(
     initialTab: Int = 0,
     viewModel: CreateHubViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState = viewModel.uiState
 
     LaunchedEffect(uiState) {
         when (uiState) {
             CreateHubUiState.Generating -> onNavigate(Screen.Queue.route)
             CreateHubUiState.TrialExpired -> {
+                GuestIdentity.markTrialExhausted(context)
                 onNavigate(Screen.Auth.route)
                 viewModel.load()
             }

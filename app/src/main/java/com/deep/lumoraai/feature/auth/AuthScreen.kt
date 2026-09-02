@@ -49,6 +49,7 @@ fun AuthScreen(
     onGuestSignIn: () -> Unit,
     onEmailOptionClick: (Boolean) -> Unit,
     onBack: () -> Unit,
+    allowGuestSignIn: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -82,7 +83,8 @@ fun AuthScreen(
                 uiState = uiState,
                 onSignInClick = { onEmailOptionClick(false) },
                 onSignUpClick = { onEmailOptionClick(true) },
-                onGuestSignIn = onGuestSignIn
+                onGuestSignIn = onGuestSignIn,
+                allowGuestSignIn = allowGuestSignIn
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -256,7 +258,8 @@ private fun AuthFooter(
     uiState: AuthUiState,
     onSignInClick: () -> Unit,
     onSignUpClick: () -> Unit,
-    onGuestSignIn: () -> Unit
+    onGuestSignIn: () -> Unit,
+    allowGuestSignIn: Boolean
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -272,7 +275,7 @@ private fun AuthFooter(
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
-        if (uiState !is AuthUiState.EmailForm) {
+        if (uiState !is AuthUiState.EmailForm && allowGuestSignIn) {
             TextButton(onClick = onGuestSignIn) {
                 Text(
                     text = "Continue as guest",
@@ -280,6 +283,14 @@ private fun AuthFooter(
                     color = IntroPalette.TextMuted
                 )
             }
+        } else if (uiState !is AuthUiState.EmailForm) {
+            Text(
+                text = "Free trial finished on this device. Sign in or create an account to continue.",
+                color = IntroPalette.TextMuted,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
         }
         FooterSwitchRow(
             uiState = uiState,

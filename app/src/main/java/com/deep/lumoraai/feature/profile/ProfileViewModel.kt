@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.GuestIdentity
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
@@ -32,12 +33,12 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     fun load() {
         val user = FirebaseAuth.getInstance().currentUser
         val items = if (user != null) {
-            val name = user.displayName ?: user.email?.substringBefore("@") ?: "Guest User"
-            val email = user.email ?: "Anonymous Access"
+            val name = GuestIdentity.displayName(getApplication(), user)
+            val email = GuestIdentity.subtitle(getApplication(), user)
             val plan = if (user.isAnonymous) "Free Tier (Guest)" else "Premium Account"
             listOf(name, email, plan)
         } else {
-            listOf("Not Logged In", "Please register or sign in.")
+            listOf(GuestIdentity.displayName(getApplication(), null), GuestIdentity.subtitle(getApplication(), null), "Guest Preview")
         }
 
         uiState = ProfileUiState.Success(items, emptyList())

@@ -100,6 +100,7 @@ fun ProfileScreen(
                 is ProfileUiState.Error -> AppErrorScreen(message = uiState.message)
                 ProfileUiState.Empty -> AppEmptyScreen(title = "Profile", body = "No account details available.")
                 is ProfileUiState.Success -> ProfileContent(
+                    items = uiState.items,
                     credits = uiState.credits,
                     generations = uiState.generations,
                     onSignOut = onSignOut,
@@ -112,6 +113,7 @@ fun ProfileScreen(
 
 @Composable
 private fun ProfileContent(
+    items: List<String>,
     credits: Int,
     generations: List<HistoryModel>,
     onSignOut: () -> Unit,
@@ -126,7 +128,12 @@ private fun ProfileContent(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         ProfileTopBar(onNavigate = onNavigate)
-        ProfileHero(onNavigate = onNavigate)
+        ProfileHero(
+            name = items.getOrNull(0).orEmpty(),
+            subtitle = items.getOrNull(1).orEmpty(),
+            plan = items.getOrNull(2).orEmpty(),
+            onNavigate = onNavigate
+        )
 
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
             DashboardCard("$credits", "LUM credits", Icons.Default.Star, Lime, { onNavigate(Screen.Credits.route) }, Modifier.weight(1f))
@@ -172,7 +179,7 @@ private fun ProfileTopBar(onNavigate: (String) -> Unit) {
 }
 
 @Composable
-private fun ProfileHero(onNavigate: (String) -> Unit) {
+private fun ProfileHero(name: String, subtitle: String, plan: String, onNavigate: (String) -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().height(164.dp),
         shape = CardShape,
@@ -183,8 +190,11 @@ private fun ProfileHero(onNavigate: (String) -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Avatar(size = 70.dp)
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Alex Thorne", color = Color.White, fontSize = 21.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("@alexthorne_creatives", color = Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(name.ifBlank { "Lumora Creator" }, color = Color.White, fontSize = 21.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(subtitle.ifBlank { plan }, color = Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (plan.isNotBlank()) {
+                        Text(plan, color = Lime, fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                     Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         MiniAction("Edit", Icons.Default.Edit, Lime, onClick = { onNavigate(EDIT_PROFILE_ROUTE) })
                         MiniAction("Share", Icons.Default.Share, Purple, onClick = {})

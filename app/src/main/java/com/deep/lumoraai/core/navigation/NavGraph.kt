@@ -13,10 +13,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.deep.lumoraai.data.repository.AuthRepository
+import com.deep.lumoraai.core.utils.GuestIdentity
 import com.deep.lumoraai.feature.auth.AuthRoute
 import com.deep.lumoraai.feature.bgstudio.BgStudioRoute
 import com.deep.lumoraai.feature.compress.CompressRoute
@@ -53,6 +55,7 @@ fun NavGraph(
 ) {
     val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     fun next(screen: Screen) = { navController.goTo(screen.nextScreen().route) }
 
     LaunchedEffect(notificationRoute) {
@@ -85,7 +88,13 @@ fun NavGraph(
                 onNext = {
                     coroutineScope.launch {
                         if (FirebaseAuth.getInstance().currentUser == null) {
-                            AuthRepository().loginAnonymouslyAndSync()
+                            if (GuestIdentity.isTrialExhausted(context)) {
+                                navController.goTo(Screen.Auth.route)
+                                return@launch
+                            } else {
+                                GuestIdentity.markTrialStarted(context)
+                                AuthRepository().loginAnonymouslyAndSync()
+                            }
                         }
                         navController.goTo(Screen.Home.route)
                     }
