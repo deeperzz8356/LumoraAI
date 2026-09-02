@@ -62,6 +62,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import android.app.Activity
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
@@ -90,6 +92,7 @@ fun CreditsScreen(
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val activity = LocalContext.current as? Activity
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = CredBackground,
@@ -109,10 +112,11 @@ fun CreditsScreen(
                     isDeveloperMode = uiState.isDeveloperMode,
                     rewards = uiState.rewards,
                     rewardMessage = uiState.rewardMessage,
+                    purchaseMessage = uiState.purchaseMessage,
                     isRewardBusy = uiState.isRewardBusy,
                     checkInDayIndex = uiState.checkInDayIndex,
                     onBack = onBack,
-                    onBuy = { viewModel.buyCredits(it) },
+                    onBuy = { viewModel.buyCredits(it, activity) },
                     onClaimReward = { viewModel.claimReward(it) },
                     onClearRewardMessage = { viewModel.clearRewardMessage() },
                     onNavigate = onNavigate
@@ -128,6 +132,7 @@ private fun CreditsContent(
     isDeveloperMode: Boolean,
     rewards: List<CreditRewardUi>,
     rewardMessage: String?,
+    purchaseMessage: String?,
     isRewardBusy: Boolean,
     checkInDayIndex: Int,
     onBack: () -> Unit,
@@ -162,6 +167,9 @@ private fun CreditsContent(
     ) {
         PageTopBar(title = "Credits", subtitle = "Fuel every generation", onBack = onBack)
         BalanceHero(balanceLabel = balanceLabel, isDeveloperMode = isDeveloperMode)
+        if (purchaseMessage != null) {
+            Text(purchaseMessage, color = Muted, fontSize = 12.sp)
+        }
 
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
             CreditStatCard("Images", "1 credit", Icons.Default.Star, Purple, Modifier.weight(1f))

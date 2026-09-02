@@ -95,6 +95,7 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.purchases)
+    implementation(libs.android.billing)
     implementation(libs.androidx.compose.material.icons.extended)
 
     // OneSignal Push Notifications

@@ -22,6 +22,7 @@ fun SubscriptionRoute(
                 viewModel.purchaseSelectedPlan(activity)
             }
         },
+        onRestore = viewModel::restorePurchases,
         onClearMessage = viewModel::clearPurchaseMessage,
         onBack = onBack,
         onNavigate = onNavigate

@@ -9,6 +9,8 @@ sealed interface CreditsUiState {
         val rewardMessage: String? = null,
         val isRewardBusy: Boolean = false,
         val checkInDayIndex: Int = 0,
+        val purchaseMessage: String? = null,
+        val isPurchasing: Boolean = false,
     ) : CreditsUiState
     data class Error(val message: String) : CreditsUiState
 }

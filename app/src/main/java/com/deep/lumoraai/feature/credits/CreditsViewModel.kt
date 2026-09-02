@@ -1,6 +1,7 @@
 package com.deep.lumoraai.feature.credits
 
 import android.app.Application
+import android.app.Activity
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +11,9 @@ import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
+import com.deep.lumoraai.data.billing.BillingRepository
+import com.deep.lumoraai.data.billing.BillingResult
+import kotlinx.coroutines.flow.collect
 import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -22,12 +26,45 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
     private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val rewardPrefs = application.getSharedPreferences("lumora_credit_rewards", Context.MODE_PRIVATE)
     private val auth = FirebaseAuth.getInstance()
+    private val billing = BillingRepository(application)
 
     var uiState: CreditsUiState by mutableStateOf(CreditsUiState.Loading)
         private set
 
     init {
+        billing.connect()
         load()
+        viewModelScope.launch {
+            billing.purchaseEvents.collect { event ->
+                if (event is BillingResult.Cancelled || event is BillingResult.Error) {
+                    (uiState as? CreditsUiState.Success)?.let {
+                        uiState = it.copy(isPurchasing = false, purchaseMessage = when (event) {
+                            BillingResult.Cancelled -> "Purchase cancelled."
+                            is BillingResult.Error -> event.message
+                            else -> null
+                        })
+                    }
+                    billing.clearPurchaseEvent()
+                    return@collect
+                }
+                val purchase = event as? BillingResult.PurchaseReady ?: return@collect
+                val productId = purchase.productIds.firstOrNull { it in BillingRepository.CREDIT_IDS }
+                if (productId != null) {
+                    val result = generationRepository.verifyGooglePlayPurchase(productId, purchase.purchaseToken)
+                    val current = uiState as? CreditsUiState.Success
+                    if (current != null) {
+                        uiState = if (result.isSuccess) {
+                            current.copy(credits = result.getOrThrow(), isPurchasing = false,
+                                purchaseMessage = "Credit pack verified and added to your balance.")
+                        } else current.copy(isPurchasing = false,
+                            purchaseMessage = "Payment received, but verification is pending. Credits were not added on this device.")
+                    }
+                    billing.finalizePurchase(purchase.purchaseToken, consume = true) {
+                        billing.clearPurchaseEvent()
+                    }
+                }
+            }
+        }
     }
 
     fun load() {
@@ -60,7 +97,7 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun buyCredits(amount: Int) {
+    fun buyCredits(amount: Int, activity: Activity?) {
         val currentState = uiState
         if (currentState is CreditsUiState.Success) {
             if (currentState.isDeveloperMode) {
@@ -71,23 +108,33 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
                 )
                 return
             }
-            uiState = CreditsUiState.Loading
+            val productId = when (amount) {
+                50 -> BillingRepository.CREDITS_STARTER
+                150 -> BillingRepository.CREDITS_CREATOR
+                500 -> BillingRepository.CREDITS_STUDIO
+                else -> null
+            }
+            if (activity == null || productId == null) return
+            uiState = currentState.copy(isPurchasing = true, purchaseMessage = null)
             viewModelScope.launch {
-                val result = generationRepository.addCredits(amount)
-                if (result.isSuccess) {
-                    val syncedCredits = result.getOrNull() ?: generationRepository.getCredits().getOrNull()
-                    val newCredits = maxOf(syncedCredits ?: (currentState.credits + amount), currentState.credits + amount)
-                    uiState = CreditsUiState.Success(
-                        credits = newCredits,
-                        isDeveloperMode = false,
-                        rewards = buildRewardTasks(isDeveloperMode = false),
-                        checkInDayIndex = checkInIndex()
-                    )
-                } else {
-                    uiState = CreditsUiState.Error("Failed to add credits")
+                when (val result = billing.launchPurchase(activity, productId)) {
+                    BillingResult.Launched -> Unit
+                    BillingResult.Cancelled -> uiState = currentState.copy(isPurchasing = false, purchaseMessage = "Purchase cancelled.")
+                    is BillingResult.Error -> uiState = currentState.copy(isPurchasing = false, purchaseMessage = result.message)
+                    is BillingResult.PurchaseReady -> Unit
                 }
             }
         }
+
+    }
+
+    fun clearPurchaseMessage() {
+        (uiState as? CreditsUiState.Success)?.let { uiState = it.copy(purchaseMessage = null) }
+    }
+
+    override fun onCleared() {
+        billing.disconnect()
+        super.onCleared()
     }
 
     fun claimReward(rewardId: String) {

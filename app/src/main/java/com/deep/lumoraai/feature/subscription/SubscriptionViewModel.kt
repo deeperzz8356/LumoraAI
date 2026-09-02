@@ -7,177 +7,125 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.data.billing.BillingProduct
+import com.deep.lumoraai.data.billing.BillingRepository
+import com.deep.lumoraai.data.billing.BillingResult
+import com.deep.lumoraai.data.billing.BillingState
+import com.deep.lumoraai.data.billing.RestoredPurchase
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
+import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.feature.subscription.model.SubscriptionPlan
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
-// Payment gateway imports are disabled for now - payment processing disconnected
-// Keeping monitoring and credit/billing logic intact
-// import com.revenuecat.purchases.CustomerInfo
-// import com.revenuecat.purchases.Offerings
-// import com.revenuecat.purchases.Purchases
-// import com.revenuecat.purchases.PurchasesError
-// import com.revenuecat.purchases.interfaces.ReceiveOfferingsCallback
-// import com.revenuecat.purchases.interfaces.LogInCallback
-// import com.revenuecat.purchases.interfaces.PurchaseCallback
-// import com.revenuecat.purchases.models.PurchaseParams
-// import com.revenuecat.purchases.models.StoreTransaction
-
 class SubscriptionViewModel(application: Application) : AndroidViewModel(application) {
-
     private val appPreferences = AppPreferencesRepository.getInstance(application)
+    private val billing = BillingRepository(application)
+    private val backend = GenerationRepository()
 
-    private val plans = listOf(
-        SubscriptionPlan(
-            id = "pro_monthly",
-            name = "Pro Monthly",
-            price = "$19.99",
-            billingPeriod = "per month",
-            features = listOf("500 credits/month", "HD image generation", "Standard queue priority")
-        ),
-        SubscriptionPlan(
-            id = "pro_annual",
-            name = "Pro Annual",
-            price = "$149.99",
-            billingPeriod = "per year",
-            features = listOf("6,000 credits/year", "HD image & video", "Priority queue", "Save 37%"),
-            highlighted = true
-        ),
-        SubscriptionPlan(
-            id = "elite_pro",
-            name = "Elite Pro",
-            price = "$499.99",
-            billingPeriod = "per year",
-            features = listOf("Unlimited credits", "8K rendering", "Instant queue", "Concierge support")
-        )
+    private val defaultPlans = listOf(
+        SubscriptionPlan("pro_monthly", "Pro Monthly", "$19.99", "per month", listOf("500 credits/month", "HD image generation", "Standard queue priority")),
+        SubscriptionPlan("pro_annual", "Pro Annual", "$149.99", "per year", listOf("6,000 credits/year", "HD image & video", "Priority queue", "Save 37%"), true),
+        SubscriptionPlan("elite_pro", "Elite Pro", "$499.99", "per year", listOf("Unlimited credits", "8K rendering", "Instant queue", "Concierge support"))
     )
 
     var uiState: SubscriptionUiState by mutableStateOf(SubscriptionUiState.Loading)
         private set
 
     init {
-        // Payment gateway initialization disabled - monitoring only mode
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user != null) {
-            // TODO: When payment gateway is re-enabled, initialize RevenueCat here
-            // Purchases.sharedInstance.logIn(
-            //     user.uid,
-            //     object : LogInCallback {
-            //         override fun onReceived(customerInfo: CustomerInfo, created: Boolean) {
-            //             // User identified successfully in RevenueCat
-            //         }
-            //         override fun onError(error: PurchasesError) {
-            //             // Ignore login error, user can still proceed with checkout
-            //         }
-            //     }
-            // )
-        }
-
+        billing.connect()
         viewModelScope.launch {
-            combine(
-                appPreferences.isDeveloperMode,
-                appPreferences.isDevModeUnlocked
-            ) { isDev, _ -> isDev }
+            combine(appPreferences.isDeveloperMode, appPreferences.isDevModeUnlocked) { isDev, _ -> isDev }
                 .collect { isDev ->
                     val current = uiState
-                    if (current is SubscriptionUiState.Success) {
-                        uiState = current.copy(isDeveloperMode = isDev)
-                    } else {
-                        uiState = SubscriptionUiState.Success(
-                            plans = plans,
-                            selectedPlanId = plans.first { it.highlighted }.id,
-                            isDeveloperMode = isDev
-                        )
+                    uiState = (current as? SubscriptionUiState.Success)?.copy(isDeveloperMode = isDev)
+                        ?: SubscriptionUiState.Success(defaultPlans, "pro_annual", isDev)
+                }
+        }
+        viewModelScope.launch {
+            combine(billing.state, billing.products, billing.purchaseEvents, billing.restoredPurchases) {
+                    state, products, event, restored -> BillingSnapshot(state, products, event, restored)
+                }.collect { snapshot ->
+                    val current = uiState as? SubscriptionUiState.Success ?: return@collect
+                    val prices = snapshot.products.associateBy { it.productId }
+                    val plans = current.plans.map { it.copy(price = prices[it.id]?.price ?: it.price) }
+                    val message = when (val event = snapshot.event) {
+                        null -> current.purchaseMessage
+                        BillingResult.Launched -> current.purchaseMessage
+                        is BillingResult.PurchaseReady -> "Purchase acknowledged. Entitlement verification is pending backend confirmation."
+                        BillingResult.Cancelled -> "Purchase cancelled."
+                        is BillingResult.Error -> event.message
+                    }
+                    uiState = current.copy(
+                        plans = plans,
+                        isPurchasing = snapshot.event == null && current.isPurchasing,
+                        purchaseMessage = message,
+                        billingState = snapshot.state,
+                        restoredProductIds = snapshot.restored.flatMap { it.productIds }
+                    )
+                    if (snapshot.event != null) billing.clearPurchaseEvent()
+                    val purchase = snapshot.event as? BillingResult.PurchaseReady
+                    if (purchase != null && purchase.productIds.isNotEmpty()) {
+                        viewModelScope.launch {
+                            val productId = purchase.productIds.first()
+                            val verified = backend.verifyGooglePlayPurchase(productId, purchase.purchaseToken)
+                            val latest = uiState as? SubscriptionUiState.Success ?: return@launch
+                            if (verified.isSuccess) {
+                                billing.finalizePurchase(purchase.purchaseToken, consume = false) {
+                                    uiState = latest.copy(
+                                        isPurchasing = false,
+                                        purchaseMessage = "Subscription verified and acknowledged."
+                                    )
+                                }
+                            } else {
+                                uiState = latest.copy(
+                                    isPurchasing = false,
+                                    purchaseMessage = "Subscription verification is pending. Access was not activated."
+                                )
+                            }
+                        }
                     }
                 }
         }
     }
 
     fun selectPlan(planId: String) {
-        val current = uiState
-        if (current is SubscriptionUiState.Success) {
-            uiState = current.copy(selectedPlanId = planId, purchaseMessage = null)
+        (uiState as? SubscriptionUiState.Success)?.let {
+            uiState = it.copy(selectedPlanId = planId, purchaseMessage = null)
         }
     }
 
     fun purchaseSelectedPlan(activity: Activity) {
-        val current = uiState
-        if (current !is SubscriptionUiState.Success) return
-
+        val current = uiState as? SubscriptionUiState.Success ?: return
         uiState = current.copy(isPurchasing = true, purchaseMessage = null)
         viewModelScope.launch {
-            val isDev = appPreferences.isDeveloperModeEnabled()
-            val plan = current.plans.firstOrNull { it.id == current.selectedPlanId }
-            
-            // Payment gateway is currently disabled - operating in monitoring mode
-            // The app tracks billing/credit usage but does not process payments
-            if (isDev) {
-                val message = "Developer mode: ${plan?.name ?: "Plan"} activated (no payment required)."
-                uiState = current.copy(isPurchasing = false, purchaseMessage = message)
-            } else {
-                // Payment processing is disabled - show informational message
-                val message = "Payment gateway is currently unavailable. " +
-                    "Your billing and credit usage are being monitored. " +
-                    "Payment processing will be enabled soon."
-                uiState = current.copy(
-                    isPurchasing = false,
-                    purchaseMessage = message
-                )
-                
-                // TODO: When payment gateway is re-enabled, implement:
-                // Purchases.sharedInstance.getOfferings(object : ReceiveOfferingsCallback {
-                //     override fun onReceived(offerings: Offerings) {
-                //         val pkg = offerings.current?.availablePackages?.firstOrNull {
-                //             it.identifier == current.selectedPlanId || it.product.id == current.selectedPlanId
-                //         }
-                //         if (pkg != null) {
-                //             val purchaseParams = PurchaseParams.Builder(activity, pkg).build()
-                //             Purchases.sharedInstance.purchase(
-                //                 purchaseParams,
-                //                 object : PurchaseCallback {
-                //                     override fun onCompleted(
-                //                         storeTransaction: StoreTransaction,
-                //                         customerInfo: CustomerInfo
-                //                     ) {
-                //                         uiState = current.copy(
-                //                             isPurchasing = false,
-                //                             purchaseMessage = "Purchase successful! Plan ${plan?.name} activated."
-                //                         )
-                //                     }
-                //
-                //                     override fun onError(error: PurchasesError, userCancelled: Boolean) {
-                //                         uiState = current.copy(
-                //                             isPurchasing = false,
-                //                             purchaseMessage = if (userCancelled) "Purchase cancelled." else "Error: ${error.message}"
-                //                         )
-                //                     }
-                //                 }
-                //             )
-                //         } else {
-                //             uiState = current.copy(
-                //                 isPurchasing = false,
-                //                 purchaseMessage = "Selected plan is not configured in Play Store."
-                //             )
-                //         }
-                //     }
-                //
-                //     override fun onError(error: PurchasesError) {
-                //         uiState = current.copy(
-                //             isPurchasing = false,
-                //             purchaseMessage = "Failed to load store offerings: ${error.message}"
-                //         )
-                //     }
-                // })
+            if (appPreferences.isDeveloperModeEnabled()) {
+                uiState = current.copy(isPurchasing = false, purchaseMessage = "Developer mode: ${current.selectedPlanId} activated (no payment required).")
+                return@launch
+            }
+            when (val result = billing.launchPurchase(activity, current.selectedPlanId)) {
+                BillingResult.Launched, is BillingResult.PurchaseReady -> Unit
+                BillingResult.Cancelled -> uiState = current.copy(isPurchasing = false, purchaseMessage = "Purchase cancelled.")
+                is BillingResult.Error -> uiState = current.copy(isPurchasing = false, purchaseMessage = result.message)
             }
         }
     }
 
+    fun restorePurchases() = billing.restorePurchases()
+
     fun clearPurchaseMessage() {
-        val current = uiState
-        if (current is SubscriptionUiState.Success) {
-            uiState = current.copy(purchaseMessage = null)
-        }
+        (uiState as? SubscriptionUiState.Success)?.let { uiState = it.copy(purchaseMessage = null) }
     }
+
+    override fun onCleared() {
+        billing.disconnect()
+        super.onCleared()
+    }
+
+    private data class BillingSnapshot(
+        val state: BillingState,
+        val products: List<BillingProduct>,
+        val event: BillingResult?,
+        val restored: List<RestoredPurchase>
+    )
 }
