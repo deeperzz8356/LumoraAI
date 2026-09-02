@@ -1,7 +1,8 @@
 package com.deep.lumoraai.feature.templates
 
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,13 +42,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.widget.Toast
+import coil.compose.AsyncImage
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
@@ -231,8 +231,8 @@ private fun TemplateRow(item: TemplateListItem, onCopy: () -> Unit, onClick: () 
                     .clip(RoundedCornerShape(5.dp))
                     .background(Color.Black)
             ) {
-                Image(
-                    painter = painterResource(id = item.imageRes),
+                AsyncImage(
+                    model = templateAssetUri(item.assetFileName),
                     contentDescription = item.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
@@ -280,3 +280,6 @@ private fun TemplateRow(item: TemplateListItem, onCopy: () -> Unit, onClick: () 
         }
     }
 }
+
+private fun templateAssetUri(fileName: String): String =
+    "file:///android_asset/templates/${Uri.encode(fileName)}"
