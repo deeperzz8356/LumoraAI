@@ -211,16 +211,9 @@ fun PromptComposerCard(
     onNegativePromptChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
     onUpload: (() -> Unit)? = null,
+    isSettingsOpen: Boolean = false,
+    onSettingsClick: () -> Unit = {},
 ) {
-    var showNegativePrompt by remember { mutableStateOf(false) }
-    if (showNegativePrompt) {
-        NegativePromptDialog(
-            value = negativePrompt,
-            onValueChange = onNegativePromptChanged,
-            onDismiss = { showNegativePrompt = false }
-        )
-    }
-
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -272,9 +265,9 @@ fun PromptComposerCard(
             )
             SquareActionButton(
                 icon = Icons.Default.Tune,
-                contentDescription = "Negative prompt",
-                onClick = { showNegativePrompt = true },
-                highlighted = negativePrompt.isNotBlank()
+                contentDescription = "Advanced settings",
+                onClick = onSettingsClick,
+                highlighted = isSettingsOpen || negativePrompt.isNotBlank()
             )
         }
         Text(
@@ -318,59 +311,6 @@ private fun SquareActionButton(
             )
         }
     }
-}
-
-@Composable
-private fun NegativePromptDialog(
-    value: String,
-    onValueChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var draft by remember(value) { mutableStateOf(value) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = GenerationPanel,
-        titleContentColor = Color.White,
-        textContentColor = GenerationMuted,
-        title = {
-            Text("Negative Prompt", fontWeight = FontWeight.Bold)
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Tell Lumora what to avoid in this generation.", fontSize = 13.sp)
-                OutlinedTextField(
-                    value = draft,
-                    onValueChange = { draft = it.take(1000) },
-                    placeholder = { Text("blurry, extra fingers, bad anatomy, watermark...") },
-                    minLines = 4,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF10182A),
-                        unfocusedContainerColor = Color(0xFF10182A),
-                        focusedBorderColor = GenerationLime.copy(alpha = 0.8f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = GenerationLime
-                    )
-                )
-                Text("${draft.length}/1000", fontSize = 12.sp, color = Color.White.copy(alpha = 0.56f), modifier = Modifier.align(Alignment.End))
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                onValueChange(draft)
-                onDismiss()
-            }) {
-                Text("Save", color = GenerationLime, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = GenerationMuted)
-            }
-        }
-    )
 }
 
 @Composable
@@ -495,6 +435,10 @@ private fun assetUri(fileName: String): String = "file:///android_asset/${Uri.en
 @Composable
 fun GenerationControlsPanel(
     modifier: Modifier = Modifier,
+    mediaType: String,
+    aspectRatioLabel: String,
+    negativePrompt: String,
+    onNegativePromptChanged: (String) -> Unit,
     similarity: Float? = null,
     similarityLabel: String = "Image Similarity",
     onSimilarityChanged: ((Float) -> Unit)? = null,
@@ -516,6 +460,26 @@ fun GenerationControlsPanel(
             .padding(horizontal = 20.dp, vertical = 18.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Advanced Settings", color = Color.White, fontSize = 18.sp, lineHeight = 22.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Tune output details before choosing a style.", color = GenerationMuted, fontSize = 12.sp, lineHeight = 16.sp)
+            }
+            Text(
+                text = mediaType.uppercase(),
+                color = Color.Black,
+                fontSize = 10.sp,
+                lineHeight = 12.sp,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(GenerationLime)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
+        SettingSummaryRow(label = "Ratio", value = aspectRatioLabel)
+        NegativePromptField(value = negativePrompt, onValueChange = onNegativePromptChanged)
+        GenerationDivider()
         if (similarity != null && onSimilarityChanged != null) {
             SliderBlock(similarityLabel, "${(similarity * 100).toInt()}%", similarity, onSimilarityChanged)
             GenerationDivider()
@@ -533,6 +497,49 @@ fun GenerationControlsPanel(
             GenerationDivider()
         }
         GenerationStepper(generations = generations, onGenerationsChanged = onGenerationsChanged)
+    }
+}
+
+@Composable
+private fun SettingSummaryRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF10182A))
+            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(value, color = GenerationLime, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+    }
+}
+
+@Composable
+private fun NegativePromptField(value: String, onValueChange: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("Negative Prompt", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text("${value.length}/1000", color = Color.White.copy(alpha = 0.56f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        }
+        OutlinedTextField(
+            value = value,
+            onValueChange = { onValueChange(it.take(1000)) },
+            placeholder = { Text("blurry, extra fingers, bad anatomy, watermark...") },
+            minLines = 3,
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color(0xFF10182A),
+                unfocusedContainerColor = Color(0xFF10182A),
+                focusedBorderColor = GenerationLime.copy(alpha = 0.8f),
+                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                cursorColor = GenerationLime
+            )
+        )
     }
 }
 

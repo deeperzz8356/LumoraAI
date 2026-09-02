@@ -13,6 +13,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.core.navigation.Screen
@@ -45,6 +47,7 @@ fun TextToImageScreen(
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
+    val showAdvancedSettings = remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isGenerating, uiState.generatedPath) {
         if (uiState.isGenerating || uiState.generatedPath != null) {
@@ -81,15 +84,23 @@ fun TextToImageScreen(
                     isImproving = uiState.isImprovingPrompt,
                     onPromptChanged = onPromptChanged,
                     onImprovePrompt = onImprovePrompt,
-                    onNegativePromptChanged = onNegativePromptChanged
+                    onNegativePromptChanged = onNegativePromptChanged,
+                    isSettingsOpen = showAdvancedSettings.value,
+                    onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                 )
+                if (showAdvancedSettings.value) {
+                    GenerationControlsPanel(
+                        mediaType = "Image",
+                        aspectRatioLabel = "2:3 portrait",
+                        negativePrompt = uiState.negativePrompt,
+                        onNegativePromptChanged = onNegativePromptChanged,
+                        creativity = uiState.creativity,
+                        onCreativityChanged = onCreativityChanged,
+                        generations = uiState.generations,
+                        onGenerationsChanged = onGenerationsChanged
+                    )
+                }
                 ImageStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
-                GenerationControlsPanel(
-                    creativity = uiState.creativity,
-                    onCreativityChanged = onCreativityChanged,
-                    generations = uiState.generations,
-                    onGenerationsChanged = onGenerationsChanged
-                )
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
                     enabled = uiState.generatedPath == null,

@@ -16,6 +16,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.core.navigation.Screen
@@ -51,6 +53,7 @@ fun ImageToVideoScreen(
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
+    val showAdvancedSettings = remember { mutableStateOf(false) }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) onImageSelected(uri)
     }
@@ -96,17 +99,25 @@ fun ImageToVideoScreen(
                     onPromptChanged = onPromptChanged,
                     onImprovePrompt = onImprovePrompt,
                     onNegativePromptChanged = onNegativePromptChanged,
-                    onUpload = { imagePicker.launch("image/*") }
+                    onUpload = { imagePicker.launch("image/*") },
+                    isSettingsOpen = showAdvancedSettings.value,
+                    onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                 )
+                if (showAdvancedSettings.value) {
+                    GenerationControlsPanel(
+                        mediaType = "Video",
+                        aspectRatioLabel = "9:16 vertical",
+                        negativePrompt = uiState.negativePrompt,
+                        onNegativePromptChanged = onNegativePromptChanged,
+                        similarity = uiState.similarity,
+                        onSimilarityChanged = onSimilarityChanged,
+                        duration = uiState.duration,
+                        onDurationChanged = onDurationChanged,
+                        generations = uiState.generations,
+                        onGenerationsChanged = onGenerationsChanged
+                    )
+                }
                 VideoStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
-                GenerationControlsPanel(
-                    similarity = uiState.similarity,
-                    onSimilarityChanged = onSimilarityChanged,
-                    duration = uiState.duration,
-                    onDurationChanged = onDurationChanged,
-                    generations = uiState.generations,
-                    onGenerationsChanged = onGenerationsChanged
-                )
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
                     enabled = uiState.generatedPath == null,
