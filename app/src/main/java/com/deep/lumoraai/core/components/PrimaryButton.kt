@@ -40,8 +40,8 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -82,23 +82,34 @@ fun GradientButton(text: String, onClick: () -> Unit, modifier: Modifier = Modif
 }
 
 @Composable
-fun AppToolbar(title: String, modifier: Modifier = Modifier, action: (@Composable () -> Unit)? = null) {
+fun AppToolbar(
+    title: String,
+    modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
+    rightAction: (@Composable () -> Unit)? = null
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(Dimension.ToolbarHeight)
             .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.Start,
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (action != null) {
-            Box(modifier = Modifier.width(48.dp)) {
-                action()
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            if (action != null) {
+                Box(modifier = Modifier.width(48.dp)) {
+                    action()
+                }
+                Spacer(modifier = Modifier.width(12.dp))
             }
-            Spacer(modifier = Modifier.width(12.dp))
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.weight(1f))
+        if (rightAction != null) {
+            Box(modifier = Modifier.width(48.dp), contentAlignment = Alignment.CenterEnd) {
+                rightAction()
+            }
+        }
     }
 }
 
@@ -128,8 +139,8 @@ fun BottomNavigationBar(items: List<String>, selected: String, onSelected: (Stri
             NavItem(Icons.Default.Home, "Home", selected == "home", { onSelected("home") }, Modifier.weight(1f))
             NavItem(Icons.Default.Search, "Templates", selected == "templates", { onSelected("templates") }, Modifier.weight(1f))
             Spacer(modifier = Modifier.width(72.dp))
+            NavItem(Icons.Default.Search, "AI Tools", selected == "aitools", { onSelected("aitools") }, Modifier.weight(1f))
             NavItem(Icons.Default.History, "History", selected == "history", { onSelected("history") }, Modifier.weight(1f))
-            NavItem(Icons.Default.Person, "Profile", selected == "profile", { onSelected("profile") }, Modifier.weight(1f))
         }
         Box(
             modifier = Modifier

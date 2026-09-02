@@ -16,6 +16,7 @@ sealed class Screen(val route: String, val title: String) {
     data object TextToVideo : Screen("texttovideo", "Text To Video")
     data object PromoVideo : Screen("promovideo", "Promo Video")
     data object Templates : Screen("templates", "Templates")
+    data object AITools : Screen("aitools", "AI Tools")
     data object Queue : Screen("queue", "Queue")
     data object Result : Screen("result", "Result")
     data object History : Screen("history", "History")
@@ -23,7 +24,10 @@ sealed class Screen(val route: String, val title: String) {
     data object Notifications : Screen("notifications", "Notifications")
     data object Subscription : Screen("subscription", "Subscription")
     data object Profile : Screen("profile", "Profile")
+    data object EditProfile : Screen("editprofile", "Edit Profile")
     data object Settings : Screen("settings", "Settings")
+    data object PrivacySecurity : Screen("privacysecurity", "Privacy & Security")
+    data object HelpSupport : Screen("helpsupport", "Help & Support")
 }
 
 val navigationSequence = listOf(
@@ -42,6 +46,7 @@ val navigationSequence = listOf(
     Screen.TextToVideo,
     Screen.PromoVideo,
     Screen.Templates,
+    Screen.AITools,
     Screen.Queue,
     Screen.Result,
     Screen.History,
@@ -49,5 +54,8 @@ val navigationSequence = listOf(
     Screen.Notifications,
     Screen.Subscription,
     Screen.Profile,
-    Screen.Settings
+    Screen.EditProfile,
+    Screen.Settings,
+    Screen.PrivacySecurity,
+    Screen.HelpSupport
 )

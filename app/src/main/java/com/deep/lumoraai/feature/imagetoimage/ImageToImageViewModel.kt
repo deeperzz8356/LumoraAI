@@ -13,6 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.notification.NotificationManager
+import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -31,6 +33,7 @@ import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 class ImageToImageViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -39,6 +42,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val mediaStorage = MediaStorageRepository.getInstance(application)
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
     private var sourceImageB64: String? = null
 
     var uiState: ImageToImageUiState by mutableStateOf(ImageToImageUiState())
@@ -147,7 +151,18 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     private fun startImageJob(sourceImage: String, developerMode: Boolean) {
         val prompt = buildPrompt()
         val jobTitle = "Image 2 Image ${shortTimestamp()}"
+        val taskId = UUID.randomUUID().toString()
         uiState = uiState.copy(isGenerating = true, error = null)
+        
+        // Send task start notification
+        viewModelScope.launch {
+            notificationManager.sendTaskStartNotification(
+                taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
+                taskId = taskId,
+                displayName = "Image to Image"
+            )
+        }
+        
         GenerationRepository.addJob(
             ActiveJobInfo(
                 title = jobTitle,

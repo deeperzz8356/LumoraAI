@@ -78,6 +78,7 @@ dependencies {
     implementation("androidx.media3:media3-transformer:1.5.0")
     implementation(libs.androidx.media3.ui)
     implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
     kapt(libs.hilt.compiler)
 
     implementation(libs.androidx.room.runtime)
@@ -87,6 +88,9 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.purchases)
     implementation(libs.androidx.compose.material.icons.extended)
+
+    // OneSignal Push Notifications
+    implementation("com.onesignal:OneSignal:5.1.5")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

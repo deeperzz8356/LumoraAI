@@ -43,6 +43,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.Icon
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.LumoraIntroBackground
 import com.deep.lumoraai.core.theme.IntroPalette
@@ -91,7 +94,7 @@ fun OnboardingScreen(
                         onNext()
                     }
                 },
-                modifier = Modifier.padding(bottom = 28.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
         }
     }
@@ -150,7 +153,7 @@ fun StandardStepScreen(currentStep: Int) {
         val compactHeight = maxHeight < 620.dp
         val imageAspectRatio = if (compactHeight) 0.92f else 0.8f
         val imageTopSpacing = if (compactHeight) 12.dp else 22.dp
-        val descriptionTopSpacing = if (compactHeight) 18.dp else 28.dp
+        val descriptionTopSpacing = if (compactHeight) 8.dp else 14.dp
 
         Column(
             modifier = Modifier
@@ -185,6 +188,8 @@ fun StandardStepScreen(currentStep: Int) {
             Spacer(modifier = Modifier.height(descriptionTopSpacing))
 
             StepDescription(step = currentStep)
+            
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
@@ -380,7 +385,7 @@ fun OnboardingControls(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 22.dp),
+            .padding(horizontal = 22.dp, vertical = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -438,7 +443,7 @@ fun OnboardingStartButton(onGetStarted: () -> Unit) {
             .width(164.dp)
             .height(52.dp),
         shape = RoundedCornerShape(26.dp),
-        contentPadding = PaddingValues(start = 18.dp, end = 6.dp, top = 0.dp, bottom = 0.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -454,9 +459,16 @@ fun OnboardingStartButton(onGetStarted: () -> Unit) {
 @Composable
 fun OnboardingStartArrow() {
     Box(
-        modifier = Modifier.size(40.dp).background(Color.White, CircleShape),
+        modifier = Modifier
+            .size(40.dp)
+            .background(Color.White, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Text(">>", color = IntroPalette.PrimaryButton, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+        Icon(
+            imageVector = Icons.Filled.ArrowForward,
+            contentDescription = "Start",
+            tint = IntroPalette.PrimaryButton,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }

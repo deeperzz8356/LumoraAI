@@ -80,6 +80,8 @@ fun HomeScreen(
     uiState: HomeUiState,
     onNext: () -> Unit,
     onNavigate: (String) -> Unit = {},
+    unreadCount: Int = 0,
+    onNotificationClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -93,13 +95,15 @@ fun HomeScreen(
                 .background(HomeBackground)
                 .padding(padding)
         ) {
-            when (uiState) {
+        when (uiState) {
                 is HomeUiState.Loading -> AppLoadingScreen()
                 is HomeUiState.Error -> AppErrorScreen(message = uiState.message)
                 is HomeUiState.Empty -> AppEmptyScreen(title = "No Content", body = "Nothing to see here.")
                 is HomeUiState.Success -> HomeContent(
                     uiState = uiState,
                     onNavigate = onNavigate,
+                    unreadCount = unreadCount,
+                    onNotificationClick = onNotificationClick,
                 )
             }
         }
@@ -110,6 +114,8 @@ fun HomeScreen(
 private fun HomeContent(
     uiState: HomeUiState.Success,
     onNavigate: (String) -> Unit,
+    unreadCount: Int = 0,
+    onNotificationClick: (() -> Unit)? = null,
 ) {
     Column(
         modifier = Modifier
@@ -122,7 +128,9 @@ private fun HomeContent(
         HomeTopBar(
             userName = uiState.userName,
             credits = uiState.credits,
-            onNavigate = onNavigate
+            onNavigate = onNavigate,
+            unreadCount = unreadCount,
+            onNotificationClick = onNotificationClick
         )
         HomeHero(onExploreRecent = { onNavigate(Screen.History.route) })
         MainCreateGrid(onNavigate = onNavigate)
@@ -137,6 +145,8 @@ private fun HomeTopBar(
     userName: String,
     credits: Int,
     onNavigate: (String) -> Unit,
+    unreadCount: Int = 0,
+    onNotificationClick: (() -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -186,7 +196,10 @@ private fun HomeTopBar(
             Box(
                 modifier = Modifier
                     .size(34.dp)
-                    .clickable { onNavigate(Screen.Notifications.route) },
+                    .clickable {
+                        onNotificationClick?.invoke()
+                            ?: onNavigate(Screen.Notifications.route)
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -195,12 +208,24 @@ private fun HomeTopBar(
                     tint = Color(0xFFDFF7F4),
                     modifier = Modifier.size(23.dp)
                 )
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .align(Alignment.TopEnd)
-                        .background(Lime, CircleShape)
-                )
+                // Unread count badge
+                if (unreadCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .align(Alignment.TopEnd)
+                            .clip(CircleShape)
+                            .background(Lime),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (unreadCount > 9) "9+" else unreadCount.toString(),
+                            color = Color.Black,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }

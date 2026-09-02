@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.local.room.dao.HistoryDao
+import com.deep.lumoraai.data.local.room.dao.NotificationDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,5 +26,11 @@ object DatabaseModule {
     @Singleton
     fun provideHistoryDao(database: LumoraDatabase): HistoryDao {
         return database.historyDao
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationDao(database: LumoraDatabase): NotificationDao {
+        return database.notificationDao
     }
 }

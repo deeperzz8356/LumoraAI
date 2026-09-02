@@ -46,6 +46,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -493,6 +495,18 @@ private fun PurchaseRow(title: String, desc: String, price: String) {
 
 @Composable
 private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit) {
+    val showDeleteDialog = remember { mutableStateOf(false) }
+
+    if (showDeleteDialog.value) {
+        DeleteAccountDialog(
+            onConfirm = {
+                showDeleteDialog.value = false
+                // TODO: Add delete account logic here
+            },
+            onDismiss = { showDeleteDialog.value = false }
+        )
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
@@ -507,7 +521,7 @@ private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit)
             PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
             PrefRow("Privacy Policy", Icons.Default.Info, Color.White)
             PrefRow("Terms of Service", Icons.Default.Info, Color.White)
-            PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A))
+            PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A), onClick = { showDeleteDialog.value = true })
             PrefRow("Sign Out", Icons.Default.ExitToApp, Color(0xFFFF7A7A), onSignOut)
         }
     }
@@ -564,6 +578,84 @@ private fun SupportCard() {
                     modifier = Modifier.padding(horizontal = 12.dp)
                 ) {
                     Text("Support", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeleteAccountDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f))
+            .clickable(onClick = onDismiss),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .clickable(enabled = false) {},
+            shape = RoundedCornerShape(16.dp),
+            color = ProfileCard,
+            border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = Color(0xFFFF7A7A),
+                    modifier = Modifier.size(48.dp)
+                )
+                Text(
+                    "Delete Account?",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    "This action cannot be undone. All your data, credits, and history will be permanently deleted.",
+                    color = Muted,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 18.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = ProfileCard.copy(alpha = 0.7f))
+                    ) {
+                        Text("Cancel", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF7A7A))
+                    ) {
+                        Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

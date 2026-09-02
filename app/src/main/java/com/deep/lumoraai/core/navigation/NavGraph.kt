@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.feature.auth.AuthRoute
+import com.deep.lumoraai.feature.aitools.AIToolsRoute
 import com.deep.lumoraai.feature.bgstudio.BgStudioRoute
 import com.deep.lumoraai.feature.compress.CompressRoute
 import com.deep.lumoraai.feature.createhub.CreateHubRoute
@@ -32,6 +33,9 @@ import com.deep.lumoraai.feature.photoenhance.PhotoEnhanceRoute
 import com.deep.lumoraai.feature.profile.ProfileRoute
 import com.deep.lumoraai.feature.queue.QueueRoute
 import com.deep.lumoraai.feature.result.ResultRoute
+import com.deep.lumoraai.feature.profile.EditProfileRoute
+import com.deep.lumoraai.feature.settings.HelpSupportRoute
+import com.deep.lumoraai.feature.settings.PrivacySecurityRoute
 import com.deep.lumoraai.feature.settings.SettingsRoute
 import com.deep.lumoraai.feature.splash.SplashRoute
 import com.deep.lumoraai.feature.subscription.SubscriptionRoute
@@ -199,6 +203,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
         composable(Screen.Templates.route) { TemplatesRoute(onNext = next(Screen.Templates), onNavigate = { navController.goTo(it) }) }
+        composable(Screen.AITools.route) { AIToolsRoute(onNavigate = { navController.goTo(it) }) }
         composable(Screen.Queue.route) { QueueRoute(onNext = next(Screen.Queue), onNavigate = { navController.goTo(it) }) }
         composable(Screen.Result.route) { ResultRoute(onNext = next(Screen.Result)) }
         composable(Screen.History.route) {
@@ -211,7 +216,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(Screen.Notifications.route) { NotificationsRoute(onNext = next(Screen.Notifications)) }
+        composable(Screen.Notifications.route) { NotificationsRoute(onNext = next(Screen.Notifications), onNavigate = { navController.goTo(it) }) }
         composable(Screen.Subscription.route) {
             SubscriptionRoute(
                 onNavigate = { navController.goTo(it) },
@@ -230,6 +235,21 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
         composable(Screen.Settings.route) { SettingsRoute(onNext = next(Screen.Settings), onNavigate = { navController.goTo(it) }) }
+        composable(Screen.EditProfile.route) { 
+            EditProfileRoute(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.PrivacySecurity.route) { 
+            PrivacySecurityRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
+        composable(Screen.HelpSupport.route) { 
+            HelpSupportRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) }
+            )
+        }
     }
 }
 

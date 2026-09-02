@@ -188,7 +188,7 @@ fun EditProfileScreen(
 
             // Save Button
             Surface(
-                onClick = { /* TODO: Save changes */ },
+                onClick = { onBack() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),

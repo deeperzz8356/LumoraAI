@@ -7,6 +7,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.notification.NotificationManager
+import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -23,6 +25,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 class TextToImageViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -31,6 +34,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val mediaStorage = MediaStorageRepository.getInstance(application)
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
 
     var uiState: TextToImageUiState by mutableStateOf(TextToImageUiState())
         private set
@@ -127,7 +131,18 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     private fun startImageJob(developerMode: Boolean) {
         val prompt = buildPrompt()
         val jobTitle = "Text 2 Image ${shortTimestamp()}"
+        val taskId = UUID.randomUUID().toString()
         uiState = uiState.copy(isGenerating = true, error = null)
+        
+        // Send task start notification
+        viewModelScope.launch {
+            notificationManager.sendTaskStartNotification(
+                taskType = TaskNotificationHelper.TEXT_TO_IMAGE,
+                taskId = taskId,
+                displayName = "Text to Image"
+            )
+        }
+        
         GenerationRepository.addJob(
             ActiveJobInfo(
                 title = jobTitle,
@@ -171,12 +186,21 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                 progressJob.cancel()
                 viewModelScope.launch {
                     if (result.isSuccess) {
-                        persistGeneratedImage(result.getOrThrow(), jobTitle, prompt)
+                        persistGeneratedImage(result.getOrThrow(), jobTitle, prompt, taskId)
                     } else {
                         val message = result.exceptionOrNull()?.message ?: "Could not generate image."
                         uiState = uiState.copy(isGenerating = false, error = message)
                         GenerationRepository.updateJob(jobTitle) { job ->
                             job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                        }
+                        // Send task failure notification
+                        launch {
+                            notificationManager.sendTaskFailureNotification(
+                                taskType = TaskNotificationHelper.TEXT_TO_IMAGE,
+                                taskId = taskId,
+                                displayName = "Text to Image",
+                                errorMessage = message
+                            )
                         }
                     }
                 }
@@ -184,7 +208,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    private suspend fun persistGeneratedImage(payload: String, jobTitle: String, prompt: String) {
+    private suspend fun persistGeneratedImage(payload: String, jobTitle: String, prompt: String, taskId: String) {
         val saved = mediaStorage.saveImageFromPayload(payload)
         historyRepository.addHistory(
             historyModel = HistoryModel(
@@ -208,6 +232,14 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                 imageUrl = saved.filePath,
             )
         }
+        
+        // Send task complete notification
+        notificationManager.sendTaskCompleteNotification(
+            taskType = TaskNotificationHelper.TEXT_TO_IMAGE,
+            taskId = taskId,
+            resultId = saved.id,
+            displayName = "Text to Image"
+        )
     }
 
     private suspend fun ensureTrialUser(): Boolean =

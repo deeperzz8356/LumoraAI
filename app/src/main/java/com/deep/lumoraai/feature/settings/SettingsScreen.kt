@@ -84,7 +84,7 @@ fun SettingsScreen(
                 SettingsActionRow(
                     title = "Manage Profile",
                     subtitle = "Update your personal information",
-                    onClick = { /* TODO */ }
+                    onClick = { onNavigate(com.deep.lumoraai.core.navigation.Screen.EditProfile.route) }
                 )
                 
                 SettingsActionRow(
@@ -96,13 +96,13 @@ fun SettingsScreen(
                 SettingsActionRow(
                     title = "Privacy & Security",
                     subtitle = "Protect your account data",
-                    onClick = { /* TODO */ }
+                    onClick = { onNavigate(com.deep.lumoraai.core.navigation.Screen.PrivacySecurity.route) }
                 )
                 
                 SettingsActionRow(
                     title = "Help & Support",
                     subtitle = "Contact us for assistance",
-                    onClick = { /* TODO */ }
+                    onClick = { onNavigate(com.deep.lumoraai.core.navigation.Screen.HelpSupport.route) }
                 )
             }
             

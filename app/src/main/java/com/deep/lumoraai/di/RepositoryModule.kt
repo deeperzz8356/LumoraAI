@@ -1,9 +1,11 @@
 package com.deep.lumoraai.di
 
+import com.deep.lumoraai.data.repository.NotificationRepository
 import com.deep.lumoraai.data.repository.PromptRepositoryImpl
 import com.deep.lumoraai.domain.repository.PromptRepository
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
