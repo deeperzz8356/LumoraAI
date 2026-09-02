@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.feature.generation.GenerateNowButton
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
 import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
@@ -37,6 +39,7 @@ fun TextToImageScreen(
     onNavigate: (String) -> Unit,
     onPromptChanged: (String) -> Unit,
     onNegativePromptChanged: (String) -> Unit,
+    onAspectRatioChanged: (GenerationAspectRatio) -> Unit,
     onImprovePrompt: () -> Unit,
     onStyleSelected: (ImageStyle) -> Unit,
     onCreativityChanged: (Float) -> Unit,
@@ -73,6 +76,7 @@ fun TextToImageScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
+                    .imePadding()
                     .padding(horizontal = 20.dp)
                     .padding(top = 18.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
@@ -91,7 +95,8 @@ fun TextToImageScreen(
                 if (showAdvancedSettings.value) {
                     GenerationControlsPanel(
                         mediaType = "Image",
-                        aspectRatioLabel = "2:3 portrait",
+                        selectedAspectRatio = uiState.aspectRatio,
+                        onAspectRatioSelected = onAspectRatioChanged,
                         negativePrompt = uiState.negativePrompt,
                         onNegativePromptChanged = onNegativePromptChanged,
                         creativity = uiState.creativity,

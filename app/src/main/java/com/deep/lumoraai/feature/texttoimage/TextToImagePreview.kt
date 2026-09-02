@@ -15,6 +15,7 @@ private fun PreviewContent() {
         onNavigate = {},
         onPromptChanged = {},
         onNegativePromptChanged = {},
+        onAspectRatioChanged = {},
         onImprovePrompt = {},
         onStyleSelected = {},
         onCreativityChanged = {},

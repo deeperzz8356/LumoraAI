@@ -16,6 +16,7 @@ private fun PreviewContent() {
         onImageSelected = {},
         onPromptChanged = {},
         onNegativePromptChanged = {},
+        onAspectRatioChanged = {},
         onImprovePrompt = {},
         onStyleSelected = {},
         onSimilarityChanged = {},

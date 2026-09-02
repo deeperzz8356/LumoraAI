@@ -9,24 +9,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,7 +28,10 @@ import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.AppCard
 import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.feature.profile.EDIT_PROFILE_ROUTE
 import com.deep.lumoraai.ui.theme.tokens.Spacing
+import com.google.firebase.auth.FirebaseAuth
 
 // Theme colors matching Home/Profile pages
 private val SettingsBackground = Color(0xFF081020)
@@ -67,8 +62,6 @@ fun SettingsScreen(
             )
         }
     ) { padding ->
-        var showLanguageDialog by remember { mutableStateOf(false) }
-        
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -84,25 +77,16 @@ fun SettingsScreen(
                 SettingsActionRow(
                     title = "Manage Profile",
                     subtitle = "Update your personal information",
-                    onClick = { /* TODO */ }
+                    onClick = {
+                        val user = FirebaseAuth.getInstance().currentUser
+                        onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else EDIT_PROFILE_ROUTE)
+                    }
                 )
                 
                 SettingsActionRow(
                     title = "Subscription & Billing",
                     subtitle = "Manage your Pro plan",
-                    onClick = { onNavigate(com.deep.lumoraai.core.navigation.Screen.Subscription.route) }
-                )
-                
-                SettingsActionRow(
-                    title = "Privacy & Security",
-                    subtitle = "Protect your account data",
-                    onClick = { /* TODO */ }
-                )
-                
-                SettingsActionRow(
-                    title = "Help & Support",
-                    subtitle = "Contact us for assistance",
-                    onClick = { /* TODO */ }
+                    onClick = { onNavigate(Screen.Subscription.route) }
                 )
             }
             
@@ -112,28 +96,7 @@ fun SettingsScreen(
                 SettingsActionRow(
                     title = "Language",
                     subtitle = uiState.selectedLanguage,
-                    onClick = { showLanguageDialog = true }
-                )
-                
-                SettingsToggleRow(
-                    title = "Dark Mode",
-                    subtitle = "Use dark theme across the app",
-                    checked = uiState.isDarkMode,
-                    onCheckedChange = { viewModel.toggleDarkMode(it) }
-                )
-                
-                SettingsToggleRow(
-                    title = "Push Notifications",
-                    subtitle = "Receive updates on generated tasks",
-                    checked = uiState.notificationsEnabled,
-                    onCheckedChange = { viewModel.toggleNotifications(it) }
-                )
-                
-                SettingsToggleRow(
-                    title = "High Quality Mode",
-                    subtitle = "Generate images in higher resolution (uses more credits)",
-                    checked = uiState.highQualityMode,
-                    onCheckedChange = { viewModel.toggleHighQualityMode(it) }
+                    onClick = { onNavigate("${Screen.Language.route}?source=settings") }
                 )
             }
 
@@ -170,20 +133,8 @@ fun SettingsScreen(
                 }
             }
         }
-        
-        if (showLanguageDialog) {
-            LanguageSelectionDialog(
-                currentLanguage = uiState.selectedLanguage,
-                onLanguageSelected = { 
-                    viewModel.setLanguage(it)
-                    showLanguageDialog = false 
-                },
-                onDismissRequest = { showLanguageDialog = false }
-            )
-        }
     }
 }
-
 @Composable
 private fun SettingsToggleRow(
     title: String,
@@ -249,66 +200,4 @@ private fun SettingsActionRow(
             Text(">", style = MaterialTheme.typography.titleLarge, color = Lime, fontWeight = FontWeight.Bold)
         }
     }
-}
-
-@Composable
-private fun LanguageSelectionDialog(
-    currentLanguage: String,
-    onLanguageSelected: (String) -> Unit,
-    onDismissRequest: () -> Unit
-) {
-    val languages = listOf(
-        "English",
-        "Hindi", 
-        "Spanish",
-        "Dutch",
-        "Italian",
-        "Portuguese",
-        "Turkish",
-        "Thai",
-        "Vietnamese",
-        "Arabic",
-        "Korean",
-        "Japanese",
-        "Chinese (Simplified)",
-        "Chinese (Traditional)"
-    )
-    
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        containerColor = SettingsCard,
-        title = {
-            Text(text = "Select Language", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-        },
-        text = {
-            LazyColumn {
-                items(languages) { language ->
-                    val isSelected = language == currentLanguage
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onLanguageSelected(language) }
-                            .padding(vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = language,
-                            color = if (isSelected) Lime else Color.White,
-                            style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
-                        if (isSelected) {
-                            Text("✓", style = MaterialTheme.typography.titleMedium, color = Lime, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismissRequest) {
-                Text("Cancel", style = MaterialTheme.typography.labelLarge, color = Muted)
-            }
-        }
-    )
 }

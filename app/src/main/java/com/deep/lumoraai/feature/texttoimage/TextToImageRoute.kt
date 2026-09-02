@@ -39,6 +39,7 @@ fun TextToImageRoute(
         onNavigate = onNavigate,
         onPromptChanged = viewModel::updatePrompt,
         onNegativePromptChanged = viewModel::updateNegativePrompt,
+        onAspectRatioChanged = viewModel::setAspectRatio,
         onImprovePrompt = viewModel::improvePrompt,
         onStyleSelected = viewModel::selectStyle,
         onCreativityChanged = viewModel::setCreativity,

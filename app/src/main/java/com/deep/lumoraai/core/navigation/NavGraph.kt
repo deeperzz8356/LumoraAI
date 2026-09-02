@@ -32,6 +32,8 @@ import com.deep.lumoraai.feature.language.LanguageRoute
 import com.deep.lumoraai.feature.notifications.NotificationsRoute
 import com.deep.lumoraai.feature.onboarding.OnboardingRoute
 import com.deep.lumoraai.feature.photoenhance.PhotoEnhanceRoute
+import com.deep.lumoraai.feature.profile.EDIT_PROFILE_ROUTE
+import com.deep.lumoraai.feature.profile.EditProfileScreen
 import com.deep.lumoraai.feature.profile.ProfileRoute
 import com.deep.lumoraai.feature.queue.QueueRoute
 import com.deep.lumoraai.feature.result.ResultRoute
@@ -82,7 +84,26 @@ fun NavGraph(
                 }
             )
         }
-        composable(Screen.Language.route) { LanguageRoute(onNext = next(Screen.Language)) }
+        composable(
+            route = Screen.Language.route + "?source={source}",
+            arguments = listOf(
+                navArgument("source") {
+                    type = NavType.StringType
+                    defaultValue = "onboarding"
+                }
+            )
+        ) { backStackEntry ->
+            val source = backStackEntry.arguments?.getString("source")
+            LanguageRoute(
+                onNext = {
+                    if (source == "settings") {
+                        navController.popBackStack()
+                    } else {
+                        navController.goTo(Screen.Onboarding.route)
+                    }
+                }
+            )
+        }
         composable(Screen.Onboarding.route) {
             OnboardingRoute(
                 onNext = {
@@ -255,6 +276,9 @@ fun NavGraph(
             )
         }
         composable(Screen.Settings.route) { SettingsRoute(onNext = next(Screen.Settings), onNavigate = { navController.goTo(it) }) }
+        composable(EDIT_PROFILE_ROUTE) {
+            EditProfileScreen(onBack = { navController.popBackStack() })
+        }
     }
 }
 

@@ -93,6 +93,21 @@ val GenerationPanel = Color(0xFF151D31)
 val GenerationLime = Color(0xFFD6FF2F)
 val GenerationMuted = Color(0xFF9AA5B8)
 
+enum class GenerationAspectRatio(
+    val label: String,
+    val description: String,
+    val width: Int,
+    val height: Int,
+    val promptHint: String,
+) {
+    Portrait("2:3", "Portrait", 1024, 1536, "vertical 2:3 portrait composition"),
+    Story("9:16", "Story", 1080, 1920, "vertical 9:16 story composition"),
+    Square("1:1", "Square", 1024, 1024, "centered 1:1 square composition"),
+    Landscape("16:9", "Wide", 1536, 864, "wide 16:9 landscape composition");
+
+    val displayLabel: String = "$label ${description.lowercase()}"
+}
+
 @Composable
 fun GenerationTopBar(
     title: String,
@@ -436,7 +451,8 @@ private fun assetUri(fileName: String): String = "file:///android_asset/${Uri.en
 fun GenerationControlsPanel(
     modifier: Modifier = Modifier,
     mediaType: String,
-    aspectRatioLabel: String,
+    selectedAspectRatio: GenerationAspectRatio,
+    onAspectRatioSelected: (GenerationAspectRatio) -> Unit,
     negativePrompt: String,
     onNegativePromptChanged: (String) -> Unit,
     similarity: Float? = null,
@@ -477,7 +493,10 @@ fun GenerationControlsPanel(
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
-        SettingSummaryRow(label = "Ratio", value = aspectRatioLabel)
+        AspectRatioSelector(
+            selected = selectedAspectRatio,
+            onSelected = onAspectRatioSelected
+        )
         NegativePromptField(value = negativePrompt, onValueChange = onNegativePromptChanged)
         GenerationDivider()
         if (similarity != null && onSimilarityChanged != null) {
@@ -501,19 +520,45 @@ fun GenerationControlsPanel(
 }
 
 @Composable
-private fun SettingSummaryRow(label: String, value: String) {
-    Row(
+private fun AspectRatioSelector(
+    selected: GenerationAspectRatio,
+    onSelected: (GenerationAspectRatio) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("Ratio", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(selected.displayLabel, color = GenerationLime, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+        }
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            GenerationAspectRatio.entries.forEach { ratio ->
+                RatioChip(
+                    ratio = ratio,
+                    selected = ratio == selected,
+                    onClick = { onSelected(ratio) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RatioChip(ratio: GenerationAspectRatio, selected: Boolean, onClick: () -> Unit) {
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .width(86.dp)
+            .height(60.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF10182A))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .background(if (selected) GenerationLime.copy(alpha = 0.15f) else Color(0xFF10182A))
+            .border(1.dp, if (selected) GenerationLime.copy(alpha = 0.72f) else Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        Text(value, color = GenerationLime, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        Text(ratio.label, color = if (selected) GenerationLime else Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+        Text(ratio.description, color = GenerationMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

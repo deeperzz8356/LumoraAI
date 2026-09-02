@@ -19,6 +19,7 @@ import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -93,6 +94,10 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
 
     fun setGenerations(value: Int) {
         uiState = uiState.copy(generations = value.coerceIn(1, 4))
+    }
+
+    fun setAspectRatio(value: GenerationAspectRatio) {
+        uiState = uiState.copy(aspectRatio = value)
     }
 
     fun generate() {
@@ -240,7 +245,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             "Create a cinematic text-to-video scene with natural motion, camera movement, depth, and coherent subject action."
         }
         val negative = uiState.negativePrompt.takeIf { it.isNotBlank() }?.let { " Avoid: $it." }.orEmpty()
-        return "$base User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Motion strength: $motion%.$negative"
+        return "$base User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Format: ${uiState.aspectRatio.promptHint}. Motion strength: $motion%.$negative"
     }
 
     private fun currentTimestamp(): String =

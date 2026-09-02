@@ -35,6 +35,7 @@ fun ImageToVideoRoute(
         onImageSelected = viewModel::loadImage,
         onPromptChanged = viewModel::updatePrompt,
         onNegativePromptChanged = viewModel::updateNegativePrompt,
+        onAspectRatioChanged = viewModel::setAspectRatio,
         onImprovePrompt = viewModel::improvePrompt,
         onStyleSelected = viewModel::selectStyle,
         onSimilarityChanged = viewModel::setSimilarity,

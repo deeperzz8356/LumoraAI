@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.profile
 
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -49,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +66,7 @@ import com.deep.lumoraai.core.components.MediaViewerDialog
 import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.data.model.HistoryModel
+import com.google.firebase.auth.FirebaseAuth
 import java.io.File
 
 private val ProfileBackground = Color(0xFF081020)
@@ -146,7 +149,6 @@ private fun ProfileContent(
         }
 
         CreationsSection(generations = generations, onNavigate = onNavigate)
-        PurchaseHistoryCard(credits = credits, onNavigate = onNavigate)
         PreferencesList(onSignOut = onSignOut, onNavigate = onNavigate)
         SupportCard()
         Spacer(modifier = Modifier.height(2.dp))
@@ -180,6 +182,8 @@ private fun ProfileTopBar(onNavigate: (String) -> Unit) {
 
 @Composable
 private fun ProfileHero(name: String, subtitle: String, plan: String, onNavigate: (String) -> Unit) {
+    val context = LocalContext.current
+    val user = FirebaseAuth.getInstance().currentUser
     Surface(
         modifier = Modifier.fillMaxWidth().height(164.dp),
         shape = CardShape,
@@ -196,8 +200,17 @@ private fun ProfileHero(name: String, subtitle: String, plan: String, onNavigate
                         Text(plan, color = Lime, fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        MiniAction("Edit", Icons.Default.Edit, Lime, onClick = { onNavigate(EDIT_PROFILE_ROUTE) })
-                        MiniAction("Share", Icons.Default.Share, Purple, onClick = {})
+                        MiniAction("Edit", Icons.Default.Edit, Lime, onClick = {
+                            onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else EDIT_PROFILE_ROUTE)
+                        })
+                        MiniAction("Share", Icons.Default.Share, Purple, onClick = {
+                            val text = "${name.ifBlank { "Lumora Creator" }} on LumoraAI"
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, text)
+                            }
+                            context.startActivity(Intent.createChooser(intent, "Share profile"))
+                        })
                     }
                 }
             }
@@ -247,16 +260,20 @@ private fun DashboardCard(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(104.dp),
+        modifier = modifier.height(92.dp),
         shape = CardShape,
         color = ProfileCard,
         border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             AccentIcon(icon, accent)
-            Column(modifier = Modifier.align(Alignment.BottomStart)) {
-                Text(value, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(label, color = Muted, fontSize = 11.sp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(value, color = Color.White, fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(label, color = Muted, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -273,18 +290,22 @@ private fun ShortcutCard(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(96.dp),
+        modifier = modifier.height(92.dp),
         shape = CardShape,
         color = ProfileCard,
         border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             AccentIcon(icon, accent)
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = accent, modifier = Modifier.align(Alignment.TopEnd).size(17.dp))
-            Column(modifier = Modifier.align(Alignment.BottomStart)) {
-                Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, color = Muted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, color = Color.White, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, color = Muted, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
         }
     }
 }
@@ -370,37 +391,6 @@ private fun CreationCard(item: HistoryModel, modifier: Modifier = Modifier, onCl
                     Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun PurchaseHistoryCard(credits: Int, onNavigate: (String) -> Unit) {
-    InfoCard(title = "Purchase History", icon = Icons.AutoMirrored.Filled.List) {
-        PurchaseRow("Current balance", "$credits LUM credits available", "Credits") { onNavigate(Screen.Credits.route) }
-        PurchaseRow("Subscription receipts", "Plan status and billing actions", "Plan") { onNavigate(Screen.Subscription.route) }
-        PurchaseRow("Creation usage", "Open saved renders and downloads", "History") { onNavigate(Screen.History.route) }
-    }
-}
-
-@Composable
-private fun PurchaseRow(title: String, desc: String, price: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 10.dp)) {
-            Text(title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(desc, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(price, color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Lime, modifier = Modifier.size(14.dp))
         }
     }
 }

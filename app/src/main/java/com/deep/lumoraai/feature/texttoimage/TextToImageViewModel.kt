@@ -18,6 +18,7 @@ import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
@@ -64,6 +65,10 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
 
     fun setGenerations(value: Int) {
         uiState = uiState.copy(generations = value.coerceIn(1, 4))
+    }
+
+    fun setAspectRatio(value: GenerationAspectRatio) {
+        uiState = uiState.copy(aspectRatio = value)
     }
 
     fun generate() {
@@ -164,8 +169,8 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                 jobTitle = jobTitle,
                 prompt = prompt,
                 style = uiState.selectedStyle.label,
-                width = 1024,
-                height = 1024,
+                width = uiState.aspectRatio.width,
+                height = uiState.aspectRatio.height,
                 negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy, watermark, text artifacts" },
                 sourceImageB64 = null,
                 developerMode = developerMode,
@@ -233,7 +238,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
 
     private fun buildPrompt(): String {
         val creativity = (uiState.creativity * 100).toInt()
-        return "${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Creativity level: $creativity%."
+        return "${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Format: ${uiState.aspectRatio.promptHint}. Creativity level: $creativity%."
     }
 
     private fun currentTimestamp(): String =

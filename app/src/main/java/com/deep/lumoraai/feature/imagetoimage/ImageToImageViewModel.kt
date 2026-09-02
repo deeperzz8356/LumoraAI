@@ -24,6 +24,7 @@ import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -80,6 +81,10 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
 
     fun setGenerations(value: Int) {
         uiState = uiState.copy(generations = value.coerceIn(1, 4))
+    }
+
+    fun setAspectRatio(value: GenerationAspectRatio) {
+        uiState = uiState.copy(aspectRatio = value)
     }
 
     fun generate() {
@@ -184,8 +189,8 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                 jobTitle = jobTitle,
                 prompt = prompt,
                 style = uiState.selectedStyle.label,
-                width = 1024,
-                height = 1024,
+                width = uiState.aspectRatio.width,
+                height = uiState.aspectRatio.height,
                 negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy" },
                 sourceImageB64 = sourceImage,
                 developerMode = developerMode,
@@ -253,7 +258,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
 
     private fun buildPrompt(): String {
         val similarity = (uiState.similarity * 100).toInt()
-        return "Create a new image from the uploaded source. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Preserve about $similarity% of the original composition and subject identity while improving the image."
+        return "Create a new image from the uploaded source. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original composition and subject identity while improving the image."
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {
