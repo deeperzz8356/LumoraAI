@@ -19,13 +19,13 @@ val localProperties = Properties().apply {
 
 android {
     namespace = "com.deep.lumoraai"
-    compileSdk = 35
+    compileSdk = 36
     val apkBaseName = "LumoraAI"
 
     defaultConfig {
         applicationId = "com.deep.lumoraai"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
