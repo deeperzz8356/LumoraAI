@@ -305,7 +305,7 @@ class GenerationRepository {
         }
     }
 
-    suspend fun addCredits(amount: Int): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun addCredits(amount: Int): Result<Int> = withContext(Dispatchers.IO) {
         try {
             val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))
             val tokenResult = user.getIdToken(true).await()
@@ -336,7 +336,7 @@ class GenerationRepository {
                 val responseString = reader.use { it.readText() }
                 val responseJson = JSONObject(responseString)
                 if (responseJson.getString("status") == "success") {
-                    Result.success(Unit)
+                    Result.success(responseJson.optInt("balance", amount))
                 } else {
                     Result.failure(Exception(responseJson.optString("message", "API status was not success")))
                 }

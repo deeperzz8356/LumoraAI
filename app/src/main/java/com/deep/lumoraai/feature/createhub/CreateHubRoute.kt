@@ -11,12 +11,16 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.deep.lumoraai.core.notification.NotificationViewModel
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.theme.IntroPalette
@@ -29,10 +33,12 @@ fun CreateHubRoute(
     onBack: () -> Unit = onNext,
     initialPrompt: String? = null,
     initialTab: Int = 0,
-    viewModel: CreateHubViewModel = viewModel()
+    viewModel: CreateHubViewModel = viewModel(),
+    notificationViewModel: NotificationViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val uiState = viewModel.uiState
+    val unreadCount by notificationViewModel.unreadCount.collectAsState()
 
     LaunchedEffect(uiState) {
         when (uiState) {
@@ -68,7 +74,8 @@ fun CreateHubRoute(
         onResetState = { viewModel.load() },
         onNext = onNext, 
         onNavigate = onNavigate,
-        onBack = onBack
+        onBack = onBack,
+        unreadCount = unreadCount
     )
 }
 

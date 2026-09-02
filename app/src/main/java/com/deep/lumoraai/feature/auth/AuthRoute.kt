@@ -111,27 +111,25 @@ private suspend fun performGoogleSignIn(context: Context, webClientId: String): 
         ?: throw IllegalStateException("Google sign-in requires an Activity context")
     val credentialManager = CredentialManager.create(context)
 
-    try {
-        return requestGoogleIdToken(
+    return runCatching {
+        requestGoogleIdToken(
             credentialManager = credentialManager,
             context = activity,
             webClientId = webClientId,
             filterAuthorized = true,
             autoSelect = true
         )
-    } catch (_: NoCredentialException) {
-        try {
-            return requestGoogleIdToken(
-                credentialManager = credentialManager,
-                context = activity,
-                webClientId = webClientId,
-                filterAuthorized = false,
-                autoSelect = false
-            )
-        } catch (_: NoCredentialException) {
-            return requestSignInWithGoogle(credentialManager, activity, webClientId)
-        }
-    }
+    }.recoverCatching {
+        requestGoogleIdToken(
+            credentialManager = credentialManager,
+            context = activity,
+            webClientId = webClientId,
+            filterAuthorized = false,
+            autoSelect = false
+        )
+    }.recoverCatching {
+        requestSignInWithGoogle(credentialManager, activity, webClientId)
+    }.getOrThrow()
 }
 
 private suspend fun requestGoogleIdToken(

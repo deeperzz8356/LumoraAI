@@ -275,18 +275,22 @@ private fun NotificationHero(
 private fun QuickActionCard(title: String, subtitle: String, icon: ImageVector, accent: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(96.dp),
+        modifier = modifier.height(82.dp),
         shape = CardShape,
         color = NotificationCard,
         border = BorderStroke(1.dp, NotificationStroke.copy(alpha = 0.58f))
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             AccentIcon(icon, accent)
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = accent, modifier = Modifier.align(Alignment.TopEnd).size(17.dp))
-            Column(modifier = Modifier.align(Alignment.BottomStart)) {
-                Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text(subtitle, color = Muted, fontSize = 11.sp)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, color = Muted, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = accent, modifier = Modifier.size(17.dp))
         }
     }
 }

@@ -16,11 +16,11 @@ class SplashViewModel(
         private set
 
     init {
+        isReady = true
         viewModelScope.launch {
             if (FirebaseAuth.getInstance().currentUser != null) {
                 authRepository.syncCurrentUser()
             }
-            isReady = true
         }
     }
 }

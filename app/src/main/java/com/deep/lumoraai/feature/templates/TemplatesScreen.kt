@@ -71,6 +71,7 @@ fun TemplatesScreen(
     uiState: TemplatesUiState,
     onNext: () -> Unit,
     onNavigate: (String) -> Unit = {},
+    unreadCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -94,14 +95,14 @@ fun TemplatesScreen(
                 is TemplatesUiState.Loading -> AppLoadingScreen()
                 is TemplatesUiState.Error -> AppErrorScreen(message = uiState.message)
                 is TemplatesUiState.Empty -> AppEmptyScreen(title = "No Templates", body = "Templates will appear here.")
-                is TemplatesUiState.Success -> TemplatesContent(uiState = uiState, onNavigate = onNavigate)
+                is TemplatesUiState.Success -> TemplatesContent(uiState = uiState, onNavigate = onNavigate, unreadCount = unreadCount)
             }
         }
     }
 }
 
 @Composable
-private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (String) -> Unit) {
+private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (String) -> Unit, unreadCount: Int) {
     var selectedType by remember { mutableStateOf("Image") }
     val templates = if (selectedType == "Image") uiState.imageTemplates else uiState.videoTemplates
     val clipboard = LocalClipboardManager.current
@@ -115,7 +116,7 @@ private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (Str
             .padding(top = 14.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        TemplatesTopBar(credits = uiState.credits, onNavigate = onNavigate)
+        TemplatesTopBar(credits = uiState.credits, onNavigate = onNavigate, unreadCount = unreadCount)
         TemplateTypeTabs(selectedType = selectedType, onSelected = { selectedType = it })
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             templates.forEach { item ->
@@ -141,13 +142,14 @@ private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (Str
 }
 
 @Composable
-private fun TemplatesTopBar(credits: Int, onNavigate: (String) -> Unit) {
+private fun TemplatesTopBar(credits: Int, onNavigate: (String) -> Unit, unreadCount: Int) {
     LumoraTopBar(
         credits = credits,
         title = "Templates",
         onProfileClick = { onNavigate(Screen.Profile.route) },
         onCreditsClick = { onNavigate(Screen.Credits.route) },
         onNotificationsClick = { onNavigate(Screen.Notifications.route) },
+        hasUnreadNotifications = unreadCount > 0,
     )
 }
 

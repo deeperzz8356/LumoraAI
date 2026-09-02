@@ -37,7 +37,6 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Fullscreen
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
@@ -81,6 +80,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.deep.lumoraai.core.components.LocalVideoPlayer
+import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.core.utils.MediaShareUtils
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
@@ -114,6 +114,7 @@ fun GenerationTopBar(
     onBack: () -> Unit,
     onNotifications: () -> Unit,
     modifier: Modifier = Modifier,
+    hasUnreadNotifications: Boolean = false,
 ) {
     Row(
         modifier = modifier
@@ -145,25 +146,10 @@ fun GenerationTopBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clickable(onClick = onNotifications),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = Color(0xFFDFF7F4),
-                modifier = Modifier.size(20.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .align(Alignment.TopEnd)
-                    .background(GenerationLime, CircleShape)
-            )
-        }
+        LumoraNotificationBell(
+            hasUnreadNotifications = hasUnreadNotifications,
+            onClick = onNotifications
+        )
     }
 }
 

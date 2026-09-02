@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -133,12 +134,10 @@ private fun SubscriptionContent(
         PageTopBar(title = "Subscription", subtitle = "Upgrade your studio", onBack = onBack)
         ProHero(isDeveloperMode = uiState.isDeveloperMode)
 
-        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-                FeatureTile("Faster", "priority runs", Icons.Default.FlashOn, Lime, Modifier.weight(1f))
-                FeatureTile("Storage", "history sync", Icons.Default.CloudDone, Cyan, Modifier.weight(1f))
-            }
-            FeatureTile("Tools", "Pro access", Icons.Default.LockOpen, Purple, Modifier.fillMaxWidth())
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            FeatureTile("Faster", "priority runs", Icons.Default.FlashOn, Lime, Modifier.weight(1f))
+            FeatureTile("Storage", "history sync", Icons.Default.CloudDone, Cyan, Modifier.weight(1f))
+            FeatureTile("Tools", "Pro access", Icons.Default.LockOpen, Purple, Modifier.weight(1f))
         }
 
         Text("Choose Plan", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
@@ -211,15 +210,15 @@ private fun PageTopBar(title: String, subtitle: String, onBack: () -> Unit) {
 @Composable
 private fun ProHero(isDeveloperMode: Boolean) {
     Surface(
-        modifier = Modifier.fillMaxWidth().height(174.dp),
+        modifier = Modifier.fillMaxWidth().height(184.dp),
         shape = CardShape,
         color = SubCard,
-        border = BorderStroke(1.dp, SubStroke.copy(alpha = 0.72f))
+        border = BorderStroke(1.dp, Lime.copy(alpha = 0.26f))
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
             Column(modifier = Modifier.fillMaxWidth(0.72f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Lumora Pro", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Create without slowing down", color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Create without limits", color = Color.White, fontSize = 29.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold)
                 Text(if (isDeveloperMode) "Developer mode gives unlimited trial access." else "Credits, priority generation, and premium creative workflows.", color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
             }
             Box(
@@ -227,10 +226,10 @@ private fun ProHero(isDeveloperMode: Boolean) {
                     .align(Alignment.BottomEnd)
                     .size(58.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Pink.copy(alpha = 0.14f)),
+                    .background(Pink.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Pink, modifier = Modifier.size(31.dp))
+                Icon(Icons.Default.WorkspacePremium, contentDescription = null, tint = Pink, modifier = Modifier.size(31.dp))
             }
         }
     }
@@ -244,11 +243,14 @@ private fun FeatureTile(title: String, subtitle: String, icon: ImageVector, acce
         color = SubCard,
         border = BorderStroke(1.dp, SubStroke.copy(alpha = 0.58f))
     ) {
-        Column(modifier = Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.SpaceBetween) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
             AccentIcon(icon, accent)
             Column {
-                Text(title, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(subtitle, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, color = Color.White, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, color = Muted, fontSize = 10.sp, lineHeight = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -273,7 +275,7 @@ private fun SubscriptionPlanCard(
         color = SubCard,
         border = BorderStroke(1.dp, if (isSelected) Lime.copy(alpha = 0.82f) else SubStroke.copy(alpha = 0.58f))
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(plan.name, color = Color.White, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)

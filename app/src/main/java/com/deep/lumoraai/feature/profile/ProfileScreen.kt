@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
@@ -62,9 +61,11 @@ import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.components.MediaViewerDialog
 import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.model.HistoryModel
 import com.google.firebase.auth.FirebaseAuth
 import java.io.File
@@ -85,6 +86,7 @@ fun ProfileScreen(
     onNext: () -> Unit,
     onSignOut: () -> Unit,
     onNavigate: (String) -> Unit = {},
+    unreadCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -106,8 +108,10 @@ fun ProfileScreen(
                     items = uiState.items,
                     credits = uiState.credits,
                     generations = uiState.generations,
+                    isGuest = uiState.isGuest,
                     onSignOut = onSignOut,
-                    onNavigate = onNavigate
+                    onNavigate = onNavigate,
+                    unreadCount = unreadCount
                 )
             }
         }
@@ -119,8 +123,10 @@ private fun ProfileContent(
     items: List<String>,
     credits: Int,
     generations: List<HistoryModel>,
+    isGuest: Boolean,
     onSignOut: () -> Unit,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    unreadCount: Int,
 ) {
     Column(
         modifier = Modifier
@@ -130,7 +136,7 @@ private fun ProfileContent(
             .padding(top = 18.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        ProfileTopBar(onNavigate = onNavigate)
+        ProfileTopBar(onNavigate = onNavigate, unreadCount = unreadCount)
         ProfileHero(
             name = items.getOrNull(0).orEmpty(),
             subtitle = items.getOrNull(1).orEmpty(),
@@ -138,25 +144,48 @@ private fun ProfileContent(
             onNavigate = onNavigate
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            DashboardCard("$credits", "LUM credits", Icons.Default.Star, Lime, { onNavigate(Screen.Credits.route) }, Modifier.weight(1f))
-            DashboardCard("${generations.size}", "creations", Icons.Default.GridView, Purple, { onNavigate(Screen.History.route) }, Modifier.weight(1f))
-        }
+        CreditsOverviewCard(credits = credits, onNavigate = onNavigate)
 
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
+            DashboardCard("${generations.size}", "creations", Icons.Default.GridView, Purple, { onNavigate(Screen.History.route) }, Modifier.weight(1f))
             ShortcutCard("Manage Plan", "Elite Pro", Icons.AutoMirrored.Filled.ReceiptLong, Pink, { onNavigate(Screen.Subscription.route) }, Modifier.weight(1f))
-            ShortcutCard("Top Up", "Buy credits", Icons.Default.Add, Cyan, { onNavigate(Screen.Credits.route) }, Modifier.weight(1f))
         }
 
         CreationsSection(generations = generations, onNavigate = onNavigate)
-        PreferencesList(onSignOut = onSignOut, onNavigate = onNavigate)
+        PreferencesList(isGuest = isGuest, onSignOut = onSignOut, onNavigate = onNavigate)
         SupportCard()
         Spacer(modifier = Modifier.height(2.dp))
     }
 }
 
 @Composable
-private fun ProfileTopBar(onNavigate: (String) -> Unit) {
+private fun CreditsOverviewCard(credits: Int, onNavigate: (String) -> Unit) {
+    val label = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else "$credits"
+    Surface(
+        onClick = { onNavigate(Screen.Credits.route) },
+        modifier = Modifier.fillMaxWidth().height(118.dp),
+        shape = CardShape,
+        color = ProfileCard,
+        border = BorderStroke(1.dp, Lime.copy(alpha = 0.38f))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            AccentIcon(Icons.Default.Star, Lime)
+            Column(modifier = Modifier.weight(1f).padding(end = 6.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text("LUM Credits", color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(label, color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("Top up and manage packs", color = Lime, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            MiniAction("Top Up", Icons.Default.Add, Cyan, onClick = { onNavigate(Screen.Credits.route) })
+        }
+    }
+}
+
+@Composable
+private fun ProfileTopBar(onNavigate: (String) -> Unit, unreadCount: Int) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -170,13 +199,10 @@ private fun ProfileTopBar(onNavigate: (String) -> Unit) {
                 Text("Account Settings", color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, lineHeight = 15.sp)
             }
         }
-        Box(
-            modifier = Modifier.size(34.dp).clickable { onNavigate(Screen.Notifications.route) },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color(0xFFDFF7F4), modifier = Modifier.size(23.dp))
-            Box(modifier = Modifier.size(6.dp).align(Alignment.TopEnd).background(Lime, CircleShape))
-        }
+        LumoraNotificationBell(
+            hasUnreadNotifications = unreadCount > 0,
+            onClick = { onNavigate(Screen.Notifications.route) }
+        )
     }
 }
 
@@ -245,7 +271,7 @@ private fun MiniAction(label: String, icon: ImageVector, accent: Color, onClick:
         horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Icon(icon, contentDescription = label, tint = accent, modifier = Modifier.size(15.dp))
-        Text(label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = Color.White, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -396,7 +422,7 @@ private fun CreationCard(item: HistoryModel, modifier: Modifier = Modifier, onCl
 }
 
 @Composable
-private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit) {
+private fun PreferencesList(isGuest: Boolean, onSignOut: () -> Unit, onNavigate: (String) -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
@@ -407,8 +433,12 @@ private fun PreferencesList(onSignOut: () -> Unit, onNavigate: (String) -> Unit)
             PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
             PrefRow("Privacy Policy", Icons.Default.Info, Color.White)
             PrefRow("Terms of Service", Icons.Default.Info, Color.White)
-            PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A))
-            PrefRow("Sign Out", Icons.AutoMirrored.Filled.ExitToApp, Color(0xFFFF7A7A), onClick = onSignOut)
+            if (isGuest) {
+                PrefRow("Login", Icons.AutoMirrored.Filled.ExitToApp, Lime, onClick = { onNavigate(Screen.Auth.route) })
+            } else {
+                PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A))
+                PrefRow("Sign Out", Icons.AutoMirrored.Filled.ExitToApp, Color(0xFFFF7A7A), onClick = onSignOut)
+            }
         }
     }
 }

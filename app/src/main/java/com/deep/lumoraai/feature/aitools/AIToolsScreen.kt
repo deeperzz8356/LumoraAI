@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +62,7 @@ private val BlueAccent = Color(0xFF7D86FF)
 fun AIToolsScreen(
     credits: Int,
     onNavigate: (String) -> Unit = {},
+    unreadCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -74,7 +76,7 @@ fun AIToolsScreen(
                 .background(AIToolsBackground)
                 .padding(padding)
         ) {
-            AIToolsContent(credits = credits, onNavigate = onNavigate)
+            AIToolsContent(credits = credits, onNavigate = onNavigate, unreadCount = unreadCount)
         }
     }
 }
@@ -83,6 +85,7 @@ fun AIToolsScreen(
 private fun AIToolsContent(
     credits: Int,
     onNavigate: (String) -> Unit,
+    unreadCount: Int,
 ) {
     Column(
         modifier = Modifier
@@ -98,17 +101,12 @@ private fun AIToolsContent(
             onProfileClick = { onNavigate(Screen.Profile.route) },
             onCreditsClick = { onNavigate(Screen.Credits.route) },
             onNotificationsClick = { onNavigate(Screen.Notifications.route) },
+            hasUnreadNotifications = unreadCount > 0,
         )
-        Text(
-            "Explore all the powerful tools to transform your content",
-            color = Muted,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            lineHeight = 18.sp
-        )
+        AIToolsHero()
 
         Text(
-            "Tools",
+            "Quick Tools",
             color = Color.White,
             fontSize = 21.sp,
             fontWeight = FontWeight.ExtraBold,
@@ -170,7 +168,7 @@ private fun AIToolsContent(
         }
         ToolBentoCard(
             title = "Compress",
-            subtitle = "Images and videos",
+            subtitle = "Smaller files without the mess",
             icon = Icons.Default.Compress,
             accent = Lime,
             onClick = { onNavigate(Screen.Compress.route) },
@@ -181,6 +179,46 @@ private fun AIToolsContent(
         )
 
         Spacer(modifier = Modifier.height(2.dp))
+    }
+}
+
+@Composable
+private fun AIToolsHero() {
+    Surface(
+        modifier = Modifier.fillMaxWidth().height(150.dp),
+        shape = CardShape,
+        color = AIToolsCard,
+        border = BorderStroke(1.dp, Cyan.copy(alpha = 0.36f))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(AIToolsCard, Color(0xFF122C3A), Color(0xFF251A3E))
+                    )
+                )
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(0.7f),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Text("Studio Tools", color = Lime, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Edit faster with focused AI actions", color = Color.White, fontSize = 24.sp, lineHeight = 27.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Replace backgrounds, improve photos, make promo clips, and compress files from one clean hub.", color = Muted, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Pink.copy(alpha = 0.18f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Pink, modifier = Modifier.size(31.dp))
+            }
+        }
     }
 }
 
@@ -259,10 +297,10 @@ private fun ToolBentoCard(
         color = AIToolsCard,
         border = BorderStroke(1.dp, AIToolsStroke.copy(alpha = 0.58f))
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(if (prominent) 14.dp else 12.dp)
+        Row(
+            modifier = Modifier.fillMaxSize().padding(if (prominent) 14.dp else 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -274,7 +312,7 @@ private fun ToolBentoCard(
                 Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(if (prominent) 23.dp else 19.dp))
             }
             Column(
-                modifier = Modifier.align(Alignment.BottomStart),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(

@@ -31,7 +31,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -53,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
 import androidx.core.content.ContextCompat
 
@@ -196,6 +196,7 @@ fun CompressScreen(
 private fun CompressTopBar(
     onBack: () -> Unit,
     onNotifications: () -> Unit,
+    hasUnreadNotifications: Boolean = false,
 ) {
     Row(
         modifier = Modifier
@@ -224,25 +225,10 @@ private fun CompressTopBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .clickable(onClick = onNotifications),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = Color(0xFFDFF7F4),
-                modifier = Modifier.size(19.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .size(7.dp)
-                    .align(Alignment.TopEnd)
-                    .background(Lime, CircleShape)
-            )
-        }
+        LumoraNotificationBell(
+            hasUnreadNotifications = hasUnreadNotifications,
+            onClick = onNotifications
+        )
     }
 }
 

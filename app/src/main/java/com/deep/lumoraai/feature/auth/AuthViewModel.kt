@@ -69,13 +69,9 @@ class AuthViewModel(
     }
 
     private fun finishWithBackendSync() {
+        uiState = AuthUiState.Success
         viewModelScope.launch {
-            val synced = authRepository.syncCurrentUser()
-            uiState = if (synced) {
-                AuthUiState.Success
-            } else {
-                AuthUiState.Error("Connected to Firebase but server sync failed. Check your internet and try again.")
-            }
+            authRepository.syncCurrentUser()
         }
     }
 }

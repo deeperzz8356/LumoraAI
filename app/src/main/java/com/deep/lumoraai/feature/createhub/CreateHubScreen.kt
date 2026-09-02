@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -66,6 +66,7 @@ fun CreateHubScreen(
     onNext: () -> Unit,
     onNavigate: (String) -> Unit = {},
     onBack: () -> Unit = onNext,
+    unreadCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -115,7 +116,9 @@ fun CreateHubScreen(
             GenerationTopBar(
                 title = "Create Hub",
                 onBack = onBack,
-                onNotifications = { onNavigate(Screen.Notifications.route) }
+                onNotifications = { onNavigate(Screen.Notifications.route) },
+                hasUnreadNotifications = unreadCount > 0,
+                modifier = Modifier.statusBarsPadding()
             )
 
             Column(

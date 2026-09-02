@@ -27,7 +27,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
@@ -50,6 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
 
 private val StudioBackground = Color(0xFF081020)
@@ -124,6 +124,7 @@ fun BgStudioScreen(
 private fun StudioTopBar(
     onBack: () -> Unit,
     onNotifications: () -> Unit,
+    hasUnreadNotifications: Boolean = false,
 ) {
     Row(
         modifier = Modifier
@@ -155,25 +156,10 @@ private fun StudioTopBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .clickable(onClick = onNotifications),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = Color(0xFFDFF7F4),
-                modifier = Modifier.size(20.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .align(Alignment.TopEnd)
-                    .background(Lime, CircleShape)
-            )
-        }
+        LumoraNotificationBell(
+            hasUnreadNotifications = hasUnreadNotifications,
+            onClick = onNotifications
+        )
     }
 }
 

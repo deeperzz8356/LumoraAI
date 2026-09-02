@@ -98,6 +98,7 @@ fun HistoryScreen(
     onNext: () -> Unit,
     onNavigate: (String) -> Unit = {},
     onDeleteItems: (List<HistoryModel>) -> Unit = {},
+    unreadCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     var selectedItem by remember { mutableStateOf<HistoryModel?>(null) }
@@ -127,6 +128,7 @@ fun HistoryScreen(
                     credits = credits,
                     onBack = { selectedItem = null },
                     onNavigate = onNavigate,
+                    unreadCount = unreadCount,
                     onDelete = {
                         onDeleteItems(listOf(viewing))
                         selectedItem = null
@@ -135,13 +137,14 @@ fun HistoryScreen(
             } else {
                 when (uiState) {
                     HistoryUiState.Loading -> AppLoadingScreen()
-                    is HistoryUiState.Empty -> HistoryEmpty(credits = uiState.credits, onNavigate = onNavigate)
+                    is HistoryUiState.Empty -> HistoryEmpty(credits = uiState.credits, onNavigate = onNavigate, unreadCount = unreadCount)
                     is HistoryUiState.Error -> AppErrorScreen(message = uiState.message)
                     is HistoryUiState.Success -> HistoryGallery(
                         items = uiState.items,
                         credits = uiState.credits,
                         onNavigate = onNavigate,
                         onDeleteItems = onDeleteItems,
+                        unreadCount = unreadCount,
                         onSelected = { item ->
                             selectedItem = item
                         }
@@ -158,6 +161,7 @@ private fun HistoryGallery(
     credits: Int,
     onNavigate: (String) -> Unit,
     onDeleteItems: (List<HistoryModel>) -> Unit,
+    unreadCount: Int,
     onSelected: (HistoryModel) -> Unit,
 ) {
     var selectedFilter by remember { mutableStateOf(HistoryFilter.All) }
@@ -185,7 +189,7 @@ private fun HistoryGallery(
             .padding(top = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        HistoryTopBar(credits = credits, onNavigate = onNavigate)
+        HistoryTopBar(credits = credits, onNavigate = onNavigate, unreadCount = unreadCount)
         FilterRow(selectedFilter = selectedFilter, onSelected = { selectedFilter = it })
         if (selectionMode) {
             SelectionBar(
@@ -232,13 +236,14 @@ private fun HistoryGallery(
 }
 
 @Composable
-private fun HistoryTopBar(credits: Int, onNavigate: (String) -> Unit) {
+private fun HistoryTopBar(credits: Int, onNavigate: (String) -> Unit, unreadCount: Int = 0) {
     LumoraTopBar(
         credits = credits,
         title = "History",
         onProfileClick = { onNavigate(Screen.Profile.route) },
         onCreditsClick = { onNavigate(Screen.Credits.route) },
         onNotificationsClick = { onNavigate(Screen.Notifications.route) },
+        hasUnreadNotifications = unreadCount > 0,
     )
 }
 
@@ -440,6 +445,7 @@ private fun HistoryMediaViewer(
     credits: Int,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
+    unreadCount: Int,
     onDelete: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -468,7 +474,7 @@ private fun HistoryMediaViewer(
             .padding(top = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        HistoryTopBar(credits = credits, onNavigate = onNavigate)
+        HistoryTopBar(credits = credits, onNavigate = onNavigate, unreadCount = unreadCount)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -719,7 +725,7 @@ private fun mimeTypeFor(item: HistoryModel): String {
 }
 
 @Composable
-private fun HistoryEmpty(credits: Int, onNavigate: (String) -> Unit) {
+private fun HistoryEmpty(credits: Int, onNavigate: (String) -> Unit, unreadCount: Int) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -727,7 +733,7 @@ private fun HistoryEmpty(credits: Int, onNavigate: (String) -> Unit) {
             .padding(top = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        HistoryTopBar(credits = credits, onNavigate = onNavigate)
+        HistoryTopBar(credits = credits, onNavigate = onNavigate, unreadCount = unreadCount)
         FilterRow(selectedFilter = HistoryFilter.All, onSelected = {})
         AppEmptyScreen(
             title = "No Creations Yet",

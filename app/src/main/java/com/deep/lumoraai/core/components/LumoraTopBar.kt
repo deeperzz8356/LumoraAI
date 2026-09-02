@@ -44,6 +44,7 @@ fun LumoraTopBar(
     onNotificationsClick: () -> Unit,
     modifier: Modifier = Modifier,
     title: String = "LUMORIA AI",
+    hasUnreadNotifications: Boolean = false,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -85,25 +86,42 @@ fun LumoraTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             LumoraCreditsChip(credits = credits, onClick = onCreditsClick)
+            LumoraNotificationBell(
+                hasUnreadNotifications = hasUnreadNotifications,
+                onClick = onNotificationsClick
+            )
+        }
+    }
+}
+
+@Composable
+fun LumoraNotificationBell(
+    hasUnreadNotifications: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(36.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White.copy(alpha = 0.055f))
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Notifications,
+            contentDescription = "Notifications",
+            tint = Color(0xFFDFF7F4),
+            modifier = Modifier.size(21.dp)
+        )
+        if (hasUnreadNotifications) {
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .clickable(onClick = onNotificationsClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications",
-                    tint = Color(0xFFDFF7F4),
-                    modifier = Modifier.size(23.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .align(Alignment.TopEnd)
-                        .background(Lime, CircleShape)
-                )
-            }
+                    .size(7.dp)
+                    .align(Alignment.TopEnd)
+                    .background(Lime, CircleShape)
+            )
         }
     }
 }

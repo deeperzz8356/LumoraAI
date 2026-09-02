@@ -9,6 +9,7 @@ import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.withTimeoutOrNull
 
 class AuthRepository {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -55,23 +56,27 @@ class AuthRepository {
 
     suspend fun syncCurrentUser(): Boolean = withContext(Dispatchers.IO) {
         val user = auth.currentUser ?: return@withContext false
-        try {
-            val tokenResult = user.getIdToken(true).await()
-            val idToken = tokenResult.token ?: return@withContext false
-            syncWithBackend(idToken)
-        } catch (e: Exception) {
-            Log.e("AuthRepository", "Error syncing current user: ${e.message}")
-            false
+        withTimeoutOrNull(6_000) {
+            try {
+                val tokenResult = user.getIdToken(true).await()
+                val idToken = tokenResult.token ?: return@withTimeoutOrNull false
+                syncWithBackend(idToken)
+            } catch (e: Exception) {
+                Log.e("AuthRepository", "Error syncing current user: ${e.message}")
+                false
+            }
         }
+            ?: false
     }
 
     private suspend fun processAuthResultAndSync(user: com.google.firebase.auth.FirebaseUser?): Boolean {
         if (user != null) {
-            val tokenResult = user.getIdToken(true).await()
-            val idToken = tokenResult.token
-            if (idToken != null) {
-                return syncWithBackend(idToken)
+            return withTimeoutOrNull(6_000) {
+                val tokenResult = user.getIdToken(true).await()
+                val idToken = tokenResult.token
+                idToken != null && syncWithBackend(idToken)
             }
+                ?: false
         }
         return false
     }
@@ -83,6 +88,8 @@ class AuthRepository {
             connection.requestMethod = "POST"
             connection.setRequestProperty("Content-Type", "application/json")
             connection.doOutput = true
+            connection.connectTimeout = 6_000
+            connection.readTimeout = 6_000
 
             // Send the id_token in the body
             val jsonInputString = JSONObject().apply {

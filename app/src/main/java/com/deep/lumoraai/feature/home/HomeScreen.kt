@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Compress
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Tune
@@ -58,6 +57,7 @@ import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.bgStudioRoute
@@ -193,40 +193,13 @@ private fun HomeTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             CreditsChip(credits = credits, onClick = { onNavigate(Screen.Credits.route) })
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clickable {
-                        onNotificationClick?.invoke()
-                            ?: onNavigate(Screen.Notifications.route)
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications",
-                    tint = Color(0xFFDFF7F4),
-                    modifier = Modifier.size(23.dp)
-                )
-                // Unread count badge
-                if (unreadCount > 0) {
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .align(Alignment.TopEnd)
-                            .clip(CircleShape)
-                            .background(Lime),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (unreadCount > 9) "9+" else unreadCount.toString(),
-                            color = Color.Black,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+            LumoraNotificationBell(
+                hasUnreadNotifications = unreadCount > 0,
+                onClick = {
+                    onNotificationClick?.invoke()
+                        ?: onNavigate(Screen.Notifications.route)
                 }
-            }
+            )
         }
     }
 }

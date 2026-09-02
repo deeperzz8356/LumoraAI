@@ -8,6 +8,7 @@ sealed interface ProfileUiState {
         val items: List<String>,
         val generations: List<HistoryModel> = emptyList(),
         val credits: Int = 0,
+        val isGuest: Boolean = true,
     ) : ProfileUiState
     data class Error(val message: String) : ProfileUiState
     data object Empty : ProfileUiState

@@ -1,6 +1,7 @@
 package com.deep.lumoraai.core.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -102,38 +103,29 @@ fun UserHeaderBar(
             // Notification Bell
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clickable(onClick = onNotifications)
-                    .padding(8.dp)
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White.copy(alpha = 0.055f))
+                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                    .clickable(onClick = onNotifications),
+                contentAlignment = Alignment.Center
             ) {
-                // Bell icon
                 Icon(
-                    imageVector = Icons.Filled.NotificationsActive,
+                    imageVector = Icons.Filled.Notifications,
                     contentDescription = "Notifications",
                     modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.Center),
+                        .size(21.dp),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
 
-                // Badge with unread count
                 if (unreadNotificationCount > 0) {
                     Box(
                         modifier = Modifier
-                            .size(20.dp)
+                            .size(7.dp)
                             .align(Alignment.TopEnd)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.error),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (unreadNotificationCount > 9) "9+" else unreadNotificationCount.toString(),
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
+                            .background(IntroPalette.AccentLime)
+                    )
                 }
             }
         }

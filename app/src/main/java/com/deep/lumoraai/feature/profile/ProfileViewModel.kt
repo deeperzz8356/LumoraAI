@@ -32,6 +32,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun load() {
         val user = FirebaseAuth.getInstance().currentUser
+        val isGuest = user == null || user.isAnonymous
         val items = if (user != null) {
             val name = GuestIdentity.displayName(getApplication(), user)
             val email = GuestIdentity.subtitle(getApplication(), user)
@@ -41,7 +42,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             listOf(GuestIdentity.displayName(getApplication(), null), GuestIdentity.subtitle(getApplication(), null), "Guest Preview")
         }
 
-        uiState = ProfileUiState.Success(items, emptyList())
+        uiState = ProfileUiState.Success(items = items, generations = emptyList(), isGuest = isGuest)
 
         viewModelScope.launch {
             historyRepository.getHistory()

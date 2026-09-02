@@ -1,15 +1,22 @@
 package com.deep.lumoraai.feature.profile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.deep.lumoraai.core.notification.NotificationViewModel
 
 @Composable
 fun ProfileRoute(
     onNext: () -> Unit,
     onSignOut: () -> Unit,
     onNavigate: (String) -> Unit,
-    viewModel: ProfileViewModel = viewModel()
+    viewModel: ProfileViewModel = viewModel(),
+    notificationViewModel: NotificationViewModel = hiltViewModel()
 ) {
+    val unreadCount by notificationViewModel.unreadCount.collectAsState()
+
     ProfileScreen(
         uiState = viewModel.uiState,
         onNext = onNext,
@@ -17,6 +24,7 @@ fun ProfileRoute(
             viewModel.signOut()
             onSignOut()
         },
-        onNavigate = onNavigate
+        onNavigate = onNavigate,
+        unreadCount = unreadCount
     )
 }
