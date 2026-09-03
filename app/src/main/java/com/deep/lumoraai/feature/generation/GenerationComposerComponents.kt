@@ -196,7 +196,7 @@ fun UploadImagePanel(
                 Text(stringResource(com.deep.lumoraai.R.string.ui_upload_image), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(7.dp))
                 Text(
-                    text = "Tap to select a file from your device",
+                    text = stringResource(com.deep.lumoraai.R.string.ui_tap_to_select_file),
                     color = GenerationMuted,
                     fontSize = 14.sp,
                     textAlign = TextAlign.Center
@@ -452,7 +452,7 @@ fun GenerationControlsPanel(
     negativePrompt: String,
     onNegativePromptChanged: (String) -> Unit,
     similarity: Float? = null,
-    similarityLabel: String = "Image Similarity",
+    similarityLabel: String = "",
     onSimilarityChanged: ((Float) -> Unit)? = null,
     creativity: Float? = null,
     onCreativityChanged: ((Float) -> Unit)? = null,
@@ -492,19 +492,24 @@ fun GenerationControlsPanel(
         NegativePromptField(value = negativePrompt, onValueChange = onNegativePromptChanged)
         GenerationDivider()
         if (similarity != null && onSimilarityChanged != null) {
-            SliderBlock(similarityLabel, "${(similarity * 100).toInt()}%", similarity, onSimilarityChanged)
+            SliderBlock(
+                similarityLabel.ifBlank { stringResource(com.deep.lumoraai.R.string.ui_image_similarity) },
+                "${(similarity * 100).toInt()}%",
+                similarity,
+                onSimilarityChanged
+            )
             GenerationDivider()
         }
         if (creativity != null && onCreativityChanged != null) {
-            SliderBlock("Creativity", "${(creativity * 100).toInt()}%", creativity, onCreativityChanged)
+            SliderBlock(stringResource(com.deep.lumoraai.R.string.ui_creativity), "${(creativity * 100).toInt()}%", creativity, onCreativityChanged)
             GenerationDivider()
         }
         if (motion != null && onMotionChanged != null) {
-            SliderBlock("Motion", "${(motion * 100).toInt()}%", motion, onMotionChanged)
+            SliderBlock(stringResource(com.deep.lumoraai.R.string.ui_motion), "${(motion * 100).toInt()}%", motion, onMotionChanged)
             GenerationDivider()
         }
         if (duration != null && onDurationChanged != null) {
-            SliderBlock("Duration", "${duration}s", (duration - 5) / 10f, { onDurationChanged((5 + it * 10).toInt()) })
+            SliderBlock(stringResource(com.deep.lumoraai.R.string.ui_duration), stringResource(com.deep.lumoraai.R.string.ui_seconds_format, duration), (duration - 5) / 10f, { onDurationChanged((5 + it * 10).toInt()) })
             GenerationDivider()
         }
     }
@@ -659,7 +664,7 @@ fun GenerateNowButton(
             Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.Black, modifier = Modifier.size(21.dp))
             Spacer(modifier = Modifier.width(9.dp))
             Text(
-                text = creditCost?.let { "Generate Now (-$it Credits)" } ?: "Generate Now",
+                text = stringResource(com.deep.lumoraai.R.string.ui_generate),
                 color = Color.Black,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.ExtraBold,
@@ -714,15 +719,15 @@ fun GeneratedMediaLoading(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = statusText ?: if (isVideo) "Video is generating" else "Image is generating",
+                    text = statusText ?: if (isVideo) stringResource(com.deep.lumoraai.R.string.ui_text_to_video_is_rendering) else stringResource(com.deep.lumoraai.R.string.loading),
                     color = Color.White,
                     fontSize = 16.sp,
                     lineHeight = 20.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
                 Text(
-                    text = progressPercent?.let { "$it% complete. Your result will load here when ready." }
-                        ?: "Rendering in the queue. Your result will load here when ready.",
+                    text = progressPercent?.let { "$it% ${stringResource(com.deep.lumoraai.R.string.completed).lowercase()}" }
+                        ?: stringResource(com.deep.lumoraai.R.string.ui_queue),
                     color = GenerationMuted,
                     fontSize = 12.sp,
                     lineHeight = 16.sp
@@ -914,8 +919,8 @@ fun GeneratedMediaResult(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            ResultActionIcon(Icons.Default.Edit, "Edit", onClick = onEdit)
-            ResultActionIcon(Icons.Default.ThumbUp, "Like", selected = quickFeedback == "Like") {
+            ResultActionIcon(Icons.Default.Edit, stringResource(com.deep.lumoraai.R.string.ui_edit_profile), onClick = onEdit)
+            ResultActionIcon(Icons.Default.ThumbUp, stringResource(com.deep.lumoraai.R.string.ui_feedback), selected = quickFeedback == "Like") {
                 if (saveGeneratedFeedback(context, selectedPath, mediaType, "Like")) {
                     quickFeedback = "Like"
                     Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
@@ -923,7 +928,7 @@ fun GeneratedMediaResult(
                     Toast.makeText(context, "Feedback could not be saved.", Toast.LENGTH_SHORT).show()
                 }
             }
-            ResultActionIcon(Icons.Default.ThumbDown, "Dislike", selected = quickFeedback == "Dislike") {
+            ResultActionIcon(Icons.Default.ThumbDown, stringResource(com.deep.lumoraai.R.string.ui_feedback), selected = quickFeedback == "Dislike") {
                 if (saveGeneratedFeedback(context, selectedPath, mediaType, "Dislike")) {
                     quickFeedback = "Dislike"
                     Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
@@ -931,10 +936,10 @@ fun GeneratedMediaResult(
                     Toast.makeText(context, "Feedback could not be saved.", Toast.LENGTH_SHORT).show()
                 }
             }
-            ResultActionIcon(Icons.Default.Feedback, "Feedback") {
+            ResultActionIcon(Icons.Default.Feedback, stringResource(com.deep.lumoraai.R.string.ui_feedback)) {
                 showFeedback = true
             }
-            ResultActionIcon(Icons.Default.Share, "Share", enabled = exists) {
+            ResultActionIcon(Icons.Default.Share, stringResource(com.deep.lumoraai.R.string.ui_share), enabled = exists) {
                 Toast.makeText(context, "Opening share sheet...", Toast.LENGTH_SHORT).show()
                 MediaShareUtils.shareMedia(context, selectedPath, mimeType)
             }
@@ -1153,8 +1158,8 @@ private fun GeneratedMediaViewer(
                     Toast.makeText(context, "Opening share sheet...", Toast.LENGTH_SHORT).show()
                     MediaShareUtils.shareMedia(context, selectedPath, mimeType)
                 }
-                ResultActionIcon(Icons.Default.Edit, "Edit", onClick = onEdit)
-                ResultActionIcon(Icons.Default.Close, "Close", onClick = onDismiss)
+                ResultActionIcon(Icons.Default.Edit, stringResource(com.deep.lumoraai.R.string.ui_edit_profile), onClick = onEdit)
+                ResultActionIcon(Icons.Default.Close, stringResource(com.deep.lumoraai.R.string.ui_close), onClick = onDismiss)
             }
         }
     }

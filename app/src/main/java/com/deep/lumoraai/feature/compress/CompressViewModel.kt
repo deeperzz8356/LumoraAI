@@ -49,7 +49,7 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
     private val outputDir = File(application.filesDir, "media/compressed").also { it.mkdirs() }
     private val tempDir = File(application.cacheDir, "compress-inputs").also { it.mkdirs() }
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
-    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao, application)
 
     var uiState: CompressUiState by mutableStateOf(CompressUiState())
         private set
@@ -374,3 +374,4 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
         }
     }
 }
+

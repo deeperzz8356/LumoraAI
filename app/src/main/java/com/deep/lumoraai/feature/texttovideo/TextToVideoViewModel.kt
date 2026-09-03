@@ -1,6 +1,7 @@
 package com.deep.lumoraai.feature.texttovideo
 
 import android.app.Application
+import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -33,13 +34,15 @@ import java.util.Locale
 import java.util.UUID
 
 class TextToVideoViewModel(application: Application) : AndroidViewModel(application) {
+    private fun s(@StringRes id: Int, vararg args: Any): String =
+        getApplication<Application>().getString(id, *args)
 
     private val generationRepository = GenerationRepository()
     private val authRepository = AuthRepository()
     private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val mediaStorage = MediaStorageRepository.getInstance(application)
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
-    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao, application)
     private var isPromoMode = false
 
     var uiState: TextToVideoUiState by mutableStateOf(TextToVideoUiState())
@@ -50,18 +53,18 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
         isPromoMode = isPromo
         val modeState = if (isPromo) {
             uiState.copy(
-                title = "Promo Video",
-                promptHint = "Describe the product, offer, or ad video you want...",
-                jobBadge = "Promo Video",
+                title = s(R.string.ui_promo_videos),
+                promptHint = s(R.string.describe_promo_video),
+                jobBadge = s(R.string.ui_promo_videos),
                 error = null,
                 generatedPath = null,
                 generatedPaths = emptyList(),
             )
         } else {
             uiState.copy(
-                title = "Text 2 Video",
-                promptHint = "Describe the video you want to generate...",
-                jobBadge = "Text 2 Video",
+                title = s(R.string.ui_text_2_video),
+                promptHint = s(R.string.describe_video_to_generate),
+                jobBadge = s(R.string.ui_text_2_video),
                 error = null,
                 generatedPath = null,
                 generatedPaths = emptyList(),
@@ -111,20 +114,20 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
     fun generate() {
         if (uiState.isGenerating) return
         if (uiState.prompt.isBlank()) {
-            uiState = uiState.copy(error = if (isPromoMode) "Describe the promo video you want to create." else "Describe the video you want to generate.")
+            uiState = uiState.copy(error = s(if (isPromoMode) R.string.describe_promo_video_to_create else R.string.describe_video_to_generate))
             return
         }
 
         viewModelScope.launch {
             val isDev = appPreferences.isDeveloperModeEnabled()
             if (!ensureTrialUser()) {
-                uiState = uiState.copy(error = "Could not start your free trial. Please try again.")
+                uiState = uiState.copy(error = s(R.string.free_trial_start_failed))
                 return@launch
             }
             if (!isDev) {
                 val credits = fetchCreditsWithSync()
                 if (credits == null) {
-                    uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
+                    uiState = uiState.copy(error = s(R.string.credits_verification_failed))
                     return@launch
                 }
                 if (!GenerationGate.canGenerateVideo(credits, isDev, uiState.generations)) {
@@ -134,12 +137,12 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             }
 
             val taskType = if (isPromoMode) TaskNotificationHelper.PROMO_VIDEO else TaskNotificationHelper.TEXT_TO_VIDEO
-            val displayName = if (isPromoMode) "Promo Video" else "Text to Video"
+            val displayName = if (isPromoMode) s(R.string.ui_promo_videos) else s(R.string.ui_text_to_video)
             val requestedGenerations = uiState.generations.coerceIn(1, 4)
             uiState = uiState.copy(
                 isGenerating = true,
                 generationProgress = 0.1f,
-                generationStatusText = "Video 1 of $requestedGenerations generating",
+                generationStatusText = s(R.string.video_generation_progress, 1, requestedGenerations),
                 error = null,
                 generatedPath = null,
                 generatedPaths = emptyList()
@@ -150,7 +153,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             repeat(requestedGenerations) { index ->
                 uiState = uiState.copy(
                     generationProgress = 0.1f,
-                    generationStatusText = "Video ${index + 1} of $requestedGenerations generating"
+                    generationStatusText = s(R.string.video_generation_progress, index + 1, requestedGenerations)
                 )
                 val taskId = UUID.randomUUID().toString()
                 val jobTitle = "${uiState.jobBadge} ${shortTimestamp()} #${index + 1}"
@@ -186,7 +189,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                     persistGeneratedVideo(result.getOrThrow(), jobTitle, prompt, taskId, taskType, displayName, keepGenerating = index < requestedGenerations - 1)
                     completed += 1
                 } else {
-                    val message = result.exceptionOrNull()?.message ?: "Failed to generate video."
+                    val message = result.exceptionOrNull()?.message ?: s(R.string.video_generation_failed)
                     uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = message)
                     GenerationRepository.updateJob(jobTitle) { job ->
                         job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
@@ -220,7 +223,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             } else {
                 uiState.copy(
                     isImprovingPrompt = false,
-                    error = result.exceptionOrNull()?.message ?: "Could not improve prompt."
+                    error = result.exceptionOrNull()?.message ?: s(R.string.prompt_improvement_failed)
                 )
             }
         }
@@ -245,7 +248,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             delay(2400)
             uiState = uiState.copy(
                 generationProgress = step.first,
-                generationStatusText = "Video $current of $total generating"
+                generationStatusText = s(R.string.video_generation_progress, current, total)
             )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
@@ -276,8 +279,8 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
         GenerationRepository.updateJob(jobTitle) { job ->
             job.copy(
                 progressPercent = 1.0f,
-                statusText = "Completed",
-                subtitle = "Saved to device",
+                statusText = s(R.string.completed),
+                subtitle = s(R.string.saved_to_device),
                 isCompleted = true,
                 localMediaPath = saved.filePath,
                 videoUrl = saved.filePath,

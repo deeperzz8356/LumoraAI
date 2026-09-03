@@ -60,6 +60,8 @@ import com.deep.lumoraai.core.theme.IntroTypography
 import com.deep.lumoraai.core.theme.LumoraPrimary
 import com.deep.lumoraai.core.theme.LumoraSecondary
 import com.deep.lumoraai.core.theme.LumoraTertiary
+import androidx.compose.ui.res.stringResource
+import com.deep.lumoraai.R
 
 @Composable
 fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
@@ -115,20 +117,20 @@ fun AppToolbar(
 
 
 @Composable
-fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier, placeholder: String = "Search") {
-    OutlinedTextField(value = query, onValueChange = onQueryChange, modifier = modifier.fillMaxWidth(), placeholder = { Text(placeholder) }, singleLine = true)
+fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier, placeholder: String? = null) {
+    OutlinedTextField(value = query, onValueChange = onQueryChange, modifier = modifier.fillMaxWidth(), placeholder = { Text(placeholder ?: stringResource(R.string.search)) }, singleLine = true)
 }
 
 @Composable
-fun PromptTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier, placeholder: String = "Describe what you want to create") {
-    OutlinedTextField(value = value, onValueChange = onValueChange, modifier = modifier.fillMaxWidth().height(132.dp), placeholder = { Text(placeholder) })
+fun PromptTextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier, placeholder: String? = null) {
+    OutlinedTextField(value = value, onValueChange = onValueChange, modifier = modifier.fillMaxWidth().height(132.dp), placeholder = { Text(placeholder ?: stringResource(R.string.describe_what_you_want_to_create)) })
 }
 
 @Composable
-fun Loading(modifier: Modifier = Modifier, text: String = "Loading") {
+fun Loading(modifier: Modifier = Modifier, text: String? = null) {
     Column(modifier = modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         CircularProgressIndicator()
-        Text(text, style = MaterialTheme.typography.bodyMedium)
+        Text(text ?: stringResource(R.string.loading), style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -153,7 +155,7 @@ fun Dialog(title: String, message: String, onDismiss: () -> Unit) {
             Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(title, style = MaterialTheme.typography.titleLarge)
                 Text(message, style = MaterialTheme.typography.bodyMedium)
-                PrimaryButton(text = "Done", onClick = onDismiss, modifier = Modifier.fillMaxWidth())
+                PrimaryButton(text = stringResource(R.string.done), onClick = onDismiss, modifier = Modifier.fillMaxWidth())
             }
         }
     }

@@ -101,14 +101,15 @@ private fun ResponsiveBottomNav(
         ) {
             NavItem(
                 icon = Icons.Default.Home,
-                label = "Home",
+                label = stringResource(com.deep.lumoraai.R.string.ui_home),
+                isHome = true,
                 isSelected = selected == "home",
                 onClick = { onSelected("home") },
                 modifier = Modifier.weight(1f)
             )
             NavItem(
                 icon = Icons.Default.Search,
-                label = "Templates",
+                label = stringResource(com.deep.lumoraai.R.string.ui_templates),
                 isSelected = selected == "templates",
                 onClick = { onSelected("templates") },
                 modifier = Modifier.weight(1f)
@@ -116,14 +117,14 @@ private fun ResponsiveBottomNav(
             Spacer(modifier = Modifier.width(72.dp))
             NavItem(
                 icon = Icons.Default.AutoAwesome,
-                label = "AI Tools",
+                label = stringResource(com.deep.lumoraai.R.string.ui_ai_tools),
                 isSelected = selected == "aitools",
                 onClick = { onSelected("aitools") },
                 modifier = Modifier.weight(1f)
             )
             NavItem(
                 icon = Icons.Default.History,
-                label = "History",
+                label = stringResource(com.deep.lumoraai.R.string.ui_history),
                 isSelected = selected == "history",
                 onClick = { onSelected("history") },
                 modifier = Modifier.weight(1f)
@@ -151,7 +152,7 @@ private fun ResponsiveBottomNav(
                 )
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    "Create",
+                    stringResource(com.deep.lumoraai.R.string.ui_create),
                     color = Color.Black,
                     fontSize = 9.sp,
                     lineHeight = 11.sp,
@@ -166,6 +167,7 @@ private fun ResponsiveBottomNav(
 private fun NavItem(
     icon: ImageVector,
     label: String,
+    isHome: Boolean = false,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -185,7 +187,7 @@ private fun NavItem(
         animationSpec = tween(180, easing = FastOutSlowInEasing),
         label = "navLabelAlpha"
     )
-    val isEnabled = !(label == "Home" && isSelected)
+    val isEnabled = !(isHome && isSelected)
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

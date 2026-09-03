@@ -46,7 +46,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val mediaStorage = MediaStorageRepository.getInstance(application)
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
-    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao, application)
     private var sourceImageB64: String? = null
 
     var uiState: ImageToImageUiState by mutableStateOf(ImageToImageUiState())
@@ -347,4 +347,5 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }
+
 

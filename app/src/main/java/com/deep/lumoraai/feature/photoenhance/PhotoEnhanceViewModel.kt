@@ -44,7 +44,7 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
     )
     private val generationRepository = GenerationRepository()
     private val appPreferences = AppPreferencesRepository.getInstance(application)
-    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao, application)
     private val imagesDir = File(application.filesDir, "media/images").also { it.mkdirs() }
 
     var uiState: PhotoEnhanceUiState by mutableStateOf(PhotoEnhanceUiState())
@@ -534,3 +534,4 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
     private fun currentTimestamp(): String =
         SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date())
 }
+

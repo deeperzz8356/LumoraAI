@@ -74,7 +74,7 @@ fun MediaViewerDialog(
                 ) {
                     if (!exists) {
                         Text(
-                            text = "Saved media file is missing.",
+                            text = stringResource(com.deep.lumoraai.R.string.ui_saved_media_file_is_missing),
                             color = Color.White,
                             modifier = Modifier.padding(16.dp)
                         )

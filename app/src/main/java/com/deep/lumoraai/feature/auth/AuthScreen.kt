@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -101,7 +102,7 @@ private fun AuthHeroSection(uiState: AuthUiState) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = if (state.isSignUp) "Create your account" else "Welcome back",
+                        text = if (state.isSignUp) stringResource(com.deep.lumoraai.R.string.auth_create_account) else stringResource(com.deep.lumoraai.R.string.auth_welcome_back),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = IntroPalette.TextPrimary,
@@ -109,9 +110,9 @@ private fun AuthHeroSection(uiState: AuthUiState) {
                     )
                     Text(
                         text = if (state.isSignUp) {
-                            "Sign up with email to save your creations and credits."
+                            stringResource(com.deep.lumoraai.R.string.auth_signup_description)
                         } else {
-                            "Sign in with email to pick up where you left off."
+                            stringResource(com.deep.lumoraai.R.string.auth_signin_description)
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = IntroPalette.TextMuted,
@@ -126,19 +127,19 @@ private fun AuthHeroSection(uiState: AuthUiState) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Unlock",
+                        text = stringResource(com.deep.lumoraai.R.string.auth_unlock),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = IntroPalette.TextPrimary
                     )
                     Text(
-                        text = "AI Creation",
+                        text = stringResource(com.deep.lumoraai.R.string.auth_ai_creation),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = IntroPalette.SecondaryText
                     )
                     Text(
-                        text = "Images, video, and edits — all in one place.",
+                        text = stringResource(com.deep.lumoraai.R.string.auth_tagline),
                         style = MaterialTheme.typography.bodyMedium,
                         color = IntroPalette.TextMuted,
                         textAlign = TextAlign.Center,
@@ -191,7 +192,7 @@ private fun AuthMainActions(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "SIGN IN",
+            text = stringResource(com.deep.lumoraai.R.string.auth_sign_in_caps),
             style = MaterialTheme.typography.labelSmall,
             fontSize = 9.sp,
             color = IntroPalette.TextSubtle,
@@ -200,12 +201,12 @@ private fun AuthMainActions(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         LumoraIntroPrimaryButton(
-            text = "Continue with Google",
+            text = stringResource(com.deep.lumoraai.R.string.auth_continue_google),
             onClick = onGoogle,
             leadingContent = { GoogleBrandIcon(modifier = Modifier.size(20.dp)) }
         )
         LumoraIntroSecondaryButton(
-            text = "Continue with Email",
+            text = stringResource(com.deep.lumoraai.R.string.auth_continue_email),
             onClick = onEmail,
             leadingIcon = Icons.Default.Email,
             modifier = Modifier.fillMaxWidth()
@@ -229,20 +230,20 @@ private fun EmailAuthForm(
         LumoraIntroTextField(
             value = email,
             onValueChange = { email = it },
-            label = "Email address"
+            label = stringResource(com.deep.lumoraai.R.string.ui_email_address)
         )
         LumoraIntroTextField(
             value = password,
             onValueChange = { password = it },
-            label = "Password",
+            label = stringResource(com.deep.lumoraai.R.string.ui_password),
             isPassword = true
         )
         LumoraIntroPrimaryButton(
-            text = if (isSignUp) "Create account" else "Sign in",
+            text = if (isSignUp) stringResource(com.deep.lumoraai.R.string.auth_create) else stringResource(com.deep.lumoraai.R.string.auth_sign_in),
             onClick = { onSubmit(email, password, isSignUp) }
         )
         Text(
-            text = "Back to sign-in options",
+            text = stringResource(com.deep.lumoraai.R.string.auth_back_options),
             color = IntroPalette.TextSubtle,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier
@@ -278,14 +279,14 @@ private fun AuthFooter(
         if (uiState !is AuthUiState.EmailForm && allowGuestSignIn) {
             TextButton(onClick = onGuestSignIn) {
                 Text(
-                    text = "Continue as guest",
+                    text = stringResource(com.deep.lumoraai.R.string.auth_continue_guest),
                     style = MaterialTheme.typography.labelMedium,
                     color = IntroPalette.TextMuted
                 )
             }
         } else if (uiState !is AuthUiState.EmailForm) {
             Text(
-                text = "Free trial finished on this device. Sign in or create an account to continue.",
+                text = stringResource(com.deep.lumoraai.R.string.auth_trial_finished),
                 color = IntroPalette.TextMuted,
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
@@ -314,12 +315,12 @@ private fun FooterSwitchRow(
     ) {
         val isSignUp = uiState is AuthUiState.EmailForm && uiState.isSignUp
         Text(
-            text = if (isSignUp) "Already have an account?" else "Don't have an account?",
+            text = if (isSignUp) stringResource(com.deep.lumoraai.R.string.auth_have_account) else stringResource(com.deep.lumoraai.R.string.auth_no_account),
             style = MaterialTheme.typography.bodySmall,
             color = IntroPalette.TextSubtle
         )
         Text(
-            text = if (isSignUp) "Sign in" else "Sign up",
+            text = if (isSignUp) stringResource(com.deep.lumoraai.R.string.auth_sign_in) else stringResource(com.deep.lumoraai.R.string.auth_sign_up),
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
             color = IntroPalette.TextPrimary,
@@ -344,7 +345,7 @@ private fun FooterSecureRow() {
             modifier = Modifier.size(14.dp)
         )
         Text(
-            text = "Your data is secure",
+            text = stringResource(com.deep.lumoraai.R.string.auth_data_secure),
             style = MaterialTheme.typography.labelSmall,
             color = IntroPalette.TextSubtle
         )
@@ -354,7 +355,7 @@ private fun FooterSecureRow() {
 @Composable
 private fun FooterCopyrightText() {
     Text(
-        text = "By continuing, you agree to Lumora AI's Terms of Service and Privacy Policy.\n© 2026 Lumora AI. All rights reserved.",
+        text = stringResource(com.deep.lumoraai.R.string.auth_legal),
         style = MaterialTheme.typography.labelSmall,
         fontSize = 9.sp,
         color = IntroPalette.TextLegal,

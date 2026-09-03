@@ -12,6 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.core.theme.LumoraTheme
+import androidx.compose.ui.res.stringResource
+import com.deep.lumoraai.R
 
 /**
  * App footer showing "Powered by LumoraAI" credit
@@ -26,7 +28,7 @@ fun AppFooter(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Powered by LumoraAI",
+            text = stringResource(R.string.powered_by_lumora_ai),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             fontWeight = FontWeight.Normal

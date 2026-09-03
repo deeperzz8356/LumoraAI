@@ -1,6 +1,8 @@
 package com.deep.lumoraai.core.notification
 
+import android.content.Context
 import android.util.Log
+import com.deep.lumoraai.R
 import com.deep.lumoraai.data.local.room.dao.NotificationDao
 import com.deep.lumoraai.data.local.room.entity.NotificationEntity
 import kotlinx.coroutines.flow.Flow
@@ -14,8 +16,10 @@ import javax.inject.Singleton
  */
 @Singleton
 class NotificationManager @Inject constructor(
-    private val notificationDao: NotificationDao
+    private val notificationDao: NotificationDao,
+    private val context: Context? = null
 ) {
+    private fun localized(id: Int, fallback: String): String = context?.getString(id) ?: fallback
     companion object {
         private const val TAG = "NotificationManager"
     }
@@ -28,8 +32,8 @@ class NotificationManager @Inject constructor(
     ) {
         val notification = NotificationEntity(
             id = UUID.randomUUID().toString(),
-            title = "Processing Started",
-            message = "$displayName generation has begun",
+            title = localized(R.string.notification_processing_started, "Processing Started"),
+            message = localized(R.string.notification_generation_started, "%1\$s generation has begun").format(displayName),
             type = "TASK_PROGRESS",
             priority = "MEDIUM",
             imageUrl = null,
@@ -75,7 +79,7 @@ class NotificationManager @Inject constructor(
         taskType: String,
         taskId: String,
         displayName: String = taskType,
-        errorMessage: String = "Error processing task"
+        errorMessage: String = localized(R.string.notification_error_processing_task, "Error processing task")
     ) {
         val notification = NotificationEntity(
             id = UUID.randomUUID().toString(),

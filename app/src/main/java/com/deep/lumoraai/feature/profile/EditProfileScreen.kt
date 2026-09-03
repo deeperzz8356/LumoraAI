@@ -122,11 +122,11 @@ fun EditProfileScreen(
         val cleanName = fullName.trim()
         if (!hasChanges || isSaving) return
         if (cleanName.isBlank()) {
-            Toast.makeText(context, "Full name is required.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.full_name_required), Toast.LENGTH_LONG).show()
             return
         }
         if (!ProfilePreferences.isValidUsername(username)) {
-            Toast.makeText(context, "Username must be 3-30 characters and use letters, numbers, dots, or underscores.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.username_invalid), Toast.LENGTH_LONG).show()
             return
         }
         isSaving = true
@@ -157,10 +157,10 @@ fun EditProfileScreen(
                     }
                 }
                 
-                Toast.makeText(context, "Profile saved successfully.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.profile_saved), Toast.LENGTH_SHORT).show()
                 onBack()
             } catch (error: Exception) {
-                Toast.makeText(context, "Could not save profile. Please try again.", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.profile_save_failed), Toast.LENGTH_LONG).show()
                 android.util.Log.e("ProfileSave", "Failed to save profile", error)
             } finally {
                 isSaving = false
@@ -176,7 +176,7 @@ fun EditProfileScreen(
             onDismissRequest = { pendingAvatarUri = null },
             containerColor = EditCard,
             title = {
-                Text("Crop profile image", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.crop_profile_image), color = Color.White, fontWeight = FontWeight.Bold)
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -202,7 +202,7 @@ fun EditProfileScreen(
                     ) {
                         AsyncImage(
                             model = cropUri,
-                            contentDescription = "1:1 profile crop preview",
+                            contentDescription = stringResource(R.string.profile_crop_preview),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .fillMaxSize()
@@ -224,7 +224,7 @@ fun EditProfileScreen(
                             inactiveTrackColor = Muted.copy(alpha = 0.35f)
                         )
                     )
-                    Text("Pinch, drag, or zoom. This square 1:1 crop will be used for your profile photo.", color = Muted, fontSize = 13.sp)
+                    Text(stringResource(R.string.profile_crop_instruction), color = Muted, fontSize = 13.sp)
                 }
             },
             confirmButton = {
@@ -241,17 +241,17 @@ fun EditProfileScreen(
                         if (copied != null) {
                             avatarUri = copied
                         } else {
-                            Toast.makeText(context, "Could not load the selected image.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, context.getString(R.string.could_not_load_selected_image), Toast.LENGTH_LONG).show()
                         }
                         pendingAvatarUri = null
                     }
                 ) {
-                    Text("Use Crop", color = Lime, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.use_crop), color = Lime, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingAvatarUri = null }) {
-                    Text("Cancel", color = Muted)
+                    Text(stringResource(R.string.ui_cancel), color = Muted)
                 }
             }
         )
@@ -268,7 +268,7 @@ fun EditProfileScreen(
                     IconButton(onClick = { saveProfile() }, enabled = hasChanges && !isSaving) {
                         Icon(
                             imageVector = Icons.Default.Check,
-                            contentDescription = "Save profile",
+                            contentDescription = stringResource(R.string.save_profile),
                             tint = if (hasChanges && !isSaving) Lime else Color.White.copy(alpha = 0.35f)
                         )
                     }
@@ -392,7 +392,7 @@ fun EditProfileScreen(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        if (isSaving) "Saving..." else "Save Changes",
+                        if (isSaving) stringResource(R.string.saving) else stringResource(R.string.ui_save_changes),
                         color = EditBackground,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.ExtraBold
@@ -412,7 +412,7 @@ fun EditProfileScreen(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        "Cancel",
+                        stringResource(R.string.ui_cancel),
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold

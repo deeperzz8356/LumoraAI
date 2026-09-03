@@ -37,6 +37,8 @@ import com.deep.lumoraai.core.components.LumoraIntroBackground
 import com.deep.lumoraai.core.components.LumoraIntroPrimaryButton
 import com.deep.lumoraai.core.components.LumoraIntroSecondaryButton
 import com.deep.lumoraai.core.theme.IntroPalette
+import androidx.compose.ui.res.stringResource
+import com.deep.lumoraai.R
 
 @Composable
 fun NoInternetScreen(
@@ -60,7 +62,7 @@ fun NoInternetScreen(
             WifiStatusArt()
             Spacer(modifier = Modifier.height(34.dp))
             Text(
-                text = "No internet connection",
+                text = stringResource(R.string.no_internet_connection),
                 color = IntroPalette.TextPrimary,
                 fontSize = 26.sp,
                 lineHeight = 32.sp,
@@ -69,7 +71,7 @@ fun NoInternetScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Please turn on Wi-Fi or mobile data to continue using Lumora AI.",
+                text = stringResource(R.string.no_internet_message),
                 color = IntroPalette.TextMuted,
                 style = MaterialTheme.typography.bodyMedium,
                 lineHeight = 21.sp,
@@ -77,14 +79,14 @@ fun NoInternetScreen(
             )
             Spacer(modifier = Modifier.height(34.dp))
             LumoraIntroPrimaryButton(
-                text = "Turn on network",
+                text = stringResource(R.string.turn_on_network),
                 onClick = onTurnOnNetwork,
                 leadingIcon = Icons.Default.Wifi,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(12.dp))
             LumoraIntroSecondaryButton(
-                text = "Retry",
+                text = stringResource(R.string.retry),
                 onClick = onRetry,
                 leadingIcon = Icons.Default.Refresh,
                 height = 52.dp,

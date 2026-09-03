@@ -141,20 +141,20 @@ fun BgStudioScreen(
                     )
                     if (showAdvancedSettings.value) {
                         GenerationControlsPanel(
-                            mediaType = "Image",
+                            mediaType = stringResource(com.deep.lumoraai.R.string.ui_image),
                             selectedAspectRatio = uiState.aspectRatio,
                             onAspectRatioSelected = onAspectRatioChanged,
                             negativePrompt = uiState.negativePrompt,
                             onNegativePromptChanged = onNegativePromptChanged,
                             similarity = uiState.similarity,
-                            similarityLabel = "Subject Preservation",
+                            similarityLabel = stringResource(com.deep.lumoraai.R.string.ui_subject_preservation),
                             onSimilarityChanged = onSimilarityChanged,
                             generations = 1,
                             onGenerationsChanged = {}
                         )
                     }
                     StudioPrimaryButton(
-                        text = "CREATE (-1 Credit)",
+                        text = stringResource(com.deep.lumoraai.R.string.ui_create_credit_cost),
                         isBusy = isBusy,
                         enabled = !isBusy && uiState.sourceBitmap != null && uiState.prompt.isNotBlank(),
                         onClick = onCreate
@@ -162,7 +162,7 @@ fun BgStudioScreen(
                 } else {
                     RemoveBackgroundPanel(uiState = uiState, onUpload = { imagePicker.launch("image/*") })
                     StudioPrimaryButton(
-                        text = "REMOVE BACKGROUND (-1 Credit)",
+                        text = stringResource(com.deep.lumoraai.R.string.ui_remove_background_credit_cost),
                         isBusy = isBusy,
                         enabled = !isBusy && uiState.sourceBitmap != null,
                         onClick = onCreate
@@ -171,14 +171,14 @@ fun BgStudioScreen(
 
                 GeneratedMediaLoading(
                     isVisible = isBusy,
-                    mediaType = "IMAGE",
+                    mediaType = stringResource(com.deep.lumoraai.R.string.ui_image_upper),
                     progress = uiState.generationProgress,
                     statusText = uiState.generationStatusText
                 )
                 GeneratedMediaResult(
                     filePath = uiState.generatedPath,
                     filePaths = uiState.generatedPaths,
-                    mediaType = "IMAGE",
+                    mediaType = stringResource(com.deep.lumoraai.R.string.ui_image_upper),
                     mimeType = uiState.generatedMimeType,
                     onEdit = onEditResult
                 )
@@ -216,7 +216,7 @@ private fun StudioTopBar(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Bg Studio",
+                text = stringResource(com.deep.lumoraai.R.string.ui_bg_studio),
                 color = Color.White,
                 fontSize = 21.sp,
                 lineHeight = 25.sp,
@@ -355,7 +355,10 @@ private fun RemoveBackgroundPanel(uiState: BgStudioUiState, onUpload: () -> Unit
             ) {
                 Text("✦", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(
-                    text = if (bitmap == null) "Tap to select subject" else "Subject Detected",
+                    text = stringResource(
+                        if (bitmap == null) com.deep.lumoraai.R.string.ui_tap_to_select_subject
+                        else com.deep.lumoraai.R.string.ui_subject_detected
+                    ),
                     color = Color.White,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
@@ -386,7 +389,7 @@ private fun PromptPanel(
             onValueChange = onPromptChanged,
             placeholder = {
                 Text(
-                    text = "Describe the image you want to generate...",
+                    text = stringResource(com.deep.lumoraai.R.string.ui_describe_image_to_generate),
                     color = Muted,
                     fontSize = 16.sp,
                     lineHeight = 22.sp
@@ -497,13 +500,13 @@ private fun StatusMessage(status: BgStudioStatus, onDismissError: () -> Unit) {
             modifier = Modifier.clickable(onClick = onDismissError)
         )
         BgStudioStatus.Completed -> Text(
-            text = "Saved to History and gallery.",
+            text = stringResource(com.deep.lumoraai.R.string.ui_saved_to_history_and_gallery),
             color = Lime,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold
         )
         BgStudioStatus.TrialExpired -> Text(
-            text = "Insufficient credits. Buy credits or enable developer mode.",
+            text = stringResource(com.deep.lumoraai.R.string.ui_insufficient_credits),
             color = Color(0xFFFFC46B),
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold

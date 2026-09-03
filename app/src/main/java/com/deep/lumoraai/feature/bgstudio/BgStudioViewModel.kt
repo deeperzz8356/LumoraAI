@@ -55,7 +55,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
     private val historyRepository = HistoryRepository(
         LumoraDatabase.getInstance(application).historyDao
     )
-    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao, application)
 
     private var sourceImageB64: String? = null
     private var sourceImageUri: Uri? = null
@@ -701,3 +701,4 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }
+

@@ -40,7 +40,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val mediaStorage = MediaStorageRepository.getInstance(application)
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
-    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
+    private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao, application)
 
     var uiState: TextToImageUiState by mutableStateOf(TextToImageUiState())
         private set
@@ -308,4 +308,5 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }
+
 

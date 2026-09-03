@@ -107,7 +107,7 @@ fun ProfileScreen(
             when (uiState) {
                 ProfileUiState.Loading -> AppLoadingScreen()
                 is ProfileUiState.Error -> AppErrorScreen(message = uiState.message)
-                ProfileUiState.Empty -> AppEmptyScreen(title = stringResource(com.deep.lumoraai.R.string.ui_profile_2), body = "No account details available.")
+                ProfileUiState.Empty -> AppEmptyScreen(title = stringResource(com.deep.lumoraai.R.string.ui_profile_2), body = stringResource(com.deep.lumoraai.R.string.ui_no_content))
                 is ProfileUiState.Success -> ProfileContent(
                     items = uiState.items,
                     credits = uiState.credits,
@@ -160,8 +160,8 @@ private fun ProfileContent(
         CreditsOverviewCard(credits = credits, onNavigate = onNavigate)
 
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            DashboardCard("${generations.size}", "creations", Icons.Default.GridView, Purple, { onNavigate(Screen.History.route) }, Modifier.weight(1f))
-            ShortcutCard("Manage Plan", "Elite Pro", Icons.AutoMirrored.Filled.ReceiptLong, Pink, { onNavigate(Screen.Subscription.route) }, Modifier.weight(1f))
+            DashboardCard("${generations.size}", stringResource(com.deep.lumoraai.R.string.ui_my_creations), Icons.Default.GridView, Purple, { onNavigate(Screen.History.route) }, Modifier.weight(1f))
+            ShortcutCard(stringResource(com.deep.lumoraai.R.string.ui_subscription), "Elite Pro", Icons.AutoMirrored.Filled.ReceiptLong, Pink, { onNavigate(Screen.Subscription.route) }, Modifier.weight(1f))
         }
 
         CreationsSection(generations = generations, onNavigate = onNavigate)
@@ -196,7 +196,7 @@ private fun CreditsOverviewCard(credits: Int, onNavigate: (String) -> Unit) {
                 Text("$credits", color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(stringResource(com.deep.lumoraai.R.string.ui_top_up_and_manage_packs), color = Lime, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            MiniAction("Top Up", Icons.Default.Add, Cyan, onClick = { onNavigate(Screen.Credits.route) })
+            MiniAction(stringResource(com.deep.lumoraai.R.string.ui_top_up), Icons.Default.Add, Cyan, onClick = { onNavigate(Screen.Credits.route) })
         }
     }
 }
@@ -247,10 +247,10 @@ private fun ProfileHero(name: String, subtitle: String, plan: String, avatarUri:
                         Text(plan, color = Lime, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        MiniAction("Edit", Icons.Default.Edit, Lime, onClick = {
+                        MiniAction(stringResource(com.deep.lumoraai.R.string.ui_edit_profile), Icons.Default.Edit, Lime, onClick = {
                             onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
                         })
-                        MiniAction("Share", Icons.Default.Share, Purple, onClick = {
+                        MiniAction(stringResource(com.deep.lumoraai.R.string.ui_share), Icons.Default.Share, Purple, onClick = {
                             val text = "${name.ifBlank { "Lumora Creator" }} on LumoraAI"
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
@@ -511,7 +511,7 @@ private fun PreferencesList(
             },
             dismissButton = {
                 TextButton(onClick = { pendingAction.value = null }) {
-                    Text("Cancel")
+                    Text(stringResource(com.deep.lumoraai.R.string.ui_cancel))
                 }
             }
         )
