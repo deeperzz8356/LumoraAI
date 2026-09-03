@@ -22,6 +22,8 @@ import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
+import com.deep.lumoraai.feature.imagetoimage.apiStyle
+import com.deep.lumoraai.feature.imagetoimage.promptDirective
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -113,7 +115,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             val result = generationRepository.enhancePrompt(
                 prompt = uiState.prompt,
                 mediaType = "IMAGE",
-                style = uiState.selectedStyle.label,
+                style = uiState.selectedStyle.apiStyle,
                 negativePrompt = uiState.negativePrompt,
             )
             uiState = if (result.isSuccess) {
@@ -138,11 +140,22 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     private fun startImageJobs(developerMode: Boolean) {
         val prompt = buildPrompt()
         val requestedGenerations = uiState.generations.coerceIn(1, 4)
-        uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null, generatedPaths = emptyList())
+            uiState = uiState.copy(
+                isGenerating = true,
+                generationProgress = 0f,
+                generationStatusText = "Image 1 of $requestedGenerations generating",
+                error = null,
+                generatedPath = null,
+                generatedPaths = emptyList()
+            )
 
         viewModelScope.launch {
             var completed = 0
             repeat(requestedGenerations) { index ->
+                uiState = uiState.copy(
+                    generationProgress = 0f,
+                    generationStatusText = "Image ${index + 1} of $requestedGenerations generating"
+                )
                 val jobTitle = "Text 2 Image ${shortTimestamp()} #${index + 1}"
                 val taskId = UUID.randomUUID().toString()
                 notificationManager.sendTaskStartNotification(
@@ -162,10 +175,10 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                         mediaType = MediaStorageRepository.MEDIA_IMAGE,
                     )
                 )
-                val progressJob = launchProgressJob(jobTitle)
+                val progressJob = launchProgressJob(jobTitle, index + 1, requestedGenerations)
                 val result = generationRepository.generateImage(
                     prompt = prompt,
-                    style = uiState.selectedStyle.label,
+                    style = uiState.selectedStyle.apiStyle,
                     width = uiState.aspectRatio.width,
                     height = uiState.aspectRatio.height,
                     negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy, watermark, text artifacts" },
@@ -178,7 +191,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                     completed += 1
                 } else {
                     val message = result.exceptionOrNull()?.message ?: "Could not generate image."
-                    uiState = uiState.copy(isGenerating = false, error = message)
+                    uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = message)
                     GenerationRepository.updateJob(jobTitle) { job ->
                         job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
                     }
@@ -191,7 +204,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                     return@launch
                 }
             }
-            uiState = uiState.copy(isGenerating = false, error = null)
+            uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = null)
             if (completed > 1) {
                 LumoraNotificationCenter.notifyCompletion(
                     context = getApplication<Application>(),
@@ -204,7 +217,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    private fun launchProgressJob(jobTitle: String) = viewModelScope.launch {
+    private fun launchProgressJob(jobTitle: String, current: Int, total: Int) = viewModelScope.launch {
         val steps = listOf(
             0.18f to "Reading prompt...",
             0.42f to "Composing style...",
@@ -213,6 +226,10 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         )
         for (step in steps) {
             delay(1800)
+            uiState = uiState.copy(
+                generationProgress = step.first,
+                generationStatusText = "Image $current of $total generating"
+            )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
             }
@@ -232,7 +249,13 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             type = MediaStorageRepository.MEDIA_IMAGE,
             mediaUrl = saved.filePath,
         )
-        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedPaths = uiState.generatedPaths + saved.filePath, generatedMimeType = saved.mimeType)
+        uiState = uiState.copy(
+            isGenerating = keepGenerating,
+            generationProgress = if (keepGenerating) 1f else null,
+            generatedPath = saved.filePath,
+            generatedPaths = uiState.generatedPaths + saved.filePath,
+            generatedMimeType = saved.mimeType
+        )
         LumoraNotificationCenter.notifyCompletion(
             context = getApplication<Application>(),
             title = "Image ready",
@@ -274,7 +297,8 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
 
     private fun buildPrompt(): String {
         val creativity = (uiState.creativity * 100).toInt()
-        return "${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Format: ${uiState.aspectRatio.promptHint}. Creativity level: $creativity%."
+        val stylePrompt = uiState.selectedStyle.promptDirective
+        return "${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Creativity level: $creativity%."
     }
 
     private fun currentTimestamp(): String =

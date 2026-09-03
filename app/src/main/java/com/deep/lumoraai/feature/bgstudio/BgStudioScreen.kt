@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -37,6 +38,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +55,12 @@ import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
+import com.deep.lumoraai.feature.generation.GeneratedMediaResult
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
+import com.deep.lumoraai.feature.generation.GenerationAspectRatioSection
+import com.deep.lumoraai.feature.generation.GenerationControlsPanel
+import kotlinx.coroutines.delay
 
 private val StudioBackground = Color(0xFF081020)
 private val StudioPanel = Color(0xFF121A2E)
@@ -66,15 +76,28 @@ fun BgStudioScreen(
     onNavigate: (String) -> Unit,
     onModeSelected: (BgStudioMode) -> Unit,
     onPromptChanged: (String) -> Unit,
+    onNegativePromptChanged: (String) -> Unit,
+    onAspectRatioChanged: (GenerationAspectRatio) -> Unit,
+    onSimilarityChanged: (Float) -> Unit,
     onImageSelected: (Uri) -> Unit,
     onCreate: () -> Unit,
+    onEditResult: () -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scrollState = rememberScrollState()
+    val showAdvancedSettings = remember { mutableStateOf(false) }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) onImageSelected(uri)
     }
     val isBusy = uiState.status == BgStudioStatus.LoadingImage || uiState.status == BgStudioStatus.Generating
+
+    LaunchedEffect(isBusy, uiState.generatedPaths) {
+        if (isBusy || uiState.generatedPaths.isNotEmpty()) {
+            delay(160)
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
 
     Box(
         modifier = modifier
@@ -85,7 +108,8 @@ fun BgStudioScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
+                .imePadding()
         ) {
             StudioTopBar(
                 onBack = onBack,
@@ -106,8 +130,28 @@ fun BgStudioScreen(
                     PromptPanel(
                         prompt = uiState.prompt,
                         onPromptChanged = onPromptChanged,
-                        onUpload = { imagePicker.launch("image/*") }
+                        onUpload = { imagePicker.launch("image/*") },
+                        isSettingsOpen = showAdvancedSettings.value,
+                        onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                     )
+                    GenerationAspectRatioSection(
+                        selected = uiState.aspectRatio,
+                        onSelected = onAspectRatioChanged
+                    )
+                    if (showAdvancedSettings.value) {
+                        GenerationControlsPanel(
+                            mediaType = "Image",
+                            selectedAspectRatio = uiState.aspectRatio,
+                            onAspectRatioSelected = onAspectRatioChanged,
+                            negativePrompt = uiState.negativePrompt,
+                            onNegativePromptChanged = onNegativePromptChanged,
+                            similarity = uiState.similarity,
+                            similarityLabel = "Subject Preservation",
+                            onSimilarityChanged = onSimilarityChanged,
+                            generations = 1,
+                            onGenerationsChanged = {}
+                        )
+                    }
                     StudioPrimaryButton(
                         text = "CREATE (-1 Credit)",
                         isBusy = isBusy,
@@ -124,7 +168,21 @@ fun BgStudioScreen(
                     )
                 }
 
+                GeneratedMediaLoading(
+                    isVisible = isBusy,
+                    mediaType = "IMAGE",
+                    progress = uiState.generationProgress,
+                    statusText = uiState.generationStatusText
+                )
+                GeneratedMediaResult(
+                    filePath = uiState.generatedPath,
+                    filePaths = uiState.generatedPaths,
+                    mediaType = "IMAGE",
+                    mimeType = uiState.generatedMimeType,
+                    onEdit = onEditResult
+                )
                 StatusMessage(status = uiState.status, onDismissError = onDismissError)
+                Spacer(modifier = Modifier.height(72.dp))
             }
         }
     }
@@ -311,6 +369,8 @@ private fun PromptPanel(
     prompt: String,
     onPromptChanged: (String) -> Unit,
     onUpload: () -> Unit,
+    isSettingsOpen: Boolean,
+    onSettingsClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -351,7 +411,11 @@ private fun PromptPanel(
             horizontalArrangement = Arrangement.spacedBy(9.dp)
         ) {
             SquareToolButton(icon = Icons.Default.Upload, onClick = onUpload)
-            SquareToolButton(icon = Icons.Default.Tune, onClick = {})
+            SquareToolButton(
+                icon = Icons.Default.Tune,
+                selected = isSettingsOpen,
+                onClick = onSettingsClick
+            )
         }
         Text(
             text = "${prompt.length}/1000",
@@ -399,12 +463,21 @@ private fun StudioPrimaryButton(
 }
 
 @Composable
-private fun SquareToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+private fun SquareToolButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean = false,
+    onClick: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .size(28.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(Color(0xFF202A3F))
+            .background(if (selected) Lime.copy(alpha = 0.22f) else Color(0xFF202A3F))
+            .border(
+                1.dp,
+                if (selected) Lime.copy(alpha = 0.75f) else Color.Transparent,
+                RoundedCornerShape(4.dp)
+            )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {

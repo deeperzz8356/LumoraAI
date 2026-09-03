@@ -133,7 +133,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             val result = generationRepository.enhancePrompt(
                 prompt = uiState.prompt,
                 mediaType = "IMAGE",
-                style = uiState.selectedStyle.label,
+                style = uiState.selectedStyle.apiStyle,
                 negativePrompt = uiState.negativePrompt,
             )
             uiState = if (result.isSuccess) {
@@ -158,11 +158,22 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     private fun startImageJobs(sourceImage: String, developerMode: Boolean) {
         val prompt = buildPrompt()
         val requestedGenerations = uiState.generations.coerceIn(1, 4)
-        uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null, generatedPaths = emptyList())
+        uiState = uiState.copy(
+            isGenerating = true,
+            generationProgress = 0f,
+            generationStatusText = "Image 1 of $requestedGenerations generating",
+            error = null,
+            generatedPath = null,
+            generatedPaths = emptyList()
+        )
 
         viewModelScope.launch {
             var completed = 0
             repeat(requestedGenerations) { index ->
+                uiState = uiState.copy(
+                    generationProgress = 0f,
+                    generationStatusText = "Image ${index + 1} of $requestedGenerations generating"
+                )
                 val jobTitle = "Image 2 Image ${shortTimestamp()} #${index + 1}"
                 val taskId = UUID.randomUUID().toString()
                 notificationManager.sendTaskStartNotification(
@@ -182,10 +193,10 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                         mediaType = MediaStorageRepository.MEDIA_IMAGE,
                     )
                 )
-                val progressJob = launchProgressJob(jobTitle)
+                val progressJob = launchProgressJob(jobTitle, index + 1, requestedGenerations)
                 val result = generationRepository.generateImage(
                     prompt = prompt,
-                    style = uiState.selectedStyle.label,
+                    style = uiState.selectedStyle.apiStyle,
                     width = uiState.aspectRatio.width,
                     height = uiState.aspectRatio.height,
                     negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy" },
@@ -198,7 +209,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                     completed += 1
                 } else {
                     val message = result.exceptionOrNull()?.message ?: "Could not generate image."
-                    uiState = uiState.copy(isGenerating = false, error = message)
+                    uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = message)
                     GenerationRepository.updateJob(jobTitle) { job ->
                         job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
                     }
@@ -211,7 +222,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                     return@launch
                 }
             }
-            uiState = uiState.copy(isGenerating = false, error = null)
+            uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = null)
             if (completed > 1) {
                 LumoraNotificationCenter.notifyCompletion(
                     context = getApplication<Application>(),
@@ -224,7 +235,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    private fun launchProgressJob(jobTitle: String) = viewModelScope.launch {
+    private fun launchProgressJob(jobTitle: String, current: Int, total: Int) = viewModelScope.launch {
         val steps = listOf(
             0.18f to "Reading source image...",
             0.42f to "Applying style direction...",
@@ -233,6 +244,10 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         )
         for (step in steps) {
             delay(1800)
+            uiState = uiState.copy(
+                generationProgress = step.first,
+                generationStatusText = "Image $current of $total generating"
+            )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
             }
@@ -252,7 +267,13 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             type = MediaStorageRepository.MEDIA_IMAGE,
             mediaUrl = saved.filePath,
         )
-        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedPaths = uiState.generatedPaths + saved.filePath, generatedMimeType = saved.mimeType)
+        uiState = uiState.copy(
+            isGenerating = keepGenerating,
+            generationProgress = if (keepGenerating) 1f else null,
+            generatedPath = saved.filePath,
+            generatedPaths = uiState.generatedPaths + saved.filePath,
+            generatedMimeType = saved.mimeType
+        )
         LumoraNotificationCenter.notifyCompletion(
             context = getApplication<Application>(),
             title = "Image ready",
@@ -294,7 +315,8 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
 
     private fun buildPrompt(): String {
         val similarity = (uiState.similarity * 100).toInt()
-        return "Create a new image from the uploaded source. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original composition and subject identity while improving the image."
+        val stylePrompt = uiState.selectedStyle.promptDirective
+        return "Create a new image from the uploaded source. User prompt: ${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original composition and subject identity while improving the image."
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {
