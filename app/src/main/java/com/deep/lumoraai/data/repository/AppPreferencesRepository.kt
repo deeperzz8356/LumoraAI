@@ -29,6 +29,14 @@ class AppPreferencesRepository private constructor(context: Context) {
         .catch { if (it is IOException) emit(androidx.datastore.preferences.core.emptyPreferences()) else throw it }
         .map { BuildConfig.DEBUG && (it[PreferenceKeys.DEV_MODE_UNLOCKED] ?: false) }
 
+    val localeCode: Flow<String> = dataStore.data
+        .catch { if (it is IOException) emit(androidx.datastore.preferences.core.emptyPreferences()) else throw it }
+        .map { it[PreferenceKeys.LOCALE_CODE] ?: "en" }
+
+    suspend fun setLocaleCode(code: String) {
+        dataStore.edit { it[PreferenceKeys.LOCALE_CODE] = code }
+    }
+
     suspend fun setDeveloperMode(enabled: Boolean) {
         dataStore.edit { prefs ->
             prefs[PreferenceKeys.IS_DEVELOPER_MODE] = enabled && BuildConfig.DEBUG

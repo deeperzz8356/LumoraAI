@@ -69,6 +69,7 @@ import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.model.HistoryModel
 import com.google.firebase.auth.FirebaseAuth
 import java.io.File
+import androidx.compose.ui.res.stringResource
 
 private val ProfileBackground = Color(0xFF081020)
 private val ProfileCard = Color(0xFF10192D)
@@ -103,7 +104,7 @@ fun ProfileScreen(
             when (uiState) {
                 ProfileUiState.Loading -> AppLoadingScreen()
                 is ProfileUiState.Error -> AppErrorScreen(message = uiState.message)
-                ProfileUiState.Empty -> AppEmptyScreen(title = "Profile", body = "No account details available.")
+                ProfileUiState.Empty -> AppEmptyScreen(title = stringResource(com.deep.lumoraai.R.string.ui_profile_2), body = "No account details available.")
                 is ProfileUiState.Success -> ProfileContent(
                     items = uiState.items,
                     credits = uiState.credits,
@@ -175,9 +176,9 @@ private fun CreditsOverviewCard(credits: Int, onNavigate: (String) -> Unit) {
         ) {
             AccentIcon(Icons.Default.Star, Lime)
             Column(modifier = Modifier.weight(1f).padding(end = 6.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("LUM Credits", color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_lum_credits), color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Text(label, color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("Top up and manage packs", color = Lime, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_top_up_and_manage_packs), color = Lime, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             MiniAction("Top Up", Icons.Default.Add, Cyan, onClick = { onNavigate(Screen.Credits.route) })
         }
@@ -195,8 +196,8 @@ private fun ProfileTopBar(onNavigate: (String) -> Unit, unreadCount: Int) {
             Avatar(size = 38.dp)
             Spacer(modifier = Modifier.width(10.dp))
             Column {
-                Text("Profile", color = Color.White, fontSize = 18.sp, lineHeight = 21.sp, fontWeight = FontWeight.Bold)
-                Text("Account Settings", color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, lineHeight = 15.sp)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_profile), color = Color.White, fontSize = 18.sp, lineHeight = 21.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_account_settings), color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, lineHeight = 15.sp)
             }
         }
         LumoraNotificationBell(
@@ -251,7 +252,7 @@ private fun Avatar(size: androidx.compose.ui.unit.Dp) {
     Box(modifier = Modifier.size(size).clip(CircleShape)) {
         Image(
             painter = painterResource(id = R.drawable.user_avatar),
-            contentDescription = "Profile",
+            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
@@ -352,9 +353,9 @@ private fun CreationsSection(generations: List<HistoryModel>, onNavigate: (Strin
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("My Creations", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_my_creations), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onNavigate(Screen.History.route) }) {
-                Text("View all", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_view_all), color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Lime, modifier = Modifier.size(16.dp))
             }
         }
@@ -370,8 +371,8 @@ private fun CreationsSection(generations: List<HistoryModel>, onNavigate: (Strin
                 Row(modifier = Modifier.fillMaxSize().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AccentIcon(Icons.Default.Add, Lime)
                     Column {
-                        Text("Start your first creation", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Text("Generate an image or video from Home", color = Muted, fontSize = 11.sp)
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_start_your_first_creation), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_generate_an_image_or_video_from_home), color = Muted, fontSize = 11.sp)
                     }
                 }
             }
@@ -472,8 +473,8 @@ private fun SupportCard() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                Text("Need Help?", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text("Support, billing, and account questions.", color = Muted, fontSize = 11.sp, lineHeight = 15.sp)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_need_help), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_support_billing_and_account_questions), color = Muted, fontSize = 11.sp, lineHeight = 15.sp)
             }
             MiniAction("Support", Icons.Default.Info, Cyan, onClick = {})
         }
