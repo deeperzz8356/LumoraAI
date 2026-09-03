@@ -44,15 +44,15 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
 
     fun applyTemplatePrompt(prompt: String?) {
         if (prompt.isNullOrBlank()) return
-        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null)
+        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null, generatedPaths = emptyList())
     }
 
     fun updatePrompt(prompt: String) {
-        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null)
+        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null, generatedPaths = emptyList())
     }
 
     fun updateNegativePrompt(prompt: String) {
-        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null, generatedPath = null)
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null, generatedPath = null, generatedPaths = emptyList())
     }
 
     fun selectStyle(style: ImageStyle) {
@@ -132,13 +132,13 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun clearResult() {
-        uiState = uiState.copy(generatedPath = null)
+        uiState = uiState.copy(generatedPath = null, generatedPaths = emptyList())
     }
 
     private fun startImageJobs(developerMode: Boolean) {
         val prompt = buildPrompt()
         val requestedGenerations = uiState.generations.coerceIn(1, 4)
-        uiState = uiState.copy(isGenerating = true, error = null)
+        uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null, generatedPaths = emptyList())
 
         viewModelScope.launch {
             var completed = 0
@@ -232,7 +232,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             type = MediaStorageRepository.MEDIA_IMAGE,
             mediaUrl = saved.filePath,
         )
-        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
+        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedPaths = uiState.generatedPaths + saved.filePath, generatedMimeType = saved.mimeType)
         LumoraNotificationCenter.notifyCompletion(
             context = getApplication<Application>(),
             title = "Image ready",
@@ -283,3 +283,4 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }
+

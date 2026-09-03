@@ -64,8 +64,8 @@ fun ImageToVideoScreen(
         if (uri != null) onImageSelected(uri)
     }
 
-    LaunchedEffect(uiState.isGenerating, uiState.generatedPath) {
-        if (uiState.isGenerating || uiState.generatedPath != null) {
+    LaunchedEffect(uiState.isGenerating, uiState.generatedPaths) {
+        if (uiState.isGenerating || uiState.generatedPaths.isNotEmpty()) {
             delay(160)
             scrollState.animateScrollTo(scrollState.maxValue)
         }
@@ -136,16 +136,17 @@ fun ImageToVideoScreen(
                 VideoStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
-                    enabled = uiState.generatedPath == null,
+                    enabled = uiState.prompt.isNotBlank() && uiState.sourceBitmap != null,
                     creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
                     onClick = onGenerate
                 )
                 GeneratedMediaLoading(
-                    isVisible = uiState.isGenerating && uiState.generatedPath == null,
+                    isVisible = uiState.isGenerating,
                     mediaType = "VIDEO"
                 )
                 GeneratedMediaResult(
                     filePath = uiState.generatedPath,
+                    filePaths = uiState.generatedPaths,
                     mediaType = "VIDEO",
                     mimeType = uiState.generatedMimeType,
                     onEdit = onEditResult

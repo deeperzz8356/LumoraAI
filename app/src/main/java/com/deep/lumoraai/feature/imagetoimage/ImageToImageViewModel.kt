@@ -53,7 +53,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
 
     fun loadImage(uri: Uri) {
         viewModelScope.launch {
-            uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null)
+            uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null, generatedPaths = emptyList())
             val decoded = withContext(Dispatchers.IO) {
                 runCatching { decodeBitmap(uri) }.getOrNull()
             }
@@ -68,11 +68,11 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun updatePrompt(prompt: String) {
-        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null)
+        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null, generatedPaths = emptyList())
     }
 
     fun updateNegativePrompt(prompt: String) {
-        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null, generatedPath = null)
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null, generatedPath = null, generatedPaths = emptyList())
     }
 
     fun selectStyle(style: ImageStyle) {
@@ -152,13 +152,13 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun clearResult() {
-        uiState = uiState.copy(generatedPath = null)
+        uiState = uiState.copy(generatedPath = null, generatedPaths = emptyList())
     }
 
     private fun startImageJobs(sourceImage: String, developerMode: Boolean) {
         val prompt = buildPrompt()
         val requestedGenerations = uiState.generations.coerceIn(1, 4)
-        uiState = uiState.copy(isGenerating = true, error = null)
+        uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null, generatedPaths = emptyList())
 
         viewModelScope.launch {
             var completed = 0
@@ -252,7 +252,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             type = MediaStorageRepository.MEDIA_IMAGE,
             mediaUrl = saved.filePath,
         )
-        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
+        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedPaths = uiState.generatedPaths + saved.filePath, generatedMimeType = saved.mimeType)
         LumoraNotificationCenter.notifyCompletion(
             context = getApplication<Application>(),
             title = "Image ready",
@@ -324,3 +324,4 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }
+

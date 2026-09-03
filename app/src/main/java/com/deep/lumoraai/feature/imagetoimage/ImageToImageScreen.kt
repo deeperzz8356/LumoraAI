@@ -62,8 +62,8 @@ fun ImageToImageScreen(
         if (uri != null) onImageSelected(uri)
     }
 
-    LaunchedEffect(uiState.isGenerating, uiState.generatedPath) {
-        if (uiState.isGenerating || uiState.generatedPath != null) {
+    LaunchedEffect(uiState.isGenerating, uiState.generatedPaths) {
+        if (uiState.isGenerating || uiState.generatedPaths.isNotEmpty()) {
             delay(160)
             scrollState.animateScrollTo(scrollState.maxValue)
         }
@@ -137,11 +137,12 @@ fun ImageToImageScreen(
                     onClick = onGenerate
                 )
                 GeneratedMediaLoading(
-                    isVisible = uiState.isGenerating && uiState.generatedPath == null,
+                    isVisible = uiState.isGenerating,
                     mediaType = "IMAGE"
                 )
                 GeneratedMediaResult(
                     filePath = uiState.generatedPath,
+                    filePaths = uiState.generatedPaths,
                     mediaType = "IMAGE",
                     mimeType = uiState.generatedMimeType,
                     onEdit = onEditResult

@@ -728,26 +728,32 @@ fun GeneratedMediaLoading(
 @Composable
 fun GeneratedMediaResult(
     filePath: String?,
+    filePaths: List<String> = emptyList(),
     mediaType: String,
     mimeType: String,
     onEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (filePath == null) return
+    val outputPaths = remember(filePath, filePaths) {
+        (filePaths.ifEmpty { filePath?.let(::listOf).orEmpty() }).distinct()
+    }
+    if (outputPaths.isEmpty()) return
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showViewer by remember { mutableStateOf(false) }
     var showFeedback by remember { mutableStateOf(false) }
     var isDownloading by remember { mutableStateOf(false) }
-    val file = remember(filePath) { File(filePath) }
+    var selectedIndex by remember(outputPaths) { mutableStateOf(outputPaths.lastIndex.coerceAtLeast(0)) }
+    val selectedPath = outputPaths[selectedIndex.coerceIn(outputPaths.indices)]
+    val file = remember(selectedPath) { File(selectedPath) }
     val exists = file.exists()
     val isVideo = mediaType.equals("VIDEO", ignoreCase = true) || mimeType.startsWith("video/", ignoreCase = true)
     val writePermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
             scope.launch {
                 isDownloading = true
-                val result = MediaGallerySaver.saveToGallery(context, filePath, mimeType, mediaType)
+                val result = MediaGallerySaver.saveToGallery(context, selectedPath, mimeType, mediaType)
                 isDownloading = false
                 Toast.makeText(context, result.getOrElse { it.message ?: "Could not download media." }, Toast.LENGTH_SHORT).show()
             }
@@ -759,7 +765,7 @@ fun GeneratedMediaResult(
 
     if (showViewer) {
         GeneratedMediaViewer(
-            filePath = filePath,
+            filePath = selectedPath,
             mediaType = mediaType,
             mimeType = mimeType,
             onDismiss = { showViewer = false },
@@ -774,7 +780,7 @@ fun GeneratedMediaResult(
         FeedbackDialog(
             onDismiss = { showFeedback = false },
             onSubmit = { reason ->
-                saveGeneratedFeedback(context, filePath, mediaType, reason)
+                saveGeneratedFeedback(context, selectedPath, mediaType, reason)
                 showFeedback = false
                 Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
             }
@@ -793,13 +799,13 @@ fun GeneratedMediaResult(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (isVideo) "Video Ready" else "Image Ready",
+                    text = if (outputPaths.size > 1) "${outputPaths.size} Results Ready" else if (isVideo) "Video Ready" else "Image Ready",
                     color = Color.White,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Saved below. Tap to open viewer.",
+                    text = if (outputPaths.size > 1) "Swipe outputs below and tap any result to inspect it." else "Saved below. Tap to open viewer.",
                     color = GenerationMuted,
                     fontSize = 12.sp
                 )
@@ -818,7 +824,7 @@ fun GeneratedMediaResult(
             if (!exists) {
                 Text("Saved media file is missing.", color = Color.White, modifier = Modifier.padding(16.dp))
             } else if (isVideo) {
-                LocalVideoPlayer(filePath = filePath)
+                LocalVideoPlayer(filePath = selectedPath)
             } else {
                 AsyncImage(
                     model = file,
@@ -839,31 +845,51 @@ fun GeneratedMediaResult(
             }
         }
 
+        if (outputPaths.size > 1) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                outputPaths.forEachIndexed { index, path ->
+                    GeneratedOutputThumb(
+                        filePath = path,
+                        index = index,
+                        isVideo = isVideo,
+                        selected = index == selectedIndex,
+                        onClick = { selectedIndex = index }
+                    )
+                }
+            }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             ResultActionIcon(Icons.Default.Edit, "Edit", onClick = onEdit)
             ResultActionIcon(Icons.Default.ThumbUp, "Like") {
-                saveGeneratedFeedback(context, filePath, mediaType, "Like")
+                saveGeneratedFeedback(context, selectedPath, mediaType, "Like")
                 Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
             }
             ResultActionIcon(Icons.Default.ThumbDown, "Dislike") {
-                saveGeneratedFeedback(context, filePath, mediaType, "Dislike")
+                saveGeneratedFeedback(context, selectedPath, mediaType, "Dislike")
                 Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
             }
             ResultActionIcon(Icons.Default.Feedback, "Feedback") {
                 showFeedback = true
             }
             ResultActionIcon(Icons.Default.Share, "Share", enabled = exists) {
-                MediaShareUtils.shareMedia(context, filePath, mimeType)
+                Toast.makeText(context, "Opening share sheet...", Toast.LENGTH_SHORT).show()
+                MediaShareUtils.shareMedia(context, selectedPath, mimeType)
             }
             ResultActionIcon(Icons.Default.Download, "Download", enabled = exists && !isDownloading, isLoading = isDownloading) {
+                Toast.makeText(context, "Downloading...", Toast.LENGTH_SHORT).show()
                 if (MediaGallerySaver.hasWritePermission(context)) {
                     scope.launch {
                         isDownloading = true
-                        Toast.makeText(context, "Downloading...", Toast.LENGTH_SHORT).show()
-                        val result = MediaGallerySaver.saveToGallery(context, filePath, mimeType, mediaType)
+                        val result = MediaGallerySaver.saveToGallery(context, selectedPath, mimeType, mediaType)
                         isDownloading = false
                         Toast.makeText(context, result.getOrElse { it.message ?: "Could not download media." }, Toast.LENGTH_SHORT).show()
                     }
@@ -874,6 +900,59 @@ fun GeneratedMediaResult(
                     Toast.makeText(context, "Could not start download.", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun GeneratedOutputThumb(
+    filePath: String,
+    index: Int,
+    isVideo: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val file = remember(filePath) { File(filePath) }
+    Box(
+        modifier = Modifier
+            .width(104.dp)
+            .height(82.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF0F1728))
+            .border(
+                1.5.dp,
+                if (selected) GenerationLime else Color.White.copy(alpha = 0.10f),
+                RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!file.exists()) {
+            Text("Missing", color = GenerationMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        } else if (isVideo) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = if (selected) GenerationLime else Color.White, modifier = Modifier.size(20.dp))
+                Text("Video ${index + 1}", color = if (selected) GenerationLime else Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        } else {
+            AsyncImage(
+                model = file,
+                contentDescription = "Generated output ${index + 1}",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Text(
+                text = "${index + 1}",
+                color = Color.Black,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .clip(CircleShape)
+                    .background(GenerationLime)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            )
         }
     }
 }

@@ -14,6 +14,7 @@ data class ImageToImageUiState(
     val isGenerating: Boolean = false,
     val isImprovingPrompt: Boolean = false,
     val generatedPath: String? = null,
+    val generatedPaths: List<String> = emptyList(),
     val generatedMimeType: String = "image/png",
     val error: String? = null,
 )

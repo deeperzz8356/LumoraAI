@@ -51,6 +51,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                 jobBadge = "Promo Video",
                 error = null,
                 generatedPath = null,
+                generatedPaths = emptyList(),
             )
         } else {
             uiState.copy(
@@ -59,10 +60,11 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                 jobBadge = "Text 2 Video",
                 error = null,
                 generatedPath = null,
+                generatedPaths = emptyList(),
             )
         }
         uiState = if (!initialPrompt.isNullOrBlank()) {
-            modeState.copy(prompt = initialPrompt.take(1000), error = null, generatedPath = null)
+            modeState.copy(prompt = initialPrompt.take(1000), error = null, generatedPath = null, generatedPaths = emptyList())
         } else if (modeChanged) {
             modeState
         } else {
@@ -71,11 +73,11 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun updatePrompt(prompt: String) {
-        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null)
+        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null, generatedPaths = emptyList())
     }
 
     fun updateNegativePrompt(prompt: String) {
-        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null, generatedPath = null)
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null, generatedPath = null, generatedPaths = emptyList())
     }
 
     fun selectStyle(style: VideoStyle) {
@@ -130,7 +132,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             val taskType = if (isPromoMode) TaskNotificationHelper.PROMO_VIDEO else TaskNotificationHelper.TEXT_TO_VIDEO
             val displayName = if (isPromoMode) "Promo Video" else "Text to Video"
             val requestedGenerations = uiState.generations.coerceIn(1, 4)
-            uiState = uiState.copy(isGenerating = true, error = null)
+            uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null, generatedPaths = emptyList())
             val prompt = buildPrompt()
 
             var completed = 0
@@ -212,7 +214,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun clearResult() {
-        uiState = uiState.copy(generatedPath = null)
+        uiState = uiState.copy(generatedPath = null, generatedPaths = emptyList())
     }
 
     private suspend fun persistGeneratedVideo(payload: String, jobTitle: String, prompt: String, taskId: String, taskType: String, displayName: String, keepGenerating: Boolean = false) {
@@ -228,7 +230,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             type = MediaStorageRepository.MEDIA_VIDEO,
             mediaUrl = saved.filePath,
         )
-        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
+        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedPaths = uiState.generatedPaths + saved.filePath, generatedMimeType = saved.mimeType)
         GenerationRepository.updateJob(jobTitle) { job ->
             job.copy(
                 progressPercent = 1.0f,
@@ -278,3 +280,4 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }
+

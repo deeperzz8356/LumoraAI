@@ -19,6 +19,7 @@ data class TextToVideoUiState(
     val isGenerating: Boolean = false,
     val isImprovingPrompt: Boolean = false,
     val generatedPath: String? = null,
+    val generatedPaths: List<String> = emptyList(),
     val generatedMimeType: String = "video/mp4",
     val error: String? = null,
 )
