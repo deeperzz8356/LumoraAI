@@ -5,6 +5,7 @@ import android.util.Log
 import com.deep.lumoraai.R
 import com.deep.lumoraai.data.local.room.dao.NotificationDao
 import com.deep.lumoraai.data.local.room.entity.NotificationEntity
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 import javax.inject.Inject
@@ -17,7 +18,7 @@ import javax.inject.Singleton
 @Singleton
 class NotificationManager @Inject constructor(
     private val notificationDao: NotificationDao,
-    private val context: Context? = null
+    @param:ApplicationContext private val context: Context? = null
 ) {
     private fun localized(id: Int, fallback: String): String = context?.getString(id) ?: fallback
     companion object {
