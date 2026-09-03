@@ -449,19 +449,27 @@ private fun PreferencesList(
             PrefRow("Privacy Policy", Icons.Default.Info, Color.White)
             PrefRow("Terms of Service", Icons.Default.Info, Color.White)
             PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A), onClick = { pendingAction.value = "delete" })
-            PrefRow("Sign Out", Icons.AutoMirrored.Filled.ExitToApp, Color(0xFFFF7A7A), onClick = { pendingAction.value = "signout" })
+            PrefRow(
+                if (isGuest) "Keep Logged In" else "Sign Out",
+                Icons.AutoMirrored.Filled.ExitToApp,
+                if (isGuest) Color.White else Color(0xFFFF7A7A),
+                onClick = { pendingAction.value = if (isGuest) "keep" else "signout" }
+            )
         }
     }
     pendingAction.value?.let { action ->
         val isDelete = action == "delete"
+        val isKeepLoggedIn = action == "keep"
         AlertDialog(
             onDismissRequest = { pendingAction.value = null },
-            title = { Text(if (isDelete) "Delete account?" else "Sign out?") },
+            title = { Text(if (isDelete) "Delete account?" else if (isKeepLoggedIn) "Keep logged in?" else "Sign out?") },
             text = {
                 Text(
                     if (isDelete) {
                         if (isGuest) "This will clear guest data from this device and sign you out."
                         else "This permanently deletes your account and local data."
+                    } else if (isKeepLoggedIn) {
+                        "Your guest session will remain active on this device."
                     } else {
                         "You will need to sign in again to access your account."
                     }
@@ -471,11 +479,11 @@ private fun PreferencesList(
                 TextButton(
                     onClick = {
                         pendingAction.value = null
-                        if (isDelete) onDeleteAccount() else onSignOut()
+                        if (isDelete) onDeleteAccount() else if (!isKeepLoggedIn) onSignOut()
                     }
                 ) {
                     Text(
-                        if (isDelete) "Delete permanently" else "Sign out",
+                        if (isDelete) "Delete permanently" else if (isKeepLoggedIn) "Keep Logged In" else "Sign out",
                         color = if (isDelete) Color(0xFFFF7A7A) else Color.White
                     )
                 }
