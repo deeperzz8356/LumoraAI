@@ -12,6 +12,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +30,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -69,6 +72,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -765,9 +769,11 @@ fun GeneratedMediaResult(
 
     if (showViewer) {
         GeneratedMediaViewer(
-            filePath = selectedPath,
+            filePaths = outputPaths,
+            initialIndex = selectedIndex,
             mediaType = mediaType,
             mimeType = mimeType,
+            onSelectedIndexChanged = { selectedIndex = it },
             onDismiss = { showViewer = false },
             onEdit = {
                 showViewer = false
@@ -959,15 +965,30 @@ private fun GeneratedOutputThumb(
 
 @Composable
 private fun GeneratedMediaViewer(
-    filePath: String,
+    filePaths: List<String>,
+    initialIndex: Int,
     mediaType: String,
     mimeType: String,
+    onSelectedIndexChanged: (Int) -> Unit,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
 ) {
     val context = LocalContext.current
     val isVideo = mediaType.equals("VIDEO", ignoreCase = true) || mimeType.startsWith("video/", ignoreCase = true)
-    val file = remember(filePath) { File(filePath) }
+    val outputPaths = remember(filePaths) { filePaths.distinct() }
+    var selectedIndex by remember(outputPaths, initialIndex) { mutableStateOf(initialIndex.coerceIn(outputPaths.indices)) }
+    val selectedPath = outputPaths[selectedIndex]
+    val file = remember(selectedPath) { File(selectedPath) }
+    val hasPrevious = selectedIndex > 0
+    val hasNext = selectedIndex < outputPaths.lastIndex
+
+    fun moveBy(delta: Int) {
+        val nextIndex = (selectedIndex + delta).coerceIn(outputPaths.indices)
+        if (nextIndex != selectedIndex) {
+            selectedIndex = nextIndex
+            onSelectedIndexChanged(nextIndex)
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -982,19 +1003,66 @@ private fun GeneratedMediaViewer(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 72.dp),
+                    .padding(bottom = 72.dp)
+                    .pointerInput(outputPaths, selectedIndex) {
+                        var dragTotal = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { dragTotal = 0f },
+                            onHorizontalDrag = { _, dragAmount -> dragTotal += dragAmount },
+                            onDragEnd = {
+                                when {
+                                    dragTotal < -80f -> moveBy(1)
+                                    dragTotal > 80f -> moveBy(-1)
+                                }
+                            },
+                            onDragCancel = { dragTotal = 0f }
+                        )
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 if (!file.exists()) {
                     Text("Saved media file is missing.", color = Color.White)
                 } else if (isVideo) {
-                    LocalVideoPlayer(filePath = filePath)
+                    LocalVideoPlayer(filePath = selectedPath)
                 } else {
                     AsyncImage(
                         model = file,
                         contentDescription = "Generated image viewer",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit
+                    )
+                }
+                if (outputPaths.size > 1) {
+                    ResultActionIcon(
+                        icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "Previous result",
+                        enabled = hasPrevious,
+                        onClick = { moveBy(-1) },
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = 6.dp)
+                    )
+                    ResultActionIcon(
+                        icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = "Next result",
+                        enabled = hasNext,
+                        onClick = { moveBy(1) },
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = 6.dp)
+                    )
+                    Text(
+                        text = "${selectedIndex + 1}/${outputPaths.size}",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 12.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(Color.Black.copy(alpha = 0.58f))
+                            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(50))
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
                     )
                 }
             }
@@ -1005,7 +1073,8 @@ private fun GeneratedMediaViewer(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ResultActionIcon(Icons.Default.Share, "Share") {
-                    MediaShareUtils.shareMedia(context, filePath, mimeType)
+                    Toast.makeText(context, "Opening share sheet...", Toast.LENGTH_SHORT).show()
+                    MediaShareUtils.shareMedia(context, selectedPath, mimeType)
                 }
                 ResultActionIcon(Icons.Default.Edit, "Edit", onClick = onEdit)
                 ResultActionIcon(Icons.Default.Close, "Close", onClick = onDismiss)
