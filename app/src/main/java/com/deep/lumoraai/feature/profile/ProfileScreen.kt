@@ -475,7 +475,10 @@ private fun PreferencesList(
                         if (isDelete) onDeleteAccount() else onSignOut()
                     }
                 ) {
-                    Text(if (isDelete) "Delete" else "Sign out")
+                    Text(
+                        if (isDelete) "Delete permanently" else "Sign out",
+                        color = if (isDelete) Color(0xFFFF7A7A) else Color.White
+                    )
                 }
             },
             dismissButton = {

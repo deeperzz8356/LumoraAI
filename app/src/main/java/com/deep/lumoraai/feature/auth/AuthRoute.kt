@@ -86,8 +86,8 @@ private fun triggerGoogleSignIn(
 ) {
     val webClientId = getWebClientId(context)
     if (webClientId == null) {
-        Toast.makeText(context, "Google Client ID missing. Using Guest fallback.", Toast.LENGTH_LONG).show()
-        viewModel.signInAnonymously()
+        Toast.makeText(context, "Google sign-in is not configured. Use email or guest access.", Toast.LENGTH_LONG).show()
+        viewModel.resetState()
         return
     }
     scope.launch {
