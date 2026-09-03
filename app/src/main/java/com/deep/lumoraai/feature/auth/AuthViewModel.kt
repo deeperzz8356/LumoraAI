@@ -98,15 +98,15 @@ class AuthViewModel(
         viewModelScope.launch {
             authRepository.syncCurrentUser()
         }
-
-        private fun authenticationMessage(error: Exception): String =
-            when ((error as? FirebaseAuthException)?.errorCode) {
-                "ERROR_EMAIL_ALREADY_IN_USE" -> "This email is already registered. Sign in instead."
-                "ERROR_INVALID_EMAIL" -> "Enter a valid email address."
-                "ERROR_WRONG_PASSWORD", "ERROR_INVALID_CREDENTIAL" -> "Email or password is incorrect."
-                "ERROR_USER_NOT_FOUND" -> "No account was found for this email."
-                "ERROR_WEAK_PASSWORD" -> "Password must be at least 6 characters."
-                else -> error.localizedMessage ?: "Authentication failed. Please try again."
-            }
     }
+
+    private fun authenticationMessage(error: Exception): String =
+        when ((error as? FirebaseAuthException)?.errorCode) {
+            "ERROR_EMAIL_ALREADY_IN_USE" -> "This email is already registered. Sign in instead."
+            "ERROR_INVALID_EMAIL" -> "Enter a valid email address."
+            "ERROR_WRONG_PASSWORD", "ERROR_INVALID_CREDENTIAL" -> "Email or password is incorrect."
+            "ERROR_USER_NOT_FOUND" -> "No account was found for this email."
+            "ERROR_WEAK_PASSWORD" -> "Password must be at least 6 characters."
+            else -> error.localizedMessage ?: "Authentication failed. Please try again."
+        }
 }
