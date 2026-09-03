@@ -21,10 +21,12 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.Composition
+import androidx.media3.transformer.DefaultEncoderFactory
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
+import androidx.media3.transformer.VideoEncoderSettings
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
@@ -45,6 +47,7 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
 
     private val resolver = application.contentResolver
     private val outputDir = File(application.filesDir, "media/compressed").also { it.mkdirs() }
+    private val tempDir = File(application.cacheDir, "compress-inputs").also { it.mkdirs() }
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
     private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
 
@@ -175,7 +178,28 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
     private fun compressVideo(uri: Uri, taskId: String) {
         val originalBytes = fileSize(uri)
         val output = File(outputDir, "compressed_${UUID.randomUUID()}.mp4")
+        val input = runCatching { copyToLocalInput(uri) }.getOrElse { error ->
+            val errorMsg = error.message ?: "Could not read this video."
+            viewModelScope.launch {
+                notificationManager.sendTaskFailureNotification(
+                    taskType = TaskNotificationHelper.COMPRESS,
+                    taskId = taskId,
+                    displayName = "Compress",
+                    errorMessage = errorMsg
+                )
+            }
+            uiState = uiState.copy(isCompressing = false, error = errorMsg)
+            return
+        }
+        val encoderFactory = DefaultEncoderFactory.Builder(getApplication())
+            .setRequestedVideoEncoderSettings(
+                VideoEncoderSettings.Builder()
+                    .setBitrate(targetVideoBitrate(originalBytes))
+                    .build()
+            )
+            .build()
         val transformer = Transformer.Builder(getApplication())
+            .setEncoderFactory(encoderFactory)
             .setTransformationRequest(
                 TransformationRequest.Builder()
                     .setVideoMimeType(MimeTypes.VIDEO_H264)
@@ -187,6 +211,7 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                     viewModelScope.launch {
                         val historyId = UUID.randomUUID().toString()
                         saveToHistory(output.absolutePath, "VIDEO", historyId)
+                        input.delete()
                         // Send task complete notification
                         notificationManager.sendTaskCompleteNotification(
                             taskType = TaskNotificationHelper.COMPRESS,
@@ -219,6 +244,7 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                     exportException: ExportException
                 ) {
                     if (output.exists()) output.delete()
+                    input.delete()
                     val errorMsg = exportException.message ?: "Could not compress this video."
                     // Send task failure notification
                     viewModelScope.launch {
@@ -237,7 +263,32 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
             })
             .build()
 
-        transformer.start(MediaItem.fromUri(uri), output.absolutePath)
+        transformer.start(MediaItem.fromUri(Uri.fromFile(input)), output.absolutePath)
+    }
+
+    private fun copyToLocalInput(uri: Uri): File {
+        val input = resolver.openInputStream(uri) ?: error("Could not open selected video.")
+        val extension = displayName(uri).substringAfterLast('.', "mp4").takeIf { it.length in 2..5 } ?: "mp4"
+        val destination = File(tempDir, "source_${UUID.randomUUID()}.$extension")
+        input.use { source ->
+            destination.outputStream().use { target -> source.copyTo(target) }
+        }
+        if (destination.length() <= 0L) {
+            destination.delete()
+            error("Selected video is empty.")
+        }
+        return destination
+    }
+
+    private fun targetVideoBitrate(originalBytes: Long): Int {
+        val twoMb = 2 * 1024 * 1024L
+        val fiveMb = 5 * 1024 * 1024L
+        return when {
+            originalBytes <= 0L -> 1_200_000
+            originalBytes < twoMb -> 650_000
+            originalBytes < fiveMb -> 900_000
+            else -> 1_200_000
+        }
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {

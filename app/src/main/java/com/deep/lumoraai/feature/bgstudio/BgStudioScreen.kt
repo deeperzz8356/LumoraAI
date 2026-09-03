@@ -108,10 +108,20 @@ fun BgStudioScreen(
                         onPromptChanged = onPromptChanged,
                         onUpload = { imagePicker.launch("image/*") }
                     )
-                    StudioPrimaryButton(text = "CREATE (-1 Credit)", isBusy = isBusy, enabled = !isBusy, onClick = onCreate)
+                    StudioPrimaryButton(
+                        text = "CREATE (-1 Credit)",
+                        isBusy = isBusy,
+                        enabled = !isBusy && uiState.sourceBitmap != null && uiState.prompt.isNotBlank(),
+                        onClick = onCreate
+                    )
                 } else {
                     RemoveBackgroundPanel(uiState = uiState, onUpload = { imagePicker.launch("image/*") })
-                    StudioPrimaryButton(text = "REMOVE BACKGROUND (-1 Credit)", isBusy = isBusy, enabled = !isBusy, onClick = onCreate)
+                    StudioPrimaryButton(
+                        text = "REMOVE BACKGROUND (-1 Credit)",
+                        isBusy = isBusy,
+                        enabled = !isBusy && uiState.sourceBitmap != null,
+                        onClick = onCreate
+                    )
                 }
 
                 StatusMessage(status = uiState.status, onDismissError = onDismissError)
