@@ -24,4 +24,5 @@ object PreferenceKeys {
     
     val NOTIFICATION_FREQUENCY = stringPreferencesKey("notification_frequency") // "instant", "daily", "weekly"
     val MAX_NOTIFICATIONS_PER_DAY = intPreferencesKey("max_notifications_per_day")
+    val LOCALE_CODE = stringPreferencesKey("locale_code")
 }

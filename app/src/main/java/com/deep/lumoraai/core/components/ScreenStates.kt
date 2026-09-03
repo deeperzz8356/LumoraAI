@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.ui.theme.tokens.Spacing
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun AppLoadingScreen(modifier: Modifier = Modifier) {
@@ -110,7 +111,7 @@ fun AppErrorScreen(
     ) {
         Icon(Icons.Rounded.Info, contentDescription = null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(Spacing.md))
-        Text("Something went wrong", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_something_went_wrong), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
         Spacer(Modifier.height(Spacing.sm))
         Text(
             message, 

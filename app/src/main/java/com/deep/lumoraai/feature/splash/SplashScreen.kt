@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ui.theme.tokens.Spacing
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun SplashScreen(
@@ -122,7 +123,7 @@ fun SplashBottomContent() {
 fun SplashLogo() {
     Image(
         painter = painterResource(id = R.drawable.logo),
-        contentDescription = "Lumora AI Logo",
+        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_lumora_ai_logo),
         contentScale = ContentScale.Fit,
         modifier = Modifier
             .size(120.dp)

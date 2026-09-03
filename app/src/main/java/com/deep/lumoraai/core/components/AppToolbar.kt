@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 
 /**
  * App Toolbar with notification bell icon and unread count badge
@@ -56,7 +57,7 @@ fun AppToolbar(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -75,7 +76,7 @@ fun AppToolbar(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Notifications,
-                        contentDescription = "Notifications",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_notifications),
                         modifier = Modifier
                             .size(21.dp),
                         tint = MaterialTheme.colorScheme.onSurface

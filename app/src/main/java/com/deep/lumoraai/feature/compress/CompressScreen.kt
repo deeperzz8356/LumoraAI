@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.res.stringResource
 
 private val CompressBackground = Color(0xFF081020)
 private val CompressPanel = Color(0xFF121A2E)
@@ -208,7 +209,7 @@ private fun CompressTopBar(
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                 tint = Color.White,
                 modifier = Modifier
                     .size(22.dp)
@@ -345,7 +346,7 @@ private fun CompletionPanel(
         ) {
             Icon(Icons.Default.Download, contentDescription = null, tint = Color.Black, modifier = Modifier.size(15.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Download Now", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_download_now), color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
         }
 
         if (uiState.downloadMessage != null) {
@@ -368,7 +369,7 @@ private fun CompletionPanel(
         ) {
             Icon(Icons.Default.Tune, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Compress Another", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_compress_another), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

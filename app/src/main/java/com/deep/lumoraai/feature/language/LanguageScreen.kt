@@ -36,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.feature.language.model.LanguageModel
+import androidx.compose.ui.res.stringResource
+import com.deep.lumoraai.R
 
 private val LanguageBackground = Color(0xFF081020)
 private val LanguageTopBar = Color(0xFF0D1426)
@@ -113,7 +115,7 @@ fun LanguageTopBar(onDone: () -> Unit) {
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            text = "Language",
+            text = stringResource(R.string.language),
             color = Color.White,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
@@ -127,7 +129,7 @@ fun LanguageTopBar(onDone: () -> Unit) {
             contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp)
         ) {
             Text(
-                text = "Done",
+                text = stringResource(R.string.done),
                 color = Color.Black,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold

@@ -9,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.deep.lumoraai.core.localization.LocaleManager
+import android.app.Activity
 
 @Composable
 fun LanguageRoute(
@@ -25,6 +27,11 @@ fun LanguageRoute(
         onLanguageSelected = viewModel::selectLanguage,
         onSearchQueryChanged = viewModel::updateSearchQuery,
         onDone = {
+            viewModel.persistSelection()
+            (context as? Activity)?.let {
+                LocaleManager.apply(it, (viewModel.uiState as? LanguageUiState.Success)?.selectedLanguageCode ?: "en")
+                it.recreate()
+            }
             checkAndRequestNotificationPermission(
                 context = context,
                 onGranted = onNext,

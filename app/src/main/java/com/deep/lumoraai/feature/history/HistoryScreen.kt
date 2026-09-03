@@ -76,6 +76,7 @@ import com.deep.lumoraai.data.model.HistoryModel
 import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.OptIn
+import androidx.compose.ui.res.stringResource
 
 private val HistoryBackground = Color(0xFF081020)
 private val HistoryPanel = Color(0xFF0E172A)
@@ -239,7 +240,7 @@ private fun HistoryGallery(
 private fun HistoryTopBar(credits: Int, onNavigate: (String) -> Unit, unreadCount: Int = 0) {
     LumoraTopBar(
         credits = credits,
-        title = "History",
+        title = stringResource(com.deep.lumoraai.R.string.ui_history_2),
         onProfileClick = { onNavigate(Screen.Profile.route) },
         onCreditsClick = { onNavigate(Screen.Credits.route) },
         onNotificationsClick = { onNavigate(Screen.Notifications.route) },
@@ -317,10 +318,10 @@ private fun SelectionBar(
             TextButton(onClick = onDelete, enabled = selectedCount > 0) {
                 Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF7A7A), modifier = Modifier.size(17.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Delete", color = Color(0xFFFF7A7A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_delete), color = Color(0xFFFF7A7A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             TextButton(onClick = onCancel) {
-                Text("Done", color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_done), color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -400,7 +401,7 @@ private fun HistoryTile(
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Play video",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_play_video),
                     tint = Color.White,
                     modifier = Modifier.size(22.dp)
                 )
@@ -490,7 +491,7 @@ private fun HistoryMediaViewer(
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     ViewerIconButton(
                         icon = Icons.Default.Download,
-                        contentDescription = "Download",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_download),
                         tint = Lime,
                         onClick = {
                             scope.launch {
@@ -521,7 +522,7 @@ private fun HistoryMediaViewer(
                     )
                     ViewerIconButton(
                         icon = Icons.Default.Share,
-                        contentDescription = "Share",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_share),
                         tint = Lime,
                         onClick = {
                             MediaShareUtils.shareMedia(
@@ -533,13 +534,13 @@ private fun HistoryMediaViewer(
                     )
                     ViewerIconButton(
                         icon = Icons.Default.Feedback,
-                        contentDescription = "Feedback",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_feedback),
                         tint = Color(0xFFCFBDFF),
                         onClick = { showFeedbackDialog = true }
                     )
                     ViewerIconButton(
                         icon = Icons.Default.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_delete),
                         tint = Color(0xFFFF7A7A),
                         onClick = onDelete
                     )
@@ -666,7 +667,7 @@ private fun FeedbackDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Muted, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_cancel), color = Muted, fontWeight = FontWeight.Bold)
             }
         }
     )
@@ -736,7 +737,7 @@ private fun HistoryEmpty(credits: Int, onNavigate: (String) -> Unit, unreadCount
         HistoryTopBar(credits = credits, onNavigate = onNavigate, unreadCount = unreadCount)
         FilterRow(selectedFilter = HistoryFilter.All, onSelected = {})
         AppEmptyScreen(
-            title = "No Creations Yet",
+            title = stringResource(com.deep.lumoraai.R.string.ui_no_creations_yet),
             body = "Generated images and videos will appear here after you create them.",
         )
     }

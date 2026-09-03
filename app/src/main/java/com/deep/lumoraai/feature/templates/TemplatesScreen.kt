@@ -57,6 +57,7 @@ import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.promoVideoRoute
 import com.deep.lumoraai.core.navigation.textToImageRoute
 import com.deep.lumoraai.core.navigation.textToVideoRoute
+import androidx.compose.ui.res.stringResource
 
 private val TemplateBackground = Color(0xFF081020)
 private val TemplatePanel = Color(0xFF111A2D)
@@ -94,7 +95,7 @@ fun TemplatesScreen(
             when (uiState) {
                 is TemplatesUiState.Loading -> AppLoadingScreen()
                 is TemplatesUiState.Error -> AppErrorScreen(message = uiState.message)
-                is TemplatesUiState.Empty -> AppEmptyScreen(title = "No Templates", body = "Templates will appear here.")
+                is TemplatesUiState.Empty -> AppEmptyScreen(title = stringResource(com.deep.lumoraai.R.string.ui_no_templates), body = "Templates will appear here.")
                 is TemplatesUiState.Success -> TemplatesContent(uiState = uiState, onNavigate = onNavigate, unreadCount = unreadCount)
             }
         }
@@ -145,7 +146,7 @@ private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (Str
 private fun TemplatesTopBar(credits: Int, onNavigate: (String) -> Unit, unreadCount: Int) {
     LumoraTopBar(
         credits = credits,
-        title = "Templates",
+        title = stringResource(com.deep.lumoraai.R.string.ui_templates),
         onProfileClick = { onNavigate(Screen.Profile.route) },
         onCreditsClick = { onNavigate(Screen.Credits.route) },
         onNotificationsClick = { onNavigate(Screen.Notifications.route) },
@@ -274,7 +275,7 @@ private fun TemplateRow(item: TemplateListItem, onCopy: () -> Unit, onClick: () 
             ) {
                 Icon(
                     imageVector = Icons.Default.ContentCopy,
-                    contentDescription = "Copy template prompt",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_copy_template_prompt),
                     tint = Lime.copy(alpha = 0.95f),
                     modifier = Modifier.size(18.dp)
                 )

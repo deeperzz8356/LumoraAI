@@ -40,6 +40,8 @@ import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.ui.theme.tokens.Spacing
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.ui.res.stringResource
+import com.deep.lumoraai.R
 
 // Theme colors matching Home/Profile pages
 private val SettingsBackground = Color(0xFF081020)
@@ -80,11 +82,11 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Account", style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(R.string.settings_account), style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                 
                 SettingsActionRow(
-                    title = "Manage Profile",
-                    subtitle = "Update your personal information",
+                    title = stringResource(R.string.settings_manage_profile),
+                    subtitle = stringResource(R.string.settings_update_personal_info),
                     onClick = {
                         val user = FirebaseAuth.getInstance().currentUser
                         onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
@@ -92,28 +94,28 @@ fun SettingsScreen(
                 )
                 
                 SettingsActionRow(
-                    title = "Subscription & Billing",
-                    subtitle = "Manage your Pro plan",
+                    title = stringResource(R.string.settings_subscription_billing),
+                    subtitle = stringResource(R.string.settings_manage_pro_plan),
                     onClick = { onNavigate(Screen.Subscription.route) }
                 )
             }
             
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Preferences", style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(R.string.settings_preferences), style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                 
                 SettingsActionRow(
-                    title = "Language",
-                    subtitle = uiState.selectedLanguage,
+                    title = stringResource(R.string.language),
+                    subtitle = languageDisplayName(uiState.selectedLanguage),
                     onClick = { onNavigate("${Screen.Language.route}?source=settings") }
                 )
             }
 
             if (uiState.isDevModeUnlocked) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Developer", style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(R.string.settings_developer), style = MaterialTheme.typography.titleLarge, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                     SettingsToggleRow(
-                        title = "Developer Mode",
-                        subtitle = if (uiState.isDeveloperMode) "Unlimited trial — no restrictions" else "User mode — normal restrictions apply",
+                        title = stringResource(R.string.settings_developer_mode),
+                        subtitle = if (uiState.isDeveloperMode) stringResource(R.string.settings_unlimited_trial) else stringResource(R.string.settings_user_mode),
                         checked = uiState.isDeveloperMode,
                         onCheckedChange = { viewModel.toggleDeveloperMode(it) }
                     )
@@ -128,13 +130,13 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Version 1.0",
+                    text = stringResource(R.string.version_format, "1.0"),
                     style = MaterialTheme.typography.bodySmall,
                     color = Muted
                 )
                 if (uiState.versionTapCount in 1..6) {
                     Text(
-                        text = "${7 - uiState.versionTapCount} taps to unlock developer options",
+                        text = stringResource(R.string.taps_to_unlock, 7 - uiState.versionTapCount),
                         style = MaterialTheme.typography.labelSmall,
                         color = Muted.copy(alpha = 0.6f)
                     )
@@ -166,7 +168,7 @@ private fun SettingsHeader() {
             Icon(Icons.Default.Settings, contentDescription = null, tint = Lime, modifier = Modifier.size(21.dp))
         }
         Text(
-            text = "Settings",
+            text = stringResource(R.string.settings),
             color = Color.White,
             fontSize = 22.sp,
             lineHeight = 26.sp,
@@ -175,6 +177,23 @@ private fun SettingsHeader() {
             overflow = TextOverflow.Ellipsis
         )
     }
+
+}
+
+@Composable
+private fun languageDisplayName(code: String): String = when (code) {
+    "vi" -> stringResource(R.string.language_vietnamese)
+    "es" -> stringResource(R.string.language_spanish)
+    "fr" -> stringResource(R.string.language_french)
+    "de" -> stringResource(R.string.language_german)
+    "it" -> stringResource(R.string.language_italian)
+    "pt" -> stringResource(R.string.language_portuguese)
+    "tr" -> stringResource(R.string.language_turkish)
+    "ar" -> stringResource(R.string.language_arabic)
+    "hi" -> stringResource(R.string.language_hindi)
+    "ko" -> stringResource(R.string.language_korean)
+    "zh" -> stringResource(R.string.language_chinese)
+    else -> stringResource(R.string.language_english)
 }
 
 @Composable

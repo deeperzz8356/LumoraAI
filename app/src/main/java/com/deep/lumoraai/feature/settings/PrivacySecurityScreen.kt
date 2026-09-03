@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import androidx.compose.ui.res.stringResource
 
 private val SettingsBackground = Color(0xFF081020)
 private val SettingsCard = Color(0xFF10192D)
@@ -60,12 +61,12 @@ fun PrivacySecurityScreen(
         containerColor = SettingsBackground,
         topBar = {
             AppToolbar(
-                title = "Privacy & Security",
+                title = stringResource(com.deep.lumoraai.R.string.ui_privacy_security),
                 action = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                             tint = Color.White
                         )
                     }
@@ -99,15 +100,15 @@ fun PrivacySecurityScreen(
                 )
 
                 PrivacyToggleRow(
-                    title = "Data Collection",
-                    subtitle = "Allow us to collect usage data to improve your experience",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_data_collection),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_allow_us_to_collect_usage_data_to_improve_your_experience),
                     checked = dataCollection,
                     onCheckedChange = { dataCollection = it }
                 )
 
                 PrivacyToggleRow(
-                    title = "Third-Party Sharing",
-                    subtitle = "Share your data with partner services",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_third_party_sharing),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_share_your_data_with_partner_services),
                     checked = thirdPartySharing,
                     onCheckedChange = { thirdPartySharing = it }
                 )
@@ -123,15 +124,15 @@ fun PrivacySecurityScreen(
                 )
 
                 PrivacyToggleRow(
-                    title = "Two-Factor Authentication",
-                    subtitle = "Add an extra layer of security to your account",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_two_factor_authentication),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_add_an_extra_layer_of_security_to_your_account),
                     checked = twoFactorAuth,
                     onCheckedChange = { twoFactorAuth = it }
                 )
 
                 PrivacyToggleRow(
-                    title = "Session Timeout",
-                    subtitle = "Automatically log out after 30 minutes of inactivity",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_session_timeout),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_automatically_log_out_after_30_minutes_of_inactivity),
                     checked = sessionTimeout,
                     onCheckedChange = { sessionTimeout = it }
                 )
@@ -147,14 +148,14 @@ fun PrivacySecurityScreen(
                 )
 
                 PrivacyActionRow(
-                    title = "Download Your Data",
-                    subtitle = "Export all your personal data",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_download_your_data),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_export_all_your_personal_data),
                     onClick = { }
                 )
 
                 PrivacyActionRow(
-                    title = "View Privacy Policy",
-                    subtitle = "Read our complete privacy policy",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_view_privacy_policy),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_read_our_complete_privacy_policy),
                     onClick = { }
                 )
             }

@@ -18,7 +18,8 @@ class SettingsRepository(context: Context) {
         get() = prefs.getBoolean("high_quality_mode", false)
         set(value) = prefs.edit().putBoolean("high_quality_mode", value).apply()
 
-    var language: String
-        get() = prefs.getString("language", "English") ?: "English"
-        set(value) = prefs.edit().putString("language", value).apply()
+    /** Stable BCP-47 language tag, never a translated display name. */
+    var localeCode: String
+        get() = prefs.getString("locale_code", "en") ?: "en"
+        set(value) = prefs.edit().putString("locale_code", value).apply()
 }

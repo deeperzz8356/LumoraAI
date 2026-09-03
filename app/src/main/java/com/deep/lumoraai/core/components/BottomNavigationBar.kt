@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.theme.IntroPalette
 import com.deep.lumoraai.core.theme.IntroTypography
 import com.deep.lumoraai.core.theme.LumoraTheme
+import androidx.compose.ui.res.stringResource
 
 /**
  * Responsive bottom navigation bar
@@ -143,7 +144,7 @@ private fun ResponsiveBottomNav(
             ) {
                 Icon(
                     Icons.Default.AutoAwesome,
-                    contentDescription = "Create",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_create),
                     tint = Color.Black,
                     modifier = Modifier.size(22.dp)
                 )

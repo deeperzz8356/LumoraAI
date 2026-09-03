@@ -3,10 +3,13 @@ package com.deep.lumoraai.feature.language
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import com.deep.lumoraai.data.repository.SettingsRepository
 import com.deep.lumoraai.feature.language.model.LanguageModel
 
-class LanguageViewModel : ViewModel() {
+class LanguageViewModel(application: Application) : AndroidViewModel(application) {
+    private val settingsRepository = SettingsRepository(application)
     var uiState: LanguageUiState by mutableStateOf(LanguageUiState.Loading)
         private set
 
@@ -31,7 +34,7 @@ class LanguageViewModel : ViewModel() {
         )
         uiState = LanguageUiState.Success(
             languages = languages,
-            selectedLanguageCode = "en",
+            selectedLanguageCode = settingsRepository.localeCode,
             searchQuery = ""
         )
     }
@@ -41,6 +44,12 @@ class LanguageViewModel : ViewModel() {
         if (currentState is LanguageUiState.Success) {
             uiState = currentState.copy(selectedLanguageCode = code)
         }
+
+    }
+
+    fun persistSelection() {
+        val state = uiState as? LanguageUiState.Success ?: return
+        settingsRepository.localeCode = state.selectedLanguageCode
     }
 
     fun updateSearchQuery(query: String) {

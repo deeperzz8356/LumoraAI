@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.LumoraCreditsChip
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
+import androidx.compose.ui.res.stringResource
 
 private val EnhanceBackground = Color(0xFF081020)
 private val EnhancePanel = Color(0xFF121A2E)
@@ -209,7 +210,7 @@ private fun EnhanceTopBar(
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                 tint = Color.White,
                 modifier = Modifier
                     .size(22.dp)
@@ -261,7 +262,7 @@ private fun UploadPanel(
         } else if (preview != null) {
             Image(
                 bitmap = preview.asImageBitmap(),
-                contentDescription = "Selected image",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_selected_image),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
             )
@@ -355,13 +356,13 @@ private fun BeforeAfterPreview(
     ) {
         Image(
             bitmap = original.asImageBitmap(),
-            contentDescription = "Original image",
+            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_original_image),
             contentScale = ContentScale.Fit,
             modifier = Modifier.fillMaxSize()
         )
         Image(
             bitmap = enhanced.asImageBitmap(),
-            contentDescription = "Enhanced image",
+            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_enhanced_image),
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxSize()
@@ -485,12 +486,12 @@ private fun EnhancementControls(
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
-                Text("Enhancement", color = Color.White, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold)
-                Text("Sharper detail, cleaner tone, richer color", color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_enhancement), color = Color.White, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_sharper_detail_cleaner_tone_richer_color), color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
             }
         }
         OptionSection(
-            title = "Resolution",
+            title = stringResource(com.deep.lumoraai.R.string.ui_resolution),
             selected = resolution,
             onSelected = onResolutionSelected
         )
@@ -499,7 +500,7 @@ private fun EnhancementControls(
             onSharpnessChanged = onSharpnessChanged
         )
         OptionSection(
-            title = "Lighting",
+            title = stringResource(com.deep.lumoraai.R.string.ui_lighting),
             selected = lighting,
             onSelected = onLightingSelected
         )
@@ -558,7 +559,7 @@ private fun SharpnessSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Detail Recovery", color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_detail_recovery), color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold)
             Text("${(sharpness * 100).toInt()}%", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Slider(

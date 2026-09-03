@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
 
 /**
  * Notification settings and preferences screen
@@ -60,7 +61,7 @@ fun NotificationSettingsScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back)
                         )
                     }
                 },
@@ -80,7 +81,7 @@ fun NotificationSettingsScreen(
             ) {
                 // Master toggle
                 SettingSection(
-                    title = "Notifications",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_notifications_2),
                     description = "Enable or disable all notifications"
                 ) {
                     SwitchSetting(
@@ -92,7 +93,7 @@ fun NotificationSettingsScreen(
 
                 // Notification types
                 SettingSection(
-                    title = "Notification Types",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_notification_types),
                     description = "Choose which types of notifications to receive"
                 ) {
                     SwitchSetting(
@@ -119,7 +120,7 @@ fun NotificationSettingsScreen(
 
                 // Sound & Vibration
                 SettingSection(
-                    title = "Sound & Vibration",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_sound_vibration),
                     description = "Configure notification alerts"
                 ) {
                     SwitchSetting(
@@ -139,7 +140,7 @@ fun NotificationSettingsScreen(
 
                 // Do Not Disturb
                 SettingSection(
-                    title = "Do Not Disturb",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_do_not_disturb),
                     description = "Silence notifications during specific hours"
                 ) {
                     SwitchSetting(
@@ -173,7 +174,7 @@ fun NotificationSettingsScreen(
 
                 // Frequency & Limits
                 SettingSection(
-                    title = "Frequency",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_frequency),
                     description = "Control notification frequency"
                 ) {
                     Text(
@@ -204,7 +205,7 @@ fun NotificationSettingsScreen(
                             .height(48.dp),
                         colors = ButtonDefaults.outlinedButtonColors()
                     ) {
-                        Text("Reset to Defaults")
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_reset_to_defaults))
                     }
                 }
 

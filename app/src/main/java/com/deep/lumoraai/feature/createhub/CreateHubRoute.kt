@@ -25,6 +25,7 @@ import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.theme.IntroPalette
 import com.deep.lumoraai.core.utils.GuestIdentity
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun CreateHubRoute(
@@ -54,7 +55,7 @@ fun CreateHubRoute(
 
     if (uiState is CreateHubUiState.TrialExpired) {
         AuthDialog(
-            title = "Free trial finished",
+            title = stringResource(com.deep.lumoraai.R.string.ui_free_trial_finished),
             message = GenerationGate.insufficientCreditsMessage(),
             onDismiss = { viewModel.load() },
             onNavigateToAuth = { onNavigate(Screen.Auth.route) }
@@ -106,7 +107,7 @@ fun AuthDialog(
                 ),
                 shape = RoundedCornerShape(24.dp)
             ) {
-                Text("Login", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_login), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -116,7 +117,7 @@ fun AuthDialog(
                     containerColor = Color.Transparent
                 )
             ) {
-                Text("Cancel", color = IntroPalette.TextMuted)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_cancel), color = IntroPalette.TextMuted)
             }
         },
         containerColor = IntroPalette.SurfaceRaised,

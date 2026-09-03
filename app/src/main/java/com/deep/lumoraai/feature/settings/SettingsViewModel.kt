@@ -40,7 +40,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             isDarkMode = repository.isDarkMode,
             notificationsEnabled = repository.notificationsEnabled,
             highQualityMode = repository.highQualityMode,
-            selectedLanguage = repository.language
+            selectedLanguage = repository.localeCode
         )
     }
 
@@ -59,9 +59,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         uiState = uiState.copy(highQualityMode = enabled)
     }
 
-    fun setLanguage(language: String) {
-        repository.language = language
-        uiState = uiState.copy(selectedLanguage = language)
+    fun setLanguage(languageCode: String) {
+        repository.localeCode = languageCode
+        uiState = uiState.copy(selectedLanguage = languageCode)
     }
 
     fun onVersionTapped() {

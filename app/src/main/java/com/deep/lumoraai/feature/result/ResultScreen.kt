@@ -19,6 +19,7 @@ import com.deep.lumoraai.core.components.ErrorState
 import com.deep.lumoraai.core.components.GradientButton
 import com.deep.lumoraai.core.components.Loading
 import com.deep.lumoraai.feature.result.components.ResultFeatureCard
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ResultScreen(
@@ -28,7 +29,7 @@ fun ResultScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { AppToolbar(title = "Result") },
+        topBar = { AppToolbar(title = stringResource(com.deep.lumoraai.R.string.ui_result_2)) },
         bottomBar = {
             BottomNavigationBar(
                 items = listOf("home", "createhub", "queue", "profile"),
@@ -39,8 +40,8 @@ fun ResultScreen(
     ) { padding ->
         when (uiState) {
             ResultUiState.Loading -> Loading(modifier = Modifier.padding(padding))
-            ResultUiState.Empty -> EmptyState(title = "Result", message = "No fake data yet.", modifier = Modifier.padding(padding))
-            is ResultUiState.Error -> ErrorState(title = "Result", message = uiState.message, modifier = Modifier.padding(padding))
+            ResultUiState.Empty -> EmptyState(title = stringResource(com.deep.lumoraai.R.string.ui_result_2), message = "No fake data yet.", modifier = Modifier.padding(padding))
+            is ResultUiState.Error -> ErrorState(title = stringResource(com.deep.lumoraai.R.string.ui_result_2), message = uiState.message, modifier = Modifier.padding(padding))
             is ResultUiState.Success -> ResultContent(items = uiState.items, onNext = onNext, modifier = Modifier.padding(padding))
         }
     }
@@ -49,8 +50,8 @@ fun ResultScreen(
 @Composable
 private fun ResultContent(items: List<String>, onNext: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Result", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        items.forEach { item -> ResultFeatureCard(title = item, subtitle = "This card shows the results of your completed generation jobs.") }
+        Text(stringResource(com.deep.lumoraai.R.string.ui_result), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        items.forEach { item -> ResultFeatureCard(title = item, subtitle = stringResource(com.deep.lumoraai.R.string.ui_this_card_shows_the_results_of_your_completed_generation_jobs)) }
         GradientButton(text = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }

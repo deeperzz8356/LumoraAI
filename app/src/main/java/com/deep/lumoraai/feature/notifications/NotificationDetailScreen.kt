@@ -46,6 +46,7 @@ import com.deep.lumoraai.domain.model.NotificationType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
 
 /**
  * Detailed view of a single notification
@@ -78,7 +79,7 @@ fun NotificationDetailScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back)
                         )
                     }
                 },
@@ -86,7 +87,7 @@ fun NotificationDetailScreen(
                     IconButton(onClick = onDeleteClick) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete"
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_delete)
                         )
                     }
                 },

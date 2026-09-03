@@ -54,6 +54,7 @@ import com.deep.lumoraai.feature.generation.VideoStyleSection
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun CreateHubScreen(
@@ -114,7 +115,7 @@ fun CreateHubScreen(
         ) { padding ->
         Column(modifier = Modifier.fillMaxSize()) {
             GenerationTopBar(
-                title = "Create Hub",
+                title = stringResource(com.deep.lumoraai.R.string.ui_create_hub),
                 onBack = onBack,
                 onNotifications = { onNavigate(Screen.Notifications.route) },
                 hasUnreadNotifications = unreadCount > 0,

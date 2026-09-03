@@ -72,6 +72,7 @@ import com.deep.lumoraai.core.restrictions.GenerationGate
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
+import androidx.compose.ui.res.stringResource
 
 private val CredBackground = Color(0xFF081020)
 private val CredCard = Color(0xFF10192D)
@@ -165,7 +166,7 @@ private fun CreditsContent(
             .padding(top = 18.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        PageTopBar(title = "Credits", subtitle = "Fuel every generation", onBack = onBack)
+        PageTopBar(title = stringResource(com.deep.lumoraai.R.string.ui_credits), subtitle = stringResource(com.deep.lumoraai.R.string.ui_fuel_every_generation), onBack = onBack)
         BalanceHero(balanceLabel = balanceLabel, isDeveloperMode = isDeveloperMode)
         if (purchaseMessage != null) {
             Text(purchaseMessage, color = Muted, fontSize = 12.sp)
@@ -210,8 +211,8 @@ private fun CreditsContent(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
                     AccentIcon(Icons.Default.CreditCard, Cyan)
                     Column {
-                        Text("Subscription Plans", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        Text("Monthly refills and Pro tools", color = Muted, fontSize = 11.sp)
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_subscription_plans), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_monthly_refills_and_pro_tools), color = Muted, fontSize = 11.sp)
                     }
                 }
                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
@@ -231,7 +232,7 @@ private fun CreditsContent(
             }
         )
 
-        Text("Top Up", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_top_up), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         CreditPackageCard("Starter", "50 credits", "$4.99", Purple, onBuy = { onBuy(50) })
         CreditPackageCard("Creator", "150 credits", "$12.99", Lime, highlighted = true, badge = "Popular", onBuy = { onBuy(150) })
         CreditPackageCard("Studio", "500 credits", "$39.99", Cyan, badge = "Best for video", onBuy = { onBuy(500) })
@@ -281,11 +282,11 @@ private fun SpinWheelDialog(
                     verticalAlignment = Alignment.Top
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Spin the Wheel", color = Color.White, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold)
-                        Text("1 free spin resets every week", color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_spin_the_wheel), color = Color.White, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_1_free_spin_resets_every_week), color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
                     }
                     TextButton(onClick = onDismiss) {
-                        Text("Close", color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_close), color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -423,10 +424,10 @@ private fun CreditRewardsSection(
             verticalAlignment = Alignment.Bottom
         ) {
             Column {
-                Text("Daily Task", color = Color.White, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Open, check in, spin, and earn verified rewards", color = Muted, fontSize = 12.sp, lineHeight = 15.sp)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_daily_task), color = Color.White, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_open_check_in_spin_and_earn_verified_rewards), color = Muted, fontSize = 12.sp, lineHeight = 15.sp)
             }
-            Text("Live", color = Lime, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_live_2), color = Lime, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold)
         }
 
             if (spinReward != null) {
@@ -483,7 +484,7 @@ private fun SpinRewardCard(
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(reward.title, color = Color.White, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Tap to open the weekly wheel. Rewards: 50, 25, 10, 2, 2, or better luck.", color = Muted, fontSize = 11.sp, lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_tap_to_open_the_weekly_wheel_rewards_50_25_10_2_2_or_better_luck), color = Muted, fontSize = 11.sp, lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Text(reward.actionLabel, color = if (reward.isAvailable) Lime else Muted, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.ExtraBold)
         }
@@ -510,7 +511,7 @@ private fun CheckInTrackCard(
                 AccentIcon(Icons.Default.CheckCircle, Purple)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(reward.title, color = Color.White, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.ExtraBold)
-                    Text("Weekly credits: 1, 1, 2, 2, 2, 3, 4", color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
+                    Text(stringResource(com.deep.lumoraai.R.string.ui_weekly_credits_1_1_2_2_2_3_4), color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
                 }
                 Button(
                     onClick = onClick,
@@ -721,7 +722,7 @@ private fun rewardIcon(id: String): ImageVector =
 private fun PageTopBar(title: String, subtitle: String, onBack: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack, modifier = Modifier.size(38.dp)) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back), tint = Color.White)
         }
         Spacer(modifier = Modifier.width(8.dp))
         Column {
@@ -741,7 +742,7 @@ private fun BalanceHero(balanceLabel: String, isDeveloperMode: Boolean) {
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Current Balance", color = Muted, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_current_balance), color = Muted, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(balanceLabel, color = Color.White, fontSize = 40.sp, lineHeight = 44.sp, fontWeight = FontWeight.ExtraBold)
                 Text(if (isDeveloperMode) "Developer mode active" else "LUM credits available", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }

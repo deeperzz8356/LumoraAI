@@ -64,6 +64,7 @@ import com.deep.lumoraai.core.navigation.bgStudioRoute
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import coil.compose.AsyncImage
 import java.io.File
+import androidx.compose.ui.res.stringResource
 
 private val HomeBackground = Color(0xFF081020)
 private val HomeCard = Color(0xFF10192D)
@@ -98,7 +99,7 @@ fun HomeScreen(
         when (uiState) {
                 is HomeUiState.Loading -> AppLoadingScreen()
                 is HomeUiState.Error -> AppErrorScreen(message = uiState.message)
-                is HomeUiState.Empty -> AppEmptyScreen(title = "No Content", body = "Nothing to see here.")
+                is HomeUiState.Empty -> AppEmptyScreen(title = stringResource(com.deep.lumoraai.R.string.ui_no_content), body = "Nothing to see here.")
                 is HomeUiState.Success -> HomeContent(
                     uiState = uiState,
                     onNavigate = onNavigate,
@@ -163,7 +164,7 @@ private fun HomeTopBar(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.user_avatar),
-                    contentDescription = "Profile",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -237,10 +238,10 @@ private fun HomeHero(onExploreRecent: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("What will we", color = Muted, fontSize = 14.sp, lineHeight = 18.sp)
-            Text("Create", color = Color.White, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Today?", color = Lime, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Turn ideas into stunning visuals", color = Muted, fontSize = 13.sp, lineHeight = 20.sp)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_what_will_we), color = Muted, fontSize = 14.sp, lineHeight = 18.sp)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_create), color = Color.White, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_today), color = Lime, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_turn_ideas_into_stunning_visuals), color = Muted, fontSize = 13.sp, lineHeight = 20.sp)
             Row(modifier = Modifier.padding(top = 4.dp)) {
                 Box(modifier = Modifier.width(34.dp).height(2.dp).background(Lime))
                 Box(modifier = Modifier.width(34.dp).height(2.dp).background(Purple))
@@ -288,7 +289,7 @@ private fun MainCreateGrid(
     onNavigate: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-        Text("Create", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_create), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
             CreateActionCard("Text → Image", "Dream it", Icons.Default.AutoAwesome, Lime, { onNavigate(Screen.TextToImage.route) }, Modifier.weight(1f))
             CreateActionCard("Img → Img", "Refine it", Icons.Default.Image, Purple, { onNavigate(Screen.ImageToImage.route) }, Modifier.weight(1f))
@@ -371,7 +372,7 @@ private fun RecentCreationsSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Recent", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_recent), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
             Text(
                 text = "View all",
                 color = Lime,
@@ -480,11 +481,11 @@ private fun ToolsSection(
     onNavigate: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Tools", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_tools), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             ToolBentoCard(
-                title = "AI Background Replace",
-                subtitle = "Generate a new scene",
+                title = stringResource(com.deep.lumoraai.R.string.ui_ai_background_replace),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_generate_a_new_scene),
                 icon = Icons.Default.AutoAwesome,
                 accent = Cyan,
                 onClick = { onNavigate(bgStudioRoute("replace")) },
@@ -494,8 +495,8 @@ private fun ToolsSection(
                 prominent = true
             )
             ToolBentoCard(
-                title = "Photo Enhancer",
-                subtitle = "Improve quality",
+                title = stringResource(com.deep.lumoraai.R.string.ui_photo_enhancer),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_improve_quality),
                 icon = Icons.Default.Tune,
                 accent = Purple,
                 onClick = { onNavigate(Screen.PhotoEnhance.route) },
@@ -507,8 +508,8 @@ private fun ToolsSection(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             ToolBentoCard(
-                title = "Promo Videos",
-                subtitle = "Ad-ready clips",
+                title = stringResource(com.deep.lumoraai.R.string.ui_promo_videos),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_ad_ready_clips),
                 icon = Icons.Default.VideoLibrary,
                 accent = Pink,
                 onClick = { onNavigate(Screen.PromoVideo.route) },
@@ -518,8 +519,8 @@ private fun ToolsSection(
                 prominent = true
             )
             ToolBentoCard(
-                title = "Remove Background",
-                subtitle = "Cut subject",
+                title = stringResource(com.deep.lumoraai.R.string.ui_remove_background),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_cut_subject),
                 icon = Icons.Default.PhotoCamera,
                 accent = Color(0xFF7D86FF),
                 onClick = { onNavigate(bgStudioRoute("remove")) },
@@ -530,8 +531,8 @@ private fun ToolsSection(
             )
         }
         ToolBentoCard(
-            title = "Compress",
-            subtitle = "Images and videos",
+            title = stringResource(com.deep.lumoraai.R.string.ui_compress),
+            subtitle = stringResource(com.deep.lumoraai.R.string.ui_images_and_videos),
             icon = Icons.Default.Compress,
             accent = Lime,
             onClick = { onNavigate(Screen.Compress.route) },

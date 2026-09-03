@@ -38,6 +38,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import java.io.File
+import androidx.compose.ui.res.stringResource
 
 /**
  * A reusable composable that displays a video player with zoom, rotation, and scroll capabilities.
@@ -162,7 +163,7 @@ private fun ControlsPanelVideo(
             IconButton(onClick = onZoomOut, modifier = Modifier.size(36.dp)) {
                 Icon(
                     Icons.Default.Remove,
-                    contentDescription = "Zoom out",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_zoom_out),
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
@@ -171,7 +172,7 @@ private fun ControlsPanelVideo(
             IconButton(onClick = onZoomIn, modifier = Modifier.size(36.dp)) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = "Zoom in",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_zoom_in),
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
@@ -180,7 +181,7 @@ private fun ControlsPanelVideo(
             IconButton(onClick = onRotate, modifier = Modifier.size(36.dp)) {
                 Icon(
                     Icons.Default.Rotate90DegreesCcw,
-                    contentDescription = "Rotate",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_rotate),
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )

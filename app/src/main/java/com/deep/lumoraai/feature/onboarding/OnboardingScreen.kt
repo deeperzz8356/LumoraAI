@@ -49,6 +49,7 @@ import androidx.compose.material3.Icon
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.LumoraIntroBackground
 import com.deep.lumoraai.core.theme.IntroPalette
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun OnboardingScreen(
@@ -215,9 +216,9 @@ fun StepTitle(step: Int, modifier: Modifier = Modifier) {
 @Composable
 fun StepOneTitle() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Next-Gen", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        Text("AI Text to Image", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        Text("Generation Tool", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = IntroPalette.SecondaryText)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_next_gen), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_ai_text_to_image), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_generation_tool), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = IntroPalette.SecondaryText)
     }
 }
 
@@ -228,13 +229,13 @@ fun StepTwoTitle() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("Cinematic ", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_cinematic), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Box(
                 modifier = Modifier
                     .background(IntroPalette.AccentPink, RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text("Video", fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_video), fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -243,7 +244,7 @@ fun StepTwoTitle() {
             horizontalArrangement = Arrangement.Center
         ) {
             UnderlinedText(text = "Generation", fontSize = 24.sp)
-            Text(" from Images", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_from_images), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -260,9 +261,9 @@ fun StepThreeTitle() {
                     .background(IntroPalette.AccentPink, RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text("Generate", fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_generate), fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
-            Text(" Videos", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_videos), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
         Spacer(modifier = Modifier.height(4.dp))
         Row(
@@ -270,7 +271,7 @@ fun StepThreeTitle() {
             horizontalArrangement = Arrangement.Center
         ) {
             UnderlinedText(text = "from Text", fontSize = 24.sp)
-            Text(" Prompts", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_prompts), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -282,13 +283,13 @@ fun StepFourTitle() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("AI-", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_ai), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Box(
                 modifier = Modifier
                     .background(IntroPalette.AccentPink, RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text("Powered", fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_powered), fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -299,11 +300,11 @@ fun StepFourTitle() {
 @Composable
 fun StepFiveTitle() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Welcome to", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_welcome_to), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("AI- ", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Text("Background", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = IntroPalette.AccentPink)
-            Text(" Eraser", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_ai_2), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_background), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = IntroPalette.AccentPink)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_eraser), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -430,7 +431,7 @@ fun OnboardingNextButton(onNext: () -> Unit) {
         shape = RoundedCornerShape(24.dp),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
     ) {
-        Text("Next", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_next), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
     }
 }
 
@@ -450,7 +451,7 @@ fun OnboardingStartButton(onGetStarted: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Let's Start", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_let_s_start), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
             OnboardingStartArrow()
         }
     }
@@ -466,7 +467,7 @@ fun OnboardingStartArrow() {
     ) {
         Icon(
             imageVector = Icons.Filled.ArrowForward,
-            contentDescription = "Start",
+            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_start),
             tint = IntroPalette.PrimaryButton,
             modifier = Modifier.size(20.dp)
         )

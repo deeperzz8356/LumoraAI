@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
+import androidx.compose.ui.res.stringResource
 
 private val StudioBackground = Color(0xFF081020)
 private val StudioPanel = Color(0xFF121A2E)
@@ -149,7 +150,7 @@ private fun StudioTopBar(
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                 tint = Color.White,
                 modifier = Modifier
                     .size(23.dp)
@@ -222,7 +223,7 @@ private fun SourceImagePanel(uiState: BgStudioUiState, onUpload: () -> Unit) {
         if (bitmap != null) {
             Image(
                 bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Source image",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_source_image),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
@@ -242,7 +243,7 @@ private fun SourceImagePanel(uiState: BgStudioUiState, onUpload: () -> Unit) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.CloudUpload, contentDescription = null, tint = Lime, modifier = Modifier.size(32.dp))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Upload source image", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(com.deep.lumoraai.R.string.ui_upload_source_image), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -273,7 +274,7 @@ private fun RemoveBackgroundPanel(uiState: BgStudioUiState, onUpload: () -> Unit
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Source subject",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_source_subject),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )

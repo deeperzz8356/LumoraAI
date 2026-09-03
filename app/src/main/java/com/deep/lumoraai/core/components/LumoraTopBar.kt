@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import androidx.compose.ui.res.stringResource
 
 private val Lime = Color(0xFFD6FF2F)
 
@@ -64,7 +65,7 @@ fun LumoraTopBar(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.user_avatar),
-                    contentDescription = "Profile",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -111,7 +112,7 @@ fun LumoraNotificationBell(
     ) {
         Icon(
             imageVector = Icons.Default.Notifications,
-            contentDescription = "Notifications",
+            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_notifications),
             tint = Color(0xFFDFF7F4),
             modifier = Modifier.size(21.dp)
         )

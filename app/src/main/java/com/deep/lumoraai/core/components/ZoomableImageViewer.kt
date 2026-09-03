@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import java.io.File
+import androidx.compose.ui.res.stringResource
 
 /**
  * A reusable composable that displays an image with zoom, rotation, and scroll capabilities.
@@ -90,7 +91,7 @@ fun ZoomableImageViewer(
         ) {
             AsyncImage(
                 model = file,
-                contentDescription = "Zoomable image",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_zoomable_image),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxSize()
@@ -151,7 +152,7 @@ private fun ControlsPanel(
             IconButton(onClick = onZoomOut, modifier = Modifier.size(36.dp)) {
                 Icon(
                     Icons.Default.Remove,
-                    contentDescription = "Zoom out",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_zoom_out),
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
@@ -160,7 +161,7 @@ private fun ControlsPanel(
             IconButton(onClick = onZoomIn, modifier = Modifier.size(36.dp)) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = "Zoom in",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_zoom_in),
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
@@ -169,7 +170,7 @@ private fun ControlsPanel(
             IconButton(onClick = onRotate, modifier = Modifier.size(36.dp)) {
                 Icon(
                     Icons.Default.Rotate90DegreesCcw,
-                    contentDescription = "Rotate",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_rotate),
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )

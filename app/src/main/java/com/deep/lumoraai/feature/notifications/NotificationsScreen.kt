@@ -51,6 +51,7 @@ import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.feature.notifications.model.NotificationModel
 import com.deep.lumoraai.feature.notifications.model.NotificationType
+import androidx.compose.ui.res.stringResource
 
 private val NotificationBackground = Color(0xFF081020)
 private val NotificationCard = Color(0xFF10192D)
@@ -139,7 +140,7 @@ private fun NotificationsContent(
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Inbox", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_inbox), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
             Text(
                 "Restore dismissed",
                 color = Lime,
@@ -195,8 +196,8 @@ private fun EmptyNotifications(
             ) {
                 Icon(Icons.Default.Notifications, contentDescription = null, tint = Lime, modifier = Modifier.size(30.dp))
                 Spacer(modifier = Modifier.height(10.dp))
-                Text("All caught up", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("New generation and account updates will appear here.", color = Muted, fontSize = 12.sp)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_all_caught_up), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_new_generation_and_account_updates_will_appear_here), color = Muted, fontSize = 12.sp)
             }
         }
         Text(
@@ -213,12 +214,12 @@ private fun EmptyNotifications(
 private fun PageTopBar(onBack: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack, modifier = Modifier.size(38.dp)) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back), tint = Color.White)
         }
         Spacer(modifier = Modifier.width(8.dp))
         Column {
-            Text("Notifications", color = Color.White, fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.Bold)
-            Text("Updates from your studio", color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, lineHeight = 15.sp)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_notifications), color = Color.White, fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_updates_from_your_studio), color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, lineHeight = 15.sp)
         }
     }
 }
@@ -333,7 +334,7 @@ private fun NotificationCard(
                     Text(item.timeLabel, color = Color.White.copy(alpha = 0.48f), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
                 IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = Color.White.copy(alpha = 0.62f), modifier = Modifier.size(17.dp))
+                    Icon(Icons.Default.Close, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_dismiss), tint = Color.White.copy(alpha = 0.62f), modifier = Modifier.size(17.dp))
                 }
             }
             item.progress?.let { progress ->

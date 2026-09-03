@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import androidx.compose.ui.res.stringResource
 
 private val SettingsBackground = Color(0xFF081020)
 private val SettingsCard = Color(0xFF10192D)
@@ -54,12 +55,12 @@ fun HelpSupportScreen(
         containerColor = SettingsBackground,
         topBar = {
             AppToolbar(
-                title = "Help & Support",
+                title = stringResource(com.deep.lumoraai.R.string.ui_help_support),
                 action = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                             tint = Color.White
                         )
                     }
@@ -94,8 +95,8 @@ fun HelpSupportScreen(
 
                 SupportContactCard(
                     icon = Icons.Default.Email,
-                    title = "Email Support",
-                    subtitle = "support@lumora.ai",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_email_support),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_support_lumora_ai),
                     description = "Send us an email and we'll respond within 24 hours",
                     iconTint = Lime,
                     onClick = { }
@@ -103,8 +104,8 @@ fun HelpSupportScreen(
 
                 SupportContactCard(
                     icon = Icons.Default.Phone,
-                    title = "Live Chat",
-                    subtitle = "Available 24/7",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_live_chat),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_available_24_7),
                     description = "Chat with our support team in real-time",
                     iconTint = Cyan,
                     onClick = { }
@@ -122,24 +123,24 @@ fun HelpSupportScreen(
 
                 SupportResourceCard(
                     icon = Icons.Default.Help,
-                    title = "FAQ & Knowledge Base",
-                    subtitle = "Find answers to common questions",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_faq_knowledge_base),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_find_answers_to_common_questions),
                     iconTint = Purple,
                     onClick = { }
                 )
 
                 SupportResourceCard(
                     icon = Icons.Default.Help,
-                    title = "Video Tutorials",
-                    subtitle = "Learn how to use Lumora AI features",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_video_tutorials),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_learn_how_to_use_lumora_ai_features),
                     iconTint = Lime,
                     onClick = { }
                 )
 
                 SupportResourceCard(
                     icon = Icons.Default.Help,
-                    title = "Status Page",
-                    subtitle = "Check service status and updates",
+                    title = stringResource(com.deep.lumoraai.R.string.ui_status_page),
+                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_check_service_status_and_updates),
                     iconTint = Cyan,
                     onClick = { }
                 )

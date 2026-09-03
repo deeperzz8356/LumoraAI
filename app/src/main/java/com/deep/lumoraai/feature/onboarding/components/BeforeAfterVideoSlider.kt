@@ -49,6 +49,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.deep.lumoraai.R
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource
 
 class LeftClipShape(private val fraction: Float) : Shape {
     override fun createOutline(
@@ -128,7 +129,7 @@ fun BeforeAfterVideoSlider(
         // Foreground: The Image (Left side) clipped by fraction
         Image(
             painter = painterResource(id = R.drawable.onboarding_2_ill),
-            contentDescription = "Before",
+            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_before),
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxSize()

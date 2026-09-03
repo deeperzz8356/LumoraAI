@@ -47,6 +47,7 @@ import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.utils.GuestIdentity
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.ui.res.stringResource
 
 // Theme colors matching Home/Profile pages
 private val EditBackground = Color(0xFF081020)
@@ -78,12 +79,12 @@ fun EditProfileScreen(
         containerColor = EditBackground,
         topBar = {
             AppToolbar(
-                title = "Edit Profile",
+                title = stringResource(com.deep.lumoraai.R.string.ui_edit_profile),
                 action = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                             tint = Color.White
                         )
                     }
@@ -115,7 +116,7 @@ fun EditProfileScreen(
                 ) {
                     androidx.compose.foundation.Image(
                         painter = painterResource(id = R.drawable.user_avatar),
-                        contentDescription = "Profile",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -131,7 +132,7 @@ fun EditProfileScreen(
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = "Change Photo",
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_change_photo),
                             tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
@@ -142,53 +143,53 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Full Name
-            Text("Full Name", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_full_name), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             EditProfileTextField(
                 value = fullName.value,
                 onValueChange = { fullName.value = it },
-                placeholder = "Your full name"
+                placeholder = stringResource(com.deep.lumoraai.R.string.ui_your_full_name)
             )
 
             // Username
-            Text("Username", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_username), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             EditProfileTextField(
                 value = username.value,
                 onValueChange = { username.value = it },
-                placeholder = "@username"
+                placeholder = stringResource(com.deep.lumoraai.R.string.ui_username_2)
             )
 
             // Email
-            Text("Email Address", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_email_address), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             EditProfileTextField(
                 value = email.value,
                 onValueChange = { email.value = it },
-                placeholder = "email@example.com",
+                placeholder = stringResource(com.deep.lumoraai.R.string.ui_email_example_com),
                 keyboardType = KeyboardType.Email
             )
 
             // Bio
-            Text("Bio", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_bio), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             EditProfileTextField(
                 value = bio.value,
                 onValueChange = { bio.value = it },
-                placeholder = "Tell us about yourself",
+                placeholder = stringResource(com.deep.lumoraai.R.string.ui_tell_us_about_yourself),
                 maxLines = 3
             )
 
             // Location
-            Text("Location", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_location), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             EditProfileTextField(
                 value = location.value,
                 onValueChange = { location.value = it },
-                placeholder = "City, Country"
+                placeholder = stringResource(com.deep.lumoraai.R.string.ui_city_country)
             )
 
             // Website
-            Text("Website", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_website), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             EditProfileTextField(
                 value = website.value,
                 onValueChange = { website.value = it },
-                placeholder = "yourwebsite.com"
+                placeholder = stringResource(com.deep.lumoraai.R.string.ui_yourwebsite_com)
             )
 
             Spacer(modifier = Modifier.height(12.dp))

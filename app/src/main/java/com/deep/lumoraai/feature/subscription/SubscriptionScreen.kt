@@ -52,6 +52,7 @@ import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.data.billing.BillingState
 import com.deep.lumoraai.feature.subscription.model.SubscriptionPlan
+import androidx.compose.ui.res.stringResource
 
 private val SubBackground = Color(0xFF081020)
 private val SubCard = Color(0xFF10192D)
@@ -121,9 +122,9 @@ private fun SubscriptionContent(
         AlertDialog(
             onDismissRequest = onClearMessage,
             containerColor = SubCard,
-            title = { Text("Subscription", color = Color.White, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(com.deep.lumoraai.R.string.ui_subscription), color = Color.White, fontWeight = FontWeight.Bold) },
             text = { Text(uiState.purchaseMessage, color = Color.White) },
-            confirmButton = { TextButton(onClick = onClearMessage) { Text("OK", color = Lime) } }
+            confirmButton = { TextButton(onClick = onClearMessage) { Text(stringResource(com.deep.lumoraai.R.string.ui_ok), color = Lime) } }
         )
     }
 
@@ -135,7 +136,7 @@ private fun SubscriptionContent(
             .padding(top = 18.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        PageTopBar(title = "Subscription", subtitle = "Upgrade your studio", onBack = onBack)
+        PageTopBar(title = stringResource(com.deep.lumoraai.R.string.ui_subscription_2), subtitle = stringResource(com.deep.lumoraai.R.string.ui_upgrade_your_studio), onBack = onBack)
         ProHero(isDeveloperMode = uiState.isDeveloperMode)
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
@@ -144,7 +145,7 @@ private fun SubscriptionContent(
             FeatureTile("Tools", "Pro access", Icons.Default.LockOpen, Purple, Modifier.weight(1f))
         }
 
-        Text("Choose Plan", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_choose_plan), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         if (uiState.billingState is BillingState.Unavailable) {
             Text(
                 "Google Play subscriptions are currently unavailable. Please try again later.",
@@ -169,7 +170,7 @@ private fun SubscriptionContent(
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Ready to create more?", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_ready_to_create_more), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Text(selectedPlan?.name ?: "Select a plan", color = Muted, fontSize = 12.sp)
                     }
                     Text(selectedPlan?.price.orEmpty(), color = Lime, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
@@ -195,13 +196,13 @@ private fun SubscriptionContent(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Buy credit packs instead", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_buy_credit_packs_instead), color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.width(4.dp))
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Lime, modifier = Modifier.size(16.dp))
         }
 
         TextButton(onClick = onRestore, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            Text("Restore purchases", color = Lime)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_restore_purchases), color = Lime)
         }
 
         Spacer(modifier = Modifier.height(2.dp))
@@ -212,7 +213,7 @@ private fun SubscriptionContent(
 private fun PageTopBar(title: String, subtitle: String, onBack: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack, modifier = Modifier.size(38.dp)) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back), tint = Color.White)
         }
         Spacer(modifier = Modifier.width(8.dp))
         Column {
@@ -232,8 +233,8 @@ private fun ProHero(isDeveloperMode: Boolean) {
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
             Column(modifier = Modifier.fillMaxWidth(0.72f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Lumora Pro", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Create without limits", color = Color.White, fontSize = 29.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_lumora_pro), color = Lime, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_create_without_limits), color = Color.White, fontSize = 29.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold)
                 Text(if (isDeveloperMode) "Developer mode gives unlimited trial access." else "Credits, priority generation, and premium creative workflows.", color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
             }
             Box(

@@ -38,6 +38,7 @@ import com.deep.lumoraai.feature.generation.UploadImagePanel
 import com.deep.lumoraai.feature.generation.VideoStyleSection
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ImageToVideoScreen(
@@ -79,7 +80,7 @@ fun ImageToVideoScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             GenerationTopBar(
-                title = "Image 2 Video",
+                title = stringResource(com.deep.lumoraai.R.string.ui_image_2_video),
                 onBack = onBack,
                 onNotifications = { onNavigate(Screen.Notifications.route) }
             )

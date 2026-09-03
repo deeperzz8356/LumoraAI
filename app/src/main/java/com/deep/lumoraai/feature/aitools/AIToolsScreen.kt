@@ -46,6 +46,7 @@ import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.bgStudioRoute
+import androidx.compose.ui.res.stringResource
 
 private val AIToolsBackground = Color(0xFF081020)
 private val AIToolsCard = Color(0xFF10192D)
@@ -97,7 +98,7 @@ private fun AIToolsContent(
     ) {
         LumoraTopBar(
             credits = credits,
-            title = "AI Tools",
+            title = stringResource(com.deep.lumoraai.R.string.ui_ai_tools),
             onProfileClick = { onNavigate(Screen.Profile.route) },
             onCreditsClick = { onNavigate(Screen.Credits.route) },
             onNotificationsClick = { onNavigate(Screen.Notifications.route) },
@@ -117,8 +118,8 @@ private fun AIToolsContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             ToolBentoCard(
-                title = "AI Background Replace",
-                subtitle = "Generate a new scene",
+                title = stringResource(com.deep.lumoraai.R.string.ui_ai_background_replace),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_generate_a_new_scene),
                 icon = Icons.Default.AutoAwesome,
                 accent = Cyan,
                 onClick = { onNavigate(bgStudioRoute("replace")) },
@@ -128,8 +129,8 @@ private fun AIToolsContent(
                 prominent = true
             )
             ToolBentoCard(
-                title = "Photo Enhancer",
-                subtitle = "Improve quality",
+                title = stringResource(com.deep.lumoraai.R.string.ui_photo_enhancer),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_improve_quality),
                 icon = Icons.Default.Tune,
                 accent = Purple,
                 onClick = { onNavigate(Screen.PhotoEnhance.route) },
@@ -144,8 +145,8 @@ private fun AIToolsContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             ToolBentoCard(
-                title = "Promo Videos",
-                subtitle = "Ad-ready clips",
+                title = stringResource(com.deep.lumoraai.R.string.ui_promo_videos),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_ad_ready_clips),
                 icon = Icons.Default.VideoLibrary,
                 accent = Pink,
                 onClick = { onNavigate(Screen.PromoVideo.route) },
@@ -155,8 +156,8 @@ private fun AIToolsContent(
                 prominent = true
             )
             ToolBentoCard(
-                title = "Remove Background",
-                subtitle = "Cut subject",
+                title = stringResource(com.deep.lumoraai.R.string.ui_remove_background),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_cut_subject),
                 icon = Icons.Default.PhotoCamera,
                 accent = BlueAccent,
                 onClick = { onNavigate(bgStudioRoute("remove")) },
@@ -167,8 +168,8 @@ private fun AIToolsContent(
             )
         }
         ToolBentoCard(
-            title = "Compress",
-            subtitle = "Smaller files without the mess",
+            title = stringResource(com.deep.lumoraai.R.string.ui_compress),
+            subtitle = stringResource(com.deep.lumoraai.R.string.ui_smaller_files_without_the_mess),
             icon = Icons.Default.Compress,
             accent = Lime,
             onClick = { onNavigate(Screen.Compress.route) },
@@ -204,9 +205,9 @@ private fun AIToolsHero() {
                 modifier = Modifier.fillMaxWidth(0.7f),
                 verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
-                Text("Studio Tools", color = Lime, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Edit faster with focused AI actions", color = Color.White, fontSize = 24.sp, lineHeight = 27.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Replace backgrounds, improve photos, make promo clips, and compress files from one clean hub.", color = Muted, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_studio_tools), color = Lime, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_edit_faster_with_focused_ai_actions), color = Color.White, fontSize = 24.sp, lineHeight = 27.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_replace_backgrounds_improve_photos_make_promo_clips_and_compress_files), color = Muted, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Box(
                 modifier = Modifier

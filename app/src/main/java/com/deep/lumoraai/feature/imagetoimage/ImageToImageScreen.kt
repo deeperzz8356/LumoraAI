@@ -37,6 +37,7 @@ import com.deep.lumoraai.feature.generation.ImageStyleSection
 import com.deep.lumoraai.feature.generation.PromptComposerCard
 import com.deep.lumoraai.feature.generation.UploadImagePanel
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ImageToImageScreen(
@@ -77,7 +78,7 @@ fun ImageToImageScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             GenerationTopBar(
-                title = "Image 2 Image",
+                title = stringResource(com.deep.lumoraai.R.string.ui_image_2_image),
                 onBack = onBack,
                 onNotifications = { onNavigate(Screen.Notifications.route) }
             )

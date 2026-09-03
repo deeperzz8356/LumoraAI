@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 
 /**
  * Bell icon button with notification count badge
@@ -38,7 +39,7 @@ fun NotificationBellButton(
         ) {
             Icon(
                 imageVector = Icons.Default.NotificationsActive,
-                contentDescription = "Notifications",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_notifications),
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary
             )

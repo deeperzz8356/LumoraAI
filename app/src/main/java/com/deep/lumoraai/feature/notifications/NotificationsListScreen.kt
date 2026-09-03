@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.deep.lumoraai.domain.model.NotificationType
 import com.deep.lumoraai.ui.components.NotificationCard
+import androidx.compose.ui.res.stringResource
 
 /**
  * Main notifications list screen
@@ -88,13 +89,13 @@ fun NotificationsListScreen(
                     IconButton(onClick = { showFilter = !showFilter }) {
                         Icon(
                             imageVector = Icons.Default.FilterList,
-                            contentDescription = "Filter"
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_filter)
                         )
                     }
                     IconButton(onClick = { viewModel.markAllAsRead() }) {
                         Icon(
                             imageVector = Icons.Default.DoneAll,
-                            contentDescription = "Mark all as read"
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_mark_all_as_read)
                         )
                     }
                 },
@@ -175,22 +176,22 @@ fun NotificationsListScreen(
                                 FilterChip(
                                     selected = uiState.filterType == null,
                                     onClick = { viewModel.filterByType(null) },
-                                    label = { Text("All") }
+                                    label = { Text(stringResource(com.deep.lumoraai.R.string.ui_all)) }
                                 )
                                 FilterChip(
                                     selected = uiState.filterType == NotificationType.TASK_COMPLETION,
                                     onClick = { viewModel.filterByType(NotificationType.TASK_COMPLETION) },
-                                    label = { Text("Tasks") }
+                                    label = { Text(stringResource(com.deep.lumoraai.R.string.ui_tasks)) }
                                 )
                                 FilterChip(
                                     selected = uiState.filterType == NotificationType.ENGAGEMENT,
                                     onClick = { viewModel.filterByType(NotificationType.ENGAGEMENT) },
-                                    label = { Text("Engagement") }
+                                    label = { Text(stringResource(com.deep.lumoraai.R.string.ui_engagement)) }
                                 )
                                 FilterChip(
                                     selected = uiState.filterType == NotificationType.FEATURE_ANNOUNCEMENT,
                                     onClick = { viewModel.filterByType(NotificationType.FEATURE_ANNOUNCEMENT) },
-                                    label = { Text("Features") }
+                                    label = { Text(stringResource(com.deep.lumoraai.R.string.ui_features)) }
                                 )
                             }
                         }
@@ -236,7 +237,7 @@ fun NotificationsListScreen(
                                         .width(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Clear all notifications")
+                                Text(stringResource(com.deep.lumoraai.R.string.ui_clear_all_notifications))
                             }
                         }
                     }

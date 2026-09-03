@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 /**
  * In-app notification alert that slides in from top
@@ -131,7 +132,7 @@ fun NotificationAlertPopup(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_close),
                         modifier = Modifier.width(16.dp),
                         tint = MaterialTheme.colorScheme.outline
                     )

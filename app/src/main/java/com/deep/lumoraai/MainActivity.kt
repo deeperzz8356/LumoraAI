@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.deep.lumoraai.core.network.hasInternetConnection
+import com.deep.lumoraai.core.localization.LocaleManager
 import com.deep.lumoraai.core.navigation.NavGraph
 import com.deep.lumoraai.core.theme.LumoraTheme
 import com.deep.lumoraai.feature.network.NoInternetScreen
@@ -90,6 +91,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        val code = newBase.getSharedPreferences("lumora_settings", Context.MODE_PRIVATE)
+            .getString("locale_code", "en")
+        super.attachBaseContext(LocaleManager.apply(newBase, code ?: "en"))
     }
 
     override fun onNewIntent(intent: Intent) {

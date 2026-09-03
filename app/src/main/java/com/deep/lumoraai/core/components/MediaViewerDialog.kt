@@ -35,6 +35,7 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.deep.lumoraai.core.utils.MediaShareUtils
 import java.io.File
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun MediaViewerDialog(
@@ -101,11 +102,11 @@ fun MediaViewerDialog(
                                 MediaShareUtils.shareMedia(context, filePath, mimeType)
                             }
                         ) {
-                            Text("Share", color = Color(0xFFCFBDFF))
+                            Text(stringResource(com.deep.lumoraai.R.string.ui_share), color = Color(0xFFCFBDFF))
                         }
                     }
                     TextButton(onClick = onDismiss) {
-                        Text("Close", color = Color.White)
+                        Text(stringResource(com.deep.lumoraai.R.string.ui_close), color = Color.White)
                     }
                 }
             }

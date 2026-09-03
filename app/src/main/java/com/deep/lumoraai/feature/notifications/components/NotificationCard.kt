@@ -27,6 +27,7 @@ import com.deep.lumoraai.data.local.room.entity.NotificationEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
 
 /**
  * Individual notification card that displays notification details
@@ -123,7 +124,7 @@ fun NotificationCard(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Close,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_delete),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         modifier = Modifier.padding(4.dp)
                     )

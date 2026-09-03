@@ -67,6 +67,7 @@ import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.ui.theme.tokens.Spacing
 import java.io.File
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 private val QueueBackground = Color(0xFF081020)
 private val QueueCard = Color(0xFF10192D)
@@ -181,7 +182,7 @@ private fun QueueTopBar(onNavigate: (String) -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Queue", color = Color.White, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_queue), color = Color.White, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold)
             Spacer(modifier = Modifier.width(Spacing.sm))
             Row(
                 modifier = Modifier
@@ -191,14 +192,14 @@ private fun QueueTopBar(onNavigate: (String) -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Box(modifier = Modifier.size(6.dp).background(Lime, CircleShape))
-                Text("LIVE", color = Purple, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_live), color = Purple, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = { onNavigate(Screen.History.route) }) {
-                Icon(Icons.Default.List, contentDescription = "History", tint = Cyan, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.List, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_history), tint = Cyan, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("History", color = Cyan, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_history), color = Cyan, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -229,7 +230,7 @@ private fun QueueEmptyState(onNavigate: (String) -> Unit) {
                 Icon(Icons.Default.Add, contentDescription = null, tint = Lime, modifier = Modifier.size(36.dp))
             }
             Spacer(modifier = Modifier.height(18.dp))
-            Text("All Clear", color = Color.White, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_all_clear), color = Color.White, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "No jobs in the pipeline. Start generating to see your work here.",
@@ -366,7 +367,7 @@ private fun JobThumbnail(job: ActiveJobInfo, isVideo: Boolean) {
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Play video",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_play_video),
                     tint = Color.White,
                     modifier = Modifier.size(28.dp)
                 )
@@ -418,7 +419,7 @@ private fun JobRightControl(
         ) {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = "Download",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_download),
                 tint = Color.Black,
                 modifier = Modifier.size(22.dp)
             )
@@ -442,7 +443,7 @@ private fun JobRightControl(
             }
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Cancel",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_cancel),
                 tint = Muted,
                 modifier = Modifier
                     .size(16.dp)

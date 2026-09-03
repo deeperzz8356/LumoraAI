@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.theme.IntroPalette
 import com.deep.lumoraai.core.theme.LumoraTheme
+import androidx.compose.ui.res.stringResource
 
 /**
  * Global header bar showing page title, user credits, and notifications
@@ -67,7 +68,7 @@ fun UserHeaderBar(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -112,7 +113,7 @@ fun UserHeaderBar(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Notifications,
-                    contentDescription = "Notifications",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_notifications),
                     modifier = Modifier
                         .size(21.dp),
                     tint = MaterialTheme.colorScheme.onSurface
@@ -137,7 +138,7 @@ fun UserHeaderBar(
 private fun UserHeaderBarPreview() {
     LumoraTheme {
         UserHeaderBar(
-            title = "Home",
+            title = stringResource(com.deep.lumoraai.R.string.ui_home),
             userCredits = 500,
             unreadNotificationCount = 3
         )
@@ -149,7 +150,7 @@ private fun UserHeaderBarPreview() {
 private fun UserHeaderBarWithBackPreview() {
     LumoraTheme {
         UserHeaderBar(
-            title = "Text To Image",
+            title = stringResource(com.deep.lumoraai.R.string.ui_text_to_image),
             userCredits = 1250,
             unreadNotificationCount = 0,
             onBackClick = {}
@@ -162,7 +163,7 @@ private fun UserHeaderBarWithBackPreview() {
 private fun UserHeaderBarNoCreditsPreview() {
     LumoraTheme {
         UserHeaderBar(
-            title = "Settings",
+            title = stringResource(com.deep.lumoraai.R.string.ui_settings),
             userCredits = 0,
             unreadNotificationCount = 12
         )

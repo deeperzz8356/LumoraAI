@@ -91,6 +91,7 @@ import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import kotlinx.coroutines.launch
 import java.io.File
+import androidx.compose.ui.res.stringResource
 
 val GenerationScreenBg = Color(0xFF081020)
 val GenerationPanel = Color(0xFF151D31)
@@ -134,7 +135,7 @@ fun GenerationTopBar(
             IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                     tint = Color.White,
                     modifier = Modifier.size(23.dp)
                 )
@@ -177,7 +178,7 @@ fun UploadImagePanel(
         if (bitmap != null) {
             Image(
                 bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Source image",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_source_image),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
             )
@@ -192,7 +193,7 @@ fun UploadImagePanel(
                     Icon(Icons.Default.CloudUpload, contentDescription = null, tint = GenerationLime, modifier = Modifier.size(27.dp))
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Upload Image", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_upload_image), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(7.dp))
                 Text(
                     text = "Tap to select a file from your device",
@@ -259,18 +260,18 @@ fun PromptComposerCard(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             if (onUpload != null) {
-                SquareActionButton(icon = Icons.Default.Upload, contentDescription = "Upload image", onClick = onUpload)
+                SquareActionButton(icon = Icons.Default.Upload, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_upload_image_2), onClick = onUpload)
             }
             SquareActionButton(
                 icon = Icons.Default.AutoAwesome,
-                contentDescription = "Improve prompt",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_improve_prompt),
                 enabled = prompt.isNotBlank() && !isImproving,
                 onClick = onImprovePrompt,
                 isLoading = isImproving
             )
             SquareActionButton(
                 icon = Icons.Default.Tune,
-                contentDescription = "Advanced settings",
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_advanced_settings_2),
                 onClick = onSettingsClick,
                 highlighted = isSettingsOpen || negativePrompt.isNotBlank()
             )
@@ -325,7 +326,7 @@ fun ImageStyleSection(
     modifier: Modifier = Modifier,
 ) {
     StyleSection(
-        title = "Style",
+        title = stringResource(com.deep.lumoraai.R.string.ui_style),
         items = ImageStyle.entries.map { StyleItem(it.label, it.promptHint, it.assetFileName, selected == it) { onSelected(it) } },
         modifier = modifier
     )
@@ -338,7 +339,7 @@ fun VideoStyleSection(
     modifier: Modifier = Modifier,
 ) {
     StyleSection(
-        title = "Style",
+        title = stringResource(com.deep.lumoraai.R.string.ui_style),
         items = VideoStyle.entries.map { StyleItem(it.label, it.promptHint, it.assetFileName, selected == it) { onSelected(it) } },
         modifier = modifier
     )
@@ -468,8 +469,8 @@ fun GenerationControlsPanel(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Advanced Settings", color = Color.White, fontSize = 18.sp, lineHeight = 22.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Tune output details before choosing a style.", color = GenerationMuted, fontSize = 12.sp, lineHeight = 16.sp)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_advanced_settings), color = Color.White, fontSize = 18.sp, lineHeight = 22.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_tune_output_details_before_choosing_a_style), color = GenerationMuted, fontSize = 12.sp, lineHeight = 16.sp)
             }
             Text(
                 text = mediaType.uppercase(),
@@ -511,7 +512,7 @@ fun GenerationAspectRatioSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Ratio", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_ratio), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text(selected.displayLabel, color = GenerationLime, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
         }
         Row(
@@ -551,13 +552,13 @@ private fun RatioChip(ratio: GenerationAspectRatio, selected: Boolean, onClick: 
 private fun NegativePromptField(value: String, onValueChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Negative Prompt", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_negative_prompt), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text("${value.length}/1000", color = Color.White.copy(alpha = 0.56f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
         OutlinedTextField(
             value = value,
             onValueChange = { onValueChange(it.take(1000)) },
-            placeholder = { Text("blurry, extra fingers, bad anatomy, watermark...") },
+            placeholder = { Text(stringResource(com.deep.lumoraai.R.string.ui_blurry_extra_fingers_bad_anatomy_watermark)) },
             minLines = 3,
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
@@ -599,7 +600,7 @@ fun GenerationCountSection(generations: Int, onGenerationsChanged: (Int) -> Unit
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("No. of Generations", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_no_of_generations), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         Row(
             modifier = Modifier
                 .height(48.dp)
@@ -828,13 +829,13 @@ fun GeneratedMediaResult(
             contentAlignment = Alignment.Center
         ) {
             if (!exists) {
-                Text("Saved media file is missing.", color = Color.White, modifier = Modifier.padding(16.dp))
+                Text(stringResource(com.deep.lumoraai.R.string.ui_saved_media_file_is_missing), color = Color.White, modifier = Modifier.padding(16.dp))
             } else if (isVideo) {
                 LocalVideoPlayer(filePath = selectedPath)
             } else {
                 AsyncImage(
                     model = file,
-                    contentDescription = "Generated image",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_generated_image),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit
                 )
@@ -842,7 +843,7 @@ fun GeneratedMediaResult(
             if (exists) {
                 ResultActionIcon(
                     icon = Icons.Default.Fullscreen,
-                    contentDescription = "Open viewer",
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_open_viewer),
                     onClick = { showViewer = true },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -934,7 +935,7 @@ private fun GeneratedOutputThumb(
         contentAlignment = Alignment.Center
     ) {
         if (!file.exists()) {
-            Text("Missing", color = GenerationMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(com.deep.lumoraai.R.string.ui_missing), color = GenerationMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         } else if (isVideo) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = if (selected) GenerationLime else Color.White, modifier = Modifier.size(20.dp))
@@ -1021,13 +1022,13 @@ private fun GeneratedMediaViewer(
                 contentAlignment = Alignment.Center
             ) {
                 if (!file.exists()) {
-                    Text("Saved media file is missing.", color = Color.White)
+                    Text(stringResource(com.deep.lumoraai.R.string.ui_saved_media_file_is_missing), color = Color.White)
                 } else if (isVideo) {
                     LocalVideoPlayer(filePath = selectedPath)
                 } else {
                     AsyncImage(
                         model = file,
-                        contentDescription = "Generated image viewer",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_generated_image_viewer),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit
                     )
@@ -1035,7 +1036,7 @@ private fun GeneratedMediaViewer(
                 if (outputPaths.size > 1) {
                     ResultActionIcon(
                         icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Previous result",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_previous_result),
                         enabled = hasPrevious,
                         onClick = { moveBy(-1) },
                         modifier = Modifier
@@ -1044,7 +1045,7 @@ private fun GeneratedMediaViewer(
                     )
                     ResultActionIcon(
                         icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "Next result",
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_next_result),
                         enabled = hasNext,
                         onClick = { moveBy(1) },
                         modifier = Modifier
@@ -1121,10 +1122,10 @@ private fun FeedbackDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = GenerationPanel,
-        title = { Text("Feedback", color = Color.White, fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(com.deep.lumoraai.R.string.ui_feedback), color = Color.White, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("What should be better in this result?", color = GenerationMuted, fontSize = 13.sp)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_what_should_be_better_in_this_result), color = GenerationMuted, fontSize = 13.sp)
                 options.forEach { option ->
                     Row(
                         modifier = Modifier
@@ -1155,7 +1156,7 @@ private fun FeedbackDialog(
                         value = draft,
                         onValueChange = { draft = it.take(400) },
                         minLines = 3,
-                        placeholder = { Text("Tell us what felt off...") },
+                        placeholder = { Text(stringResource(com.deep.lumoraai.R.string.ui_tell_us_what_felt_off)) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color(0xFF10182A),
                             unfocusedContainerColor = Color(0xFF10182A),
@@ -1179,12 +1180,12 @@ private fun FeedbackDialog(
                     onSubmit(reason)
                 }
             ) {
-                Text("Send", color = GenerationLime, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_send), color = GenerationLime, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = GenerationMuted)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_cancel), color = GenerationMuted)
             }
         }
     )
