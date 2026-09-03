@@ -2,6 +2,8 @@ package com.deep.lumoraai
 
 import android.content.Intent
 import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.ConnectivityManager
 import android.net.Network
 import android.os.Build
@@ -32,6 +34,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_LumoraAI)
         super.onCreate(savedInstanceState)
+        window.setBackgroundDrawable(ColorDrawable(Color.rgb(8, 16, 32)))
+        window.statusBarColor = Color.rgb(8, 16, 32)
+        window.navigationBarColor = Color.rgb(8, 16, 32)
         notificationRoute = intent.getStringExtra(NOTIFICATION_ROUTE_EXTRA)
 
         setContent {
