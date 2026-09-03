@@ -35,6 +35,11 @@ android {
             "GROQ_PROMPT_API_KEY",
             "\"${localProperties.getProperty("GROQ_PROMPT_API_KEY", "")}\""
         )
+        buildConfigField(
+            "String",
+            "APYHUB_API_KEY",
+            "\"${localProperties.getProperty("APYHUB_API_KEY", "")}\""
+        )
     }
 
     applicationVariants.all {

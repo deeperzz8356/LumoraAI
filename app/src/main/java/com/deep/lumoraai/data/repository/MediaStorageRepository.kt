@@ -25,6 +25,24 @@ class MediaStorageRepository private constructor(context: Context) {
         savePayload(payload = payload, mediaType = MEDIA_IMAGE, outputDir = imagesDir)
     }
 
+    suspend fun saveImageBytes(
+        bytes: ByteArray,
+        mimeType: String = "image/png",
+    ): SavedMedia = withContext(Dispatchers.IO) {
+        if (bytes.isEmpty()) error("Image response was empty.")
+        val id = UUID.randomUUID().toString()
+        val extension = extensionForMimeType(mimeType, MEDIA_IMAGE)
+        val file = File(imagesDir, "$id.$extension")
+        file.writeBytes(bytes)
+        SavedMedia(
+            id = id,
+            localUri = Uri.fromFile(file),
+            filePath = file.absolutePath,
+            mimeType = mimeType,
+            mediaType = MEDIA_IMAGE,
+        )
+    }
+
     suspend fun saveVideoFromPayload(payload: String): SavedMedia = withContext(Dispatchers.IO) {
         savePayload(payload = payload, mediaType = MEDIA_VIDEO, outputDir = videosDir)
     }

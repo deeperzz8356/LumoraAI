@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.BuildConfig
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.notification.NotificationManager
@@ -32,11 +33,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
 import kotlin.math.roundToInt
+
+private const val APYHUB_REMOVE_BG_URL =
+    "https://api.eu.apyhub.com/apyhub/remove-background-from-images/multi-part/download"
 
 class BgStudioViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -50,6 +57,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
     private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao)
 
     private var sourceImageB64: String? = null
+    private var sourceImageUri: Uri? = null
 
     var uiState: BgStudioUiState by mutableStateOf(BgStudioUiState())
         private set
@@ -65,15 +73,24 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
     fun loadImage(uri: Uri) {
         viewModelScope.launch {
             uiState = uiState.copy(status = BgStudioStatus.LoadingImage)
+            val mimeType = getApplication<Application>().contentResolver.getType(uri).orEmpty()
+            if (!mimeType.startsWith("image/")) {
+                sourceImageB64 = null
+                sourceImageUri = null
+                uiState = uiState.copy(status = BgStudioStatus.Error("Upload an image file only."))
+                return@launch
+            }
             val decoded = withContext(Dispatchers.IO) {
                 runCatching { decodeBitmap(uri) }.getOrNull()
             }
             if (decoded == null) {
                 sourceImageB64 = null
+                sourceImageUri = null
                 uiState = uiState.copy(status = BgStudioStatus.Error("Could not open that image."))
                 return@launch
             }
             sourceImageB64 = withContext(Dispatchers.Default) { decoded.toJpegBase64() }
+            sourceImageUri = uri
             uiState = uiState.copy(sourceBitmap = decoded, status = BgStudioStatus.Idle)
         }
     }
@@ -92,7 +109,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
 
         viewModelScope.launch {
             if (uiState.mode == BgStudioMode.Remove) {
-                startLocalRemoveJob(bitmap)
+                startApyHubRemoveJob(bitmap)
                 return@launch
             }
 
@@ -238,7 +255,13 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private fun startLocalRemoveJob(bitmap: Bitmap) {
+    private fun startApyHubRemoveJob(bitmap: Bitmap) {
+        val imageUri = sourceImageUri
+        if (imageUri == null) {
+            uiState = uiState.copy(status = BgStudioStatus.Error("Upload an image first."))
+            return
+        }
+
         uiState = uiState.copy(status = BgStudioStatus.Generating)
         
         val taskId = UUID.randomUUID().toString()
@@ -267,8 +290,8 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         )
 
         viewModelScope.launch {
-            val cutout = withContext(Dispatchers.Default) {
-                runCatching { removeBorderConnectedBackground(bitmap) }
+            val removedBytes = withContext(Dispatchers.IO) {
+                runCatching { removeBackgroundWithApyHub(imageUri) }
             }.getOrElse { error ->
                 val message = error.message ?: "Could not remove that background."
                 uiState = uiState.copy(status = BgStudioStatus.Error(message))
@@ -283,7 +306,10 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 )
                 return@launch
             }
-            val saved = mediaStorage.saveImageBitmap(cutout, mimeType = "image/png")
+            val saved = mediaStorage.saveImageBytes(removedBytes, mimeType = "image/png")
+            val preview = withContext(Dispatchers.IO) {
+                runCatching { BitmapFactory.decodeFile(saved.filePath) }.getOrNull()
+            }
             historyRepository.addHistory(
                 historyModel = HistoryModel(
                     id = saved.id,
@@ -295,7 +321,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 type = MediaStorageRepository.MEDIA_IMAGE,
                 mediaUrl = saved.filePath,
             )
-            uiState = uiState.copy(sourceBitmap = cutout, status = BgStudioStatus.Completed)
+            uiState = uiState.copy(sourceBitmap = preview ?: bitmap, status = BgStudioStatus.Completed)
             LumoraNotificationCenter.notifyCompletion(
                 context = getApplication<Application>(),
                 title = "Background ready",
@@ -323,6 +349,63 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
             )
         }
     }
+
+    private fun removeBackgroundWithApyHub(imageUri: Uri): ByteArray {
+        val apiKey = BuildConfig.APYHUB_API_KEY
+        if (apiKey.isBlank()) error("Background remover API key is missing.")
+
+        val resolver = getApplication<Application>().contentResolver
+        val mimeType = resolver.getType(imageUri).orEmpty()
+        if (!mimeType.startsWith("image/")) error("Upload an image file only.")
+
+        val boundary = "LumoraBoundary${UUID.randomUUID()}"
+        val lineEnd = "\r\n"
+        val connection = (URL("$APYHUB_REMOVE_BG_URL?output=lumora-bg-${System.currentTimeMillis()}").openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            setRequestProperty("apy-token", apiKey)
+            setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+            connectTimeout = 30_000
+            readTimeout = 120_000
+            doInput = true
+            doOutput = true
+        }
+
+        return try {
+            DataOutputStream(connection.outputStream).use { output ->
+                output.writeBytes("--$boundary$lineEnd")
+                output.writeBytes("Content-Disposition: form-data; name=\"image\"; filename=\"source.${extensionForMimeType(mimeType)}\"$lineEnd")
+                output.writeBytes("Content-Type: $mimeType$lineEnd$lineEnd")
+                resolver.openInputStream(imageUri)?.use { input -> input.copyTo(output) }
+                    ?: error("Could not open selected image.")
+                output.writeBytes(lineEnd)
+                output.writeBytes("--$boundary--$lineEnd")
+                output.flush()
+            }
+
+            val responseCode = connection.responseCode
+            val responseBytes = if (responseCode in 200..299) {
+                connection.inputStream.use { it.readBytes() }
+            } else {
+                connection.errorStream?.use { it.readBytes() } ?: ByteArray(0)
+            }
+            if (responseCode !in 200..299) {
+                val detail = responseBytes.toString(Charsets.UTF_8).ifBlank { "HTTP $responseCode" }
+                error("Background remover failed: $detail")
+            }
+            if (responseBytes.isEmpty()) error("Background remover returned an empty image.")
+            responseBytes
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun extensionForMimeType(mimeType: String): String =
+        when (mimeType.lowercase()) {
+            "image/jpeg", "image/jpg" -> "jpg"
+            "image/webp" -> "webp"
+            "image/png" -> "png"
+            else -> "png"
+        }
 
     private suspend fun persistGeneratedImage(payload: String, jobTitle: String, taskId: String, taskType: String, displayName: String) {
         val saved = mediaStorage.saveImageFromPayload(payload)
