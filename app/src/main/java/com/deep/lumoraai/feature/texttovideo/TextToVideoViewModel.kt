@@ -71,11 +71,11 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun updatePrompt(prompt: String) {
-        uiState = uiState.copy(prompt = prompt.take(1000), error = null)
+        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null)
     }
 
     fun updateNegativePrompt(prompt: String) {
-        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null)
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null, generatedPath = null)
     }
 
     fun selectStyle(style: VideoStyle) {
@@ -129,60 +129,59 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
 
             val taskType = if (isPromoMode) TaskNotificationHelper.PROMO_VIDEO else TaskNotificationHelper.TEXT_TO_VIDEO
             val displayName = if (isPromoMode) "Promo Video" else "Text to Video"
-            val taskId = UUID.randomUUID().toString()
-            
-            // Send task start notification
-            launch {
+            val requestedGenerations = uiState.generations.coerceIn(1, 4)
+            uiState = uiState.copy(isGenerating = true, error = null)
+            val prompt = buildPrompt()
+
+            var completed = 0
+            repeat(requestedGenerations) { index ->
+                val taskId = UUID.randomUUID().toString()
+                val jobTitle = "${uiState.jobBadge} ${shortTimestamp()} #${index + 1}"
                 notificationManager.sendTaskStartNotification(
                     taskType = taskType,
                     taskId = taskId,
                     displayName = displayName
                 )
-            }
-
-            uiState = uiState.copy(isGenerating = true, error = null)
-            val prompt = buildPrompt()
-            val jobTitle = "${uiState.jobBadge} ${shortTimestamp()}"
-            GenerationRepository.addJob(
-                ActiveJobInfo(
-                    title = jobTitle,
-                    subtitle = "Generating video...",
-                    badgeText = uiState.jobBadge,
-                    statusText = "Queued",
-                    progressPercent = 0.1f,
-                    isCompleted = false,
-                    imageRes = R.drawable.style_digital,
-                    mediaType = MediaStorageRepository.MEDIA_VIDEO,
+                GenerationRepository.addJob(
+                    ActiveJobInfo(
+                        title = jobTitle,
+                        subtitle = "Generating video ${index + 1} of $requestedGenerations...",
+                        badgeText = uiState.jobBadge,
+                        statusText = "Queued",
+                        progressPercent = 0.1f,
+                        isCompleted = false,
+                        imageRes = R.drawable.style_digital,
+                        mediaType = MediaStorageRepository.MEDIA_VIDEO,
+                    )
                 )
-            )
+                val result = generationRepository.generateVideo(
+                    prompt = prompt,
+                    engine = uiState.selectedEngine.modelId,
+                    sourceImageB64 = null,
+                    motionStrength = (uiState.motion * 100).toInt().coerceIn(20, 90),
+                    duration = uiState.duration,
+                    developerMode = isDev,
+                )
 
-            val result = generationRepository.generateVideo(
-                prompt = prompt,
-                engine = uiState.selectedEngine.modelId,
-                sourceImageB64 = null,
-                motionStrength = (uiState.motion * 100).toInt().coerceIn(20, 90),
-                duration = uiState.duration,
-                developerMode = isDev,
-            )
-
-            if (result.isSuccess) {
-                persistGeneratedVideo(result.getOrThrow(), jobTitle, prompt, taskId, taskType, displayName)
-            } else {
-                val message = result.exceptionOrNull()?.message ?: "Failed to generate video."
-                uiState = uiState.copy(isGenerating = false, error = message)
-                GenerationRepository.updateJob(jobTitle) { job ->
-                    job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
-                }
-                // Send task failure notification
-                launch {
+                if (result.isSuccess) {
+                    persistGeneratedVideo(result.getOrThrow(), jobTitle, prompt, taskId, taskType, displayName, keepGenerating = index < requestedGenerations - 1)
+                    completed += 1
+                } else {
+                    val message = result.exceptionOrNull()?.message ?: "Failed to generate video."
+                    uiState = uiState.copy(isGenerating = false, error = message)
+                    GenerationRepository.updateJob(jobTitle) { job ->
+                        job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                    }
                     notificationManager.sendTaskFailureNotification(
                         taskType = taskType,
                         taskId = taskId,
                         displayName = displayName,
                         errorMessage = message
                     )
+                    return@launch
                 }
             }
+            uiState = uiState.copy(isGenerating = false, error = null)
         }
     }
 
@@ -216,7 +215,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
         uiState = uiState.copy(generatedPath = null)
     }
 
-    private suspend fun persistGeneratedVideo(payload: String, jobTitle: String, prompt: String, taskId: String, taskType: String, displayName: String) {
+    private suspend fun persistGeneratedVideo(payload: String, jobTitle: String, prompt: String, taskId: String, taskType: String, displayName: String, keepGenerating: Boolean = false) {
         val saved = mediaStorage.saveVideoFromPayload(payload)
         historyRepository.addHistory(
             historyModel = HistoryModel(
@@ -229,7 +228,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             type = MediaStorageRepository.MEDIA_VIDEO,
             mediaUrl = saved.filePath,
         )
-        uiState = uiState.copy(isGenerating = false, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
+        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
         GenerationRepository.updateJob(jobTitle) { job ->
             job.copy(
                 progressPercent = 1.0f,

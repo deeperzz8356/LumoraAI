@@ -122,7 +122,7 @@ fun TextToVideoScreen(
                 VideoStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
-                    enabled = uiState.generatedPath == null,
+                    enabled = uiState.prompt.isNotBlank(),
                     creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
                     onClick = onGenerate
                 )

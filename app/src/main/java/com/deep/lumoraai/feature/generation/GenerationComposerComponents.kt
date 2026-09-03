@@ -739,16 +739,20 @@ fun GeneratedMediaResult(
     val scope = rememberCoroutineScope()
     var showViewer by remember { mutableStateOf(false) }
     var showFeedback by remember { mutableStateOf(false) }
+    var isDownloading by remember { mutableStateOf(false) }
     val file = remember(filePath) { File(filePath) }
     val exists = file.exists()
     val isVideo = mediaType.equals("VIDEO", ignoreCase = true) || mimeType.startsWith("video/", ignoreCase = true)
     val writePermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
             scope.launch {
+                isDownloading = true
                 val result = MediaGallerySaver.saveToGallery(context, filePath, mimeType, mediaType)
+                isDownloading = false
                 Toast.makeText(context, result.getOrElse { it.message ?: "Could not download media." }, Toast.LENGTH_SHORT).show()
             }
         } else {
+            isDownloading = false
             Toast.makeText(context, "Storage permission is needed to download this file.", Toast.LENGTH_SHORT).show()
         }
     }
@@ -772,7 +776,7 @@ fun GeneratedMediaResult(
             onSubmit = { reason ->
                 saveGeneratedFeedback(context, filePath, mediaType, reason)
                 showFeedback = false
-                Toast.makeText(context, "Thanks, feedback saved.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -842,11 +846,11 @@ fun GeneratedMediaResult(
             ResultActionIcon(Icons.Default.Edit, "Edit", onClick = onEdit)
             ResultActionIcon(Icons.Default.ThumbUp, "Like") {
                 saveGeneratedFeedback(context, filePath, mediaType, "Like")
-                Toast.makeText(context, "Glad you liked it.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
             }
             ResultActionIcon(Icons.Default.ThumbDown, "Dislike") {
                 saveGeneratedFeedback(context, filePath, mediaType, "Dislike")
-                Toast.makeText(context, "Noted.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
             }
             ResultActionIcon(Icons.Default.Feedback, "Feedback") {
                 showFeedback = true
@@ -854,14 +858,20 @@ fun GeneratedMediaResult(
             ResultActionIcon(Icons.Default.Share, "Share", enabled = exists) {
                 MediaShareUtils.shareMedia(context, filePath, mimeType)
             }
-            ResultActionIcon(Icons.Default.Download, "Download", enabled = exists) {
+            ResultActionIcon(Icons.Default.Download, "Download", enabled = exists && !isDownloading, isLoading = isDownloading) {
                 if (MediaGallerySaver.hasWritePermission(context)) {
                     scope.launch {
+                        isDownloading = true
+                        Toast.makeText(context, "Downloading...", Toast.LENGTH_SHORT).show()
                         val result = MediaGallerySaver.saveToGallery(context, filePath, mimeType, mediaType)
+                        isDownloading = false
                         Toast.makeText(context, result.getOrElse { it.message ?: "Could not download media." }, Toast.LENGTH_SHORT).show()
                     }
                 } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    isDownloading = true
                     writePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                } else {
+                    Toast.makeText(context, "Could not start download.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -931,6 +941,7 @@ private fun ResultActionIcon(
     contentDescription: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
     onClick: () -> Unit,
 ) {
     Box(
@@ -942,7 +953,11 @@ private fun ResultActionIcon(
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = contentDescription, tint = if (enabled) Color.White else Color.White.copy(alpha = 0.35f), modifier = Modifier.size(21.dp))
+        if (isLoading) {
+            CircularProgressIndicator(color = GenerationLime, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+        } else {
+            Icon(icon, contentDescription = contentDescription, tint = if (enabled) Color.White else Color.White.copy(alpha = 0.35f), modifier = Modifier.size(21.dp))
+        }
     }
 }
 

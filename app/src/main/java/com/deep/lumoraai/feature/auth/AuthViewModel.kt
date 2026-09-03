@@ -37,15 +37,29 @@ class AuthViewModel(
     }
 
     fun signInWithEmail(email: String, password: String, isSignUp: Boolean) {
-        if (email.isBlank() || password.isBlank()) {
-            uiState = AuthUiState.Error("Fields cannot be empty.")
+        val cleanEmail = email.trim()
+        if (cleanEmail.isBlank() || password.isBlank()) {
+            uiState = AuthUiState.Error("Enter email and password.")
+            return
+        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) {
+            uiState = AuthUiState.Error("Enter a valid email address.")
+            return
+        }
+        if (password.length < 6) {
+            uiState = AuthUiState.Error("Password must be at least 6 characters.")
             return
         }
         uiState = AuthUiState.Loading
-        val task = if (isSignUp) {
-            auth.createUserWithEmailAndPassword(email, password)
-        } else {
-            auth.signInWithEmailAndPassword(email, password)
+        val task = runCatching {
+            if (isSignUp) {
+                auth.createUserWithEmailAndPassword(cleanEmail, password)
+            } else {
+                auth.signInWithEmailAndPassword(cleanEmail, password)
+            }
+        }.getOrElse { error ->
+            uiState = AuthUiState.Error(error.message ?: "Authentication could not start.")
+            return
         }
         task.addOnCompleteListener { res ->
             if (res.isSuccessful) {

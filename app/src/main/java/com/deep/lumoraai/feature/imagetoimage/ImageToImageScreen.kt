@@ -132,7 +132,7 @@ fun ImageToImageScreen(
                 ImageStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
-                    enabled = uiState.generatedPath == null,
+                    enabled = uiState.prompt.isNotBlank() && uiState.sourceBitmap != null,
                     creditCost = GenerationGate.CREDITS_PER_IMAGE * uiState.generations,
                     onClick = onGenerate
                 )

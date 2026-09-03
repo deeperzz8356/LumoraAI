@@ -68,11 +68,11 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun updatePrompt(prompt: String) {
-        uiState = uiState.copy(prompt = prompt.take(1000), error = null)
+        uiState = uiState.copy(prompt = prompt.take(1000), error = null, generatedPath = null)
     }
 
     fun updateNegativePrompt(prompt: String) {
-        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null)
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), error = null, generatedPath = null)
     }
 
     fun selectStyle(style: ImageStyle) {
@@ -121,7 +121,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             } else {
                 authRepository.syncCurrentUser()
             }
-            startImageJob(source, isDev)
+            startImageJobs(source, isDev)
         }
     }
 
@@ -155,87 +155,91 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         uiState = uiState.copy(generatedPath = null)
     }
 
-    private fun startImageJob(sourceImage: String, developerMode: Boolean) {
+    private fun startImageJobs(sourceImage: String, developerMode: Boolean) {
         val prompt = buildPrompt()
-        val jobTitle = "Image 2 Image ${shortTimestamp()}"
-        val taskId = UUID.randomUUID().toString()
+        val requestedGenerations = uiState.generations.coerceIn(1, 4)
         uiState = uiState.copy(isGenerating = true, error = null)
-        
-        // Send task start notification
-        viewModelScope.launch {
-            notificationManager.sendTaskStartNotification(
-                taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
-                taskId = taskId,
-                displayName = "Image to Image"
-            )
-        }
-        
-        GenerationRepository.addJob(
-            ActiveJobInfo(
-                title = jobTitle,
-                subtitle = "Refining source image...",
-                badgeText = "Image 2 Image",
-                statusText = "Queued",
-                progressPercent = 0.0f,
-                isCompleted = false,
-                imageRes = R.drawable.style_anime,
-                mediaType = MediaStorageRepository.MEDIA_IMAGE,
-            )
-        )
 
         viewModelScope.launch {
-            val progressJob = launch {
-                val steps = listOf(
-                    0.18f to "Reading source image...",
-                    0.42f to "Applying style direction...",
-                    0.70f to "Balancing similarity...",
-                    0.90f to "Finishing image..."
+            var completed = 0
+            repeat(requestedGenerations) { index ->
+                val jobTitle = "Image 2 Image ${shortTimestamp()} #${index + 1}"
+                val taskId = UUID.randomUUID().toString()
+                notificationManager.sendTaskStartNotification(
+                    taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
+                    taskId = taskId,
+                    displayName = "Image to Image"
                 )
-                for (step in steps) {
-                    delay(1800)
+                GenerationRepository.addJob(
+                    ActiveJobInfo(
+                        title = jobTitle,
+                        subtitle = "Generating variation ${index + 1} of $requestedGenerations...",
+                        badgeText = "Image 2 Image",
+                        statusText = "Queued",
+                        progressPercent = 0.0f,
+                        isCompleted = false,
+                        imageRes = R.drawable.style_anime,
+                        mediaType = MediaStorageRepository.MEDIA_IMAGE,
+                    )
+                )
+                val progressJob = launchProgressJob(jobTitle)
+                val result = generationRepository.generateImage(
+                    prompt = prompt,
+                    style = uiState.selectedStyle.label,
+                    width = uiState.aspectRatio.width,
+                    height = uiState.aspectRatio.height,
+                    negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy" },
+                    sourceImageB64 = sourceImage,
+                    developerMode = developerMode,
+                )
+                progressJob.cancel()
+                if (result.isSuccess) {
+                    persistGeneratedImage(result.getOrThrow(), jobTitle, prompt, taskId, keepGenerating = index < requestedGenerations - 1)
+                    completed += 1
+                } else {
+                    val message = result.exceptionOrNull()?.message ?: "Could not generate image."
+                    uiState = uiState.copy(isGenerating = false, error = message)
                     GenerationRepository.updateJob(jobTitle) { job ->
-                        job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
+                        job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
                     }
+                    notificationManager.sendTaskFailureNotification(
+                        taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
+                        taskId = taskId,
+                        displayName = "Image to Image",
+                        errorMessage = message
+                    )
+                    return@launch
                 }
             }
-
-            GenerationRepository.runImageGeneration(
-                repository = generationRepository,
-                jobTitle = jobTitle,
-                prompt = prompt,
-                style = uiState.selectedStyle.label,
-                width = uiState.aspectRatio.width,
-                height = uiState.aspectRatio.height,
-                negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy" },
-                sourceImageB64 = sourceImage,
-                developerMode = developerMode,
-            ) { result ->
-                progressJob.cancel()
-                viewModelScope.launch {
-                    if (result.isSuccess) {
-                        persistGeneratedImage(result.getOrThrow(), jobTitle, prompt, taskId)
-                    } else {
-                        val message = result.exceptionOrNull()?.message ?: "Could not generate image."
-                        uiState = uiState.copy(isGenerating = false, error = message)
-                        GenerationRepository.updateJob(jobTitle) { job ->
-                            job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
-                        }
-                        // Send task failure notification
-                        launch {
-                            notificationManager.sendTaskFailureNotification(
-                                taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
-                                taskId = taskId,
-                                displayName = "Image to Image",
-                                errorMessage = message
-                            )
-                        }
-                    }
-                }
+            uiState = uiState.copy(isGenerating = false, error = null)
+            if (completed > 1) {
+                LumoraNotificationCenter.notifyCompletion(
+                    context = getApplication<Application>(),
+                    title = "$completed images ready",
+                    message = "Your Image 2 Image batch has finished.",
+                    route = Screen.History.route,
+                    mediaType = MediaStorageRepository.MEDIA_IMAGE,
+                )
             }
         }
     }
 
-    private suspend fun persistGeneratedImage(payload: String, jobTitle: String, prompt: String, taskId: String) {
+    private fun launchProgressJob(jobTitle: String) = viewModelScope.launch {
+        val steps = listOf(
+            0.18f to "Reading source image...",
+            0.42f to "Applying style direction...",
+            0.70f to "Balancing similarity...",
+            0.90f to "Finishing image..."
+        )
+        for (step in steps) {
+            delay(1800)
+            GenerationRepository.updateJob(jobTitle) { job ->
+                job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
+            }
+        }
+    }
+
+    private suspend fun persistGeneratedImage(payload: String, jobTitle: String, prompt: String, taskId: String, keepGenerating: Boolean = false) {
         val saved = mediaStorage.saveImageFromPayload(payload)
         historyRepository.addHistory(
             historyModel = HistoryModel(
@@ -248,7 +252,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             type = MediaStorageRepository.MEDIA_IMAGE,
             mediaUrl = saved.filePath,
         )
-        uiState = uiState.copy(isGenerating = false, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
+        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedMimeType = saved.mimeType)
         LumoraNotificationCenter.notifyCompletion(
             context = getApplication<Application>(),
             title = "Image ready",
