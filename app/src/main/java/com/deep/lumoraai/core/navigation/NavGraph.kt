@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.deep.lumoraai.core.components.AppShell
 import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.core.utils.GuestIdentity
+import com.deep.lumoraai.core.utils.OnboardingPreferences
 import com.deep.lumoraai.feature.auth.AuthRoute
 import com.deep.lumoraai.feature.aitools.AIToolsRoute
 import com.deep.lumoraai.feature.bgstudio.BgStudioRoute
@@ -77,7 +78,11 @@ fun NavGraph(
             SplashRoute(
                 onNext = {
                     val user = FirebaseAuth.getInstance().currentUser
-                    val target = if (user != null) Screen.Home.route else Screen.Language.route
+                    val target = if (user != null && OnboardingPreferences.isCompleted(context)) {
+                        Screen.Home.route
+                    } else {
+                        Screen.Language.route
+                    }
                     navController.goTo(target)
                 }
             )
@@ -115,12 +120,13 @@ fun NavGraph(
                                 AuthRepository().loginAnonymouslyAndSync()
                             }
                         }
+                        OnboardingPreferences.markCompleted(context)
                         navController.goTo(Screen.Home.route)
                     }
                 }
             )
         }
-        composable(Screen.Auth.route) { AuthRoute(onNext = next(Screen.Auth)) }
+        composable(Screen.Auth.route) { AuthRoute(onNext = { navController.goTo(Screen.Home.route) }) }
         composable(Screen.Home.route) { HomeRoute(onNext = next(Screen.Home), onNavigate = { navController.goTo(it) }) }
         composable(
             route = Screen.CreateHub.route + "?prompt={prompt}&tab={tab}",
@@ -268,6 +274,11 @@ fun NavGraph(
             ProfileRoute(
                 onNext = next(Screen.Profile),
                 onSignOut = {
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onDeleteAccount = {
                     navController.navigate(Screen.Auth.route) {
                         popUpTo(0) { inclusive = true }
                     }
