@@ -290,26 +290,46 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         )
 
         viewModelScope.launch {
-            val removedBytes = withContext(Dispatchers.IO) {
+            val apiResult = withContext(Dispatchers.IO) {
                 runCatching { removeBackgroundWithApyHub(imageUri) }
-            }.getOrElse { error ->
-                val message = error.message ?: "Could not remove that background."
-                uiState = uiState.copy(status = BgStudioStatus.Error(message))
-                GenerationRepository.updateJob(jobTitle) { job ->
-                    job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+            }
+
+            val output = if (apiResult.isSuccess) {
+                val saved = mediaStorage.saveImageBytes(apiResult.getOrThrow(), mimeType = "image/png")
+                val preview = withContext(Dispatchers.IO) {
+                    runCatching { BitmapFactory.decodeFile(saved.filePath) }.getOrNull()
                 }
-                notificationManager.sendTaskFailureNotification(
-                    taskType = TaskNotificationHelper.BG_REMOVE,
-                    taskId = taskId,
-                    displayName = "Background Remove",
-                    errorMessage = message
-                )
-                return@launch
+                Triple(saved, preview ?: bitmap, false)
+            } else {
+                GenerationRepository.updateJob(jobTitle) { job ->
+                    job.copy(
+                        progressPercent = 0.62f,
+                        statusText = "Fallback processing",
+                        subtitle = "Finishing background removal on device"
+                    )
+                }
+                val fallback = withContext(Dispatchers.Default) {
+                    runCatching { removeBorderConnectedBackground(bitmap) }
+                }.getOrElse { fallbackError ->
+                    val apiMessage = apiResult.exceptionOrNull()?.message ?: "ApyHub failed."
+                    val fallbackMessage = fallbackError.message ?: "Local fallback failed."
+                    val message = "Could not remove that background. $apiMessage $fallbackMessage"
+                    uiState = uiState.copy(status = BgStudioStatus.Error(message))
+                    GenerationRepository.updateJob(jobTitle) { job ->
+                        job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                    }
+                    notificationManager.sendTaskFailureNotification(
+                        taskType = TaskNotificationHelper.BG_REMOVE,
+                        taskId = taskId,
+                        displayName = "Background Remove",
+                        errorMessage = message
+                    )
+                    return@launch
+                }
+                val saved = mediaStorage.saveImageBitmap(fallback, mimeType = "image/png")
+                Triple(saved, fallback, true)
             }
-            val saved = mediaStorage.saveImageBytes(removedBytes, mimeType = "image/png")
-            val preview = withContext(Dispatchers.IO) {
-                runCatching { BitmapFactory.decodeFile(saved.filePath) }.getOrNull()
-            }
+            val (saved, preview, usedFallback) = output
             historyRepository.addHistory(
                 historyModel = HistoryModel(
                     id = saved.id,
@@ -321,7 +341,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 type = MediaStorageRepository.MEDIA_IMAGE,
                 mediaUrl = saved.filePath,
             )
-            uiState = uiState.copy(sourceBitmap = preview ?: bitmap, status = BgStudioStatus.Completed)
+            uiState = uiState.copy(sourceBitmap = preview, status = BgStudioStatus.Completed)
             LumoraNotificationCenter.notifyCompletion(
                 context = getApplication<Application>(),
                 title = "Background ready",
@@ -333,7 +353,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 job.copy(
                     progressPercent = 1.0f,
                     statusText = "Completed",
-                    subtitle = "Saved to history",
+                    subtitle = if (usedFallback) "Saved with local fallback" else "Saved to history",
                     isCompleted = true,
                     localMediaPath = saved.filePath,
                     imageUrl = saved.filePath,
