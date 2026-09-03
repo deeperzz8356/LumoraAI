@@ -201,7 +201,7 @@ fun LumoraIntroTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
+        placeholder = { Text(label) },
         modifier = modifier.fillMaxWidth(),
         shape = IntroFieldShape,
         singleLine = true,
