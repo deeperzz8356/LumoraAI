@@ -15,6 +15,8 @@ import com.deep.lumoraai.data.repository.HistoryRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import android.widget.Toast
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
     var uiState: ProfileUiState by mutableStateOf(ProfileUiState.Loading)
@@ -70,5 +72,31 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun signOut() {
         FirebaseAuth.getInstance().signOut()
+    }
+
+    fun deleteAccount(onDeleted: () -> Unit) {
+        viewModelScope.launch {
+            val user = FirebaseAuth.getInstance().currentUser
+            try {
+                if (user != null && !user.isAnonymous) {
+                    user.delete().await()
+                }
+                clearLocalData()
+                FirebaseAuth.getInstance().signOut()
+                onDeleted()
+            } catch (error: Exception) {
+                Toast.makeText(
+                    getApplication(),
+                    error.localizedMessage ?: "Account deletion failed. Please try again.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    private suspend fun clearLocalData() {
+        val database = LumoraDatabase.getInstance(getApplication())
+        database.historyDao.clearAllHistory()
+        database.notificationDao.clearAllNotifications()
     }
 }

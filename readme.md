@@ -15,6 +15,19 @@ fulfillment. Configure its service-account paths, package name, catalog JSON,
 and database path as documented in `backend/README.md`; deploy it behind TLS.
 Do not enable paid access until this endpoint is deployed and tested.
 
+## Tester unlimited access
+
+To grant unlimited credits to specific Firebase email accounts, add a comma-separated
+allowlist to `local.properties` before building:
+
+```properties
+TESTER_EMAILS=tester@example.com,another.tester@example.com
+```
+
+This only grants the tester entitlement after the user signs in with Firebase.
+Do not put passwords in the repository or in `local.properties`; create tester
+accounts in Firebase Authentication and share credentials securely.
+
 - Kotlin
 - Jetpack Compose
 - Material 3

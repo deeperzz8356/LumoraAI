@@ -11,6 +11,7 @@ import com.deep.lumoraai.core.notification.NotificationViewModel
 fun ProfileRoute(
     onNext: () -> Unit,
     onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onNavigate: (String) -> Unit,
     viewModel: ProfileViewModel = viewModel(),
     notificationViewModel: NotificationViewModel = hiltViewModel()
@@ -23,6 +24,9 @@ fun ProfileRoute(
         onSignOut = {
             viewModel.signOut()
             onSignOut()
+        },
+        onDeleteAccount = {
+            viewModel.deleteAccount(onDeleted = onDeleteAccount)
         },
         onNavigate = onNavigate,
         unreadCount = unreadCount

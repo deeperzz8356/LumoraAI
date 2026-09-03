@@ -41,6 +41,11 @@ android {
             "APYHUB_API_KEY",
             "\"${localProperties.getProperty("APYHUB_API_KEY", "")}\""
         )
+        buildConfigField(
+            "String",
+            "TESTER_EMAILS",
+            "\"${localProperties.getProperty("TESTER_EMAILS", "")}\""
+        )
     }
 
     applicationVariants.all {

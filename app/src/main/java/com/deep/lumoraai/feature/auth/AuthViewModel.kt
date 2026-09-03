@@ -71,8 +71,17 @@ class AuthViewModel(
     }
 
     fun signInWithGoogle(idToken: String) {
+        if (idToken.isBlank()) {
+            uiState = AuthUiState.Error("Google login returned an empty credential.")
+            return
+        }
         uiState = AuthUiState.Loading
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        val credential = runCatching {
+            GoogleAuthProvider.getCredential(idToken, null)
+        }.getOrElse { error ->
+            uiState = AuthUiState.Error(error.localizedMessage ?: "Google login failed.")
+            return
+        }
         auth.signInWithCredential(credential).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 finishWithBackendSync()

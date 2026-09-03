@@ -96,14 +96,14 @@ private fun triggerGoogleSignIn(
             viewModel.signInWithGoogle(result)
         } catch (e: GetCredentialException) {
             val message = when (e) {
-                is NoCredentialException -> "No Google account found. Continuing as guest."
-                else -> e.localizedMessage ?: "Google login failed. Continuing as guest."
+                is NoCredentialException -> "No Google account found. Choose another sign-in method."
+                else -> e.localizedMessage ?: "Google login failed."
             }
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            viewModel.signInAnonymously()
+            viewModel.resetState()
         } catch (e: Exception) {
-            Toast.makeText(context, "Google login failed. Continuing as guest.", Toast.LENGTH_LONG).show()
-            viewModel.signInAnonymously()
+            Toast.makeText(context, e.localizedMessage ?: "Google login failed.", Toast.LENGTH_LONG).show()
+            viewModel.resetState()
         }
     }
 }
