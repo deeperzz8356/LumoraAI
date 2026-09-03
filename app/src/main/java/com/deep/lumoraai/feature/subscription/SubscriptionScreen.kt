@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.data.billing.BillingState
 import com.deep.lumoraai.feature.subscription.model.SubscriptionPlan
 
 private val SubBackground = Color(0xFF081020)
@@ -67,6 +68,7 @@ fun SubscriptionScreen(
     uiState: SubscriptionUiState,
     onSelectPlan: (String) -> Unit,
     onPurchase: () -> Unit,
+    onRestore: () -> Unit,
     onClearMessage: () -> Unit,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit = {},
@@ -93,6 +95,7 @@ fun SubscriptionScreen(
                     uiState = uiState,
                     onSelectPlan = onSelectPlan,
                     onPurchase = onPurchase,
+                    onRestore = onRestore,
                     onClearMessage = onClearMessage,
                     onBack = onBack,
                     onNavigate = onNavigate
@@ -107,6 +110,7 @@ private fun SubscriptionContent(
     uiState: SubscriptionUiState.Success,
     onSelectPlan: (String) -> Unit,
     onPurchase: () -> Unit,
+    onRestore: () -> Unit,
     onClearMessage: () -> Unit,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
@@ -141,6 +145,13 @@ private fun SubscriptionContent(
         }
 
         Text("Choose Plan", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+        if (uiState.billingState is BillingState.Unavailable) {
+            Text(
+                "Google Play subscriptions are currently unavailable. Please try again later.",
+                color = Muted,
+                fontSize = 12.sp
+            )
+        }
         uiState.plans.forEach { plan ->
             SubscriptionPlanCard(
                 plan = plan,
@@ -187,6 +198,10 @@ private fun SubscriptionContent(
             Text("Buy credit packs instead", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.width(4.dp))
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Lime, modifier = Modifier.size(16.dp))
+        }
+
+        TextButton(onClick = onRestore, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Text("Restore purchases", color = Lime)
         }
 
         Spacer(modifier = Modifier.height(2.dp))

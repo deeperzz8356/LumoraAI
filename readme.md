@@ -4,6 +4,17 @@ Lumora AI is an Android app built with Jetpack Compose and a clean, feature-base
 
 ## Tech Stack
 
+## Paid billing security
+
+The Android app uses Google Play Billing for `SUBS` and `INAPP` products. It
+never sends client-controlled credit amounts. The `backend/` FastAPI service
+is the verification boundary: it authenticates Firebase ID tokens, verifies
+purchase tokens with the Google Play Developer API, maps product IDs to
+server-side entitlements, and records purchase tokens uniquely before
+fulfillment. Configure its service-account paths, package name, catalog JSON,
+and database path as documented in `backend/README.md`; deploy it behind TLS.
+Do not enable paid access until this endpoint is deployed and tested.
+
 - Kotlin
 - Jetpack Compose
 - Material 3

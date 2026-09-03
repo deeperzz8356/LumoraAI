@@ -24,6 +24,7 @@ fun SubscriptionLightPreview() {
             uiState = previewState,
             onSelectPlan = {},
             onPurchase = {},
+            onRestore = {},
             onClearMessage = {},
             onBack = {}
         )
@@ -38,6 +39,7 @@ fun SubscriptionDarkPreview() {
             uiState = previewState.copy(isDeveloperMode = true),
             onSelectPlan = {},
             onPurchase = {},
+            onRestore = {},
             onClearMessage = {},
             onBack = {}
         )

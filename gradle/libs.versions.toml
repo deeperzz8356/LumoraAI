@@ -10,6 +10,7 @@ activityCompose = "1.9.3"
 composeBom = "2024.09.00"
 navigationCompose = "2.8.3"
 googleGmsGoogleServices = "4.5.0"
+firebaseCrashlyticsPlugin = "3.0.2"
 firebaseAuth = "24.1.0"
 firebaseBom = "33.1.2"
 credentials = "1.6.0"
@@ -21,6 +22,7 @@ room = "2.8.4"
 datastore = "1.1.1"
 media3 = "1.5.0"
 purchases = "9.0.0"
+billing = "7.1.1"
 composeMaterialIcons = "1.6.7"
 
 [libraries]
@@ -43,6 +45,7 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
@@ -56,10 +59,12 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 purchases = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "purchases" }
+android-billing = { group = "com.android.billingclient", name = "billing", version.ref = "billing" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "composeMaterialIcons" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

@@ -340,6 +340,7 @@ class GenerationRepository {
                 } else {
                     Result.failure(Exception(responseJson.optString("message", "API status was not success")))
                 }
+
             } else {
                 Result.failure(Exception("HTTP Error $responseCode"))
             }
@@ -347,6 +348,41 @@ class GenerationRepository {
             Result.failure(e)
         }
     }
+
+    /** Server verifies the Play token and derives the entitlement; amount is never client-supplied. */
+    suspend fun verifyGooglePlayPurchase(productId: String, purchaseToken: String): Result<Int> =
+        withContext(Dispatchers.IO) {
+            try {
+                val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))
+                val idToken = user.getIdToken(true).await().token
+                    ?: return@withContext Result.failure(Exception("Failed to get authentication token"))
+                val connection = (URL("https://lumoraai-backend-rlcy.onrender.com/api/v1/billing/google-play/verify")
+                    .openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty("Authorization", "Bearer $idToken")
+                    doOutput = true
+                    connectTimeout = 15000
+                    readTimeout = 15000
+                }
+                OutputStreamWriter(connection.outputStream).use {
+                    it.write(JSONObject().apply {
+                        put("product_id", productId)
+                        put("purchase_token", purchaseToken)
+                    }.toString())
+                }
+                val body = connection.readResponseBody()
+                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                    val json = JSONObject(body)
+                    if (json.optString("status") == "success") Result.success(json.optInt("balance"))
+                    else Result.failure(Exception(json.optString("message", "Purchase verification failed")))
+                } else {
+                    Result.failure(Exception("Purchase verification failed (HTTP ${connection.responseCode})"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 
     suspend fun enhancePrompt(
         prompt: String,

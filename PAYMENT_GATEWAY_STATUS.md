@@ -1,28 +1,29 @@
-# Payment Gateway Status - Monitoring Mode
+# Payment Gateway Status - Google Play Billing
 
 ## Changes Made
 
-### 1. Payment Gateway Disconnected
-- **File**: `app/src/main/java/com/deep/lumoraai/feature/subscription/SubscriptionViewModel.kt`
-- **Status**: ✅ Payment gateway code safely disabled
-- **Mode**: Monitoring mode enabled - app tracks billing/credit usage without processing payments
+### 1. Payment Gateway Integration
+- **Files**: `app/src/main/java/com/deep/lumoraai/data/billing/`, subscription, and credits features
+- **Status**: ✅ Direct Google Play Billing client wired for SUBS and INAPP
+- **Mode**: Purchases are acknowledged locally; paid fulfillment remains disabled until backend verification is deployed
+- **Target**: Direct Google Play Billing Library (not Google Pay APIs or RevenueCat)
 
 ### 2. Changes Detail
 
-#### Imports (Lines 14-23)
-- ❌ All RevenueCat imports commented out
-- ✅ Kept only core Android/Compose imports needed for UI and state management
+#### Current billing state
+- ✅ Google Play Billing client, SUBS/INAPP queries, purchase launch, restore, and lifecycle state are wired
+- ✅ Credit purchases call the backend verification boundary with purchase token only
+- ❌ Paid fulfillment remains disabled until the backend verifies with Google
+- ✅ Billing state and Play prices are reflected in the subscription UI
 
-#### Init Block (Lines 54-75)
-- ❌ Removed: `Purchases.sharedInstance.logIn()` call
-- ✅ Added: TODO comment for re-enabling when payment gateway is ready
-- ✅ Kept: User state and preferences monitoring logic intact
+#### Init Block
+- ✅ Billing client initializes, queries products, and restores existing subscriptions/credit purchases
+- ✅ User state and preferences monitoring logic remains intact
 
-#### purchaseSelectedPlan() Function (Lines 105-157)
-- ❌ Removed: RevenueCat purchase calls and callbacks
-- ✅ Added: User-friendly message explaining payment gateway is unavailable
-- ✅ Kept: Plan selection and credit monitoring logic
-- ✅ Added: Complete TODO block with original purchase code for easy re-enablement
+#### purchaseSelectedPlan() Function
+- ✅ Google Play purchase launch, cancellation, pending, error, and acknowledgement callbacks are active
+- ✅ Added: Restore purchases action
+- ✅ Credit pack purchases no longer call client-controlled `addCredits(amount)`
 
 ### 3. Billing/Credit Monitoring - Still Active
 The following features continue to work:
@@ -32,30 +33,27 @@ The following features continue to work:
 - ✅ User state management
 - ✅ Credit/billing information display
 - ✅ Message feedback to user
+- ✅ Play Store prices and billing availability status
 
 ### 4. What's Disabled
-- ❌ RevenueCat payment processing
-- ❌ Google Play Billing integration
-- ❌ Purchase verification callbacks
-- ❌ Transaction tracking to payment gateway
+- ⚠️ Backend endpoint `POST /api/v1/billing/google-play/verify` must verify with Google and derive amounts server-side
+- ❌ Server-side transaction tracking and entitlement fulfillment
 
-## Re-enabling Payment Gateway
+## Remaining Work
 
-When ready to re-enable payments:
+Before enabling paid access:
 
-1. **Uncomment RevenueCat imports** (lines 14-23)
-2. **Uncomment init block code** (within TODO comment)
-3. **Uncomment purchaseSelectedPlan() implementation** (within TODO comment)
-4. Update `build.gradle.kts` to ensure RevenueCat dependency is active
-5. Rebuild and test
+1. Configure matching subscription and INAPP products in Play Console.
+2. Implement idempotent server verification/fulfillment for the verification endpoint.
+3. Connect verified subscription entitlements to subscription state and generation gates.
+4. Test with a Play test track before release.
 
 ## Compilation Status
 - ✅ All PurchaseParams unresolved reference errors fixed
 - ✅ All Material Icons unresolved reference errors fixed
-- ✅ Payment code safely archived as comments
-- ⏳ Build in progress - downloading dependencies
+- ✅ Direct Play Billing code is isolated behind `BillingRepository`
+- ⏳ Build requires an Android SDK path in `local.properties` or `ANDROID_HOME`
 
 ## Next Steps
-1. Wait for build to complete (first-time dependency download)
-2. Once build succeeds, app will run in monitoring mode
-3. Payment gateway can be re-enabled following steps above
+1. Configure an Android SDK path and run the debug compile.
+2. Deploy backend purchase-token verification before enabling paid fulfillment.
