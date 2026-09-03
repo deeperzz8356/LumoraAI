@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -37,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.AppToolbar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.ui.theme.tokens.Spacing
 import com.google.firebase.auth.FirebaseAuth
@@ -58,12 +58,18 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNext: () -> Unit,
     onNavigate: (String) -> Unit = {},
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = SettingsBackground,
-        topBar = { SettingsHeader() },
+        topBar = {
+            AppToolbar(
+                title = stringResource(R.string.settings),
+                onBackClick = onBack
+            )
+        },
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
@@ -144,40 +150,6 @@ fun SettingsScreen(
             }
         }
     }
-}
-
-@Composable
-private fun SettingsHeader() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .height(64.dp)
-            .background(Color(0xFF0B1426))
-            .padding(horizontal = 20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Lime.copy(alpha = 0.14f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.Settings, contentDescription = null, tint = Lime, modifier = Modifier.size(21.dp))
-        }
-        Text(
-            text = stringResource(R.string.settings),
-            color = Color.White,
-            fontSize = 22.sp,
-            lineHeight = 26.sp,
-            fontWeight = FontWeight.ExtraBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-
 }
 
 @Composable

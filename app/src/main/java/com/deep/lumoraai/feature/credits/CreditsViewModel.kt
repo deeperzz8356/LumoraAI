@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.billing.BillingRepository
@@ -81,19 +82,20 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
                 return@launch
             }
             val result = generationRepository.getCredits()
-            if (result.isSuccess) {
-                val automaticBonus = grantAutomaticRewards()
-                val visibleCredits = maxOf(result.getOrDefault(0) + automaticBonus, localRewardBalance())
-                uiState = CreditsUiState.Success(
-                    credits = visibleCredits,
-                    isDeveloperMode = false,
-                    rewards = buildRewardTasks(isDeveloperMode = false),
-                    rewardMessage = automaticBonus.takeIf { it > 0 }?.let { "+$it daily/account credits added automatically." },
-                    checkInDayIndex = checkInIndex()
-                )
-            } else {
-                uiState = CreditsUiState.Error("Failed to load credits")
-            }
+            val automaticBonus = grantAutomaticRewards()
+            val backendCredits = result.getOrNull()
+            val localBalance = localRewardBalance()
+            val visibleCredits = maxOf((backendCredits ?: 0) + automaticBonus, localBalance)
+            uiState = CreditsUiState.Success(
+                credits = visibleCredits,
+                isDeveloperMode = false,
+                rewards = buildRewardTasks(isDeveloperMode = false),
+                rewardMessage = when {
+                    automaticBonus > 0 && backendCredits != null -> "+$automaticBonus daily/account credits added automatically."
+                    else -> null
+                },
+                checkInDayIndex = checkInIndex()
+            )
         }
     }
 
@@ -154,25 +156,18 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         uiState = currentState.copy(isRewardBusy = true, rewardMessage = "Adding reward credits...")
         viewModelScope.launch {
             val result = if (amount > 0) generationRepository.addCredits(amount) else Result.success(currentState.credits)
-            if (result.isSuccess) {
-                markRewardClaimed(rewardId)
-                addLocalRewardBalance(amount)
-                val syncedCredits = result.getOrNull() ?: if (amount > 0) generationRepository.getCredits().getOrNull() else currentState.credits
-                val expectedCredits = currentState.credits + amount
-                val newCredits = maxOf(syncedCredits ?: expectedCredits, expectedCredits, localRewardBalance())
-                uiState = currentState.copy(
-                    credits = newCredits,
-                    rewards = buildRewardTasks(isDeveloperMode = false),
-                    rewardMessage = message,
-                    isRewardBusy = false,
-                    checkInDayIndex = checkInIndex()
-                )
-            } else {
-                uiState = currentState.copy(
-                    rewardMessage = "Could not add reward credits. Backend did not accept the update.",
-                    isRewardBusy = false
-                )
-            }
+            markRewardClaimed(rewardId)
+            addLocalRewardBalance(amount)
+            val syncedCredits = result.getOrNull() ?: if (amount > 0) generationRepository.getCredits().getOrNull() else currentState.credits
+            val expectedCredits = currentState.credits + amount
+            val newCredits = maxOf(syncedCredits ?: expectedCredits, expectedCredits, localRewardBalance())
+            uiState = currentState.copy(
+                credits = newCredits,
+                rewards = buildRewardTasks(isDeveloperMode = false),
+                rewardMessage = message,
+                isRewardBusy = false,
+                checkInDayIndex = checkInIndex()
+            )
         }
     }
 
@@ -217,31 +212,28 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         var total = 0
         val today = todayKey()
         if (rewardPrefs.getString(KEY_DAILY_RESET_DATE, "") != today) {
-            if (generationRepository.addCredits(2).isSuccess) {
-                total += 2
-                rewardPrefs.edit()
-                    .putString(KEY_DAILY_RESET_DATE, today)
-                    .putInt(KEY_LOCAL_REWARD_BALANCE, localRewardBalance() + 2)
-                    .apply()
-            }
+            generationRepository.addCredits(2)
+            total += 2
+            LocalCreditBalance.add(getApplication(), 2)
+            rewardPrefs.edit()
+                .putString(KEY_DAILY_RESET_DATE, today)
+                .apply()
         }
         if (!rewardPrefs.getBoolean(KEY_SIGNUP_CLAIMED, false) && hasSignedUpUser()) {
-            if (generationRepository.addCredits(2).isSuccess) {
-                total += 2
-                rewardPrefs.edit()
-                    .putBoolean(KEY_SIGNUP_CLAIMED, true)
-                    .putInt(KEY_LOCAL_REWARD_BALANCE, localRewardBalance() + 2)
-                    .apply()
-            }
+            generationRepository.addCredits(2)
+            total += 2
+            LocalCreditBalance.add(getApplication(), 2)
+            rewardPrefs.edit()
+                .putBoolean(KEY_SIGNUP_CLAIMED, true)
+                .apply()
         }
         if (!rewardPrefs.getBoolean(KEY_EMAIL_LOGIN_CLAIMED, false) && hasEmailLogin()) {
-            if (generationRepository.addCredits(1).isSuccess) {
-                total += 1
-                rewardPrefs.edit()
-                    .putBoolean(KEY_EMAIL_LOGIN_CLAIMED, true)
-                    .putInt(KEY_LOCAL_REWARD_BALANCE, localRewardBalance() + 1)
-                    .apply()
-            }
+            generationRepository.addCredits(1)
+            total += 1
+            LocalCreditBalance.add(getApplication(), 1)
+            rewardPrefs.edit()
+                .putBoolean(KEY_EMAIL_LOGIN_CLAIMED, true)
+                .apply()
         }
         return total
     }
@@ -269,14 +261,11 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun addLocalRewardBalance(amount: Int) {
-        if (amount <= 0) return
-        rewardPrefs.edit()
-            .putInt(KEY_LOCAL_REWARD_BALANCE, localRewardBalance() + amount)
-            .apply()
+        LocalCreditBalance.add(getApplication(), amount)
     }
 
     private fun localRewardBalance(): Int =
-        rewardPrefs.getInt(KEY_LOCAL_REWARD_BALANCE, 0).coerceAtLeast(0)
+        LocalCreditBalance.get(getApplication())
 
     private fun markRewardClaimed(rewardId: String) {
         val today = todayKey()
@@ -338,8 +327,6 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         private const val KEY_EMAIL_LOGIN_CLAIMED = "email_login_claimed"
         private const val KEY_REFERRAL_DATE = "referral_date"
         private const val KEY_SOCIAL_SHARE_DATE = "social_share_date"
-        private const val KEY_LOCAL_REWARD_BALANCE = "local_reward_balance"
-
         private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         private val SPIN_PRIZES = listOf(
             SpinPrize(amount = 0, weight = 40),

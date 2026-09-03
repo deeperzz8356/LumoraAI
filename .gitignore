@@ -9,6 +9,7 @@
 .cxx
 local.properties
 app/src/asset/stitch_remix_of_lumora_ai_splash_screen
+/backend/*
 backend/*.sqlite3
 backend/.venv/
 

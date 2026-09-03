@@ -10,6 +10,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.AuthCredential
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
 
@@ -58,8 +59,12 @@ class AuthViewModel(
             try {
                 val currentUser = auth.currentUser
                 val credential = EmailAuthProvider.getCredential(cleanEmail, password)
-                if (isSignUp && currentUser?.isAnonymous == true) {
-                    currentUser.linkWithCredential(credential).await()
+                if (currentUser?.isAnonymous == true) {
+                    runCatching {
+                        currentUser.linkWithCredential(credential).await()
+                    }.getOrElse {
+                        auth.signInWithEmailAndPassword(cleanEmail, password).await()
+                    }
                 } else if (isSignUp) {
                     auth.createUserWithEmailAndPassword(cleanEmail, password).await()
                 } else {
@@ -84,12 +89,31 @@ class AuthViewModel(
             uiState = AuthUiState.Error(error.localizedMessage ?: "Google login failed.")
             return
         }
-        auth.signInWithCredential(credential).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
+        val currentUser = auth.currentUser
+        viewModelScope.launch {
+            try {
+                if (currentUser?.isAnonymous == true) {
+                    signInOrLinkGuest(credential)
+                } else {
+                    auth.signInWithCredential(credential).await()
+                }
                 finishWithBackendSync()
-            } else {
-                uiState = AuthUiState.Error(task.exception?.message ?: "Google login failed.")
+            } catch (error: Exception) {
+                uiState = AuthUiState.Error(error.localizedMessage ?: "Google login failed.")
             }
+        }
+    }
+
+    private suspend fun signInOrLinkGuest(credential: AuthCredential) {
+        val guest = auth.currentUser
+        if (guest?.isAnonymous == true) {
+            runCatching {
+                guest.linkWithCredential(credential).await()
+            }.getOrElse {
+                auth.signInWithCredential(credential).await()
+            }
+        } else {
+            auth.signInWithCredential(credential).await()
         }
     }
 

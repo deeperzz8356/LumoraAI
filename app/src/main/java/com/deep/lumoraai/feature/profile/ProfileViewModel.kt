@@ -7,10 +7,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.utils.GuestIdentity
+import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -33,12 +35,18 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         val user = FirebaseAuth.getInstance().currentUser
         val isGuest = user == null || user.isAnonymous
         val items = if (user != null) {
-            val name = GuestIdentity.displayName(getApplication(), user)
-            val email = GuestIdentity.subtitle(getApplication(), user)
-            val plan = if (user.isAnonymous) "Free Tier (Guest)" else "Premium Account"
+            val savedProfile = ProfilePreferences.load(getApplication(), user)
+            val name = savedProfile.fullName.ifBlank { GuestIdentity.displayName(getApplication(), user) }
+            val email = "@${savedProfile.username.ifBlank { GuestIdentity.subtitle(getApplication(), user).removePrefix("@") }}"
+            val plan = if (user.isAnonymous) "Free Tier (Guest)" else ""
             listOf(name, email, plan)
         } else {
-            listOf(GuestIdentity.displayName(getApplication(), null), GuestIdentity.subtitle(getApplication(), null), "Guest Preview")
+            val savedProfile = ProfilePreferences.load(getApplication(), null)
+            listOf(
+                savedProfile.fullName.ifBlank { GuestIdentity.displayName(getApplication(), null) },
+                "@${savedProfile.username.ifBlank { GuestIdentity.subtitle(getApplication(), null).removePrefix("@") }}",
+                "Guest Preview"
+            )
         }
 
         uiState = ProfileUiState.Success(items = items, generations = emptyList(), isGuest = isGuest)
@@ -54,7 +62,20 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
         if (user != null) {
             viewModelScope.launch {
-                val credits = generationRepository.getCredits().getOrDefault(0)
+                val credits = LocalCreditBalance.maxWith(getApplication(), generationRepository.getCredits().getOrNull())
+                val currentSuccess = uiState as? ProfileUiState.Success
+                if (currentSuccess != null) {
+                    uiState = currentSuccess.copy(credits = credits)
+                }
+            }
+        }
+    }
+    
+    fun refreshCredits() {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            viewModelScope.launch {
+                val credits = LocalCreditBalance.maxWith(getApplication(), generationRepository.getCredits().getOrNull())
                 val currentSuccess = uiState as? ProfileUiState.Success
                 if (currentSuccess != null) {
                     uiState = currentSuccess.copy(credits = credits)
@@ -77,6 +98,12 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 clearLocalData()
                 FirebaseAuth.getInstance().signOut()
                 onDeleted()
+            } catch (error: FirebaseAuthRecentLoginRequiredException) {
+                Toast.makeText(
+                    getApplication(),
+                    "Please login again before deleting this account.",
+                    Toast.LENGTH_LONG
+                ).show()
             } catch (error: Exception) {
                 Toast.makeText(
                     getApplication(),

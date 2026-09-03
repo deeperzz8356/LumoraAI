@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
@@ -57,7 +58,8 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
             val credits = if (appPreferences.isDeveloperModeEnabled()) {
                 GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
             } else {
-                generationRepository.getCredits().getOrDefault(0)
+                val remoteCredits = generationRepository.getCredits().getOrNull()
+                LocalCreditBalance.maxWith(getApplication(), remoteCredits)
             }
             latestCredits = credits
             val current = uiState
@@ -67,6 +69,10 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
                 else -> current
             }
         }
+    }
+    
+    fun refreshCredits() {
+        loadCredits()
     }
 
     fun deleteItems(items: List<HistoryModel>) {

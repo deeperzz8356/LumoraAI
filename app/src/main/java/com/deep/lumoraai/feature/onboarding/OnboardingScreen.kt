@@ -441,35 +441,18 @@ fun OnboardingStartButton(onGetStarted: () -> Unit) {
         onClick = onGetStarted,
         colors = ButtonDefaults.buttonColors(containerColor = IntroPalette.PrimaryButton),
         modifier = Modifier
-            .width(164.dp)
+            .width(140.dp)
             .height(52.dp),
         shape = RoundedCornerShape(26.dp),
-        contentPadding = PaddingValues(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(stringResource(com.deep.lumoraai.R.string.ui_let_s_start), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
-            OnboardingStartArrow()
-        }
-    }
-}
-
-@Composable
-fun OnboardingStartArrow() {
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .background(Color.White, CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Filled.ArrowForward,
-            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_start),
-            tint = IntroPalette.PrimaryButton,
-            modifier = Modifier.size(20.dp)
+        Text(
+            text = stringResource(com.deep.lumoraai.R.string.ui_let_s_start), 
+            color = Color.White, 
+            fontWeight = FontWeight.Bold, 
+            fontSize = 15.sp, 
+            maxLines = 1
         )
     }
 }
+

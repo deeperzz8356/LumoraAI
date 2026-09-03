@@ -136,12 +136,12 @@ fun LumoraCreditsChip(
     val label = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
         "Unlimited"
     } else {
-        "$credits"
+        credits.toString()
     }
 
     Row(
         modifier = modifier
-            .height(28.dp)
+            .height(32.dp)
             .clip(RoundedCornerShape(50))
             .background(Color.White.copy(alpha = 0.05f))
             .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
@@ -150,11 +150,11 @@ fun LumoraCreditsChip(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text("✦", color = Lime, fontSize = 13.sp, lineHeight = 13.sp)
+        Text("✦", color = Lime, fontSize = 14.sp, lineHeight = 14.sp)
         Text(
             text = label,
             color = Lime,
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             lineHeight = 16.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1

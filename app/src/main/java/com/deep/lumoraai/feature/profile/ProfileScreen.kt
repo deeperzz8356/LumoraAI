@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -133,9 +134,15 @@ private fun ProfileContent(
     onNavigate: (String) -> Unit,
     unreadCount: Int,
 ) {
+    val context = LocalContext.current
+    val user = FirebaseAuth.getInstance().currentUser
+    val savedProfile = remember(user?.uid) { ProfilePreferences.load(context, user) }
+    val displayName = savedProfile.fullName.ifBlank { items.getOrNull(0).orEmpty() }
+    val displaySubtitle = "@${savedProfile.username.ifBlank { items.getOrNull(1).orEmpty().removePrefix("@") }}"
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 18.dp, bottom = 20.dp),
@@ -143,9 +150,10 @@ private fun ProfileContent(
     ) {
         ProfileTopBar(onNavigate = onNavigate, unreadCount = unreadCount)
         ProfileHero(
-            name = items.getOrNull(0).orEmpty(),
-            subtitle = items.getOrNull(1).orEmpty(),
+            name = displayName,
+            subtitle = displaySubtitle,
             plan = items.getOrNull(2).orEmpty(),
+            avatarUri = savedProfile.avatarUri,
             onNavigate = onNavigate
         )
 
@@ -216,25 +224,29 @@ private fun ProfileTopBar(onNavigate: (String) -> Unit, unreadCount: Int) {
 }
 
 @Composable
-private fun ProfileHero(name: String, subtitle: String, plan: String, onNavigate: (String) -> Unit) {
+private fun ProfileHero(name: String, subtitle: String, plan: String, avatarUri: String?, onNavigate: (String) -> Unit) {
     val context = LocalContext.current
     val user = FirebaseAuth.getInstance().currentUser
     Surface(
-        modifier = Modifier.fillMaxWidth().height(164.dp),
+        modifier = Modifier.fillMaxWidth().height(190.dp),
         shape = CardShape,
         color = ProfileCard,
         border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Avatar(size = 70.dp)
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(name.ifBlank { "Lumora Creator" }, color = Color.White, fontSize = 21.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(subtitle.ifBlank { plan }, color = Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Avatar(size = 84.dp, avatarUri = avatarUri)
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(name.ifBlank { "Lumora Creator" }, color = Color.White, fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(subtitle.ifBlank { plan }, color = Muted, fontSize = 14.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (plan.isNotBlank()) {
-                        Text(plan, color = Lime, fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(plan, color = Lime, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         MiniAction("Edit", Icons.Default.Edit, Lime, onClick = {
                             onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
                         })
@@ -256,14 +268,23 @@ private fun ProfileHero(name: String, subtitle: String, plan: String, onNavigate
 }
 
 @Composable
-private fun Avatar(size: androidx.compose.ui.unit.Dp) {
+private fun Avatar(size: androidx.compose.ui.unit.Dp, avatarUri: String? = null) {
     Box(modifier = Modifier.size(size).clip(CircleShape)) {
-        Image(
-            painter = painterResource(id = R.drawable.user_avatar),
-            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
+        if (avatarUri != null) {
+            AsyncImage(
+                model = avatarUri,
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.user_avatar),
+                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
@@ -271,16 +292,16 @@ private fun Avatar(size: androidx.compose.ui.unit.Dp) {
 private fun MiniAction(label: String, icon: ImageVector, accent: Color, onClick: () -> Unit) {
     Row(
         modifier = Modifier
-            .height(34.dp)
+            .height(42.dp)
             .clip(RoundedCornerShape(50))
             .background(accent.copy(alpha = 0.14f))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
     ) {
-        Icon(icon, contentDescription = label, tint = accent, modifier = Modifier.size(15.dp))
-        Text(label, color = Color.White, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Icon(icon, contentDescription = label, tint = accent, modifier = Modifier.size(18.dp))
+        Text(label, color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -450,26 +471,26 @@ private fun PreferencesList(
             PrefRow("Terms of Service", Icons.Default.Info, Color.White)
             PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A), onClick = { pendingAction.value = "delete" })
             PrefRow(
-                if (isGuest) "Keep Logged In" else "Sign Out",
+                if (isGuest) "Login" else "Sign Out",
                 Icons.AutoMirrored.Filled.ExitToApp,
                 if (isGuest) Color.White else Color(0xFFFF7A7A),
-                onClick = { pendingAction.value = if (isGuest) "keep" else "signout" }
+                onClick = { pendingAction.value = if (isGuest) "login" else "signout" }
             )
         }
     }
     pendingAction.value?.let { action ->
         val isDelete = action == "delete"
-        val isKeepLoggedIn = action == "keep"
+        val isLogin = action == "login"
         AlertDialog(
             onDismissRequest = { pendingAction.value = null },
-            title = { Text(if (isDelete) "Delete account?" else if (isKeepLoggedIn) "Keep logged in?" else "Sign out?") },
+            title = { Text(if (isDelete) "Delete account?" else if (isLogin) "Login to save your work?" else "Sign out?") },
             text = {
                 Text(
                     if (isDelete) {
                         if (isGuest) "This will clear guest data from this device and sign you out."
                         else "This permanently deletes your account and local data."
-                    } else if (isKeepLoggedIn) {
-                        "Your guest session will remain active on this device."
+                    } else if (isLogin) {
+                        "Login or create an account to keep your guest creations and continue with the same session."
                     } else {
                         "You will need to sign in again to access your account."
                     }
@@ -479,11 +500,11 @@ private fun PreferencesList(
                 TextButton(
                     onClick = {
                         pendingAction.value = null
-                        if (isDelete) onDeleteAccount() else if (!isKeepLoggedIn) onSignOut()
+                        if (isDelete) onDeleteAccount() else if (isLogin) onNavigate(Screen.Auth.route) else onSignOut()
                     }
                 ) {
                     Text(
-                        if (isDelete) "Delete permanently" else if (isKeepLoggedIn) "Keep Logged In" else "Sign out",
+                        if (isDelete) "Delete permanently" else if (isLogin) "Login" else "Sign out",
                         color = if (isDelete) Color(0xFFFF7A7A) else Color.White
                     )
                 }

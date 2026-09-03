@@ -241,7 +241,7 @@ fun PromptComposerCard(
             },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 22.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
                 .padding(bottom = 66.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
@@ -251,6 +251,11 @@ fun PromptComposerCard(
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
                 cursorColor = GenerationLime
+            ),
+            textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
+                color = Color.White,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Start
             )
         )
         Row(
@@ -780,6 +785,7 @@ fun GeneratedMediaResult(
     var isDownloading by remember { mutableStateOf(false) }
     var selectedIndex by remember(outputPaths) { mutableStateOf(outputPaths.lastIndex.coerceAtLeast(0)) }
     val selectedPath = outputPaths[selectedIndex.coerceIn(outputPaths.indices)]
+    var quickFeedback by remember(selectedPath) { mutableStateOf<String?>(null) }
     var downloadStatus by remember(selectedPath) { mutableStateOf<String?>(null) }
     val file = remember(selectedPath) { File(selectedPath) }
     val exists = file.exists()
@@ -909,13 +915,21 @@ fun GeneratedMediaResult(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             ResultActionIcon(Icons.Default.Edit, "Edit", onClick = onEdit)
-            ResultActionIcon(Icons.Default.ThumbUp, "Like") {
-                saveGeneratedFeedback(context, selectedPath, mediaType, "Like")
-                Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
+            ResultActionIcon(Icons.Default.ThumbUp, "Like", selected = quickFeedback == "Like") {
+                if (saveGeneratedFeedback(context, selectedPath, mediaType, "Like")) {
+                    quickFeedback = "Like"
+                    Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Feedback could not be saved.", Toast.LENGTH_SHORT).show()
+                }
             }
-            ResultActionIcon(Icons.Default.ThumbDown, "Dislike") {
-                saveGeneratedFeedback(context, selectedPath, mediaType, "Dislike")
-                Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
+            ResultActionIcon(Icons.Default.ThumbDown, "Dislike", selected = quickFeedback == "Dislike") {
+                if (saveGeneratedFeedback(context, selectedPath, mediaType, "Dislike")) {
+                    quickFeedback = "Dislike"
+                    Toast.makeText(context, "Feedback submitted.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Feedback could not be saved.", Toast.LENGTH_SHORT).show()
+                }
             }
             ResultActionIcon(Icons.Default.Feedback, "Feedback") {
                 showFeedback = true
@@ -1153,21 +1167,22 @@ private fun ResultActionIcon(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isLoading: Boolean = false,
+    selected: Boolean = false,
     onClick: () -> Unit,
 ) {
     Box(
         modifier = modifier
             .size(40.dp)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = if (enabled) 0.58f else 0.26f))
-            .border(1.dp, Color.White.copy(alpha = 0.14f), CircleShape)
+            .background(if (selected) GenerationLime else Color.Black.copy(alpha = if (enabled) 0.58f else 0.26f))
+            .border(1.dp, if (selected) GenerationLime else Color.White.copy(alpha = 0.14f), CircleShape)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         if (isLoading) {
             CircularProgressIndicator(color = GenerationLime, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
         } else {
-            Icon(icon, contentDescription = contentDescription, tint = if (enabled) Color.White else Color.White.copy(alpha = 0.35f), modifier = Modifier.size(21.dp))
+            Icon(icon, contentDescription = contentDescription, tint = if (selected) Color.Black else if (enabled) Color.White else Color.White.copy(alpha = 0.35f), modifier = Modifier.size(21.dp))
         }
     }
 }
@@ -1253,11 +1268,12 @@ private fun FeedbackDialog(
     )
 }
 
-private fun saveGeneratedFeedback(context: android.content.Context, filePath: String, mediaType: String, reason: String) {
+private fun saveGeneratedFeedback(context: android.content.Context, filePath: String, mediaType: String, reason: String): Boolean {
     val prefs = context.applicationContext.getSharedPreferences("generated_media_feedback", android.content.Context.MODE_PRIVATE)
-    val existing = prefs.getStringSet("records", emptySet()).orEmpty()
+    val existing = prefs.getStringSet("records", emptySet()).orEmpty().toMutableSet()
     val record = listOf(System.currentTimeMillis().toString(), mediaType, reason, filePath).joinToString("|")
-    prefs.edit().putStringSet("records", existing + record).apply()
+    existing.add(record)
+    return prefs.edit().putStringSet("records", existing).commit()
 }
 
 @Composable

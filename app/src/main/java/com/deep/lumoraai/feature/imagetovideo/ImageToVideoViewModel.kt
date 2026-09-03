@@ -17,6 +17,7 @@ import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -305,7 +306,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             authRepository.syncCurrentUser()
             result = generationRepository.getCredits()
         }
-        return result.getOrNull()
+        return LocalCreditBalance.maxWith(getApplication(), result.getOrNull())
     }
 
     private fun buildPrompt(): String {

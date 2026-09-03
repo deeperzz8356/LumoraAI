@@ -41,6 +41,9 @@ class AppPreferencesRepository private constructor(context: Context) {
     suspend fun setDeveloperMode(enabled: Boolean) {
         dataStore.edit { prefs ->
             prefs[PreferenceKeys.IS_DEVELOPER_MODE] = enabled && BuildConfig.DEBUG
+            if (!enabled) {
+                prefs[PreferenceKeys.DEV_MODE_UNLOCKED] = false
+            }
         }
     }
 

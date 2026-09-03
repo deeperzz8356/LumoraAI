@@ -5,8 +5,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 
@@ -36,6 +41,7 @@ fun AppToolbar(
     title: String,
     modifier: Modifier = Modifier,
     onBackClick: (() -> Unit)? = null,
+    action: (@Composable () -> Unit)? = null,
     unreadCount: Int = 0,
     onNotificationClick: (() -> Unit)? = null
 ) {
@@ -44,26 +50,35 @@ fun AppToolbar(
             Text(
                 text = title,
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
-        modifier = modifier,
+        modifier = modifier
+            .statusBarsPadding()
+            .height(64.dp),
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = Color(0xFF0B1426),
+            titleContentColor = Color.White,
+            navigationIconContentColor = Color.White,
+            actionIconContentColor = Color.White
         ),
+        windowInsets = WindowInsets(0.dp),
         navigationIcon = {
             if (onBackClick != null) {
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = Color.White
                     )
                 }
             }
         },
         actions = {
+            action?.invoke()
             if (onNotificationClick != null) {
                 Box(
                     modifier = Modifier
@@ -79,7 +94,7 @@ fun AppToolbar(
                         contentDescription = stringResource(com.deep.lumoraai.R.string.ui_notifications),
                         modifier = Modifier
                             .size(21.dp),
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = Color.White
                     )
 
                     if (unreadCount > 0) {

@@ -286,7 +286,17 @@ fun NavGraph(
                 onNavigate = { navController.goTo(it) }
             )
         }
-        composable(Screen.Settings.route) { SettingsRoute(onNext = next(Screen.Settings), onNavigate = { navController.goTo(it) }) }
+        composable(Screen.Settings.route) {
+            SettingsRoute(
+                onNext = next(Screen.Settings),
+                onNavigate = { navController.goTo(it) },
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.goTo(Screen.Profile.route)
+                    }
+                }
+            )
+        }
         composable(Screen.EditProfile.route) { 
             EditProfileRoute(onBack = { navController.popBackStack() })
         }

@@ -9,10 +9,12 @@ import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.utils.GuestIdentity
+import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.local.room.entity.HistoryEntity
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
+import com.deep.lumoraai.feature.profile.ProfilePreferences
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -37,7 +39,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun observeHomeData() {
         val user = FirebaseAuth.getInstance().currentUser
-        val name = GuestIdentity.displayName(getApplication(), user)
+        val savedProfile = ProfilePreferences.load(getApplication(), user)
+        val name = savedProfile.username.ifBlank {
+            GuestIdentity.subtitle(getApplication(), user).removePrefix("@")
+        }
         val planLabel = when {
             user == null -> "Free"
             user.isAnonymous -> "Guest"
@@ -68,7 +73,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val credits = if (isDev) {
                 GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
             } else {
-                generationRepository.getCredits().getOrDefault(0)
+                val remoteCredits = generationRepository.getCredits().getOrNull()
+                LocalCreditBalance.maxWith(getApplication(), remoteCredits)
             }
             latestCredits = credits
             val current = uiState
@@ -76,6 +82,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 uiState = current.copy(credits = credits)
             }
         }
+    }
+    
+    fun refreshCredits() {
+        loadCredits()
     }
 
     private fun HistoryEntity.toRecentItem(): HomeRecentItem =

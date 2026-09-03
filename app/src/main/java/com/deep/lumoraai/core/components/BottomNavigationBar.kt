@@ -140,7 +140,8 @@ private fun ResponsiveBottomNav(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxHeight()
             ) {
                 Icon(
                     Icons.Default.AutoAwesome,
@@ -148,10 +149,12 @@ private fun ResponsiveBottomNav(
                     tint = Color.Black,
                     modifier = Modifier.size(22.dp)
                 )
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     "Create",
                     color = Color.Black,
                     fontSize = 9.sp,
+                    lineHeight = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
             }

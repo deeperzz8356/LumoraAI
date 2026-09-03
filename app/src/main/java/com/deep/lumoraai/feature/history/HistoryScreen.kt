@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -254,32 +256,36 @@ private fun FilterRow(
     onSelected: (HistoryFilter) -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         HistoryFilter.entries.forEach { filter ->
             val selected = selectedFilter == filter
             Box(
                 modifier = Modifier
-                    .height(26.dp)
-                    .clip(RoundedCornerShape(50))
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(24.dp))
                     .background(if (selected) Lime.copy(alpha = 0.16f) else FilterIdle)
                     .border(
                         1.dp,
                         if (selected) Lime.copy(alpha = 0.8f) else HistoryStroke,
-                        RoundedCornerShape(50)
+                        RoundedCornerShape(24.dp)
                     )
                     .clickable { onSelected(filter) }
-                    .padding(horizontal = 13.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = filter.label,
                     color = if (selected) Lime else Muted,
-                    fontSize = 9.sp,
-                    lineHeight = 11.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.width(androidx.compose.foundation.layout.IntrinsicSize.Min)
                 )
             }
         }

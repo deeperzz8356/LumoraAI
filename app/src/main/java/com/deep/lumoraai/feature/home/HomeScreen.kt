@@ -172,7 +172,7 @@ private fun HomeTopBar(
             Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(
-                    text = "Hi, ${userName.ifBlank { "Alex" }}",
+                    text = "Hi, ${userName.ifBlank { "guest" }}",
                     color = Color.White,
                     fontSize = 18.sp,
                     lineHeight = 21.sp,
@@ -480,65 +480,65 @@ private fun RecentCreationCard(
 private fun ToolsSection(
     onNavigate: (String) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(stringResource(com.deep.lumoraai.R.string.ui_tools), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_ai_background_replace),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_generate_a_new_scene),
+                title = "AI Background\nReplace",
+                subtitle = "",
                 icon = Icons.Default.AutoAwesome,
                 accent = Cyan,
                 onClick = { onNavigate(bgStudioRoute("replace")) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(116.dp),
+                    .height(140.dp),
                 prominent = true
             )
             ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_photo_enhancer),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_improve_quality),
+                title = "Photo\nEnhancer",
+                subtitle = "",
                 icon = Icons.Default.Tune,
                 accent = Purple,
                 onClick = { onNavigate(Screen.PhotoEnhance.route) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(116.dp),
+                    .height(140.dp),
                 prominent = true
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_promo_videos),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_ad_ready_clips),
+                title = "Promo\nVideos",
+                subtitle = "",
                 icon = Icons.Default.VideoLibrary,
                 accent = Pink,
                 onClick = { onNavigate(Screen.PromoVideo.route) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(116.dp),
+                    .height(140.dp),
                 prominent = true
             )
             ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_remove_background),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_cut_subject),
+                title = "Remove\nBackground",
+                subtitle = "",
                 icon = Icons.Default.PhotoCamera,
                 accent = Color(0xFF7D86FF),
                 onClick = { onNavigate(bgStudioRoute("remove")) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(116.dp),
+                    .height(140.dp),
                 prominent = true
             )
         }
         ToolBentoCard(
-            title = stringResource(com.deep.lumoraai.R.string.ui_compress),
-            subtitle = stringResource(com.deep.lumoraai.R.string.ui_images_and_videos),
+            title = "Compress",
+            subtitle = "",
             icon = Icons.Default.Compress,
             accent = Lime,
             onClick = { onNavigate(Screen.Compress.route) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(116.dp),
+                .height(120.dp),
             prominent = true
         )
     }
@@ -564,40 +564,47 @@ private fun ToolBentoCard(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (prominent) 14.dp else 12.dp)
+                .padding(18.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(if (prominent) 38.dp else 32.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(accent.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(if (prominent) 23.dp else 19.dp))
-            }
             Column(
-                modifier = Modifier.align(Alignment.BottomStart),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = title,
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontSize = if (prominent) 15.sp else 14.sp,
-                    lineHeight = if (prominent) 18.sp else 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Start,
-                    maxLines = if (prominent) 2 else 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = subtitle,
-                    color = Muted,
-                    fontSize = if (prominent) 11.sp else 11.sp,
-                    lineHeight = if (prominent) 13.sp else 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Box(
+                    modifier = Modifier
+                        .size(if (prominent) 44.dp else 36.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(accent.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(if (prominent) 26.dp else 20.dp))
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = title,
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = if (prominent) 16.sp else 15.sp,
+                        lineHeight = if (prominent) 20.sp else 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Start,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (subtitle.isNotBlank()) {
+                        Text(
+                            text = subtitle,
+                            color = Muted,
+                            fontSize = 12.sp,
+                            lineHeight = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
     }

@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.utils.CompletionNotificationEvent
+import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
@@ -93,7 +94,7 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
             credits = if (appPreferences.isDeveloperModeEnabled()) {
                 GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
             } else {
-                generationRepository.getCredits().getOrNull()
+                LocalCreditBalance.maxWith(getApplication(), generationRepository.getCredits().getOrNull())
             }
             rebuild()
         }

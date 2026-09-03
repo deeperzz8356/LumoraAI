@@ -18,6 +18,7 @@ import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
@@ -91,7 +92,7 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
             val credits = if (appPreferences.isDeveloperModeEnabled()) {
                 GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
             } else {
-                generationRepository.getCredits().getOrDefault(0)
+                LocalCreditBalance.maxWith(getApplication(), generationRepository.getCredits().getOrNull())
             }
             uiState = uiState.copy(credits = credits)
         }

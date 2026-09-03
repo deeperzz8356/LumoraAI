@@ -8,9 +8,12 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +26,7 @@ import com.deep.lumoraai.core.navigation.NavGraph
 import com.deep.lumoraai.core.theme.LumoraTheme
 import com.deep.lumoraai.feature.network.NoInternetScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -43,25 +47,37 @@ class MainActivity : ComponentActivity() {
         setContent {
             LumoraTheme {
                 val context = LocalContext.current
-                var hasInternet by remember { mutableStateOf(context.hasInternetConnection()) }
+                var hasInternet by remember { mutableStateOf(true) }
+
+                LaunchedEffect(context) {
+                    delay(500) // Brief initial check delay
+                    hasInternet = context.hasInternetConnection()
+                }
 
                 DisposableEffect(context) {
                     val connectivityManager =
                         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                    val mainHandler = Handler(Looper.getMainLooper())
                     val callback = object : ConnectivityManager.NetworkCallback() {
                         override fun onAvailable(network: Network) {
-                            runOnUiThread { hasInternet = context.hasInternetConnection() }
+                            mainHandler.post {
+                                hasInternet = context.hasInternetConnection()
+                            }
                         }
 
                         override fun onLost(network: Network) {
-                            runOnUiThread { hasInternet = context.hasInternetConnection() }
+                            mainHandler.postDelayed({
+                                hasInternet = context.hasInternetConnection()
+                            }, 1000) // Give some time before checking
                         }
 
                         override fun onCapabilitiesChanged(
                             network: Network,
                             networkCapabilities: android.net.NetworkCapabilities
                         ) {
-                            runOnUiThread { hasInternet = context.hasInternetConnection() }
+                            mainHandler.post {
+                                hasInternet = context.hasInternetConnection()
+                            }
                         }
                     }
 

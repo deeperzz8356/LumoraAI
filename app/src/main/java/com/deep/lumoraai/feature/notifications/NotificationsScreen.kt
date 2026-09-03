@@ -232,15 +232,15 @@ private fun NotificationHero(
     onMarkAllRead: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth().height(166.dp),
+        modifier = Modifier.fillMaxWidth().height(190.dp),
         shape = CardShape,
         color = NotificationCard,
         border = BorderStroke(1.dp, Lime.copy(alpha = 0.32f))
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
-            Column(modifier = Modifier.fillMaxWidth(0.76f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            Column(modifier = Modifier.fillMaxWidth(0.72f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(if (notificationsEnabled) "Inbox Live" else "Notifications Off", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-                Text("$unreadCount unread", color = Color.White, fontSize = 36.sp, lineHeight = 40.sp, fontWeight = FontWeight.ExtraBold)
+                Text("$unreadCount unread", color = Color.White, fontSize = 34.sp, lineHeight = 38.sp, fontWeight = FontWeight.ExtraBold)
                 Text(
                     if (notificationsEnabled) "Track renders, credits, and account updates."
                     else "Enable alerts in Settings for generation updates.",
@@ -253,14 +253,14 @@ private fun NotificationHero(
             }
             Row(
                 modifier = Modifier.align(Alignment.BottomStart),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 PillAction("Mark read", Icons.Default.Check, Lime, onMarkAllRead)
                 PillAction("Settings", Icons.Default.Settings, Purple, onSettings)
             }
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
+                    .align(Alignment.CenterEnd)
                     .size(56.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Cyan.copy(alpha = 0.14f)),
@@ -353,16 +353,16 @@ private fun NotificationCard(
 private fun PillAction(label: String, icon: ImageVector, accent: Color, onClick: () -> Unit) {
     Row(
         modifier = Modifier
-            .height(34.dp)
+            .height(40.dp)
             .clip(RoundedCornerShape(50))
             .background(accent.copy(alpha = 0.14f))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
     ) {
-        Icon(icon, contentDescription = label, tint = accent, modifier = Modifier.size(15.dp))
-        Text(label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Icon(icon, contentDescription = label, tint = accent, modifier = Modifier.size(17.dp))
+        Text(label, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

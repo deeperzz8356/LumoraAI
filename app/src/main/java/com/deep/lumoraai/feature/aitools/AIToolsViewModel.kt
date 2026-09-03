@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -28,9 +29,9 @@ class AIToolsViewModel(application: Application) : AndroidViewModel(application)
             credits = if (appPreferences.isDeveloperModeEnabled()) {
                 GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
             } else if (FirebaseAuth.getInstance().currentUser != null) {
-                generationRepository.getCredits().getOrDefault(0)
+                LocalCreditBalance.maxWith(getApplication(), generationRepository.getCredits().getOrNull())
             } else {
-                0
+                LocalCreditBalance.get(getApplication())
             }
         }
     }
