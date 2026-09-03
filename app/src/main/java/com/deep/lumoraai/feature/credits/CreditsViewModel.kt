@@ -119,6 +119,7 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
             viewModelScope.launch {
                 when (val result = billing.launchPurchase(activity, productId)) {
                     BillingResult.Launched -> Unit
+                    BillingResult.PurchaseFinalized -> Unit
                     BillingResult.Cancelled -> uiState = currentState.copy(isPurchasing = false, purchaseMessage = "Purchase cancelled.")
                     is BillingResult.Error -> uiState = currentState.copy(isPurchasing = false, purchaseMessage = result.message)
                     is BillingResult.PurchaseReady -> Unit

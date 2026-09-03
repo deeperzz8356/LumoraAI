@@ -52,6 +52,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                     val message = when (val event = snapshot.event) {
                         null -> current.purchaseMessage
                         BillingResult.Launched -> current.purchaseMessage
+                        BillingResult.PurchaseFinalized -> current.purchaseMessage
                         is BillingResult.PurchaseReady -> "Purchase acknowledged. Entitlement verification is pending backend confirmation."
                         BillingResult.Cancelled -> "Purchase cancelled."
                         is BillingResult.Error -> event.message
@@ -104,7 +105,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                 return@launch
             }
             when (val result = billing.launchPurchase(activity, current.selectedPlanId)) {
-                BillingResult.Launched, is BillingResult.PurchaseReady -> Unit
+                BillingResult.Launched, is BillingResult.PurchaseReady, is BillingResult.PurchaseFinalized -> Unit
                 BillingResult.Cancelled -> uiState = current.copy(isPurchasing = false, purchaseMessage = "Purchase cancelled.")
                 is BillingResult.Error -> uiState = current.copy(isPurchasing = false, purchaseMessage = result.message)
             }
