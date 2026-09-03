@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
 import com.deep.lumoraai.BuildConfig
 import com.deep.lumoraai.data.local.PreferenceKeys
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -57,7 +58,19 @@ class AppPreferencesRepository private constructor(context: Context) {
         }
     }
 
-    suspend fun isDeveloperModeEnabled(): Boolean = isDeveloperMode.first()
+    suspend fun isDeveloperModeEnabled(): Boolean {
+        if (isDeveloperMode.first()) return true
+
+        val email = FirebaseAuth.getInstance().currentUser?.email
+            ?.trim()
+            ?.lowercase()
+            ?: return false
+        return BuildConfig.TESTER_EMAILS
+            .split(',')
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .any { it.lowercase() == email }
+    }
 
     companion object {
         @Volatile

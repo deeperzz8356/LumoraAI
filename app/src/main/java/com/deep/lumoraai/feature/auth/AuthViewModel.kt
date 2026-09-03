@@ -7,7 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.data.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.EmailAuthProvider
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
@@ -51,28 +54,36 @@ class AuthViewModel(
             return
         }
         uiState = AuthUiState.Loading
-        val task = runCatching {
-            if (isSignUp) {
-                auth.createUserWithEmailAndPassword(cleanEmail, password)
-            } else {
-                auth.signInWithEmailAndPassword(cleanEmail, password)
-            }
-        }.getOrElse { error ->
-            uiState = AuthUiState.Error(error.message ?: "Authentication could not start.")
-            return
-        }
-        task.addOnCompleteListener { res ->
-            if (res.isSuccessful) {
+        viewModelScope.launch {
+            try {
+                val currentUser = auth.currentUser
+                val credential = EmailAuthProvider.getCredential(cleanEmail, password)
+                if (isSignUp && currentUser?.isAnonymous == true) {
+                    currentUser.linkWithCredential(credential).await()
+                } else if (isSignUp) {
+                    auth.createUserWithEmailAndPassword(cleanEmail, password).await()
+                } else {
+                    auth.signInWithEmailAndPassword(cleanEmail, password).await()
+                }
                 finishWithBackendSync()
-            } else {
-                uiState = AuthUiState.Error(res.exception?.message ?: "Authentication failed.")
+            } catch (error: Exception) {
+                uiState = AuthUiState.Error(authenticationMessage(error))
             }
         }
     }
 
     fun signInWithGoogle(idToken: String) {
+        if (idToken.isBlank()) {
+            uiState = AuthUiState.Error("Google login returned an empty credential.")
+            return
+        }
         uiState = AuthUiState.Loading
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        val credential = runCatching {
+            GoogleAuthProvider.getCredential(idToken, null)
+        }.getOrElse { error ->
+            uiState = AuthUiState.Error(error.localizedMessage ?: "Google login failed.")
+            return
+        }
         auth.signInWithCredential(credential).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 finishWithBackendSync()
@@ -88,4 +99,14 @@ class AuthViewModel(
             authRepository.syncCurrentUser()
         }
     }
+
+    private fun authenticationMessage(error: Exception): String =
+        when ((error as? FirebaseAuthException)?.errorCode) {
+            "ERROR_EMAIL_ALREADY_IN_USE" -> "This email is already registered. Sign in instead."
+            "ERROR_INVALID_EMAIL" -> "Enter a valid email address."
+            "ERROR_WRONG_PASSWORD", "ERROR_INVALID_CREDENTIAL" -> "Email or password is incorrect."
+            "ERROR_USER_NOT_FOUND" -> "No account was found for this email."
+            "ERROR_WEAK_PASSWORD" -> "Password must be at least 6 characters."
+            else -> error.localizedMessage ?: "Authentication failed. Please try again."
+        }
 }

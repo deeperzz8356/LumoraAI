@@ -37,6 +37,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -86,6 +88,7 @@ fun ProfileScreen(
     uiState: ProfileUiState,
     onNext: () -> Unit,
     onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit = {},
     onNavigate: (String) -> Unit = {},
     unreadCount: Int = 0,
     modifier: Modifier = Modifier
@@ -111,6 +114,7 @@ fun ProfileScreen(
                     generations = uiState.generations,
                     isGuest = uiState.isGuest,
                     onSignOut = onSignOut,
+                    onDeleteAccount = onDeleteAccount,
                     onNavigate = onNavigate,
                     unreadCount = unreadCount
                 )
@@ -126,6 +130,7 @@ private fun ProfileContent(
     generations: List<HistoryModel>,
     isGuest: Boolean,
     onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onNavigate: (String) -> Unit,
     unreadCount: Int,
 ) {
@@ -153,7 +158,12 @@ private fun ProfileContent(
         }
 
         CreationsSection(generations = generations, onNavigate = onNavigate)
-        PreferencesList(isGuest = isGuest, onSignOut = onSignOut, onNavigate = onNavigate)
+        PreferencesList(
+            isGuest = isGuest,
+            onSignOut = onSignOut,
+            onDeleteAccount = onDeleteAccount,
+            onNavigate = onNavigate
+        )
         SupportCard()
         Spacer(modifier = Modifier.height(2.dp))
     }
@@ -423,7 +433,13 @@ private fun CreationCard(item: HistoryModel, modifier: Modifier = Modifier, onCl
 }
 
 @Composable
-private fun PreferencesList(isGuest: Boolean, onSignOut: () -> Unit, onNavigate: (String) -> Unit) {
+private fun PreferencesList(
+    isGuest: Boolean,
+    onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
+    onNavigate: (String) -> Unit
+) {
+    val pendingAction = remember { mutableStateOf<String?>(null) }
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
@@ -434,13 +450,44 @@ private fun PreferencesList(isGuest: Boolean, onSignOut: () -> Unit, onNavigate:
             PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
             PrefRow("Privacy Policy", Icons.Default.Info, Color.White)
             PrefRow("Terms of Service", Icons.Default.Info, Color.White)
-            if (isGuest) {
-                PrefRow("Login", Icons.AutoMirrored.Filled.ExitToApp, Lime, onClick = { onNavigate(Screen.Auth.route) })
-            } else {
-                PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A))
-                PrefRow("Sign Out", Icons.AutoMirrored.Filled.ExitToApp, Color(0xFFFF7A7A), onClick = onSignOut)
-            }
+            PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A), onClick = { pendingAction.value = "delete" })
+            PrefRow("Sign Out", Icons.AutoMirrored.Filled.ExitToApp, Color(0xFFFF7A7A), onClick = { pendingAction.value = "signout" })
         }
+    }
+    pendingAction.value?.let { action ->
+        val isDelete = action == "delete"
+        AlertDialog(
+            onDismissRequest = { pendingAction.value = null },
+            title = { Text(if (isDelete) "Delete account?" else "Sign out?") },
+            text = {
+                Text(
+                    if (isDelete) {
+                        if (isGuest) "This will clear guest data from this device and sign you out."
+                        else "This permanently deletes your account and local data."
+                    } else {
+                        "You will need to sign in again to access your account."
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pendingAction.value = null
+                        if (isDelete) onDeleteAccount() else onSignOut()
+                    }
+                ) {
+                    Text(
+                        if (isDelete) "Delete permanently" else "Sign out",
+                        color = if (isDelete) Color(0xFFFF7A7A) else Color.White
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingAction.value = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

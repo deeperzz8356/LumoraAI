@@ -15,12 +15,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -198,30 +197,29 @@ fun LumoraIntroTextField(
     modifier: Modifier = Modifier,
     isPassword: Boolean = false,
 ) {
-    OutlinedTextField(
+    BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = modifier.fillMaxWidth(),
-        shape = IntroFieldShape,
+        modifier = modifier
+            .fillMaxWidth()
+            .background(IntroPalette.SurfaceRaised, IntroFieldShape)
+            .border(1.dp, IntroPalette.BorderSubtle, IntroFieldShape)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         singleLine = true,
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = IntroPalette.TextPrimary),
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = if (isPassword) {
             KeyboardOptions(keyboardType = KeyboardType.Password)
         } else {
             KeyboardOptions(keyboardType = KeyboardType.Email)
         },
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = IntroPalette.SurfaceRaised,
-            unfocusedContainerColor = IntroPalette.SurfaceRaised,
-            focusedBorderColor = IntroPalette.PrimaryButton.copy(alpha = 0.6f),
-            unfocusedBorderColor = IntroPalette.BorderSubtle,
-            focusedTextColor = IntroPalette.TextPrimary,
-            unfocusedTextColor = IntroPalette.TextPrimary,
-            focusedLabelColor = IntroPalette.TextMuted,
-            unfocusedLabelColor = IntroPalette.TextSubtle,
-            cursorColor = IntroPalette.PrimaryButton
-        )
+        cursorBrush = androidx.compose.ui.graphics.SolidColor(IntroPalette.PrimaryButton),
+        decorationBox = { innerTextField ->
+            if (value.isEmpty()) {
+                Text(label, color = IntroPalette.TextSubtle, style = MaterialTheme.typography.bodyMedium)
+            }
+            innerTextField()
+        }
     )
 }
 
