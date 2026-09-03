@@ -53,6 +53,8 @@ import com.deep.lumoraai.feature.generation.PromptComposerCard
 import com.deep.lumoraai.feature.generation.VideoStyleSection
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
+import com.deep.lumoraai.feature.imagetoimage.apiStyle
+import com.deep.lumoraai.feature.imagetoimage.promptDirective
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 
@@ -76,8 +78,8 @@ fun CreateHubScreen(
     }
     var prompt by remember(initialPrompt) { mutableStateOf(initialPrompt.orEmpty()) }
     var negativePrompt by remember { mutableStateOf("") }
-    var imageStyle by remember { mutableStateOf(ImageStyle.Photorealistic) }
-    var videoStyle by remember { mutableStateOf(VideoStyle.CinematicFilm) }
+    var imageStyle by remember { mutableStateOf(ImageStyle.NoStyle) }
+    var videoStyle by remember { mutableStateOf(VideoStyle.NoStyle) }
     var aspectRatio by remember { mutableStateOf(GenerationAspectRatio.Portrait) }
     var creativity by remember { mutableStateOf(0.5f) }
     var motion by remember { mutableStateOf(0.5f) }
@@ -210,8 +212,9 @@ fun CreateHubScreen(
                     },
                     onClick = {
                         if (selectedMode == CreateHubMode.Video) {
+                            val styledPrompt = "$prompt${videoStyle.promptDirective}"
                             onGenerateVideo(
-                                prompt,
+                                styledPrompt,
                                 VideoEngine.FAST_DRAFT.modelId,
                                 null,
                                 (motion * 100).toInt().coerceIn(20, 90),
@@ -221,7 +224,7 @@ fun CreateHubScreen(
                         } else {
                             onGenerateImage(
                                 prompt,
-                                imageStyle.label,
+                                imageStyle.apiStyle,
                                 aspectRatio.width,
                                 aspectRatio.height,
                                 negativePrompt.takeIf { it.isNotBlank() },

@@ -27,6 +27,7 @@ import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -63,16 +64,28 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         private set
 
     fun selectMode(mode: BgStudioMode) {
-        uiState = uiState.copy(mode = mode, status = BgStudioStatus.Idle)
+        uiState = uiState.copy(mode = mode, status = BgStudioStatus.Idle, generatedPath = null, generatedPaths = emptyList())
     }
 
     fun updatePrompt(prompt: String) {
-        uiState = uiState.copy(prompt = prompt.take(1000), status = BgStudioStatus.Idle)
+        uiState = uiState.copy(prompt = prompt.take(1000), status = BgStudioStatus.Idle, generatedPath = null, generatedPaths = emptyList())
+    }
+
+    fun updateNegativePrompt(prompt: String) {
+        uiState = uiState.copy(negativePrompt = prompt.take(1000), status = BgStudioStatus.Idle, generatedPath = null, generatedPaths = emptyList())
+    }
+
+    fun setAspectRatio(value: GenerationAspectRatio) {
+        uiState = uiState.copy(aspectRatio = value, status = BgStudioStatus.Idle, generatedPath = null, generatedPaths = emptyList())
+    }
+
+    fun setSimilarity(value: Float) {
+        uiState = uiState.copy(similarity = value.coerceIn(0f, 1f))
     }
 
     fun loadImage(uri: Uri) {
         viewModelScope.launch {
-            uiState = uiState.copy(status = BgStudioStatus.LoadingImage)
+            uiState = uiState.copy(status = BgStudioStatus.LoadingImage, generatedPath = null, generatedPaths = emptyList())
             val mimeType = getApplication<Application>().contentResolver.getType(uri).orEmpty()
             if (!mimeType.startsWith("image/")) {
                 sourceImageB64 = null
@@ -132,13 +145,12 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 authRepository.syncCurrentUser()
             }
 
-            val (width, height) = outputDimensions(bitmap)
             val prompt = buildGenerationPrompt(uiState.mode, uiState.prompt)
             startBackgroundJob(
                 prompt = prompt,
                 sourceImageB64 = source,
-                width = width,
-                height = height,
+                width = uiState.aspectRatio.width,
+                height = uiState.aspectRatio.height,
                 developerMode = isDev,
             )
         }
@@ -146,6 +158,16 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
 
     fun resetStatus() {
         uiState = uiState.copy(status = BgStudioStatus.Idle)
+    }
+
+    fun clearResult() {
+        uiState = uiState.copy(
+            generatedPath = null,
+            generatedPaths = emptyList(),
+            generationProgress = null,
+            generationStatusText = null,
+            status = BgStudioStatus.Idle
+        )
     }
 
     private suspend fun ensureTrialUser(): Boolean =
@@ -167,7 +189,11 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         height: Int,
         developerMode: Boolean,
     ) {
-        uiState = uiState.copy(status = BgStudioStatus.Generating)
+        uiState = uiState.copy(
+            status = BgStudioStatus.Generating,
+            generationProgress = 0f,
+            generationStatusText = "Background replacement generating"
+        )
 
         val taskType = if (uiState.mode == BgStudioMode.Replace) TaskNotificationHelper.BG_REPLACE else TaskNotificationHelper.BG_REMOVE
         val displayName = if (uiState.mode == BgStudioMode.Replace) "Background Replace" else "Background Remove"
@@ -209,6 +235,10 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 )
                 for (step in progressSteps) {
                     delay(1800)
+                    uiState = uiState.copy(
+                        generationProgress = step.first,
+                        generationStatusText = "Background replacement generating"
+                    )
                     GenerationRepository.updateJob(jobTitle) { job ->
                         job.copy(
                             progressPercent = step.first,
@@ -226,7 +256,9 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 style = "Photographic",
                 width = width,
                 height = height,
-                negativePrompt = "distorted subject, changed face, extra limbs, bad anatomy, low quality, blurry",
+                negativePrompt = uiState.negativePrompt.ifBlank {
+                    "distorted subject, changed face, extra limbs, bad anatomy, low quality, blurry, watermark"
+                },
                 sourceImageB64 = sourceImageB64,
                 developerMode = developerMode,
             ) { result ->
@@ -236,7 +268,11 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                         persistGeneratedImage(result.getOrThrow(), jobTitle, taskId, taskType, displayName)
                     } else {
                         val message = result.exceptionOrNull()?.message ?: "Could not replace background."
-                        uiState = uiState.copy(status = BgStudioStatus.Error(message))
+                        uiState = uiState.copy(
+                            status = BgStudioStatus.Error(message),
+                            generationProgress = null,
+                            generationStatusText = null
+                        )
                         GenerationRepository.updateJob(jobTitle) { job ->
                             job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
                         }
@@ -262,7 +298,11 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
             return
         }
 
-        uiState = uiState.copy(status = BgStudioStatus.Generating)
+        uiState = uiState.copy(
+            status = BgStudioStatus.Generating,
+            generationProgress = 0.25f,
+            generationStatusText = "Background removal generating"
+        )
         
         val taskId = UUID.randomUUID().toString()
         
@@ -301,6 +341,10 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 }
                 Triple(saved, preview ?: bitmap, false)
             } else {
+                uiState = uiState.copy(
+                    generationProgress = 0.62f,
+                    generationStatusText = "Background removal generating"
+                )
                 GenerationRepository.updateJob(jobTitle) { job ->
                     job.copy(
                         progressPercent = 0.62f,
@@ -314,7 +358,11 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                     val apiMessage = apiResult.exceptionOrNull()?.message ?: "ApyHub failed."
                     val fallbackMessage = fallbackError.message ?: "Local fallback failed."
                     val message = "Could not remove that background. $apiMessage $fallbackMessage"
-                    uiState = uiState.copy(status = BgStudioStatus.Error(message))
+                    uiState = uiState.copy(
+                        status = BgStudioStatus.Error(message),
+                        generationProgress = null,
+                        generationStatusText = null
+                    )
                     GenerationRepository.updateJob(jobTitle) { job ->
                         job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
                     }
@@ -341,7 +389,15 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 type = MediaStorageRepository.MEDIA_IMAGE,
                 mediaUrl = saved.filePath,
             )
-            uiState = uiState.copy(sourceBitmap = preview, status = BgStudioStatus.Completed)
+            uiState = uiState.copy(
+                sourceBitmap = preview,
+                generatedPath = saved.filePath,
+                generatedPaths = listOf(saved.filePath),
+                generatedMimeType = saved.mimeType,
+                generationProgress = null,
+                generationStatusText = null,
+                status = BgStudioStatus.Completed
+            )
             LumoraNotificationCenter.notifyCompletion(
                 context = getApplication<Application>(),
                 title = "Background ready",
@@ -443,7 +499,15 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
             type = MediaStorageRepository.MEDIA_IMAGE,
             mediaUrl = saved.filePath,
         )
-        uiState = uiState.copy(sourceBitmap = preview ?: uiState.sourceBitmap, status = BgStudioStatus.Completed)
+        uiState = uiState.copy(
+            sourceBitmap = preview ?: uiState.sourceBitmap,
+            generatedPath = saved.filePath,
+            generatedPaths = listOf(saved.filePath),
+            generatedMimeType = saved.mimeType,
+            generationProgress = null,
+            generationStatusText = null,
+            status = BgStudioStatus.Completed
+        )
         LumoraNotificationCenter.notifyCompletion(
             context = getApplication<Application>(),
             title = "Background ready",
@@ -503,7 +567,8 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
 
     private fun buildGenerationPrompt(mode: BgStudioMode, prompt: String): String =
         if (mode == BgStudioMode.Replace) {
-            "Edit the provided image. Keep the foreground subject, face, body, pose, clothing, and object details exactly the same. Replace only the background with: $prompt. Do not invent a new subject. Match perspective, lighting, shadows, depth of field, and reflections. Return a realistic composite."
+            val preservation = (uiState.similarity * 100).toInt()
+            "Edit the provided image. Keep the foreground subject, face, body, pose, clothing, and object details about $preservation% preserved. Replace only the background with: $prompt. Format: ${uiState.aspectRatio.promptHint}. Do not invent a new subject. Match perspective, lighting, shadows, depth of field, and reflections. Return one realistic composite image."
         } else {
             "Edit the provided image. Keep the foreground subject exactly the same and remove only the background. Return the subject as a clean transparent PNG cutout."
         }

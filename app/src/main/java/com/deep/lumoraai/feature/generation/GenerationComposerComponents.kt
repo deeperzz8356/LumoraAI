@@ -669,11 +669,15 @@ fun GenerateNowButton(
 fun GeneratedMediaLoading(
     isVisible: Boolean,
     mediaType: String,
+    progress: Float? = null,
+    statusText: String? = null,
     modifier: Modifier = Modifier,
 ) {
     if (!isVisible) return
 
     val isVideo = mediaType.equals("VIDEO", ignoreCase = true)
+    val safeProgress = progress?.coerceIn(0f, 1f)
+    val progressPercent = safeProgress?.let { (it * 100).toInt().coerceIn(0, 100) }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -705,28 +709,53 @@ fun GeneratedMediaLoading(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (isVideo) "Video is generating" else "Image is generating",
+                    text = statusText ?: if (isVideo) "Video is generating" else "Image is generating",
                     color = Color.White,
                     fontSize = 16.sp,
                     lineHeight = 20.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
                 Text(
-                    text = "Rendering in the queue. Your result will load here when ready.",
+                    text = progressPercent?.let { "$it% complete. Your result will load here when ready." }
+                        ?: "Rendering in the queue. Your result will load here when ready.",
                     color = GenerationMuted,
                     fontSize = 12.sp,
                     lineHeight = 16.sp
                 )
             }
+            if (progressPercent != null) {
+                Text(
+                    text = "$progressPercent%",
+                    color = Color.Black,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(GenerationLime)
+                        .padding(horizontal = 9.dp, vertical = 5.dp)
+                )
+            }
         }
-        LinearProgressIndicator(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(5.dp)
-                .clip(CircleShape),
-            color = GenerationLime,
-            trackColor = Color.White.copy(alpha = 0.1f)
-        )
+        if (safeProgress != null) {
+            LinearProgressIndicator(
+                progress = { safeProgress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(5.dp)
+                    .clip(CircleShape),
+                color = GenerationLime,
+                trackColor = Color.White.copy(alpha = 0.1f)
+            )
+        } else {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(5.dp)
+                    .clip(CircleShape),
+                color = GenerationLime,
+                trackColor = Color.White.copy(alpha = 0.1f)
+            )
+        }
     }
 }
 
@@ -751,6 +780,7 @@ fun GeneratedMediaResult(
     var isDownloading by remember { mutableStateOf(false) }
     var selectedIndex by remember(outputPaths) { mutableStateOf(outputPaths.lastIndex.coerceAtLeast(0)) }
     val selectedPath = outputPaths[selectedIndex.coerceIn(outputPaths.indices)]
+    var downloadStatus by remember(selectedPath) { mutableStateOf<String?>(null) }
     val file = remember(selectedPath) { File(selectedPath) }
     val exists = file.exists()
     val isVideo = mediaType.equals("VIDEO", ignoreCase = true) || mimeType.startsWith("video/", ignoreCase = true)
@@ -758,13 +788,16 @@ fun GeneratedMediaResult(
         if (granted) {
             scope.launch {
                 isDownloading = true
+                downloadStatus = "Saving to gallery..."
                 val result = MediaGallerySaver.saveToGallery(context, selectedPath, mimeType, mediaType)
                 isDownloading = false
-                Toast.makeText(context, result.getOrElse { it.message ?: "Could not download media." }, Toast.LENGTH_SHORT).show()
+                downloadStatus = result.getOrElse { it.message ?: "Could not download media." }
+                Toast.makeText(context, downloadStatus, Toast.LENGTH_SHORT).show()
             }
         } else {
             isDownloading = false
-            Toast.makeText(context, "Storage permission is needed to download this file.", Toast.LENGTH_SHORT).show()
+            downloadStatus = "Storage permission is needed to download this file."
+            Toast.makeText(context, downloadStatus, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -892,20 +925,49 @@ fun GeneratedMediaResult(
                 MediaShareUtils.shareMedia(context, selectedPath, mimeType)
             }
             ResultActionIcon(Icons.Default.Download, "Download", enabled = exists && !isDownloading, isLoading = isDownloading) {
+                downloadStatus = "Saving to gallery..."
                 Toast.makeText(context, "Downloading...", Toast.LENGTH_SHORT).show()
                 if (MediaGallerySaver.hasWritePermission(context)) {
                     scope.launch {
                         isDownloading = true
                         val result = MediaGallerySaver.saveToGallery(context, selectedPath, mimeType, mediaType)
                         isDownloading = false
-                        Toast.makeText(context, result.getOrElse { it.message ?: "Could not download media." }, Toast.LENGTH_SHORT).show()
+                        downloadStatus = result.getOrElse { it.message ?: "Could not download media." }
+                        Toast.makeText(context, downloadStatus, Toast.LENGTH_SHORT).show()
                     }
                 } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                     isDownloading = true
                     writePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 } else {
-                    Toast.makeText(context, "Could not start download.", Toast.LENGTH_SHORT).show()
+                    downloadStatus = "Could not start download."
+                    Toast.makeText(context, downloadStatus, Toast.LENGTH_SHORT).show()
                 }
+            }
+        }
+        if (downloadStatus != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(GenerationLime.copy(alpha = if (isDownloading) 0.10f else 0.14f))
+                    .border(1.dp, GenerationLime.copy(alpha = 0.24f), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = if (isDownloading) Icons.Default.Download else Icons.Default.Check,
+                    contentDescription = null,
+                    tint = GenerationLime,
+                    modifier = Modifier.size(17.dp)
+                )
+                Text(
+                    text = downloadStatus.orEmpty(),
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }

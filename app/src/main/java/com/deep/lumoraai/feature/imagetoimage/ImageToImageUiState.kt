@@ -7,11 +7,13 @@ data class ImageToImageUiState(
     val sourceBitmap: Bitmap? = null,
     val prompt: String = "",
     val negativePrompt: String = "",
-    val selectedStyle: ImageStyle = ImageStyle.Photorealistic,
+    val selectedStyle: ImageStyle = ImageStyle.NoStyle,
     val aspectRatio: GenerationAspectRatio = GenerationAspectRatio.Portrait,
     val similarity: Float = 0.5f,
     val generations: Int = 2,
     val isGenerating: Boolean = false,
+    val generationProgress: Float? = null,
+    val generationStatusText: String? = null,
     val isImprovingPrompt: Boolean = false,
     val generatedPath: String? = null,
     val generatedPaths: List<String> = emptyList(),
@@ -20,6 +22,7 @@ data class ImageToImageUiState(
 )
 
 enum class ImageStyle(val label: String, val promptHint: String, val assetFileName: String) {
+    NoStyle("No Style", "follow only the prompt without applying a preset look", "minimalistic.png"),
     Photorealistic("Photorealistic", "realistic camera look, natural skin/materials, true lighting", "photorealitstic.png"),
     Cinematic("Cinematic", "movie-poster lighting, dramatic contrast, depth, atmospheric effects", "cinematic.png"),
     Anime("Anime", "clean anime illustration, expressive design, stylized backgrounds", "anime.png"),
@@ -32,7 +35,18 @@ enum class ImageStyle(val label: String, val promptHint: String, val assetFileNa
     RetroVintage("Retro/Vintage", "80s/90s aesthetic, film grain, faded colors, nostalgic design", "retro.png"),
 }
 
+val ImageStyle.apiStyle: String
+    get() = if (this == ImageStyle.NoStyle) "Default" else label
+
+val ImageStyle.promptDirective: String
+    get() = if (this == ImageStyle.NoStyle) {
+        ""
+    } else {
+        " Style: $label ($promptHint)."
+    }
+
 enum class VideoStyle(val label: String, val promptHint: String, val assetFileName: String) {
+    NoStyle("No Style", "follow only the prompt without applying a preset motion style", "documentaryvideo.png"),
     CinematicFilm("Cinematic Film", "movie-quality shots, dramatic lighting, shallow depth of field", "cinematicvideo.png"),
     AnimeAnimation("Anime Animation", "animated anime scenes with expressive movement and backgrounds", "animevideo.png"),
     PhotorealisticLiveAction("Photorealistic Live Action", "realistic humans, environments, physics and camera motion", "photorealitsticvideo.png"),
@@ -44,3 +58,13 @@ enum class VideoStyle(val label: String, val promptHint: String, val assetFileNa
     DroneAerial("Drone/Aerial", "sweeping landscape shots, flyovers, city or nature cinematography", "dronevideo.png"),
     ExperimentalSurreal("Experimental/Surreal", "dream transitions, morphing objects, impossible environments and abstract motion", "expivideo.png"),
 }
+
+val VideoStyle.apiStyle: String
+    get() = if (this == VideoStyle.NoStyle) "Default" else label
+
+val VideoStyle.promptDirective: String
+    get() = if (this == VideoStyle.NoStyle) {
+        ""
+    } else {
+        " Style: $label ($promptHint)."
+    }

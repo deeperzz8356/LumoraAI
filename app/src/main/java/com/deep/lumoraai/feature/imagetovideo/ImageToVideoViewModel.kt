@@ -29,7 +29,10 @@ import com.deep.lumoraai.data.repository.MediaStorageRepository
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
+import com.deep.lumoraai.feature.imagetoimage.apiStyle
+import com.deep.lumoraai.feature.imagetoimage.promptDirective
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -130,10 +133,21 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             }
 
             val requestedGenerations = uiState.generations.coerceIn(1, 4)
-            uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null, generatedPaths = emptyList())
+            uiState = uiState.copy(
+                isGenerating = true,
+                generationProgress = 0.1f,
+                generationStatusText = "Video 1 of $requestedGenerations generating",
+                error = null,
+                generatedPath = null,
+                generatedPaths = emptyList()
+            )
             val prompt = buildPrompt()
 
             repeat(requestedGenerations) { index ->
+                uiState = uiState.copy(
+                    generationProgress = 0.1f,
+                    generationStatusText = "Video ${index + 1} of $requestedGenerations generating"
+                )
                 val taskId = UUID.randomUUID().toString()
                 val jobTitle = "Image 2 Video ${shortTimestamp()} #${index + 1}"
                 notificationManager.sendTaskStartNotification(
@@ -154,6 +168,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     )
                 )
 
+                val progressJob = launchProgressJob(jobTitle, index + 1, requestedGenerations)
                 val result = generationRepository.generateVideo(
                     prompt = prompt,
                     engine = uiState.selectedEngine.modelId,
@@ -162,12 +177,13 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     duration = uiState.duration,
                     developerMode = isDev,
                 )
+                progressJob.cancel()
 
                 if (result.isSuccess) {
                     persistGeneratedVideo(result.getOrThrow(), jobTitle, prompt, taskId, keepGenerating = index < requestedGenerations - 1)
                 } else {
                     val message = result.exceptionOrNull()?.message ?: "Failed to generate video."
-                    uiState = uiState.copy(isGenerating = false, error = message)
+                    uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = message)
                     GenerationRepository.updateJob(jobTitle) { job ->
                         job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
                     }
@@ -180,7 +196,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     return@launch
                 }
             }
-            uiState = uiState.copy(isGenerating = false, error = null)
+            uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = null)
         }
     }
 
@@ -192,7 +208,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             val result = generationRepository.enhancePrompt(
                 prompt = uiState.prompt,
                 mediaType = "VIDEO",
-                style = uiState.selectedStyle.label,
+                style = uiState.selectedStyle.apiStyle,
                 negativePrompt = uiState.negativePrompt,
             )
             uiState = if (result.isSuccess) {
@@ -214,6 +230,25 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
         uiState = uiState.copy(generatedPath = null, generatedPaths = emptyList())
     }
 
+    private fun launchProgressJob(jobTitle: String, current: Int, total: Int) = viewModelScope.launch {
+        val steps = listOf(
+            0.22f to "Reading source image...",
+            0.45f to "Planning motion...",
+            0.68f to "Rendering frames...",
+            0.90f to "Encoding video..."
+        )
+        for (step in steps) {
+            delay(2400)
+            uiState = uiState.copy(
+                generationProgress = step.first,
+                generationStatusText = "Video $current of $total generating"
+            )
+            GenerationRepository.updateJob(jobTitle) { job ->
+                job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
+            }
+        }
+    }
+
     private suspend fun persistGeneratedVideo(payload: String, jobTitle: String, prompt: String, taskId: String, keepGenerating: Boolean = false) {
         val saved = mediaStorage.saveVideoFromPayload(payload)
         historyRepository.addHistory(
@@ -227,7 +262,13 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             type = MediaStorageRepository.MEDIA_VIDEO,
             mediaUrl = saved.filePath,
         )
-        uiState = uiState.copy(isGenerating = keepGenerating, generatedPath = saved.filePath, generatedPaths = uiState.generatedPaths + saved.filePath, generatedMimeType = saved.mimeType)
+        uiState = uiState.copy(
+            isGenerating = keepGenerating,
+            generationProgress = if (keepGenerating) 1f else null,
+            generatedPath = saved.filePath,
+            generatedPaths = uiState.generatedPaths + saved.filePath,
+            generatedMimeType = saved.mimeType
+        )
         LumoraNotificationCenter.notifyCompletion(
             context = getApplication<Application>(),
             title = "Video ready",
@@ -270,7 +311,8 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
     private fun buildPrompt(): String {
         val similarity = (uiState.similarity * 100).toInt()
         val negative = uiState.negativePrompt.takeIf { it.isNotBlank() }?.let { " Avoid: $it." }.orEmpty()
-        return "Animate the uploaded source image into a video. User prompt: ${uiState.prompt}. Style: ${uiState.selectedStyle.label} (${uiState.selectedStyle.promptHint}). Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original subject and composition while adding natural motion, camera movement, and depth.$negative"
+        val stylePrompt = uiState.selectedStyle.promptDirective
+        return "Animate the uploaded source image into a video. User prompt: ${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original subject and composition while adding natural motion, camera movement, and depth.$negative"
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {

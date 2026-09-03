@@ -67,7 +67,6 @@ import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.components.MediaViewerDialog
 import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.model.HistoryModel
 import com.google.firebase.auth.FirebaseAuth
 import java.io.File
@@ -171,7 +170,6 @@ private fun ProfileContent(
 
 @Composable
 private fun CreditsOverviewCard(credits: Int, onNavigate: (String) -> Unit) {
-    val label = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else "$credits"
     Surface(
         onClick = { onNavigate(Screen.Credits.route) },
         modifier = Modifier.fillMaxWidth().height(118.dp),
@@ -187,7 +185,7 @@ private fun CreditsOverviewCard(credits: Int, onNavigate: (String) -> Unit) {
             AccentIcon(Icons.Default.Star, Lime)
             Column(modifier = Modifier.weight(1f).padding(end = 6.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(stringResource(com.deep.lumoraai.R.string.ui_lum_credits), color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text(label, color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("$credits", color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(stringResource(com.deep.lumoraai.R.string.ui_top_up_and_manage_packs), color = Lime, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             MiniAction("Top Up", Icons.Default.Add, Cyan, onClick = { onNavigate(Screen.Credits.route) })

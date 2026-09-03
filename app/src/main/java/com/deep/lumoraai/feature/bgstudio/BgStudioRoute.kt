@@ -26,7 +26,6 @@ fun BgStudioRoute(
 
     LaunchedEffect(uiState.status) {
         when (uiState.status) {
-            BgStudioStatus.Generating -> onNavigate(Screen.Queue.route)
             BgStudioStatus.TrialExpired -> {
                 onNavigate(Screen.Auth.route)
                 viewModel.resetStatus()
@@ -41,8 +40,12 @@ fun BgStudioRoute(
         onNavigate = onNavigate,
         onModeSelected = viewModel::selectMode,
         onPromptChanged = viewModel::updatePrompt,
+        onNegativePromptChanged = viewModel::updateNegativePrompt,
+        onAspectRatioChanged = viewModel::setAspectRatio,
+        onSimilarityChanged = viewModel::setSimilarity,
         onImageSelected = viewModel::loadImage,
         onCreate = viewModel::create,
+        onEditResult = viewModel::clearResult,
         onDismissError = viewModel::resetStatus,
     )
 }

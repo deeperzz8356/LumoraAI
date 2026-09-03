@@ -143,7 +143,9 @@ fun ImageToVideoScreen(
                 )
                 GeneratedMediaLoading(
                     isVisible = uiState.isGenerating,
-                    mediaType = "VIDEO"
+                    mediaType = "VIDEO",
+                    progress = uiState.generationProgress,
+                    statusText = uiState.generationStatusText
                 )
                 GeneratedMediaResult(
                     filePath = uiState.generatedPath,
