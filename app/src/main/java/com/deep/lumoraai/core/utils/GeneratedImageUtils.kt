@@ -120,11 +120,32 @@ fun formatGenerationErrorMessage(
 fun humanizeProviderError(raw: String): String {
     val lower = raw.lowercase()
     return when {
-        "resource_exhausted" in lower || "quota exceeded" in lower || "429" in raw ->
-            "Video generation quota is exhausted on Google Vertex AI. " +
-                "Request a quota increase in Google Cloud Console or try the FastDraft engine."
+        // Transient rate limiting from the upstream provider (Vertex AI 429 /
+        // RESOURCE_EXHAUSTED). This is retriable, so guide the user to retry
+        // rather than implying a hard quota wall. Distinguish a genuine quota
+        // wall ("quota exceeded") from momentary throttling.
+        "quota exceeded" in lower ->
+            "Generation quota is exhausted on Google Vertex AI. " +
+                "Request a quota increase in Google Cloud Console or try again later."
+        "resource_exhausted" in lower || "rate limit" in lower || "too many requests" in raw.lowercase() || "429" in raw ->
+            "The server is busy right now (too many requests). Please wait a moment and try again."
         else -> raw
     }
+}
+
+/**
+ * True when a provider/backend error string indicates a transient rate-limit /
+ * resource-exhaustion condition that is worth retrying with backoff (as opposed
+ * to a hard quota wall or a permanent failure).
+ */
+fun isRetriableRateLimit(raw: String?): Boolean {
+    if (raw.isNullOrBlank()) return false
+    val lower = raw.lowercase()
+    if ("quota exceeded" in lower) return false
+    return "resource_exhausted" in lower ||
+        "rate limit" in lower ||
+        "too many requests" in lower ||
+        "429" in raw
 }
 
 fun isHttpImageUrl(value: String): Boolean =

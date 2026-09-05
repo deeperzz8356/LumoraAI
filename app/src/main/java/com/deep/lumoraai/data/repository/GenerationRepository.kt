@@ -18,8 +18,10 @@ import com.deep.lumoraai.core.utils.extractGeneratedVideo
 import com.deep.lumoraai.core.utils.isSuccessfulApiStatus
 import com.deep.lumoraai.core.utils.formatGenerationErrorMessage
 import com.deep.lumoraai.core.utils.humanizeProviderError
+import com.deep.lumoraai.core.utils.isRetriableRateLimit
 import com.deep.lumoraai.core.utils.parseGenerationFailure
 import com.deep.lumoraai.BuildConfig
+import kotlinx.coroutines.delay
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -95,15 +97,6 @@ class GenerationRepository {
             val tokenResult = user.getIdToken(true).await()
             val idToken = tokenResult.token
                 ?: return@withContext Result.failure(Exception("Failed to get authentication token."))
-            
-            val url = URL(imageGenerateUrl)
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.applyAuthHeaders(idToken, user.uid, developerMode)
-            connection.doOutput = true
-            connection.connectTimeout = 60_000
-            connection.readTimeout = 120_000
 
             val jsonInputString = JSONObject().apply {
                 put("prompt", prompt)
@@ -118,34 +111,52 @@ class GenerationRepository {
                 }
             }.toString()
 
-            OutputStreamWriter(connection.outputStream).use { writer ->
-                writer.write(jsonInputString)
-                writer.flush()
-            }
+            // Batch requests can trip an upstream 429 (RESOURCE_EXHAUSTED). Retry
+            // a bounded number of times with exponential backoff before surfacing
+            // a clear "server busy" message (never a raw "no content" message).
+            retryOnRateLimit(mediaType = "image") {
+                val url = URL(imageGenerateUrl)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.applyAuthHeaders(idToken, user.uid, developerMode)
+                connection.doOutput = true
+                connection.connectTimeout = 60_000
+                connection.readTimeout = 120_000
 
-            val responseCode = connection.responseCode
-            val responseBody = connection.readResponseBody()
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val responseJson = JSONObject(responseBody)
-                Log.d("GenerationRepository", "Image response (${responseBody.length} chars): ${responseBody.take(800)}")
-                responseJson.parseGenerationFailure()?.let { errorMessage ->
-                    Log.e("GenerationRepository", "Generation failed: $errorMessage body=$responseBody")
-                    return@withContext Result.failure(Exception(errorMessage))
+                OutputStreamWriter(connection.outputStream).use { writer ->
+                    writer.write(jsonInputString)
+                    writer.flush()
                 }
-                val imagePayload = extractGeneratedImage(responseJson)
-                if (imagePayload != null) {
-                    Result.success(imagePayload)
+
+                val responseCode = connection.responseCode
+                val responseBody = connection.readResponseBody()
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val responseJson = JSONObject(responseBody)
+                    Log.d("GenerationRepository", "Image response (${responseBody.length} chars): ${responseBody.take(800)}")
+                    responseJson.parseGenerationFailure()?.let { errorMessage ->
+                        Log.e("GenerationRepository", "Generation failed: $errorMessage body=$responseBody")
+                        // A body-level rate-limit failure is retriable even on HTTP 200.
+                        return@retryOnRateLimit GenerationAttempt.of(errorMessage, mediaType = "image")
+                    }
+                    val imagePayload = extractGeneratedImage(responseJson)
+                    if (imagePayload != null) {
+                        GenerationAttempt.Success(imagePayload)
+                    } else {
+                        val message = responseJson.parseApiMessage()
+                        Log.e("GenerationRepository", "API error: ${message ?: "no image data"} body=$responseBody")
+                        GenerationAttempt.of(message, mediaType = "image")
+                    }
+                } else if (responseCode == 429) {
+                    val message = responseBody.parseApiMessage()
+                    Log.w("GenerationRepository", "HTTP 429 (rate limited): ${message ?: responseBody.take(200)}")
+                    GenerationAttempt.RateLimited(message)
                 } else {
-                    val message = responseJson.parseApiMessage()
-                        ?: "Server returned no image data."
-                    Log.e("GenerationRepository", "API error: $message body=$responseBody")
-                    Result.failure(Exception(message))
+                    val message = responseBody.parseApiMessage()
+                        ?: "Server error ($responseCode). The backend may still be waking up — try again in a moment."
+                    Log.e("GenerationRepository", "HTTP $responseCode: $message")
+                    GenerationAttempt.Failed(message)
                 }
-            } else {
-                val message = responseBody.parseApiMessage()
-                    ?: "Server error ($responseCode). The backend may still be waking up — try again in a moment."
-                Log.e("GenerationRepository", "HTTP $responseCode: $message")
-                Result.failure(Exception(message))
             }
         } catch (e: Exception) {
             Log.e("GenerationRepository", "Exception: ${e.message}")
@@ -177,15 +188,6 @@ class GenerationRepository {
             val tokenResult = user.getIdToken(true).await()
             val idToken = tokenResult.token ?: return@withContext Result.failure(Exception("Failed to get ID token"))
 
-            val url = URL("$backendUrl/video")
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.applyAuthHeaders(idToken, user.uid, developerMode)
-            connection.doOutput = true
-            connection.connectTimeout = 30000
-            connection.readTimeout = 180_000
-
             val jsonInputString = JSONObject().apply {
                 put("prompt", prompt)
                 put("model", engine)
@@ -202,34 +204,50 @@ class GenerationRepository {
                 if (style != null && style != "Default") put("style", style)
             }.toString()
 
-            OutputStreamWriter(connection.outputStream).use { writer ->
-                writer.write(jsonInputString)
-                writer.flush()
-            }
+            // Retry a bounded number of times with exponential backoff on 429
+            // before surfacing a clear "server busy" message.
+            retryOnRateLimit(mediaType = "video") {
+                val url = URL("$backendUrl/video")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.applyAuthHeaders(idToken, user.uid, developerMode)
+                connection.doOutput = true
+                connection.connectTimeout = 30000
+                connection.readTimeout = 180_000
 
-            val responseCode = connection.responseCode
-            val responseBody = connection.readResponseBody()
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val responseJson = JSONObject(responseBody)
-                Log.d("GenerationRepository", "Video response (${responseBody.length} chars): ${responseBody.take(800)}")
-                responseJson.parseGenerationFailure()?.let { errorMessage ->
-                    Log.e("GenerationRepository", "Video generation failed: $errorMessage body=$responseBody")
-                    return@withContext Result.failure(Exception(errorMessage))
+                OutputStreamWriter(connection.outputStream).use { writer ->
+                    writer.write(jsonInputString)
+                    writer.flush()
                 }
-                val videoUrl = extractGeneratedVideo(responseJson)
-                if (videoUrl != null && responseJson.isSuccessfulApiStatus()) {
-                    Result.success(videoUrl)
+
+                val responseCode = connection.responseCode
+                val responseBody = connection.readResponseBody()
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val responseJson = JSONObject(responseBody)
+                    Log.d("GenerationRepository", "Video response (${responseBody.length} chars): ${responseBody.take(800)}")
+                    responseJson.parseGenerationFailure()?.let { errorMessage ->
+                        Log.e("GenerationRepository", "Video generation failed: $errorMessage body=$responseBody")
+                        return@retryOnRateLimit GenerationAttempt.of(errorMessage, mediaType = "video")
+                    }
+                    val videoUrl = extractGeneratedVideo(responseJson)
+                    if (videoUrl != null && responseJson.isSuccessfulApiStatus()) {
+                        GenerationAttempt.Success(videoUrl)
+                    } else {
+                        val message = responseJson.parseApiMessage()
+                        Log.e("GenerationRepository", "Video API error: ${message ?: "no video data"} body=$responseBody")
+                        GenerationAttempt.of(message, mediaType = "video")
+                    }
+                } else if (responseCode == 429) {
+                    val message = responseBody.parseApiMessage()
+                    Log.w("GenerationRepository", "Video HTTP 429 (rate limited): ${message ?: responseBody.take(200)}")
+                    GenerationAttempt.RateLimited(message)
                 } else {
-                    val message = responseJson.parseApiMessage()?.let(::humanizeProviderError)
-                        ?: formatGenerationErrorMessage(detail = null, mediaType = "video")
-                    Log.e("GenerationRepository", "Video API error: $message body=$responseBody")
-                    Result.failure(Exception(message))
+                    val message = responseBody.parseApiMessage()?.let(::humanizeProviderError)
+                        ?: "Server error ($responseCode). The backend may still be waking up — try again in a moment."
+                    Log.e("GenerationRepository", "Video HTTP $responseCode: $message")
+                    GenerationAttempt.Failed(message)
                 }
-            } else {
-                val message = responseBody.parseApiMessage()?.let(::humanizeProviderError)
-                    ?: "Server error ($responseCode). The backend may still be waking up — try again in a moment."
-                Log.e("GenerationRepository", "Video HTTP $responseCode: $message")
-                Result.failure(Exception(message))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -372,6 +390,74 @@ class GenerationRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    /**
+     * Outcome of a single generation attempt, classified so [retryOnRateLimit]
+     * knows whether to back off and retry or return immediately.
+     */
+    private sealed interface GenerationAttempt {
+        data class Success(val payload: String) : GenerationAttempt
+        /** Retriable transient rate limiting (HTTP 429 or a rate-limit body). */
+        data class RateLimited(val message: String?) : GenerationAttempt
+        /** Non-retriable failure; surfaced to the caller as-is. */
+        data class Failed(val message: String) : GenerationAttempt
+
+        companion object {
+            /**
+             * Classifies a message from a success-shaped or error body: a
+             * rate-limit message becomes retriable, anything else is a terminal
+             * failure with a humanized, non-empty message (never "no content").
+             */
+            fun of(message: String?, mediaType: String): GenerationAttempt =
+                if (isRetriableRateLimit(message)) {
+                    RateLimited(message)
+                } else {
+                    Failed(
+                        message?.let(::humanizeProviderError)
+                            ?: formatGenerationErrorMessage(detail = null, mediaType = mediaType)
+                    )
+                }
+        }
+    }
+
+    /**
+     * Runs [attempt] with bounded exponential backoff on transient rate limiting.
+     *
+     * Batch/quick-succession requests can trip an upstream Vertex AI 429
+     * (RESOURCE_EXHAUSTED). Rather than immediately failing with an unhelpful
+     * message, retry a few times with increasing delays. If retries are
+     * exhausted, return a clear "server busy" message so the UI never shows a
+     * confusing "no content provided".
+     */
+    private suspend fun retryOnRateLimit(
+        mediaType: String,
+        maxAttempts: Int = 4,
+        attempt: suspend () -> GenerationAttempt,
+    ): Result<String> {
+        var lastRateLimitMessage: String? = null
+        repeat(maxAttempts) { index ->
+            when (val outcome = attempt()) {
+                is GenerationAttempt.Success -> return Result.success(outcome.payload)
+                is GenerationAttempt.Failed -> return Result.failure(Exception(outcome.message))
+                is GenerationAttempt.RateLimited -> {
+                    lastRateLimitMessage = outcome.message
+                    if (index < maxAttempts - 1) {
+                        // Exponential backoff with jitter: ~1s, 2s, 4s (+0-500ms).
+                        val backoff = (1_000L shl index) + (0..500L).random()
+                        Log.w(
+                            "GenerationRepository",
+                            "Rate limited ($mediaType). Backing off ${backoff}ms before retry ${index + 2}/$maxAttempts",
+                        )
+                        delay(backoff)
+                    }
+                }
+            }
+        }
+        val message = lastRateLimitMessage?.let(::humanizeProviderError)
+            ?: "The server is busy right now (too many requests). Please wait a moment and try again."
+        Log.e("GenerationRepository", "Rate limit retries exhausted for $mediaType: $message")
+        return Result.failure(Exception(message))
     }
 
     /** Server verifies the Play token and derives the entitlement; amount is never client-supplied. */

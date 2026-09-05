@@ -22,7 +22,7 @@ data class ImageToImageUiState(
 )
 
 enum class ImageStyle(val label: String, val promptHint: String, val assetFileName: String) {
-    NoStyle("No Style", "follow only the prompt without applying a preset look", "minimalistic.png"),
+    NoStyle("No Style", "follow only the prompt without applying a preset look", "nostyle.jpg"),
     Photorealistic("Photorealistic", "realistic camera look, natural skin/materials, true lighting", "photorealitstic.png"),
     Cinematic("Cinematic", "movie-poster lighting, dramatic contrast, depth, atmospheric effects", "cinematic.png"),
     Anime("Anime", "clean anime illustration, expressive design, stylized backgrounds", "anime.png"),
