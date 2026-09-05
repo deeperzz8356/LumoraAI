@@ -11,7 +11,6 @@ import com.deep.lumoraai.R
 import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
-import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
@@ -307,7 +306,8 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             authRepository.syncCurrentUser()
             result = generationRepository.getCredits()
         }
-        return LocalCreditBalance.maxWith(getApplication(), result.getOrNull())
+        // Gate on the SERVER balance only (see TextToImageViewModel for rationale).
+        return result.getOrNull()
     }
 
     private fun buildPrompt(): String {

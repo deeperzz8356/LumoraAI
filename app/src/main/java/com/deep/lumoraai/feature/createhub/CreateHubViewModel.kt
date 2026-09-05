@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.utils.LumoraNotificationCenter
-import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
@@ -105,7 +104,8 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
             authRepository.syncCurrentUser()
             result = generationRepository.getCredits()
         }
-        return LocalCreditBalance.maxWith(getApplication(), result.getOrNull())
+        // Gate on the SERVER balance only (see TextToImageViewModel for rationale).
+        return result.getOrNull()
     }
 
     private suspend fun ensureTrialUser(): Boolean {

@@ -11,7 +11,6 @@ import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -293,7 +292,11 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             authRepository.syncCurrentUser()
             result = generationRepository.getCredits()
         }
-        return LocalCreditBalance.maxWith(getApplication(), result.getOrNull())
+        // Gate on the SERVER balance only. Using max(server, local) let a stale
+        // local value pass the affordability check even when the server would
+        // reject, producing a confusing start-then-fail. The server is the
+        // single source of truth for spendable credits.
+        return result.getOrNull()
     }
 
     private fun buildPrompt(): String {
