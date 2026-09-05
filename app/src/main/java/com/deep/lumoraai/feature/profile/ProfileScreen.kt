@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -90,6 +91,7 @@ fun ProfileScreen(
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit = {},
     onNavigate: (String) -> Unit = {},
+    onBack: () -> Unit = {},
     unreadCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
@@ -116,6 +118,7 @@ fun ProfileScreen(
                     onSignOut = onSignOut,
                     onDeleteAccount = onDeleteAccount,
                     onNavigate = onNavigate,
+                    onBack = onBack,
                     unreadCount = unreadCount
                 )
             }
@@ -132,6 +135,7 @@ private fun ProfileContent(
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     onNavigate: (String) -> Unit,
+    onBack: () -> Unit,
     unreadCount: Int,
 ) {
     val context = LocalContext.current
@@ -142,13 +146,15 @@ private fun ProfileContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
+            // NOTE: no statusBarsPadding() here — the Scaffold already applies the
+            // status-bar inset via its content padding. Adding it again pushed the
+            // Profile header noticeably lower than Home's.
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 18.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        ProfileTopBar(onNavigate = onNavigate, unreadCount = unreadCount)
+        ProfileTopBar(onNavigate = onNavigate, unreadCount = unreadCount, onBack = onBack)
         ProfileHero(
             name = displayName,
             subtitle = displaySubtitle,
@@ -202,14 +208,29 @@ private fun CreditsOverviewCard(credits: Int, onNavigate: (String) -> Unit) {
 }
 
 @Composable
-private fun ProfileTopBar(onNavigate: (String) -> Unit, unreadCount: Int) {
+private fun ProfileTopBar(onNavigate: (String) -> Unit, unreadCount: Int, onBack: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Avatar(size = 38.dp)
+            // Functional back arrow in place of the profile picture.
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.055f))
+                    .clickable(onClick = onBack),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(stringResource(com.deep.lumoraai.R.string.ui_profile), color = Color.White, fontSize = 18.sp, lineHeight = 21.sp, fontWeight = FontWeight.Bold)

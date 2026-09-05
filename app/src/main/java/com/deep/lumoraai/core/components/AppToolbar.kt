@@ -5,22 +5,19 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,7 +42,7 @@ fun AppToolbar(
     unreadCount: Int = 0,
     onNotificationClick: (() -> Unit)? = null
 ) {
-    TopAppBar(
+    CenterAlignedTopAppBar(
         title = {
             Text(
                 text = title,
@@ -56,16 +53,17 @@ fun AppToolbar(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        modifier = modifier
-            .statusBarsPadding()
-            .height(64.dp),
-        colors = TopAppBarDefaults.topAppBarColors(
+        // Let the app bar own its status-bar inset and standard height so the
+        // title is properly centered both horizontally and vertically. (The old
+        // combination of statusBarsPadding() + fixed height(64.dp) + zeroed
+        // window insets offset the title and left it uncentered.)
+        modifier = modifier,
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = Color(0xFF0B1426),
             titleContentColor = Color.White,
             navigationIconContentColor = Color.White,
             actionIconContentColor = Color.White
         ),
-        windowInsets = WindowInsets(0.dp),
         navigationIcon = {
             if (onBackClick != null) {
                 IconButton(onClick = onBackClick) {

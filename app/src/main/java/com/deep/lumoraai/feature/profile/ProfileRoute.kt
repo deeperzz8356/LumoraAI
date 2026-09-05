@@ -13,6 +13,7 @@ fun ProfileRoute(
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     onNavigate: (String) -> Unit,
+    onBack: () -> Unit = {},
     viewModel: ProfileViewModel = viewModel(),
     notificationViewModel: NotificationViewModel = hiltViewModel()
 ) {
@@ -29,6 +30,7 @@ fun ProfileRoute(
             viewModel.deleteAccount(onDeleted = onDeleteAccount)
         },
         onNavigate = onNavigate,
+        onBack = onBack,
         unreadCount = unreadCount
     )
 }

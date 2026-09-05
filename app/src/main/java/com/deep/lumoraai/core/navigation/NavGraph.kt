@@ -283,7 +283,12 @@ fun NavGraph(
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onNavigate = { navController.goTo(it) }
+                onNavigate = { navController.goTo(it) },
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.goTo(Screen.Home.route)
+                    }
+                }
             )
         }
         composable(Screen.Settings.route) {
