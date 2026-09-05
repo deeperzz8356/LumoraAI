@@ -16,8 +16,15 @@ object LocalCreditBalance {
         return next
     }
 
+    /**
+     * Returns the authoritative backend balance (falling back to 0 when it's
+     * unavailable). Historically this returned max(server, local), but a stale
+     * local value caused different screens to disagree with the header/Credits
+     * screen. The server is the single source of truth; the [get]/[add] local
+     * cache is retained only for legacy callers and offline display fallback.
+     */
     fun maxWith(context: Context, backendCredits: Int?): Int =
-        maxOf(backendCredits ?: 0, get(context))
+        backendCredits ?: get(context)
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

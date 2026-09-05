@@ -8,9 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.core.utils.GuestIdentity
-import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
-import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
@@ -23,7 +21,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var uiState: ProfileUiState by mutableStateOf(ProfileUiState.Loading)
         private set
 
-    private val generationRepository = GenerationRepository()
     private val historyRepository = HistoryRepository(
         LumoraDatabase.getInstance(application).historyDao
     )
@@ -61,27 +58,28 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 }
         }
 
+        // Observe the app-wide balance so Profile shows the SAME number as the
+        // header and Credits screen (single source of truth), and refresh it.
+        observeCreditStore()
         if (user != null) {
-            viewModelScope.launch {
-                val credits = LocalCreditBalance.maxWith(getApplication(), generationRepository.getCredits().getOrNull())
-                val currentSuccess = uiState as? ProfileUiState.Success
-                if (currentSuccess != null) {
-                    uiState = currentSuccess.copy(credits = credits)
+            CreditBalanceStore.refresh()
+        }
+    }
+
+    private fun observeCreditStore() {
+        viewModelScope.launch {
+            CreditBalanceStore.balance.collect { stored ->
+                if (stored == null) return@collect
+                (uiState as? ProfileUiState.Success)?.let {
+                    uiState = it.copy(credits = stored)
                 }
             }
         }
     }
-    
+
     fun refreshCredits() {
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user != null) {
-            viewModelScope.launch {
-                val credits = LocalCreditBalance.maxWith(getApplication(), generationRepository.getCredits().getOrNull())
-                val currentSuccess = uiState as? ProfileUiState.Success
-                if (currentSuccess != null) {
-                    uiState = currentSuccess.copy(credits = credits)
-                }
-            }
+        if (FirebaseAuth.getInstance().currentUser != null) {
+            CreditBalanceStore.refresh()
         }
     }
 

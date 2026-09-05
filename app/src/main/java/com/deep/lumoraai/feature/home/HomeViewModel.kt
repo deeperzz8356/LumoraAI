@@ -10,7 +10,6 @@ import com.deep.lumoraai.R
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.core.utils.GuestIdentity
-import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.local.room.entity.HistoryEntity
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
@@ -92,8 +91,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val credits = if (isDev) {
                 GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY
             } else {
-                val remoteCredits = generationRepository.getCredits().getOrNull()
-                LocalCreditBalance.maxWith(getApplication(), remoteCredits)
+                // Server balance is the single source of truth (no max(server,local),
+                // which caused screens to disagree). Published to the shared store below.
+                generationRepository.getCredits().getOrNull() ?: (latestCredits ?: 0)
             }
             latestCredits = credits
             // Publish to the app-wide store so all screens (and this header) stay
