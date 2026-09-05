@@ -171,8 +171,11 @@ private fun HomeTopBar(
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
+                val rawName = userName.ifBlank { "guest" }
+                // Show at most 8 characters; append "..." only when it's longer.
+                val displayName = if (rawName.length > 8) "${rawName.take(8)}..." else rawName
                 Text(
-                    text = "Hi, ${userName.ifBlank { "guest" }}",
+                    text = "Hi, $displayName",
                     color = Color.White,
                     fontSize = 18.sp,
                     lineHeight = 21.sp,
