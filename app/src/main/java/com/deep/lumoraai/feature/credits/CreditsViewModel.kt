@@ -9,9 +9,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.restrictions.GenerationGate
-import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
+import com.deep.lumoraai.data.repository.RewardsRepository
 import com.deep.lumoraai.data.billing.BillingRepository
 import com.deep.lumoraai.data.billing.BillingResult
 import kotlinx.coroutines.flow.collect
@@ -19,12 +19,12 @@ import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import kotlin.random.Random
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class CreditsViewModel(application: Application) : AndroidViewModel(application) {
     private val generationRepository = GenerationRepository()
+    private val rewardsRepository = RewardsRepository()
     private val appPreferences = AppPreferencesRepository.getInstance(application)
     private val rewardPrefs = application.getSharedPreferences("lumora_credit_rewards", Context.MODE_PRIVATE)
     private val auth = FirebaseAuth.getInstance()
@@ -137,19 +137,16 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
                     )
                     return@launch
                 }
-                val result = generationRepository.getCredits()
-                val automaticBonus = grantAutomaticRewards()
-                val backendCredits = result.getOrNull()
-                val localBalance = localRewardBalance()
-                val visibleCredits = maxOf((backendCredits ?: 0) + automaticBonus, localBalance)
+                // Claim any pending automatic rewards on the server first; it
+                // returns an authoritative balance when it grants anything.
+                val autoBalance = grantAutomaticRewards()
+                // Then read the authoritative balance (auto-claim balance wins if present).
+                val backendCredits = autoBalance ?: generationRepository.getCredits().getOrNull()
                 uiState = CreditsUiState.Success(
-                    credits = visibleCredits,
+                    credits = backendCredits ?: 0,
                     isDeveloperMode = false,
                     rewards = buildRewardTasks(isDeveloperMode = false),
-                    rewardMessage = when {
-                        automaticBonus > 0 && backendCredits != null -> "+$automaticBonus daily/account credits added automatically."
-                        else -> null
-                    },
+                    rewardMessage = null,
                     checkInDayIndex = checkInIndex()
                 )
             } finally {
@@ -206,24 +203,52 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         val reward = currentState.rewards.firstOrNull { it.id == rewardId } ?: return
         if (!reward.isAvailable) return
 
-        val amount = rewardAmountFor(rewardId)
-        val message = if (rewardId == REWARD_SPIN && amount == 0) {
-            "Better luck next time. Your free weekly spin was used."
-        } else {
-            "+$amount credits added from ${reward.title}."
-        }
-
-        uiState = currentState.copy(isRewardBusy = true, rewardMessage = "Adding reward credits...")
+        uiState = currentState.copy(isRewardBusy = true, rewardMessage = "Claiming reward...")
         viewModelScope.launch {
-            val result = if (amount > 0) {
-                generationRepository.addCredits(amount, rewardIdempotencyKey(rewardId))
-            } else Result.success(currentState.credits)
-            markRewardClaimed(rewardId)
-            addLocalRewardBalance(amount)
-            val syncedCredits = result.getOrNull() ?: if (amount > 0) generationRepository.getCredits().getOrNull() else currentState.credits
-            val expectedCredits = currentState.credits + amount
-            val newCredits = maxOf(syncedCredits ?: expectedCredits, expectedCredits, localRewardBalance())
-            uiState = currentState.copy(
+            // Server is authoritative: it decides the amount, enforces caps/streak,
+            // and returns the new balance. The client only says which reward happened.
+            val result = when (rewardId) {
+                REWARD_SPIN -> rewardsRepository.spin()
+                REWARD_CHECK_IN -> rewardsRepository.claimCheckIn()
+                REWARD_DAILY_RESET -> rewardsRepository.claimDailyReset()
+                REWARD_SIGNUP -> rewardsRepository.claimSignUpBonus()
+                REWARD_EMAIL_LOGIN -> rewardsRepository.claimEmailLogin()
+                else -> Result.failure(IllegalArgumentException("Reward $rewardId is not claimable here."))
+            }
+
+            val reward2 = result.getOrNull()
+            if (reward2 == null) {
+                uiState = (uiState as? CreditsUiState.Success ?: currentState).copy(
+                    isRewardBusy = false,
+                    rewardMessage = result.exceptionOrNull()?.message ?: "Could not claim reward. Try again.",
+                )
+                return@launch
+            }
+
+            // Persist the local "claimed" marker only for UI gating (the server is
+            // the real guard via idempotency). Only mark on a real success/consumed
+            // outcome so a transient failure doesn't hide an unclaimed reward.
+            if (reward2.isSuccess || reward2.isAlreadyClaimed) {
+                markRewardClaimed(rewardId)
+            }
+
+            val awarded = reward2.creditsAwarded
+            val message = when {
+                reward2.isAlreadyClaimed -> reward2.message ?: "Already claimed."
+                reward2.isCapped -> reward2.message ?: "Reward cap reached."
+                rewardId == REWARD_SPIN && awarded == 0 ->
+                    reward2.message ?: "Better luck next time. Your free weekly spin was used."
+                rewardId == REWARD_CHECK_IN && reward2.streakDay != null ->
+                    "+$awarded credits · Day ${reward2.streakDay} check-in."
+                else -> "+$awarded credits added from ${reward.title}."
+            }
+
+            // Prefer the server-reported balance as the source of truth.
+            val newCredits = reward2.balance ?: run {
+                (generationRepository.getCredits().getOrNull() ?: (currentState.credits + awarded))
+            }
+
+            uiState = (uiState as? CreditsUiState.Success ?: currentState).copy(
                 credits = newCredits,
                 rewards = buildRewardTasks(isDeveloperMode = false),
                 rewardMessage = message,
@@ -270,89 +295,45 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         )
     }
 
-    private suspend fun grantAutomaticRewards(): Int {
-        var total = 0
+    /**
+     * Claims the automatic rewards (daily reset, sign-up bonus, email-login
+     * bonus) via the server, which owns the amounts and idempotency. Returns the
+     * latest server-reported balance if any claim produced one, else null.
+     *
+     * The SharedPrefs markers are only a client-side UI hint to avoid firing the
+     * request every load; the server's idempotency is the real guard, so a stale
+     * or reset marker cannot cause a double-grant.
+     */
+    private suspend fun grantAutomaticRewards(): Int? {
+        var latestBalance: Int? = null
         val today = todayKey()
+
         if (rewardPrefs.getString(KEY_DAILY_RESET_DATE, "") != today) {
-            generationRepository.addCredits(2, rewardIdempotencyKey(REWARD_DAILY_RESET))
-            total += 2
-            LocalCreditBalance.add(getApplication(), 2)
-            rewardPrefs.edit()
-                .putString(KEY_DAILY_RESET_DATE, today)
-                .apply()
+            rewardsRepository.claimDailyReset().getOrNull()?.let { r ->
+                if (r.isSuccess || r.isAlreadyClaimed) {
+                    rewardPrefs.edit().putString(KEY_DAILY_RESET_DATE, today).apply()
+                }
+                r.balance?.let { latestBalance = it }
+            }
         }
         if (!rewardPrefs.getBoolean(KEY_SIGNUP_CLAIMED, false) && hasSignedUpUser()) {
-            generationRepository.addCredits(2, rewardIdempotencyKey(REWARD_SIGNUP))
-            total += 2
-            LocalCreditBalance.add(getApplication(), 2)
-            rewardPrefs.edit()
-                .putBoolean(KEY_SIGNUP_CLAIMED, true)
-                .apply()
+            rewardsRepository.claimSignUpBonus().getOrNull()?.let { r ->
+                if (r.isSuccess || r.isAlreadyClaimed) {
+                    rewardPrefs.edit().putBoolean(KEY_SIGNUP_CLAIMED, true).apply()
+                }
+                r.balance?.let { latestBalance = it }
+            }
         }
         if (!rewardPrefs.getBoolean(KEY_EMAIL_LOGIN_CLAIMED, false) && hasEmailLogin()) {
-            generationRepository.addCredits(1, rewardIdempotencyKey(REWARD_EMAIL_LOGIN))
-            total += 1
-            LocalCreditBalance.add(getApplication(), 1)
-            rewardPrefs.edit()
-                .putBoolean(KEY_EMAIL_LOGIN_CLAIMED, true)
-                .apply()
+            rewardsRepository.claimEmailLogin().getOrNull()?.let { r ->
+                if (r.isSuccess || r.isAlreadyClaimed) {
+                    rewardPrefs.edit().putBoolean(KEY_EMAIL_LOGIN_CLAIMED, true).apply()
+                }
+                r.balance?.let { latestBalance = it }
+            }
         }
-        return total
+        return latestBalance
     }
-
-    /**
-     * Deterministic idempotency key for a single logical reward event (Bug 4b).
-     *
-     * The key is derived from the current user, the reward id, and the reward's
-     * natural time bucket. This makes it:
-     *  - STABLE across retries of the SAME logical event (e.g. the up-to-3
-     *    back-to-back addCredits calls in grantAutomaticRewards, or a retried
-     *    claim) — the same day/week produces the same key, so a duplicate
-     *    delivery does not double-apply.
-     *  - DISTINCT across genuinely separate events — a new day (daily reset,
-     *    check-in) or a new week (spin) yields a fresh key, so each real
-     *    recurrence still applies once. One-time bonuses (signup, email login)
-     *    have no time bucket and so are permanently single-apply per user.
-     */
-    private fun rewardIdempotencyKey(rewardId: String): String {
-        val uid = auth.currentUser?.uid ?: "anonymous"
-        val bucket = when (rewardId) {
-            REWARD_SPIN -> weekKey()
-            REWARD_CHECK_IN, REWARD_DAILY_RESET, REWARD_REFERRAL, REWARD_SOCIAL_SHARE -> todayKey()
-            REWARD_SIGNUP, REWARD_EMAIL_LOGIN -> "once"
-            else -> todayKey()
-        }
-        return "$uid:$rewardId:$bucket"
-    }
-
-    private fun rewardAmountFor(rewardId: String): Int =
-        when (rewardId) {
-            REWARD_SPIN -> weightedSpinReward()
-            REWARD_CHECK_IN -> WEEKLY_CHECK_IN_REWARDS[checkInIndex()]
-            REWARD_DAILY_RESET -> 2
-            REWARD_SIGNUP -> 2
-            REWARD_EMAIL_LOGIN -> 1
-            REWARD_REFERRAL -> 5
-            REWARD_SOCIAL_SHARE -> 3
-            else -> 0
-        }
-
-    private fun weightedSpinReward(): Int {
-        val totalWeight = SPIN_PRIZES.sumOf { it.weight }
-        var ticket = Random.nextInt(totalWeight)
-        SPIN_PRIZES.forEach { prize ->
-            ticket -= prize.weight
-            if (ticket < 0) return prize.amount
-        }
-        return 0
-    }
-
-    private fun addLocalRewardBalance(amount: Int) {
-        LocalCreditBalance.add(getApplication(), amount)
-    }
-
-    private fun localRewardBalance(): Int =
-        LocalCreditBalance.get(getApplication())
 
     private fun markRewardClaimed(rewardId: String) {
         val today = todayKey()
@@ -423,19 +404,9 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         private const val KEY_REFERRAL_DATE = "referral_date"
         private const val KEY_SOCIAL_SHARE_DATE = "social_share_date"
         private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        private val SPIN_PRIZES = listOf(
-            SpinPrize(amount = 0, weight = 40),
-            SpinPrize(amount = 2, weight = 15),
-            SpinPrize(amount = 2, weight = 15),
-            SpinPrize(amount = 10, weight = 15),
-            SpinPrize(amount = 25, weight = 5),
-            SpinPrize(amount = 50, weight = 1),
-        )
-        private val WEEKLY_CHECK_IN_REWARDS = listOf(1, 1, 2, 2, 2, 3, 4)
+        // Display-only mirror of the server's check-in streak amounts
+        // (backend rewards_config.CHECK_IN_STREAK_CREDITS). The server is
+        // authoritative for the actual grant; this only drives the "+N" label.
+        private val WEEKLY_CHECK_IN_REWARDS = listOf(1, 1, 2, 2, 3, 4, 5)
     }
 }
-
-private data class SpinPrize(
-    val amount: Int,
-    val weight: Int,
-)
