@@ -136,6 +136,9 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                         uiState = uiState.copy(status = BgStudioStatus.TrialExpired)
                         return@launch
                     }
+                    // Optimistic: bg removal costs 1 credit; reconciled by the
+                    // deduct response on completion.
+                    CreditBalanceStore.applyOptimistic(-GenerationGate.CREDITS_PER_IMAGE)
                 }
                 startRemoveBackgroundJob(bitmap, developerMode = isDev)
                 return@launch

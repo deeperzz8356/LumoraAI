@@ -104,9 +104,17 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             } else {
                 authRepository.syncCurrentUser()
             }
+            // Optimistic: drop the header instantly by the expected cost
+            // (1 credit per image). The post-completion refresh reconciles to
+            // the authoritative server balance (and undoes this if it failed).
+            if (!isDev) {
+                CreditBalanceStore.applyOptimistic(-GenerationGate.CREDITS_PER_IMAGE * requestedGenerationsFor())
+            }
             startImageJobs(developerMode = isDev)
         }
     }
+
+    private fun requestedGenerationsFor(): Int = uiState.generations.coerceIn(1, 4)
 
     fun improvePrompt() {
         if (uiState.isImprovingPrompt || uiState.prompt.isBlank()) return

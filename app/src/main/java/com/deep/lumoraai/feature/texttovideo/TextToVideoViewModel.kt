@@ -139,6 +139,11 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             val taskType = if (isPromoMode) TaskNotificationHelper.PROMO_VIDEO else TaskNotificationHelper.TEXT_TO_VIDEO
             val displayName = if (isPromoMode) s(R.string.ui_promo_videos) else s(R.string.ui_text_to_video)
             val requestedGenerations = uiState.generations.coerceIn(1, 4)
+            // Optimistic: drop the header instantly by the expected cost
+            // (5 credits per video). Reconciled by the post-completion refresh.
+            if (!isDev) {
+                CreditBalanceStore.applyOptimistic(-GenerationGate.CREDITS_PER_VIDEO * requestedGenerations)
+            }
             uiState = uiState.copy(
                 isGenerating = true,
                 generationProgress = 0.1f,

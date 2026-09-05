@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.core.utils.GuestIdentity
 import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
@@ -85,6 +86,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun signOut() {
+        // Clear the cached credit balance so the next signed-in user never sees
+        // a previous account's number flash in the header.
+        CreditBalanceStore.clear()
         FirebaseAuth.getInstance().signOut()
     }
 
@@ -96,6 +100,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     user.delete().await()
                 }
                 clearLocalData()
+                CreditBalanceStore.clear()
                 FirebaseAuth.getInstance().signOut()
                 onDeleted()
             } catch (error: FirebaseAuthRecentLoginRequiredException) {
