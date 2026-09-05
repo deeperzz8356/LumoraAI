@@ -98,7 +98,8 @@ fun TextToVideoScreen(
                 )
                 GenerationAspectRatioSection(
                     selected = uiState.aspectRatio,
-                    onSelected = onAspectRatioChanged
+                    onSelected = onAspectRatioChanged,
+                    options = GenerationAspectRatio.videoRatios
                 )
                 GenerationCountSection(
                     generations = uiState.generations,

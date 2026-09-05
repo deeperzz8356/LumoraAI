@@ -160,9 +160,18 @@ fun CreateHubScreen(
                     isSettingsOpen = showAdvancedSettings,
                     onSettingsClick = { showAdvancedSettings = !showAdvancedSettings }
                 )
+                val isVideoMode = selectedMode == CreateHubMode.Video
+                // Video (Veo) only supports 16:9 / 9:16; if a portrait/square ratio
+                // was selected in image mode, snap to a valid video ratio.
+                LaunchedEffect(isVideoMode) {
+                    if (isVideoMode && aspectRatio !in GenerationAspectRatio.videoRatios) {
+                        aspectRatio = GenerationAspectRatio.Story
+                    }
+                }
                 GenerationAspectRatioSection(
                     selected = aspectRatio,
-                    onSelected = { aspectRatio = it }
+                    onSelected = { aspectRatio = it },
+                    options = if (isVideoMode) GenerationAspectRatio.videoRatios else GenerationAspectRatio.entries
                 )
                 GenerationCountSection(
                     generations = generations,

@@ -111,6 +111,15 @@ enum class GenerationAspectRatio(
     Landscape("16:9", "Wide", 1536, 864, "wide 16:9 landscape composition");
 
     val displayLabel: String = "$label ${description.lowercase()}"
+
+    companion object {
+        /**
+         * Aspect ratios supported by the video model (Vertex Veo). Veo only
+         * accepts 16:9 and 9:16 — 2:3 and 1:1 return HTTP 400 "invalid aspect
+         * ratio", so they are excluded from every video generation screen.
+         */
+        val videoRatios: List<GenerationAspectRatio> = listOf(Landscape, Story)
+    }
 }
 
 @Composable
@@ -519,6 +528,7 @@ fun GenerationControlsPanel(
 fun GenerationAspectRatioSection(
     selected: GenerationAspectRatio,
     onSelected: (GenerationAspectRatio) -> Unit,
+    options: List<GenerationAspectRatio> = GenerationAspectRatio.entries,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -529,7 +539,7 @@ fun GenerationAspectRatioSection(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GenerationAspectRatio.entries.forEach { ratio ->
+            options.forEach { ratio ->
                 RatioChip(
                     ratio = ratio,
                     selected = ratio == selected,
