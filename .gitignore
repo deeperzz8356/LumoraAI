@@ -17,7 +17,7 @@ backend/.venv/
 **/__pycache__/
 backend/.venv
 .env
-
+*.kiro/
 app/google-services.json
 app/src/asset
 

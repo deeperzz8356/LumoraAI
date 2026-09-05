@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import kotlin.random.Random
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class CreditsViewModel(application: Application) : AndroidViewModel(application) {
@@ -32,9 +33,26 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
     var uiState: CreditsUiState by mutableStateOf(CreditsUiState.Loading)
         private set
 
+    /**
+     * Bug 2 (isBugCondition2) guard state for the credits fetch.
+     *
+     * The credits fetch used to fire on every invocation of load() (which was
+     * itself called from init and could be re-driven by recomposition-sensitive
+     * triggers), producing a burst of GET /api/v1/credits calls per screen
+     * entry. These fields collapse that into a single fetch per entry:
+     *  - [creditsFetchJob] holds the in-flight fetch so concurrent/rapid
+     *    triggers coalesce onto the SAME request instead of starting new ones.
+     *  - [lastFetchedAtMs] records when the last successful/completed fetch
+     *    happened so a repeated trigger within [FRESH_WINDOW_MS] is served from
+     *    the already-loaded state instead of re-fetching.
+     * Legitimate refresh events (successful generation, purchase, sign-in/token
+     * refresh) bypass both guards via [forceRefresh].
+     */
+    private var creditsFetchJob: Job? = null
+    private var lastFetchedAtMs: Long = 0L
+
     init {
         billing.connect()
-        load()
         viewModelScope.launch {
             billing.purchaseEvents.collect { event ->
                 if (event is BillingResult.Cancelled || event is BillingResult.Error) {
@@ -68,34 +86,76 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun load() {
-        uiState = CreditsUiState.Loading
-        viewModelScope.launch {
-            val isDev = appPreferences.isDeveloperModeEnabled()
-            if (isDev) {
+    /**
+     * Drives the single credits fetch for a screen entry.
+     *
+     * Call this from a stable, entry-scoped trigger (e.g. LaunchedEffect(Unit)
+     * in CreditsRoute). It is safe to call on every recomposition: if a fetch
+     * is already in flight it coalesces onto that request, and if fresh data is
+     * already loaded within the freshness window it serves the cached state
+     * without a network call. This is what makes entering the screen fetch
+     * exactly once regardless of recomposition count (Bug 2 fix).
+     */
+    fun ensureLoaded() {
+        load(force = false)
+    }
+
+    /**
+     * Forces a fresh credits fetch for a legitimate refresh event (successful
+     * generation, purchase, sign-in / token refresh). Bypasses the freshness
+     * window but still coalesces onto any in-flight request so a single logical
+     * event yields a single network call (preservation: one call per distinct
+     * legitimate event).
+     */
+    fun forceRefresh() {
+        load(force = true)
+    }
+
+    fun load(force: Boolean = true) {
+        // Coalesce rapid/concurrent triggers onto the in-flight request.
+        if (creditsFetchJob?.isActive == true) return
+        // Serve fresh cached data instead of re-fetching for non-forced triggers.
+        if (!force &&
+            uiState is CreditsUiState.Success &&
+            (System.currentTimeMillis() - lastFetchedAtMs) < FRESH_WINDOW_MS
+        ) {
+            return
+        }
+
+        if (uiState !is CreditsUiState.Success) {
+            uiState = CreditsUiState.Loading
+        }
+        creditsFetchJob = viewModelScope.launch {
+            try {
+                val isDev = appPreferences.isDeveloperModeEnabled()
+                if (isDev) {
+                    uiState = CreditsUiState.Success(
+                        credits = GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY,
+                        isDeveloperMode = true,
+                        rewards = buildRewardTasks(isDeveloperMode = true),
+                        checkInDayIndex = checkInIndex()
+                    )
+                    return@launch
+                }
+                val result = generationRepository.getCredits()
+                val automaticBonus = grantAutomaticRewards()
+                val backendCredits = result.getOrNull()
+                val localBalance = localRewardBalance()
+                val visibleCredits = maxOf((backendCredits ?: 0) + automaticBonus, localBalance)
                 uiState = CreditsUiState.Success(
-                    credits = GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY,
-                    isDeveloperMode = true,
-                    rewards = buildRewardTasks(isDeveloperMode = true),
+                    credits = visibleCredits,
+                    isDeveloperMode = false,
+                    rewards = buildRewardTasks(isDeveloperMode = false),
+                    rewardMessage = when {
+                        automaticBonus > 0 && backendCredits != null -> "+$automaticBonus daily/account credits added automatically."
+                        else -> null
+                    },
                     checkInDayIndex = checkInIndex()
                 )
-                return@launch
+            } finally {
+                lastFetchedAtMs = System.currentTimeMillis()
+                creditsFetchJob = null
             }
-            val result = generationRepository.getCredits()
-            val automaticBonus = grantAutomaticRewards()
-            val backendCredits = result.getOrNull()
-            val localBalance = localRewardBalance()
-            val visibleCredits = maxOf((backendCredits ?: 0) + automaticBonus, localBalance)
-            uiState = CreditsUiState.Success(
-                credits = visibleCredits,
-                isDeveloperMode = false,
-                rewards = buildRewardTasks(isDeveloperMode = false),
-                rewardMessage = when {
-                    automaticBonus > 0 && backendCredits != null -> "+$automaticBonus daily/account credits added automatically."
-                    else -> null
-                },
-                checkInDayIndex = checkInIndex()
-            )
         }
     }
 
@@ -155,7 +215,9 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
 
         uiState = currentState.copy(isRewardBusy = true, rewardMessage = "Adding reward credits...")
         viewModelScope.launch {
-            val result = if (amount > 0) generationRepository.addCredits(amount) else Result.success(currentState.credits)
+            val result = if (amount > 0) {
+                generationRepository.addCredits(amount, rewardIdempotencyKey(rewardId))
+            } else Result.success(currentState.credits)
             markRewardClaimed(rewardId)
             addLocalRewardBalance(amount)
             val syncedCredits = result.getOrNull() ?: if (amount > 0) generationRepository.getCredits().getOrNull() else currentState.credits
@@ -212,7 +274,7 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         var total = 0
         val today = todayKey()
         if (rewardPrefs.getString(KEY_DAILY_RESET_DATE, "") != today) {
-            generationRepository.addCredits(2)
+            generationRepository.addCredits(2, rewardIdempotencyKey(REWARD_DAILY_RESET))
             total += 2
             LocalCreditBalance.add(getApplication(), 2)
             rewardPrefs.edit()
@@ -220,7 +282,7 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
                 .apply()
         }
         if (!rewardPrefs.getBoolean(KEY_SIGNUP_CLAIMED, false) && hasSignedUpUser()) {
-            generationRepository.addCredits(2)
+            generationRepository.addCredits(2, rewardIdempotencyKey(REWARD_SIGNUP))
             total += 2
             LocalCreditBalance.add(getApplication(), 2)
             rewardPrefs.edit()
@@ -228,7 +290,7 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
                 .apply()
         }
         if (!rewardPrefs.getBoolean(KEY_EMAIL_LOGIN_CLAIMED, false) && hasEmailLogin()) {
-            generationRepository.addCredits(1)
+            generationRepository.addCredits(1, rewardIdempotencyKey(REWARD_EMAIL_LOGIN))
             total += 1
             LocalCreditBalance.add(getApplication(), 1)
             rewardPrefs.edit()
@@ -236,6 +298,31 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
                 .apply()
         }
         return total
+    }
+
+    /**
+     * Deterministic idempotency key for a single logical reward event (Bug 4b).
+     *
+     * The key is derived from the current user, the reward id, and the reward's
+     * natural time bucket. This makes it:
+     *  - STABLE across retries of the SAME logical event (e.g. the up-to-3
+     *    back-to-back addCredits calls in grantAutomaticRewards, or a retried
+     *    claim) — the same day/week produces the same key, so a duplicate
+     *    delivery does not double-apply.
+     *  - DISTINCT across genuinely separate events — a new day (daily reset,
+     *    check-in) or a new week (spin) yields a fresh key, so each real
+     *    recurrence still applies once. One-time bonuses (signup, email login)
+     *    have no time bucket and so are permanently single-apply per user.
+     */
+    private fun rewardIdempotencyKey(rewardId: String): String {
+        val uid = auth.currentUser?.uid ?: "anonymous"
+        val bucket = when (rewardId) {
+            REWARD_SPIN -> weekKey()
+            REWARD_CHECK_IN, REWARD_DAILY_RESET, REWARD_REFERRAL, REWARD_SOCIAL_SHARE -> todayKey()
+            REWARD_SIGNUP, REWARD_EMAIL_LOGIN -> "once"
+            else -> todayKey()
+        }
+        return "$uid:$rewardId:$bucket"
     }
 
     private fun rewardAmountFor(rewardId: String): Int =
@@ -311,6 +398,14 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
     }
 
     companion object {
+        /**
+         * How long a completed credits fetch is considered fresh. A non-forced
+         * trigger (screen entry / recomposition) within this window is served
+         * from the loaded state instead of re-fetching, collapsing a burst of
+         * recomposition-driven triggers into a single network call (Bug 2 fix).
+         */
+        private const val FRESH_WINDOW_MS = 30_000L
+
         private const val REWARD_SPIN = "spin"
         private const val REWARD_CHECK_IN = "check_in"
         private const val REWARD_DAILY_RESET = "daily_reset"

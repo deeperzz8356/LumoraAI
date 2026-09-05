@@ -28,10 +28,15 @@ fun LanguageRoute(
         onSearchQueryChanged = viewModel::updateSearchQuery,
         onDone = {
             viewModel.persistSelection()
-            (context as? Activity)?.let {
-                LocaleManager.apply(it, (viewModel.uiState as? LanguageUiState.Success)?.selectedLanguageCode ?: "en")
-                it.recreate()
-            }
+            val selected = (viewModel.uiState as? LanguageUiState.Success)?.selectedLanguageCode ?: "en"
+            // Apply app-wide via the AndroidX per-app locale API so the locale
+            // survives process restarts and future activities pick it up.
+            LocaleManager.applyAppLocale(selected)
+            // The host is a ComponentActivity (not AppCompatActivity), so it is
+            // not auto-recreated by the delegate. Recreate it explicitly to make
+            // the change visible immediately; attachBaseContext re-reads the
+            // freshly persisted locale.
+            (context as? Activity)?.recreate()
             checkAndRequestNotificationPermission(
                 context = context,
                 onGranted = onNext,

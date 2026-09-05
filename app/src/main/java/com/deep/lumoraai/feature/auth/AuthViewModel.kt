@@ -25,6 +25,17 @@ class AuthViewModel(
         uiState = AuthUiState.Initial
     }
 
+    /**
+     * Clears a stuck full-screen loading state. Only resets when currently
+     * Loading so it never clobbers a Success (which drives navigation) or an
+     * Error the user still needs to see. Safe to call on navigation-away.
+     */
+    fun clearLoading() {
+        if (uiState is AuthUiState.Loading) {
+            uiState = AuthUiState.Initial
+        }
+    }
+
     fun showEmailForm(isSignUp: Boolean) {
         uiState = AuthUiState.EmailForm(isSignUp)
     }
@@ -59,18 +70,25 @@ class AuthViewModel(
             try {
                 val currentUser = auth.currentUser
                 val credential = EmailAuthProvider.getCredential(cleanEmail, password)
+                // Track whether this flow actually created a new account so we can
+                // give the user explicit confirmation.
+                var createdNewAccount = false
                 if (currentUser?.isAnonymous == true) {
                     runCatching {
                         currentUser.linkWithCredential(credential).await()
+                        // Upgrading a guest into a real account is a new account.
+                        createdNewAccount = true
                     }.getOrElse {
                         auth.signInWithEmailAndPassword(cleanEmail, password).await()
+                        createdNewAccount = false
                     }
                 } else if (isSignUp) {
                     auth.createUserWithEmailAndPassword(cleanEmail, password).await()
+                    createdNewAccount = true
                 } else {
                     auth.signInWithEmailAndPassword(cleanEmail, password).await()
                 }
-                finishWithBackendSync()
+                finishWithBackendSync(isNewAccount = createdNewAccount)
             } catch (error: Exception) {
                 uiState = AuthUiState.Error(authenticationMessage(error))
             }
@@ -117,8 +135,8 @@ class AuthViewModel(
         }
     }
 
-    private fun finishWithBackendSync() {
-        uiState = AuthUiState.Success
+    private fun finishWithBackendSync(isNewAccount: Boolean = false) {
+        uiState = AuthUiState.Success(isNewAccount = isNewAccount)
         viewModelScope.launch {
             authRepository.syncCurrentUser()
         }

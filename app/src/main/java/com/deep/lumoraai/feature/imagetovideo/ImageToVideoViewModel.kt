@@ -176,6 +176,8 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     sourceImageB64 = source,
                     motionStrength = (uiState.similarity * 100).toInt().coerceIn(20, 90),
                     duration = uiState.duration,
+                    aspectRatio = uiState.aspectRatio.label,
+                    style = uiState.selectedStyle.apiStyle,
                     developerMode = isDev,
                 )
                 progressJob.cancel()

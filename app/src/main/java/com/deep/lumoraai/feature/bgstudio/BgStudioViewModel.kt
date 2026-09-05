@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.deep.lumoraai.BuildConfig
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.notification.NotificationManager
@@ -22,8 +21,11 @@ import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
+import com.deep.lumoraai.data.model.SavedMedia
+import com.deep.lumoraai.core.network.hasInternetConnection
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.AuthRepository
+import com.deep.lumoraai.data.repository.BackgroundRemovalRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.HistoryRepository
 import com.deep.lumoraai.data.repository.MediaStorageRepository
@@ -34,17 +36,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import java.io.DataOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
-import kotlin.math.roundToInt
-
-private const val APYHUB_REMOVE_BG_URL =
-    "https://api.eu.apyhub.com/apyhub/remove-background-from-images/multi-part/download"
 
 class BgStudioViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -56,6 +51,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         LumoraDatabase.getInstance(application).historyDao
     )
     private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao, application)
+    private val backgroundRemovalRepository = BackgroundRemovalRepository()
 
     private var sourceImageB64: String? = null
     private var sourceImageUri: Uri? = null
@@ -122,7 +118,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
 
         viewModelScope.launch {
             if (uiState.mode == BgStudioMode.Remove) {
-                startApyHubRemoveJob(bitmap)
+                startRemoveBackgroundJob(bitmap)
                 return@launch
             }
 
@@ -291,7 +287,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private fun startApyHubRemoveJob(bitmap: Bitmap) {
+    private fun startRemoveBackgroundJob(bitmap: Bitmap) {
         val imageUri = sourceImageUri
         if (imageUri == null) {
             uiState = uiState.copy(status = BgStudioStatus.Error("Upload an image first."))
@@ -303,9 +299,9 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
             generationProgress = 0.25f,
             generationStatusText = "Background removal generating"
         )
-        
+
         val taskId = UUID.randomUUID().toString()
-        
+
         // Send task start notification
         viewModelScope.launch {
             notificationManager.sendTaskStartNotification(
@@ -314,12 +310,12 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 displayName = "Background Remove"
             )
         }
-        
+
         val jobTitle = "BG Remove ${shortTimestamp()}"
         GenerationRepository.addJob(
             ActiveJobInfo(
                 title = jobTitle,
-                subtitle = "Removing background on device...",
+                subtitle = "Removing background...",
                 badgeText = "BG Studio",
                 statusText = "Processing",
                 progressPercent = 0.25f,
@@ -330,34 +326,38 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         )
 
         viewModelScope.launch {
-            val apiResult = withContext(Dispatchers.IO) {
-                runCatching { removeBackgroundWithApyHub(imageUri) }
-            }
+            val resolver = getApplication<Application>().contentResolver
+            val online = getApplication<Application>().hasInternetConnection()
 
-            val output = if (apiResult.isSuccess) {
-                val saved = mediaStorage.saveImageBytes(apiResult.getOrThrow(), mimeType = "image/png")
-                val preview = withContext(Dispatchers.IO) {
-                    runCatching { BitmapFactory.decodeFile(saved.filePath) }.getOrNull()
+            val outcome = backgroundRemovalRepository.removeBackground(
+                resolver = resolver,
+                imageUri = imageUri,
+                decodedBitmap = bitmap,
+                online = online,
+            )
+
+            // Persist the successful cutout, whether from the API or the fallback.
+            val output: Triple<SavedMedia, Bitmap, Boolean> = when (outcome) {
+                is BackgroundRemovalRepository.Outcome.ApiSuccess -> {
+                    val saved = mediaStorage.saveImageBytes(outcome.pngBytes, mimeType = "image/png")
+                    val preview = withContext(Dispatchers.IO) {
+                        runCatching { BitmapFactory.decodeFile(saved.filePath) }.getOrNull()
+                    }
+                    Triple(saved, preview ?: bitmap, false)
                 }
-                Triple(saved, preview ?: bitmap, false)
-            } else {
-                uiState = uiState.copy(
-                    generationProgress = 0.62f,
-                    generationStatusText = "Background removal generating"
-                )
-                GenerationRepository.updateJob(jobTitle) { job ->
-                    job.copy(
-                        progressPercent = 0.62f,
-                        statusText = "Fallback processing",
-                        subtitle = "Finishing background removal on device"
-                    )
+                is BackgroundRemovalRepository.Outcome.FallbackSuccess -> {
+                    GenerationRepository.updateJob(jobTitle) { job ->
+                        job.copy(
+                            progressPercent = 0.62f,
+                            statusText = "On-device processing",
+                            subtitle = "Finishing background removal on device"
+                        )
+                    }
+                    val saved = mediaStorage.saveImageBitmap(outcome.bitmap, mimeType = "image/png")
+                    Triple(saved, outcome.bitmap, true)
                 }
-                val fallback = withContext(Dispatchers.Default) {
-                    runCatching { removeBorderConnectedBackground(bitmap) }
-                }.getOrElse { fallbackError ->
-                    val apiMessage = apiResult.exceptionOrNull()?.message ?: "ApyHub failed."
-                    val fallbackMessage = fallbackError.message ?: "Local fallback failed."
-                    val message = "Could not remove that background. $apiMessage $fallbackMessage"
+                is BackgroundRemovalRepository.Outcome.Failure -> {
+                    val message = outcome.message
                     uiState = uiState.copy(
                         status = BgStudioStatus.Error(message),
                         generationProgress = null,
@@ -374,9 +374,8 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                     )
                     return@launch
                 }
-                val saved = mediaStorage.saveImageBitmap(fallback, mimeType = "image/png")
-                Triple(saved, fallback, true)
             }
+
             val (saved, preview, usedFallback) = output
             historyRepository.addHistory(
                 historyModel = HistoryModel(
@@ -409,13 +408,13 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                 job.copy(
                     progressPercent = 1.0f,
                     statusText = "Completed",
-                    subtitle = if (usedFallback) "Saved with local fallback" else "Saved to history",
+                    subtitle = if (usedFallback) "Saved with on-device removal" else "Saved to history",
                     isCompleted = true,
                     localMediaPath = saved.filePath,
                     imageUrl = saved.filePath,
                 )
             }
-            
+
             // Send task complete notification
             notificationManager.sendTaskCompleteNotification(
                 taskType = TaskNotificationHelper.BG_REMOVE,
@@ -425,63 +424,6 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
             )
         }
     }
-
-    private fun removeBackgroundWithApyHub(imageUri: Uri): ByteArray {
-        val apiKey = BuildConfig.APYHUB_API_KEY
-        if (apiKey.isBlank()) error("Background remover API key is missing.")
-
-        val resolver = getApplication<Application>().contentResolver
-        val mimeType = resolver.getType(imageUri).orEmpty()
-        if (!mimeType.startsWith("image/")) error("Upload an image file only.")
-
-        val boundary = "LumoraBoundary${UUID.randomUUID()}"
-        val lineEnd = "\r\n"
-        val connection = (URL("$APYHUB_REMOVE_BG_URL?output=lumora-bg-${System.currentTimeMillis()}").openConnection() as HttpURLConnection).apply {
-            requestMethod = "POST"
-            setRequestProperty("apy-token", apiKey)
-            setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
-            connectTimeout = 30_000
-            readTimeout = 120_000
-            doInput = true
-            doOutput = true
-        }
-
-        return try {
-            DataOutputStream(connection.outputStream).use { output ->
-                output.writeBytes("--$boundary$lineEnd")
-                output.writeBytes("Content-Disposition: form-data; name=\"image\"; filename=\"source.${extensionForMimeType(mimeType)}\"$lineEnd")
-                output.writeBytes("Content-Type: $mimeType$lineEnd$lineEnd")
-                resolver.openInputStream(imageUri)?.use { input -> input.copyTo(output) }
-                    ?: error("Could not open selected image.")
-                output.writeBytes(lineEnd)
-                output.writeBytes("--$boundary--$lineEnd")
-                output.flush()
-            }
-
-            val responseCode = connection.responseCode
-            val responseBytes = if (responseCode in 200..299) {
-                connection.inputStream.use { it.readBytes() }
-            } else {
-                connection.errorStream?.use { it.readBytes() } ?: ByteArray(0)
-            }
-            if (responseCode !in 200..299) {
-                val detail = responseBytes.toString(Charsets.UTF_8).ifBlank { "HTTP $responseCode" }
-                error("Background remover failed: $detail")
-            }
-            if (responseBytes.isEmpty()) error("Background remover returned an empty image.")
-            responseBytes
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    private fun extensionForMimeType(mimeType: String): String =
-        when (mimeType.lowercase()) {
-            "image/jpeg", "image/jpg" -> "jpg"
-            "image/webp" -> "webp"
-            "image/png" -> "png"
-            else -> "png"
-        }
 
     private suspend fun persistGeneratedImage(payload: String, jobTitle: String, taskId: String, taskType: String, displayName: String) {
         val saved = mediaStorage.saveImageFromPayload(payload)
@@ -556,15 +498,6 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
     }
 
-    private fun outputDimensions(bitmap: Bitmap): Pair<Int, Int> {
-        val aspect = bitmap.width.toFloat() / bitmap.height.toFloat()
-        return if (aspect >= 1f) {
-            1024 to (1024 / aspect).roundToInt().coerceIn(512, 1024)
-        } else {
-            (1024 * aspect).roundToInt().coerceIn(512, 1024) to 1024
-        }
-    }
-
     private fun buildGenerationPrompt(mode: BgStudioMode, prompt: String): String =
         if (mode == BgStudioMode.Replace) {
             val preservation = (uiState.similarity * 100).toInt()
@@ -572,128 +505,6 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         } else {
             "Edit the provided image. Keep the foreground subject exactly the same and remove only the background. Return the subject as a clean transparent PNG cutout."
         }
-
-    private fun removeBorderConnectedBackground(source: Bitmap): Bitmap {
-        val width = source.width
-        val height = source.height
-        val pixels = IntArray(width * height)
-        source.getPixels(pixels, 0, width, 0, 0, width, height)
-
-        val edgeSamples = collectEdgeSamples(pixels, width, height)
-        val background = averageColor(edgeSamples)
-        val threshold = adaptiveBackgroundThreshold(edgeSamples, background)
-        val isBackground = BooleanArray(pixels.size)
-        val queue = IntArray(pixels.size)
-        var head = 0
-        var tail = 0
-
-        fun enqueue(index: Int) {
-            if (!isBackground[index] && colorDistance(pixels[index], background) <= threshold) {
-                isBackground[index] = true
-                queue[tail++] = index
-            }
-        }
-
-        for (x in 0 until width) {
-            enqueue(x)
-            enqueue((height - 1) * width + x)
-        }
-        for (y in 0 until height) {
-            enqueue(y * width)
-            enqueue(y * width + width - 1)
-        }
-
-        while (head < tail) {
-            val index = queue[head++]
-            val x = index % width
-            val y = index / width
-            if (x > 0) enqueue(index - 1)
-            if (x < width - 1) enqueue(index + 1)
-            if (y > 0) enqueue(index - width)
-            if (y < height - 1) enqueue(index + width)
-        }
-
-        val output = IntArray(pixels.size)
-        for (i in pixels.indices) {
-            val alpha = when {
-                isBackground[i] -> 0
-                touchesBackground(i, width, height, isBackground) -> 210
-                nearBackground(i, width, height, isBackground) -> 238
-                else -> android.graphics.Color.alpha(pixels[i])
-            }
-            output[i] = (pixels[i] and 0x00FFFFFF) or (alpha.coerceIn(0, 255) shl 24)
-        }
-        return Bitmap.createBitmap(output, width, height, Bitmap.Config.ARGB_8888)
-    }
-
-    private fun collectEdgeSamples(pixels: IntArray, width: Int, height: Int): IntArray {
-        val samples = ArrayList<Int>((width + height) * 2)
-        val step = ((width + height) / 140).coerceAtLeast(1)
-        for (x in 0 until width step step) {
-            samples.add(pixels[x])
-            samples.add(pixels[(height - 1) * width + x])
-        }
-        for (y in 0 until height step step) {
-            samples.add(pixels[y * width])
-            samples.add(pixels[y * width + width - 1])
-        }
-        return samples.toIntArray()
-    }
-
-    private fun averageColor(colors: IntArray): Int {
-        var r = 0L
-        var g = 0L
-        var b = 0L
-        colors.forEach { color ->
-            r += android.graphics.Color.red(color)
-            g += android.graphics.Color.green(color)
-            b += android.graphics.Color.blue(color)
-        }
-        val count = colors.size.coerceAtLeast(1)
-        return android.graphics.Color.rgb((r / count).toInt(), (g / count).toInt(), (b / count).toInt())
-    }
-
-    private fun adaptiveBackgroundThreshold(edgeSamples: IntArray, background: Int): Int {
-        val averageDistance = edgeSamples
-            .map { colorDistance(it, background) }
-            .average()
-            .takeIf { !it.isNaN() }
-            ?: 42.0
-        return (averageDistance * 1.9).roundToInt().coerceIn(42, 96)
-    }
-
-    private fun colorDistance(first: Int, second: Int): Int {
-        val redMean = (android.graphics.Color.red(first) + android.graphics.Color.red(second)) / 2
-        val red = android.graphics.Color.red(first) - android.graphics.Color.red(second)
-        val green = android.graphics.Color.green(first) - android.graphics.Color.green(second)
-        val blue = android.graphics.Color.blue(first) - android.graphics.Color.blue(second)
-        val weighted = (((512 + redMean) * red * red) shr 8) + 4 * green * green + (((767 - redMean) * blue * blue) shr 8)
-        return kotlin.math.sqrt(weighted.toDouble()).roundToInt()
-    }
-
-    private fun touchesBackground(index: Int, width: Int, height: Int, background: BooleanArray): Boolean {
-        val x = index % width
-        val y = index / width
-        return (x > 0 && background[index - 1]) ||
-            (x < width - 1 && background[index + 1]) ||
-            (y > 0 && background[index - width]) ||
-            (y < height - 1 && background[index + width])
-    }
-
-    private fun nearBackground(index: Int, width: Int, height: Int, background: BooleanArray): Boolean {
-        val x = index % width
-        val y = index / width
-        for (dy in -2..2) {
-            val ny = y + dy
-            if (ny !in 0 until height) continue
-            for (dx in -2..2) {
-                val nx = x + dx
-                if (nx !in 0 until width) continue
-                if (background[ny * width + nx]) return true
-            }
-        }
-        return false
-    }
 
     private fun currentTimestamp(): String =
         SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date())

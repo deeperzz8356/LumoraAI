@@ -20,6 +20,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.deep.lumoraai.core.navigation.ResetLoadingOnLeave
 import com.deep.lumoraai.core.utils.GuestIdentity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -38,8 +39,19 @@ fun AuthRoute(
         viewModel.resetState()
     }
 
+    // Never leave a full-screen auth spinner stuck when the user navigates away
+    // mid sign-in: clear any lingering Loading state on exit.
+    ResetLoadingOnLeave { viewModel.clearLoading() }
+
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
+            if (uiState.isNewAccount) {
+                Toast.makeText(
+                    context,
+                    context.getString(com.deep.lumoraai.R.string.auth_account_created),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
             onNext()
         }
     }

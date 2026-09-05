@@ -8,6 +8,8 @@
 
     <string name="done">Done</string>
 
+    <string name="auth_account_created">Account created successfully! Please log in.</string>
+
     <string name="settings">Settings</string>
 
     <string name="settings_account">Account</string>

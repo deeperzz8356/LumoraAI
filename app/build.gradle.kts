@@ -43,6 +43,11 @@ android {
         )
         buildConfigField(
             "String",
+            "WITHOUTBG_API_KEY",
+            "\"${localProperties.getProperty("WITHOUTBG_API_KEY", "")}\""
+        )
+        buildConfigField(
+            "String",
             "TESTER_EMAILS",
             "\"${localProperties.getProperty("TESTER_EMAILS", "")}\""
         )
@@ -113,7 +118,16 @@ dependencies {
     // OneSignal Push Notifications
     implementation("com.onesignal:OneSignal:5.6.1")
 
+    // Per-app locale support (AppCompatDelegate.setApplicationLocales)
+    implementation("androidx.appcompat:appcompat:1.7.0")
+
+    // ML Kit Subject Segmentation - on-device / offline background removal fallback
+    implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
+
     testImplementation(libs.junit)
+    // Real org.json implementation so JVM unit tests exercise JSON payload
+    // construction instead of the android.jar stub (which throws "not mocked").
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

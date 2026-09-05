@@ -118,6 +118,16 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         (uiState as? SubscriptionUiState.Success)?.let { uiState = it.copy(purchaseMessage = null) }
     }
 
+    /**
+     * Clears any in-progress purchase spinner so it does not remain stuck when
+     * the user navigates away mid-purchase. Safe on navigation-away.
+     */
+    fun clearPurchasingState() {
+        (uiState as? SubscriptionUiState.Success)?.let {
+            if (it.isPurchasing) uiState = it.copy(isPurchasing = false)
+        }
+    }
+
     override fun onCleared() {
         billing.disconnect()
         super.onCleared()

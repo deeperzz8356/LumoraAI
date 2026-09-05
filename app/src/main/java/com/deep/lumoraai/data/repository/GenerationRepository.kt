@@ -168,6 +168,8 @@ class GenerationRepository {
         motionStrength: Int = 65,
         cameraDirection: String? = null,
         duration: Int = 10,
+        aspectRatio: String? = null,
+        style: String? = null,
         developerMode: Boolean = false,
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -191,6 +193,13 @@ class GenerationRepository {
                 put("duration", duration)
                 if (sourceImageB64 != null) put("source_image_b64", sourceImageB64)
                 if (cameraDirection != null) put("camera_direction", cameraDirection)
+                // Structured parameter-mapping (Bugs 3 & 5): the selected aspect ratio and
+                // style are the authoritative carriers to Vertex; the prompt-text hints
+                // built by buildPrompt() remain only as a redundant fallback. Style follows
+                // generateImage()'s convention: omit the default sentinel ("Default") so
+                // no-style requests keep the default/unstyled behavior.
+                if (aspectRatio != null) put("aspect_ratio", aspectRatio)
+                if (style != null && style != "Default") put("style", style)
             }.toString()
 
             OutputStreamWriter(connection.outputStream).use { writer ->
@@ -305,7 +314,19 @@ class GenerationRepository {
         }
     }
 
-    suspend fun addCredits(amount: Int): Result<Int> = withContext(Dispatchers.IO) {
+    /**
+     * Adds credits for a single logical reward/purchase event.
+     *
+     * Idempotency (Bug 4b, isBugCondition4): the caller owns the logical-event
+     * identity and MUST supply a [idempotencyKey] that is STABLE across retries of
+     * the same logical event (so a duplicate delivery does not double-apply) and
+     * DISTINCT across different logical events (so genuinely separate rewards each
+     * apply once). Derive it deterministically from the event, e.g.
+     * "<uid>:daily_reset:<yyyy-MM-dd>" or "<uid>:spin:<year-week>" — never a
+     * fresh per-call/per-retry UUID. The backend (Task 3.5) applies the effect at
+     * most once per key. The key is sent in the JSON body as "idempotency_key".
+     */
+    suspend fun addCredits(amount: Int, idempotencyKey: String): Result<Int> = withContext(Dispatchers.IO) {
         try {
             val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))
             val tokenResult = user.getIdToken(true).await()
@@ -323,6 +344,10 @@ class GenerationRepository {
 
             val jsonInputString = JSONObject().apply {
                 put("amount", amount)
+                // Bug 4b: stable, caller-owned idempotency key so duplicate deliveries
+                // of the SAME logical event do not double-apply, while distinct events
+                // each apply once.
+                put("idempotency_key", idempotencyKey)
             }.toString()
 
             OutputStreamWriter(connection.outputStream).use { writer ->

@@ -181,6 +181,8 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                     sourceImageB64 = null,
                     motionStrength = (uiState.motion * 100).toInt().coerceIn(20, 90),
                     duration = uiState.duration,
+                    aspectRatio = uiState.aspectRatio.label,
+                    style = uiState.selectedStyle.apiStyle,
                     developerMode = isDev,
                 )
                 progressJob.cancel()

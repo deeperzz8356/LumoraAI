@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.deep.lumoraai.core.navigation.ResetLoadingOnLeave
 
 @Composable
 fun SubscriptionRoute(
@@ -13,6 +14,9 @@ fun SubscriptionRoute(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Reset any lingering purchase spinner when leaving this screen.
+    ResetLoadingOnLeave { viewModel.clearPurchasingState() }
 
     SubscriptionScreen(
         uiState = viewModel.uiState,
