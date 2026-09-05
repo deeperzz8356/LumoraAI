@@ -22,6 +22,8 @@ import com.deep.lumoraai.core.utils.isRetriableRateLimit
 import com.deep.lumoraai.core.utils.parseGenerationFailure
 import com.deep.lumoraai.BuildConfig
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -39,6 +41,36 @@ class GenerationRepository {
         private val generationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         private val _activeJobs = MutableStateFlow<List<ActiveJobInfo>>(emptyList())
         val activeJobs: StateFlow<List<ActiveJobInfo>> = _activeJobs.asStateFlow()
+
+        // --- App-wide generation throttle -----------------------------------
+        // The upstream provider (Vertex generate_content) returns a shared-
+        // capacity 429 RESOURCE_EXHAUSTED when several generations hit it in
+        // quick succession. Even though each screen dispatches its own
+        // generations sequentially, independent jobs (text-to-image, video,
+        // background studio) can overlap and burst. This gate serializes ALL
+        // provider-bound generation requests across the whole app and enforces
+        // a minimum spacing between them, so the client never fires a burst.
+        private val generationGate = Mutex()
+        private const val MIN_REQUEST_SPACING_MS = 1_200L
+        @Volatile
+        private var lastRequestStartedAt = 0L
+
+        /**
+         * Runs [block] as the sole in-flight generation request, waiting until at
+         * least [MIN_REQUEST_SPACING_MS] has elapsed since the previous request
+         * started. Serializing here (rather than per-screen) means overlapping
+         * jobs from different features cannot burst the provider.
+         */
+        private suspend fun <T> withGenerationSlot(block: suspend () -> T): T =
+            generationGate.withLock {
+                val now = System.currentTimeMillis()
+                val sinceLast = now - lastRequestStartedAt
+                if (lastRequestStartedAt != 0L && sinceLast < MIN_REQUEST_SPACING_MS) {
+                    delay(MIN_REQUEST_SPACING_MS - sinceLast)
+                }
+                lastRequestStartedAt = System.currentTimeMillis()
+                block()
+            }
 
         fun addJob(job: ActiveJobInfo) {
             _activeJobs.update { it + job }
@@ -437,7 +469,9 @@ class GenerationRepository {
     ): Result<String> {
         var lastRateLimitMessage: String? = null
         repeat(maxAttempts) { index ->
-            when (val outcome = attempt()) {
+            // Each attempt (including retries) goes through the app-wide slot so
+            // concurrent jobs are serialized and spaced apart.
+            when (val outcome = withGenerationSlot { attempt() }) {
                 is GenerationAttempt.Success -> return Result.success(outcome.payload)
                 is GenerationAttempt.Failed -> return Result.failure(Exception(outcome.message))
                 is GenerationAttempt.RateLimited -> {
