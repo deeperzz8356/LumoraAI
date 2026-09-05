@@ -46,7 +46,9 @@ val ImageStyle.promptDirective: String
     }
 
 enum class VideoStyle(val label: String, val promptHint: String, val assetFileName: String) {
-    NoStyle("No Style", "follow only the prompt without applying a preset motion style", "documentaryvideo.png"),
+    // Uses the same local fallback asset as the image "No Style" option
+    // (nostyle.jpg) instead of a random video thumbnail.
+    NoStyle("No Style", "follow only the prompt without applying a preset motion style", "nostyle.jpg"),
     CinematicFilm("Cinematic Film", "movie-quality shots, dramatic lighting, shallow depth of field", "cinematicvideo.png"),
     AnimeAnimation("Anime Animation", "animated anime scenes with expressive movement and backgrounds", "animevideo.png"),
     PhotorealisticLiveAction("Photorealistic Live Action", "realistic humans, environments, physics and camera motion", "photorealitsticvideo.png"),

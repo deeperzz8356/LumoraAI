@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.GenerationRepository
 import com.deep.lumoraai.data.repository.RewardsRepository
@@ -142,6 +143,7 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
                 val autoBalance = grantAutomaticRewards()
                 // Then read the authoritative balance (auto-claim balance wins if present).
                 val backendCredits = autoBalance ?: generationRepository.getCredits().getOrNull()
+                CreditBalanceStore.set(backendCredits)
                 uiState = CreditsUiState.Success(
                     credits = backendCredits ?: 0,
                     isDeveloperMode = false,
@@ -247,6 +249,8 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
             val newCredits = reward2.balance ?: run {
                 (generationRepository.getCredits().getOrNull() ?: (currentState.credits + awarded))
             }
+            // Publish so the header (and any other screen) reflects earned credits.
+            CreditBalanceStore.set(newCredits)
 
             uiState = (uiState as? CreditsUiState.Success ?: currentState).copy(
                 credits = newCredits,

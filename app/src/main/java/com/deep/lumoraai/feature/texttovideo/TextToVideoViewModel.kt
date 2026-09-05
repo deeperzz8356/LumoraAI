@@ -11,6 +11,7 @@ import com.deep.lumoraai.R
 import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
@@ -205,6 +206,9 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                 }
             }
             uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = null)
+            // Re-fetch the authoritative balance so the header reflects the
+            // credits the server deducted for this generation.
+            if (completed > 0) CreditBalanceStore.refresh()
         }
     }
 
@@ -307,7 +311,9 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             result = generationRepository.getCredits()
         }
         // Gate on the SERVER balance only (see TextToImageViewModel for rationale).
-        return result.getOrNull()
+        val credits = result.getOrNull()
+        CreditBalanceStore.set(credits)
+        return credits
     }
 
     private fun buildPrompt(): String {

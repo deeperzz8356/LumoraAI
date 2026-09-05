@@ -1,6 +1,7 @@
 package com.deep.lumoraai.feature.home
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -16,6 +17,12 @@ fun HomeRoute(
     notificationViewModel: NotificationViewModel = hiltViewModel()
 ) {
     val unreadCount by notificationViewModel.unreadCount.collectAsState()
+
+    // Refresh the balance every time Home is (re)entered so the header reflects
+    // deductions/rewards that happened on other screens.
+    LaunchedEffect(Unit) {
+        homeViewModel.refreshCredits()
+    }
 
     HomeScreen(
         uiState = homeViewModel.uiState,

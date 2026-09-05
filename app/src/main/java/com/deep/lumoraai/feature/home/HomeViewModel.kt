@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.core.utils.GuestIdentity
 import com.deep.lumoraai.core.utils.LocalCreditBalance
 import com.deep.lumoraai.data.local.room.LumoraDatabase
@@ -34,7 +35,25 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         observeHomeData()
+        observeCreditStore()
         loadCredits()
+    }
+
+    /**
+     * Reflect the app-wide credit balance live. Any action that changes credits
+     * (generation, reward, purchase, deduction) publishes to CreditBalanceStore,
+     * so the header updates in real time instead of showing a stale value.
+     */
+    private fun observeCreditStore() {
+        viewModelScope.launch {
+            CreditBalanceStore.balance.collect { stored ->
+                if (stored == null) return@collect
+                val isDev = appPreferences.isDeveloperModeEnabled()
+                val credits = if (isDev) GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY else stored
+                latestCredits = credits
+                (uiState as? HomeUiState.Success)?.let { uiState = it.copy(credits = credits) }
+            }
+        }
     }
 
     private fun observeHomeData() {
@@ -77,6 +96,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 LocalCreditBalance.maxWith(getApplication(), remoteCredits)
             }
             latestCredits = credits
+            // Publish to the app-wide store so all screens (and this header) stay
+            // in sync; for non-dev users this is the authoritative server balance.
+            if (!isDev) CreditBalanceStore.set(credits)
             val current = uiState
             if (current is HomeUiState.Success) {
                 uiState = current.copy(credits = credits)

@@ -332,6 +332,45 @@ class GenerationRepository {
         }
     }
 
+    /**
+     * Charges the server-defined cost for a named billable action (server prices
+     * it; the client cannot set the amount). Used for on-device actions like
+     * background removal that don't flow through a generation endpoint.
+     * Returns the new balance on success, or a failure (e.g. HTTP 402 insufficient).
+     */
+    suspend fun deductForAction(action: String): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))
+            val idToken = user.getIdToken(true).await().token
+                ?: return@withContext Result.failure(Exception("Failed to get ID token"))
+
+            val connection = (URL("https://lumoraai-backend-rlcy.onrender.com/api/v1/credits/deduct")
+                .openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                setRequestProperty("Content-Type", "application/json")
+                setRequestProperty("Authorization", "Bearer $idToken")
+                setRequestProperty("x-user-id", user.uid)
+                doOutput = true
+                connectTimeout = 15000
+                readTimeout = 15000
+            }
+            OutputStreamWriter(connection.outputStream).use { it.write(JSONObject().put("action", action).toString()) }
+
+            val code = connection.responseCode
+            val body = connection.readResponseBody()
+            if (code == HttpURLConnection.HTTP_OK) {
+                val json = JSONObject(body)
+                Result.success(json.optInt("balance"))
+            } else if (code == 402) {
+                Result.failure(Exception("Insufficient credits."))
+            } else {
+                Result.failure(Exception(body.parseApiMessage() ?: "Could not charge credits (HTTP $code)."))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getCredits(): Result<Int> = withContext(Dispatchers.IO) {
         try {
             val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))

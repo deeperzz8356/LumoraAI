@@ -23,6 +23,7 @@ import com.deep.lumoraai.data.model.ActiveJobInfo
 import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.data.model.SavedMedia
 import com.deep.lumoraai.core.network.hasInternetConnection
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.AuthRepository
 import com.deep.lumoraai.data.repository.BackgroundRemovalRepository
@@ -118,7 +119,25 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
 
         viewModelScope.launch {
             if (uiState.mode == BgStudioMode.Remove) {
-                startRemoveBackgroundJob(bitmap)
+                // Background removal costs 1 credit. Gate on the server balance
+                // before doing the (on-device / API) work, unless in dev mode.
+                val isDev = appPreferences.isDeveloperModeEnabled()
+                if (!ensureTrialUser()) {
+                    uiState = uiState.copy(status = BgStudioStatus.Error("Could not start your free trial. Please try again."))
+                    return@launch
+                }
+                if (!isDev) {
+                    val credits = fetchCreditsWithSync()
+                    if (credits == null) {
+                        uiState = uiState.copy(status = BgStudioStatus.Error("Could not verify credits. Check your connection and try again."))
+                        return@launch
+                    }
+                    if (!GenerationGate.canGenerateImage(credits, isDev)) {
+                        uiState = uiState.copy(status = BgStudioStatus.TrialExpired)
+                        return@launch
+                    }
+                }
+                startRemoveBackgroundJob(bitmap, developerMode = isDev)
                 return@launch
             }
 
@@ -175,7 +194,9 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
             authRepository.syncCurrentUser()
             result = generationRepository.getCredits()
         }
-        return result.getOrNull()
+        val credits = result.getOrNull()
+        CreditBalanceStore.set(credits)
+        return credits
     }
 
     private fun startBackgroundJob(
@@ -287,7 +308,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private fun startRemoveBackgroundJob(bitmap: Bitmap) {
+    private fun startRemoveBackgroundJob(bitmap: Bitmap, developerMode: Boolean = false) {
         val imageUri = sourceImageUri
         if (imageUri == null) {
             uiState = uiState.copy(status = BgStudioStatus.Error("Upload an image first."))
@@ -373,6 +394,15 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                         errorMessage = message
                     )
                     return@launch
+                }
+            }
+
+            // Charge 1 credit for a successful background removal (server-priced).
+            // Removal runs on-device/via a third-party API, so it does not flow
+            // through a generation endpoint that would deduct — charge explicitly.
+            if (!developerMode) {
+                generationRepository.deductForAction("background_removal").getOrNull()?.let { balance ->
+                    CreditBalanceStore.set(balance)
                 }
             }
 

@@ -11,6 +11,7 @@ import com.deep.lumoraai.core.notification.NotificationManager
 import com.deep.lumoraai.core.notification.TaskNotificationHelper
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -205,6 +206,9 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                 }
             }
             uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = null)
+            // Re-fetch the authoritative balance so the header reflects the
+            // credits the server deducted for this batch.
+            if (completed > 0) CreditBalanceStore.refresh()
             if (completed > 1) {
                 LumoraNotificationCenter.notifyCompletion(
                     context = getApplication<Application>(),
@@ -296,7 +300,9 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         // local value pass the affordability check even when the server would
         // reject, producing a confusing start-then-fail. The server is the
         // single source of truth for spendable credits.
-        return result.getOrNull()
+        val credits = result.getOrNull()
+        CreditBalanceStore.set(credits)
+        return credits
     }
 
     private fun buildPrompt(): String {

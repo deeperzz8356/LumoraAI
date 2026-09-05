@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.core.utils.LumoraNotificationCenter
 import com.deep.lumoraai.data.local.room.LumoraDatabase
 import com.deep.lumoraai.data.model.ActiveJobInfo
@@ -105,7 +106,9 @@ class CreateHubViewModel(application: Application) : AndroidViewModel(applicatio
             result = generationRepository.getCredits()
         }
         // Gate on the SERVER balance only (see TextToImageViewModel for rationale).
-        return result.getOrNull()
+        val credits = result.getOrNull()
+        CreditBalanceStore.set(credits)
+        return credits
     }
 
     private suspend fun ensureTrialUser(): Boolean {
