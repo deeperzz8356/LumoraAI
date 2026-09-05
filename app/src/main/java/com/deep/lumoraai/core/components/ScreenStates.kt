@@ -1,13 +1,6 @@
 package com.deep.lumoraai.core.components
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,8 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.ui.theme.tokens.Spacing
@@ -34,38 +25,14 @@ import androidx.compose.ui.res.stringResource
 
 @Composable
 fun AppLoadingScreen(modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "appLoader")
-    val rotation = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 900, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "appLoaderRotation"
-    )
+    // No spinner on screen navigation. The brief Loading state (local reads /
+    // cached data) now renders just the screen background, so switching screens
+    // is instant with no loader flash. Content appears the moment data is ready.
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF081020)),
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(modifier = Modifier.size(46.dp)) {
-            val stroke = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
-            drawCircle(
-                color = Color.White.copy(alpha = 0.10f),
-                radius = size.minDimension / 2f - stroke.width / 2f,
-                style = stroke
-            )
-            drawArc(
-                color = Color(0xFFD6FF2F),
-                startAngle = rotation.value - 90f,
-                sweepAngle = 280f,
-                useCenter = false,
-                style = stroke
-            )
-        }
-    }
+            .background(Color(0xFF081020))
+    )
 }
 
 @Composable
