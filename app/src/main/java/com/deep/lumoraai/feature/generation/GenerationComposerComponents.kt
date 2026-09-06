@@ -104,11 +104,12 @@ enum class GenerationAspectRatio(
     val width: Int,
     val height: Int,
     val promptHint: String,
+    @androidx.annotation.StringRes val descriptionRes: Int,
 ) {
-    Portrait("2:3", "Portrait", 1024, 1536, "vertical 2:3 portrait composition"),
-    Story("9:16", "Story", 1080, 1920, "vertical 9:16 story composition"),
-    Square("1:1", "Square", 1024, 1024, "centered 1:1 square composition"),
-    Landscape("16:9", "Wide", 1536, 864, "wide 16:9 landscape composition");
+    Portrait("2:3", "Portrait", 1024, 1536, "vertical 2:3 portrait composition", com.deep.lumoraai.R.string.ui_ratio_portrait),
+    Story("9:16", "Story", 1080, 1920, "vertical 9:16 story composition", com.deep.lumoraai.R.string.ui_ratio_story),
+    Square("1:1", "Square", 1024, 1024, "centered 1:1 square composition", com.deep.lumoraai.R.string.ui_ratio_square),
+    Landscape("16:9", "Wide", 1536, 864, "wide 16:9 landscape composition", com.deep.lumoraai.R.string.ui_ratio_wide);
 
     val displayLabel: String = "$label ${description.lowercase()}"
 
@@ -341,7 +342,7 @@ fun ImageStyleSection(
 ) {
     StyleSection(
         title = stringResource(com.deep.lumoraai.R.string.ui_style),
-        items = ImageStyle.entries.map { StyleItem(it.label, it.promptHint, it.assetFileName, selected == it) { onSelected(it) } },
+        items = ImageStyle.entries.map { StyleItem(it.labelRes, it.descriptionRes, it.assetFileName, selected == it) { onSelected(it) } },
         modifier = modifier
     )
 }
@@ -354,14 +355,14 @@ fun VideoStyleSection(
 ) {
     StyleSection(
         title = stringResource(com.deep.lumoraai.R.string.ui_style),
-        items = VideoStyle.entries.map { StyleItem(it.label, it.promptHint, it.assetFileName, selected == it) { onSelected(it) } },
+        items = VideoStyle.entries.map { StyleItem(it.labelRes, it.descriptionRes, it.assetFileName, selected == it) { onSelected(it) } },
         modifier = modifier
     )
 }
 
 private data class StyleItem(
-    val label: String,
-    val hint: String,
+    @androidx.annotation.StringRes val labelRes: Int,
+    @androidx.annotation.StringRes val descriptionRes: Int,
     val assetFileName: String,
     val selected: Boolean,
     val onClick: () -> Unit,
@@ -399,7 +400,7 @@ private fun StyleCard(item: StyleItem) {
     ) {
         AsyncImage(
             model = assetUri(item.assetFileName),
-            contentDescription = item.label,
+            contentDescription = stringResource(item.labelRes),
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
@@ -431,7 +432,7 @@ private fun StyleCard(item: StyleItem) {
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
-                text = item.label,
+                text = stringResource(item.labelRes),
                 color = if (item.selected) GenerationLime else Color.White,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
@@ -439,11 +440,11 @@ private fun StyleCard(item: StyleItem) {
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = item.hint,
+                text = stringResource(item.descriptionRes),
                 color = GenerationMuted,
                 fontSize = 10.sp,
                 lineHeight = 12.sp,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
         }
@@ -533,7 +534,7 @@ fun GenerationAspectRatioSection(
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(com.deep.lumoraai.R.string.ui_ratio), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Text(selected.displayLabel, color = GenerationLime, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+            Text("${selected.label} ${stringResource(selected.descriptionRes)}", color = GenerationLime, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
         }
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -564,7 +565,7 @@ private fun RatioChip(ratio: GenerationAspectRatio, selected: Boolean, onClick: 
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Text(ratio.label, color = if (selected) GenerationLime else Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-        Text(ratio.description, color = GenerationMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(stringResource(ratio.descriptionRes), color = GenerationMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -1030,7 +1031,7 @@ private fun GeneratedOutputThumb(
         } else if (isVideo) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = if (selected) GenerationLime else Color.White, modifier = Modifier.size(20.dp))
-                Text("Video ${index + 1}", color = if (selected) GenerationLime else Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_video_number_format, index + 1), color = if (selected) GenerationLime else Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         } else {
             AsyncImage(

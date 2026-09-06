@@ -87,12 +87,12 @@ private val Lime = Color(0xFFD6FF2F)
 private val Muted = Color(0xFF94A0B8)
 private val FilterIdle = Color(0xFF111A2D)
 
-private enum class HistoryFilter(val label: String) {
-    All("ALL"),
-    Images("IMAGE"),
-    Videos("VIDEO"),
-    Enhancer("ENHANCER"),
-    Compress("COMPRESS"),
+private enum class HistoryFilter(@androidx.annotation.StringRes val labelRes: Int) {
+    All(com.deep.lumoraai.R.string.ui_filter_all),
+    Images(com.deep.lumoraai.R.string.ui_filter_image),
+    Videos(com.deep.lumoraai.R.string.ui_filter_video),
+    Enhancer(com.deep.lumoraai.R.string.ui_filter_enhancer),
+    Compress(com.deep.lumoraai.R.string.ui_filter_compress),
 }
 
 @Composable
@@ -279,7 +279,7 @@ private fun FilterRow(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = filter.label,
+                    text = stringResource(filter.labelRes).uppercase(),
                     color = if (selected) Lime else Muted,
                     fontSize = 12.sp,
                     lineHeight = 16.sp,
@@ -744,7 +744,7 @@ private fun HistoryEmpty(credits: Int, onNavigate: (String) -> Unit, unreadCount
         FilterRow(selectedFilter = HistoryFilter.All, onSelected = {})
         AppEmptyScreen(
             title = stringResource(com.deep.lumoraai.R.string.ui_no_creations_yet),
-            body = "Generated images and videos will appear here after you create them.",
+            body = stringResource(com.deep.lumoraai.R.string.ui_history_empty_body),
         )
     }
 }

@@ -171,11 +171,11 @@ private fun HomeTopBar(
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
-                val rawName = userName.ifBlank { "guest" }
+                val rawName = userName.ifBlank { stringResource(com.deep.lumoraai.R.string.ui_guest) }
                 // Show at most 8 characters; append "..." only when it's longer.
                 val displayName = if (rawName.length > 8) "${rawName.take(8)}..." else rawName
                 Text(
-                    text = "Hi, $displayName",
+                    text = stringResource(com.deep.lumoraai.R.string.ui_hi_name, displayName),
                     color = Color.White,
                     fontSize = 18.sp,
                     lineHeight = 21.sp,
@@ -184,7 +184,7 @@ private fun HomeTopBar(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "Good Morning",
+                    text = stringResource(com.deep.lumoraai.R.string.ui_good_morning),
                     color = Color.White.copy(alpha = 0.72f),
                     fontSize = 12.sp,
                     lineHeight = 15.sp
@@ -294,12 +294,12 @@ private fun MainCreateGrid(
     Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
         Text(stringResource(com.deep.lumoraai.R.string.ui_create), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreateActionCard("Text → Image", "Dream it", Icons.Default.AutoAwesome, Lime, { onNavigate(Screen.TextToImage.route) }, Modifier.weight(1f))
-            CreateActionCard("Img → Img", "Refine it", Icons.Default.Image, Purple, { onNavigate(Screen.ImageToImage.route) }, Modifier.weight(1f))
+            CreateActionCard(stringResource(com.deep.lumoraai.R.string.ui_create_text_to_image), stringResource(com.deep.lumoraai.R.string.ui_create_dream_it), Icons.Default.AutoAwesome, Lime, { onNavigate(Screen.TextToImage.route) }, Modifier.weight(1f))
+            CreateActionCard(stringResource(com.deep.lumoraai.R.string.ui_create_img_to_img), stringResource(com.deep.lumoraai.R.string.ui_create_refine_it), Icons.Default.Image, Purple, { onNavigate(Screen.ImageToImage.route) }, Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreateActionCard("Img → Video", "Animate it", Icons.Default.Movie, Pink, { onNavigate(Screen.ImageToVideo.route) }, Modifier.weight(1f))
-            CreateActionCard("Text → Video", "Direct it", Icons.Default.PlayArrow, Cyan, { onNavigate(Screen.TextToVideo.route) }, Modifier.weight(1f))
+            CreateActionCard(stringResource(com.deep.lumoraai.R.string.ui_create_img_to_video), stringResource(com.deep.lumoraai.R.string.ui_create_animate_it), Icons.Default.Movie, Pink, { onNavigate(Screen.ImageToVideo.route) }, Modifier.weight(1f))
+            CreateActionCard(stringResource(com.deep.lumoraai.R.string.ui_create_text_to_video), stringResource(com.deep.lumoraai.R.string.ui_create_direct_it), Icons.Default.PlayArrow, Cyan, { onNavigate(Screen.TextToVideo.route) }, Modifier.weight(1f))
         }
     }
 }
@@ -487,7 +487,7 @@ private fun ToolsSection(
         Text(stringResource(com.deep.lumoraai.R.string.ui_tools), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             ToolBentoCard(
-                title = "AI Background\nReplace",
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_ai_bg_replace),
                 subtitle = "",
                 icon = Icons.Default.AutoAwesome,
                 accent = Cyan,
@@ -498,7 +498,7 @@ private fun ToolsSection(
                 prominent = true
             )
             ToolBentoCard(
-                title = "Photo\nEnhancer",
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_photo_enhancer),
                 subtitle = "",
                 icon = Icons.Default.Tune,
                 accent = Purple,
@@ -511,7 +511,7 @@ private fun ToolsSection(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             ToolBentoCard(
-                title = "Promo\nVideos",
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_promo_videos),
                 subtitle = "",
                 icon = Icons.Default.VideoLibrary,
                 accent = Pink,
@@ -522,7 +522,7 @@ private fun ToolsSection(
                 prominent = true
             )
             ToolBentoCard(
-                title = "Remove\nBackground",
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_remove_background),
                 subtitle = "",
                 icon = Icons.Default.PhotoCamera,
                 accent = Color(0xFF7D86FF),
@@ -534,7 +534,7 @@ private fun ToolsSection(
             )
         }
         ToolBentoCard(
-            title = "Compress",
+            title = stringResource(com.deep.lumoraai.R.string.ui_tool_compress),
             subtitle = "",
             icon = Icons.Default.Compress,
             accent = Lime,
@@ -593,7 +593,7 @@ private fun ToolBentoCard(
                         lineHeight = if (prominent) 20.sp else 18.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Start,
-                        maxLines = 2,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis
                     )
                     if (subtitle.isNotBlank()) {

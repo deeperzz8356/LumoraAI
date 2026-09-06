@@ -117,7 +117,7 @@ fun OnboardingTopBar(onSkip: () -> Unit) {
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
-                text = "Skip",
+                text = stringResource(com.deep.lumoraai.R.string.ui_skip),
                 style = MaterialTheme.typography.labelMedium,
                 color = IntroPalette.TextMuted
             )
@@ -243,7 +243,7 @@ fun StepTwoTitle() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            UnderlinedText(text = "Generation", fontSize = 24.sp)
+            UnderlinedText(text = stringResource(com.deep.lumoraai.R.string.ui_onboarding_generation), fontSize = 24.sp)
             Text(stringResource(com.deep.lumoraai.R.string.ui_from_images), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
@@ -270,7 +270,7 @@ fun StepThreeTitle() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            UnderlinedText(text = "from Text", fontSize = 24.sp)
+            UnderlinedText(text = stringResource(com.deep.lumoraai.R.string.ui_onboarding_from_text), fontSize = 24.sp)
             Text(stringResource(com.deep.lumoraai.R.string.ui_prompts), fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
@@ -293,7 +293,7 @@ fun StepFourTitle() {
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
-        UnderlinedText(text = "Face Swap Technology", fontSize = 24.sp)
+        UnderlinedText(text = stringResource(com.deep.lumoraai.R.string.ui_onboarding_face_swap_technology), fontSize = 24.sp)
     }
 }
 
@@ -336,11 +336,11 @@ fun UnderlinedText(text: String, fontSize: androidx.compose.ui.unit.TextUnit, co
 @Composable
 fun StepDescription(step: Int, modifier: Modifier = Modifier) {
     val text = when (step) {
-        1 -> "Create stunning, high-resolution images with hyper realistic details directly from your text prompts using Imagine V5."
-        2 -> "Bring your static images to life by transforming them into high-quality cinematic videos using advanced AI video models."
-        3 -> "Generate high-quality video clips directly from descriptive text prompts in just a few clicks."
-        4 -> "Easily switch faces in your photos using our AI Face Swipe feature. Perfect for creating amusing images or trying different looks."
-        5 -> "Effortlessly remove backgrounds from any image with AI precision and generate clean cutouts in seconds."
+        1 -> stringResource(com.deep.lumoraai.R.string.ui_onboarding_step_1_desc)
+        2 -> stringResource(com.deep.lumoraai.R.string.ui_onboarding_step_2_desc)
+        3 -> stringResource(com.deep.lumoraai.R.string.ui_onboarding_step_3_desc)
+        4 -> stringResource(com.deep.lumoraai.R.string.ui_onboarding_step_4_desc)
+        5 -> stringResource(com.deep.lumoraai.R.string.ui_onboarding_step_5_desc)
         else -> ""
     }
     Text(
@@ -369,7 +369,7 @@ fun StepIllustration(step: Int, modifier: Modifier = Modifier) {
         }
         Image(
             painter = painterResource(id = imageRes),
-            contentDescription = "Step $step",
+            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_onboarding_step_illustration, step),
             modifier = modifier,
             contentScale = ContentScale.Crop
         )

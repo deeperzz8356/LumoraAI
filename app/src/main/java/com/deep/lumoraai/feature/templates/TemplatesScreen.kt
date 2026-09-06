@@ -95,7 +95,7 @@ fun TemplatesScreen(
             when (uiState) {
                 is TemplatesUiState.Loading -> AppLoadingScreen()
                 is TemplatesUiState.Error -> AppErrorScreen(message = uiState.message)
-                is TemplatesUiState.Empty -> AppEmptyScreen(title = stringResource(com.deep.lumoraai.R.string.ui_no_templates), body = "Templates will appear here.")
+                is TemplatesUiState.Empty -> AppEmptyScreen(title = stringResource(com.deep.lumoraai.R.string.ui_no_templates), body = stringResource(com.deep.lumoraai.R.string.ui_templates_will_appear_here))
                 is TemplatesUiState.Success -> TemplatesContent(uiState = uiState, onNavigate = onNavigate, unreadCount = unreadCount)
             }
         }
@@ -108,6 +108,7 @@ private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (Str
     val templates = if (selectedType == "Image") uiState.imageTemplates else uiState.videoTemplates
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
+    val promptCopiedMessage = stringResource(com.deep.lumoraai.R.string.ui_template_prompt_copied)
 
     Column(
         modifier = Modifier
@@ -125,7 +126,7 @@ private fun TemplatesContent(uiState: TemplatesUiState.Success, onNavigate: (Str
                     item = item,
                     onCopy = {
                         clipboard.setText(AnnotatedString(item.prompt))
-                        Toast.makeText(context, "Template prompt copied", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, promptCopiedMessage, Toast.LENGTH_SHORT).show()
                     },
                     onClick = {
                         val route = when {
@@ -166,14 +167,14 @@ private fun TemplateTypeTabs(selectedType: String, onSelected: (String) -> Unit)
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         TemplateTab(
-            label = "Image",
+            label = stringResource(com.deep.lumoraai.R.string.ui_filter_image),
             icon = Icons.Default.Image,
             selected = selectedType == "Image",
             onClick = { onSelected("Image") },
             modifier = Modifier.weight(1f)
         )
         TemplateTab(
-            label = "Video",
+            label = stringResource(com.deep.lumoraai.R.string.ui_filter_video),
             icon = Icons.Default.VideoLibrary,
             selected = selectedType == "Video",
             onClick = { onSelected("Video") },
@@ -247,7 +248,7 @@ private fun TemplateRow(item: TemplateListItem, onCopy: () -> Unit, onClick: () 
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = item.title,
+                    text = stringResource(item.titleRes),
                     color = Color.White,
                     fontSize = 14.sp,
                     lineHeight = 17.sp,
@@ -257,7 +258,7 @@ private fun TemplateRow(item: TemplateListItem, onCopy: () -> Unit, onClick: () 
                 )
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    text = item.subtitle,
+                    text = stringResource(item.subtitleRes),
                     color = Muted,
                     fontSize = 10.sp,
                     lineHeight = 13.sp,

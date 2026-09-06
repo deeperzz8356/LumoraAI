@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -267,18 +268,22 @@ private fun ProfileHero(name: String, subtitle: String, plan: String, avatarUri:
                     if (plan.isNotBlank()) {
                         Text(plan, color = Lime, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val shareChooserTitle = stringResource(com.deep.lumoraai.R.string.ui_share)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         MiniAction(stringResource(com.deep.lumoraai.R.string.ui_edit_profile), Icons.Default.Edit, Lime, onClick = {
                             onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
-                        })
+                        }, modifier = Modifier.weight(1f))
                         MiniAction(stringResource(com.deep.lumoraai.R.string.ui_share), Icons.Default.Share, Purple, onClick = {
                             val text = "${name.ifBlank { "Lumora Creator" }} on LumoraAI"
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, text)
                             }
-                            context.startActivity(Intent.createChooser(intent, "Share profile"))
-                        })
+                            context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+                        }, modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -310,19 +315,19 @@ private fun Avatar(size: androidx.compose.ui.unit.Dp, avatarUri: String? = null)
 }
 
 @Composable
-private fun MiniAction(label: String, icon: ImageVector, accent: Color, onClick: () -> Unit) {
+private fun MiniAction(label: String, icon: ImageVector, accent: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
-            .height(42.dp)
+        modifier = modifier
+            .heightIn(min = 42.dp)
             .clip(RoundedCornerShape(50))
             .background(accent.copy(alpha = 0.14f))
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(7.dp)
     ) {
         Icon(icon, contentDescription = label, tint = accent, modifier = Modifier.size(18.dp))
-        Text(label, color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -487,12 +492,12 @@ private fun PreferencesList(
         border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            PrefRow("Account Settings", Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
-            PrefRow("Privacy Policy", Icons.Default.Info, Color.White)
-            PrefRow("Terms of Service", Icons.Default.Info, Color.White)
-            PrefRow("Delete Account", Icons.Default.Delete, Color(0xFFFF7A7A), onClick = { pendingAction.value = "delete" })
+            PrefRow(stringResource(com.deep.lumoraai.R.string.ui_account_settings), Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
+            PrefRow(stringResource(com.deep.lumoraai.R.string.ui_privacy_policy), Icons.Default.Info, Color.White)
+            PrefRow(stringResource(com.deep.lumoraai.R.string.ui_terms_of_service), Icons.Default.Info, Color.White)
+            PrefRow(stringResource(com.deep.lumoraai.R.string.ui_delete_account), Icons.Default.Delete, Color(0xFFFF7A7A), onClick = { pendingAction.value = "delete" })
             PrefRow(
-                if (isGuest) "Login" else "Sign Out",
+                if (isGuest) stringResource(com.deep.lumoraai.R.string.ui_log_in) else stringResource(com.deep.lumoraai.R.string.ui_sign_out),
                 Icons.AutoMirrored.Filled.ExitToApp,
                 if (isGuest) Color.White else Color(0xFFFF7A7A),
                 onClick = { pendingAction.value = if (isGuest) "login" else "signout" }
@@ -504,16 +509,22 @@ private fun PreferencesList(
         val isLogin = action == "login"
         AlertDialog(
             onDismissRequest = { pendingAction.value = null },
-            title = { Text(if (isDelete) "Delete account?" else if (isLogin) "Login to save your work?" else "Sign out?") },
+            title = {
+                Text(
+                    if (isDelete) stringResource(com.deep.lumoraai.R.string.ui_delete_account_q)
+                    else if (isLogin) stringResource(com.deep.lumoraai.R.string.ui_login_to_save_q)
+                    else stringResource(com.deep.lumoraai.R.string.ui_sign_out_q)
+                )
+            },
             text = {
                 Text(
                     if (isDelete) {
-                        if (isGuest) "This will clear guest data from this device and sign you out."
-                        else "This permanently deletes your account and local data."
+                        if (isGuest) stringResource(com.deep.lumoraai.R.string.ui_delete_guest_data_body)
+                        else stringResource(com.deep.lumoraai.R.string.ui_delete_account_body)
                     } else if (isLogin) {
-                        "Login or create an account to keep your guest creations and continue with the same session."
+                        stringResource(com.deep.lumoraai.R.string.ui_login_dialog_body)
                     } else {
-                        "You will need to sign in again to access your account."
+                        stringResource(com.deep.lumoraai.R.string.ui_sign_out_body)
                     }
                 )
             },
@@ -525,7 +536,9 @@ private fun PreferencesList(
                     }
                 ) {
                     Text(
-                        if (isDelete) "Delete permanently" else if (isLogin) "Login" else "Sign out",
+                        if (isDelete) stringResource(com.deep.lumoraai.R.string.ui_delete_permanently)
+                        else if (isLogin) stringResource(com.deep.lumoraai.R.string.ui_log_in)
+                        else stringResource(com.deep.lumoraai.R.string.ui_sign_out),
                         color = if (isDelete) Color(0xFFFF7A7A) else Color.White
                     )
                 }
@@ -571,7 +584,7 @@ private fun SupportCard() {
                 Text(stringResource(com.deep.lumoraai.R.string.ui_need_help), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Text(stringResource(com.deep.lumoraai.R.string.ui_support_billing_and_account_questions), color = Muted, fontSize = 11.sp, lineHeight = 15.sp)
             }
-            MiniAction("Support", Icons.Default.Info, Cyan, onClick = {})
+            MiniAction(stringResource(com.deep.lumoraai.R.string.ui_support), Icons.Default.Info, Cyan, onClick = {})
         }
     }
 }

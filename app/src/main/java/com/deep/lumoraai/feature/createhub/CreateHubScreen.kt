@@ -148,9 +148,9 @@ fun CreateHubScreen(
                 PromptComposerCard(
                     prompt = prompt,
                     promptHint = if (selectedMode == CreateHubMode.Video) {
-                        "Describe the video you want to generate..."
+                        stringResource(com.deep.lumoraai.R.string.describe_video_to_generate)
                     } else {
-                        "Describe the image you want to create..."
+                        stringResource(com.deep.lumoraai.R.string.ui_describe_image_to_create)
                     },
                     negativePrompt = negativePrompt,
                     isImproving = false,
@@ -260,9 +260,9 @@ fun CreateHubScreen(
     }
 }
 
-private enum class CreateHubMode(val label: String) {
-    Image("Image"),
-    Video("Video")
+private enum class CreateHubMode(@androidx.annotation.StringRes val labelRes: Int) {
+    Image(com.deep.lumoraai.R.string.ui_filter_image),
+    Video(com.deep.lumoraai.R.string.ui_filter_video)
 }
 
 @Composable
@@ -292,7 +292,7 @@ private fun CreateHubModeTabs(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = mode.label,
+                    text = stringResource(mode.labelRes),
                     color = if (selected) Color.Black else GenerationMuted,
                     fontWeight = FontWeight.ExtraBold
                 )

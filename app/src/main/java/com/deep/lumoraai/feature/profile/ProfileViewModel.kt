@@ -36,14 +36,14 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             val savedProfile = ProfilePreferences.load(getApplication(), user)
             val name = savedProfile.fullName.ifBlank { GuestIdentity.displayName(getApplication(), user) }
             val email = "@${savedProfile.username.ifBlank { GuestIdentity.subtitle(getApplication(), user).removePrefix("@") }}"
-            val plan = if (user.isAnonymous) "Free Tier (Guest)" else ""
+            val plan = if (user.isAnonymous) getApplication<Application>().getString(com.deep.lumoraai.R.string.ui_free_tier_guest) else ""
             listOf(name, email, plan)
         } else {
             val savedProfile = ProfilePreferences.load(getApplication(), null)
             listOf(
                 savedProfile.fullName.ifBlank { GuestIdentity.displayName(getApplication(), null) },
                 "@${savedProfile.username.ifBlank { GuestIdentity.subtitle(getApplication(), null).removePrefix("@") }}",
-                "Guest Preview"
+                getApplication<Application>().getString(com.deep.lumoraai.R.string.ui_guest_preview)
             )
         }
 
