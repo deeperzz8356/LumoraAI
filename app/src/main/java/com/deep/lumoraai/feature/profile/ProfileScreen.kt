@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -168,7 +169,7 @@ private fun ProfileContent(
 
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
             DashboardCard("${generations.size}", stringResource(com.deep.lumoraai.R.string.ui_my_creations), Icons.Default.GridView, Purple, { onNavigate(Screen.History.route) }, Modifier.weight(1f))
-            ShortcutCard(stringResource(com.deep.lumoraai.R.string.ui_subscription), "Elite Pro", Icons.AutoMirrored.Filled.ReceiptLong, Pink, { onNavigate(Screen.Subscription.route) }, Modifier.weight(1f))
+            ShortcutCard(stringResource(com.deep.lumoraai.R.string.ui_subscription), stringResource(com.deep.lumoraai.R.string.ui_plan_elite_pro), Icons.AutoMirrored.Filled.ReceiptLong, Pink, { onNavigate(Screen.Subscription.route) }, Modifier.weight(1f))
         }
 
         CreationsSection(generations = generations, onNavigate = onNavigate)
@@ -187,13 +188,13 @@ private fun ProfileContent(
 private fun CreditsOverviewCard(credits: Int, onNavigate: (String) -> Unit) {
     Surface(
         onClick = { onNavigate(Screen.Credits.route) },
-        modifier = Modifier.fillMaxWidth().height(118.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
         color = ProfileCard,
         border = BorderStroke(1.dp, Lime.copy(alpha = 0.38f))
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -201,7 +202,7 @@ private fun CreditsOverviewCard(credits: Int, onNavigate: (String) -> Unit) {
             Column(modifier = Modifier.weight(1f).padding(end = 6.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(stringResource(com.deep.lumoraai.R.string.ui_lum_credits), color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Text("$credits", color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_top_up_and_manage_packs), color = Lime, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_top_up_and_manage_packs), color = Lime, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold)
             }
             MiniAction(stringResource(com.deep.lumoraai.R.string.ui_top_up), Icons.Default.Add, Cyan, onClick = { onNavigate(Screen.Credits.route) })
         }
@@ -250,12 +251,12 @@ private fun ProfileHero(name: String, subtitle: String, plan: String, avatarUri:
     val context = LocalContext.current
     val user = FirebaseAuth.getInstance().currentUser
     Surface(
-        modifier = Modifier.fillMaxWidth().height(190.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
         color = ProfileCard,
         border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(18.dp),
@@ -263,32 +264,30 @@ private fun ProfileHero(name: String, subtitle: String, plan: String, avatarUri:
             ) {
                 Avatar(size = 84.dp, avatarUri = avatarUri)
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(name.ifBlank { "Lumora Creator" }, color = Color.White, fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(subtitle.ifBlank { plan }, color = Muted, fontSize = 14.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(name.ifBlank { stringResource(com.deep.lumoraai.R.string.ui_lumora_creator) }, color = Color.White, fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(subtitle.ifBlank { plan }, color = Muted, fontSize = 14.sp, lineHeight = 18.sp)
                     if (plan.isNotBlank()) {
-                        Text(plan, color = Lime, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    val shareChooserTitle = stringResource(com.deep.lumoraai.R.string.ui_share)
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        MiniAction(stringResource(com.deep.lumoraai.R.string.ui_edit_profile), Icons.Default.Edit, Lime, onClick = {
-                            onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
-                        }, modifier = Modifier.weight(1f))
-                        MiniAction(stringResource(com.deep.lumoraai.R.string.ui_share), Icons.Default.Share, Purple, onClick = {
-                            val text = "${name.ifBlank { "Lumora Creator" }} on LumoraAI"
-                            val intent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, text)
-                            }
-                            context.startActivity(Intent.createChooser(intent, shareChooserTitle))
-                        }, modifier = Modifier.weight(1f))
+                        Text(plan, color = Lime, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
-            Box(modifier = Modifier.align(Alignment.BottomEnd).width(34.dp).height(2.dp).background(Lime))
-            Box(modifier = Modifier.align(Alignment.BottomEnd).padding(end = 34.dp).width(34.dp).height(2.dp).background(Purple))
+            val shareChooserTitle = stringResource(com.deep.lumoraai.R.string.ui_share)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                MiniAction(stringResource(com.deep.lumoraai.R.string.ui_edit_profile), Icons.Default.Edit, Lime, onClick = {
+                    onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
+                }, modifier = Modifier.weight(1f))
+                MiniAction(stringResource(com.deep.lumoraai.R.string.ui_share), Icons.Default.Share, Purple, onClick = {
+                    val text = "${name.ifBlank { "Lumora Creator" }} on LumoraAI"
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, text)
+                    }
+                    context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+                }, modifier = Modifier.weight(1f))
+            }
         }
     }
 }
@@ -342,13 +341,13 @@ private fun DashboardCard(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(92.dp),
+        modifier = modifier.defaultMinSize(minHeight = 92.dp),
         shape = CardShape,
         color = ProfileCard,
         border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -372,13 +371,13 @@ private fun ShortcutCard(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(92.dp),
+        modifier = modifier.defaultMinSize(minHeight = 92.dp),
         shape = CardShape,
         color = ProfileCard,
         border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {

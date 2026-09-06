@@ -6,12 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -150,48 +148,34 @@ fun OnboardingBrandMark(modifier: Modifier = Modifier) {
 
 @Composable
 fun StandardStepScreen(currentStep: Int) {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val compactHeight = maxHeight < 620.dp
-        val imageAspectRatio = if (compactHeight) 0.92f else 0.8f
-        val imageTopSpacing = if (compactHeight) 12.dp else 22.dp
-        val descriptionTopSpacing = if (compactHeight) 8.dp else 14.dp
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 22.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        StepTitle(step = currentStep)
 
-        Column(
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 22.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .weight(1f, fill = true)
+                .clip(RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(if (compactHeight) 92.dp else 112.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                StepTitle(step = currentStep)
-            }
-
-            Spacer(modifier = Modifier.height(imageTopSpacing))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(imageAspectRatio)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                StepIllustration(
-                    step = currentStep,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(descriptionTopSpacing))
-
-            StepDescription(step = currentStep)
-            
-            Spacer(modifier = Modifier.weight(1f))
+            StepIllustration(
+                step = currentStep,
+                modifier = Modifier.fillMaxSize()
+            )
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        StepDescription(step = currentStep)
+
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -271,10 +272,10 @@ private fun CreateHubModeTabs(
     onSelected: (CreateHubMode) -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(46.dp)
-            .clip(RoundedCornerShape(12.dp))
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 46.dp)
+                .clip(RoundedCornerShape(12.dp))
             .background(GenerationPanel)
             .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
             .padding(4.dp),
@@ -285,10 +286,10 @@ private fun CreateHubModeTabs(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxSize()
                     .clip(RoundedCornerShape(9.dp))
                     .background(if (selected) GenerationLime else Color.Transparent)
-                    .clickable { onSelected(mode) },
+                    .clickable { onSelected(mode) }
+                    .padding(vertical = 10.dp, horizontal = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

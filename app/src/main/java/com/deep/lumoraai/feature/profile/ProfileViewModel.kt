@@ -36,7 +36,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             val savedProfile = ProfilePreferences.load(getApplication(), user)
             val name = savedProfile.fullName.ifBlank { GuestIdentity.displayName(getApplication(), user) }
             val email = "@${savedProfile.username.ifBlank { GuestIdentity.subtitle(getApplication(), user).removePrefix("@") }}"
-            val plan = if (user.isAnonymous) getApplication<Application>().getString(com.deep.lumoraai.R.string.ui_free_tier_guest) else ""
+            val plan = if (user.isAnonymous) {
+                getApplication<Application>().getString(com.deep.lumoraai.R.string.ui_free_tier_guest)
+            } else {
+                getApplication<Application>().getString(com.deep.lumoraai.R.string.ui_free_tier)
+            }
             listOf(name, email, plan)
         } else {
             val savedProfile = ProfilePreferences.load(getApplication(), null)

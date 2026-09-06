@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -266,7 +267,7 @@ private fun FilterRow(
             val selected = selectedFilter == filter
             Box(
                 modifier = Modifier
-                    .height(48.dp)
+                    .heightIn(min = 40.dp)
                     .clip(RoundedCornerShape(24.dp))
                     .background(if (selected) Lime.copy(alpha = 0.16f) else FilterIdle)
                     .border(
@@ -275,7 +276,7 @@ private fun FilterRow(
                         RoundedCornerShape(24.dp)
                     )
                     .clickable { onSelected(filter) }
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -285,7 +286,7 @@ private fun FilterRow(
                     lineHeight = 16.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    modifier = Modifier.width(androidx.compose.foundation.layout.IntrinsicSize.Min)
+                    maxLines = 2
                 )
             }
         }

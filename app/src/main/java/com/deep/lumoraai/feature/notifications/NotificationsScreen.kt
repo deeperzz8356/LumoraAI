@@ -6,11 +6,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -135,8 +139,22 @@ private fun NotificationsContent(
         )
 
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            QuickActionCard("Queue", "Active renders", Icons.Default.PlayArrow, Pink, { onNavigate(Screen.Queue.route) }, Modifier.weight(1f))
-            QuickActionCard("History", "Finished work", Icons.Default.TaskAlt, Lime, { onNavigate(Screen.History.route) }, Modifier.weight(1f))
+            QuickActionCard(
+                stringResource(com.deep.lumoraai.R.string.ui_queue),
+                stringResource(com.deep.lumoraai.R.string.ui_active_renders),
+                Icons.Default.PlayArrow,
+                Pink,
+                { onNavigate(Screen.Queue.route) },
+                Modifier.weight(1f)
+            )
+            QuickActionCard(
+                stringResource(com.deep.lumoraai.R.string.ui_history),
+                stringResource(com.deep.lumoraai.R.string.ui_finished_work),
+                Icons.Default.TaskAlt,
+                Lime,
+                { onNavigate(Screen.History.route) },
+                Modifier.weight(1f)
+            )
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -184,13 +202,13 @@ private fun EmptyNotifications(
             onMarkAllRead = {}
         )
         Surface(
-            modifier = Modifier.fillMaxWidth().height(136.dp),
+            modifier = Modifier.fillMaxWidth(),
             shape = CardShape,
             color = NotificationCard,
             border = BorderStroke(1.dp, NotificationStroke.copy(alpha = 0.72f))
         ) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(18.dp),
+                modifier = Modifier.fillMaxWidth().padding(18.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -224,6 +242,7 @@ private fun PageTopBar(onBack: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NotificationHero(
     unreadCount: Int,
@@ -232,35 +251,42 @@ private fun NotificationHero(
     onMarkAllRead: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth().height(190.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
         color = NotificationCard,
         border = BorderStroke(1.dp, Lime.copy(alpha = 0.32f))
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
-            Column(modifier = Modifier.fillMaxWidth(0.72f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(if (notificationsEnabled) "Inbox Live" else "Notifications Off", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    if (notificationsEnabled) stringResource(com.deep.lumoraai.R.string.ui_inbox_live)
+                    else stringResource(com.deep.lumoraai.R.string.ui_notifications_off),
+                    color = Lime,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
                 Text(stringResource(com.deep.lumoraai.R.string.ui_unread_count_format, unreadCount), color = Color.White, fontSize = 34.sp, lineHeight = 38.sp, fontWeight = FontWeight.ExtraBold)
                 Text(
-                    if (notificationsEnabled) "Track renders, credits, and account updates."
-                    else "Enable alerts in Settings for generation updates.",
+                    if (notificationsEnabled) stringResource(com.deep.lumoraai.R.string.ui_inbox_live_subtitle)
+                    else stringResource(com.deep.lumoraai.R.string.ui_notifications_off_subtitle),
                     color = Muted,
                     fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    lineHeight = 16.sp
                 )
-            }
-            Row(
-                modifier = Modifier.align(Alignment.BottomStart),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                PillAction("Mark read", Icons.Default.Check, Lime, onMarkAllRead)
-                PillAction("Settings", Icons.Default.Settings, Purple, onSettings)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    PillAction(stringResource(com.deep.lumoraai.R.string.ui_mark_as_read), Icons.Default.Check, Lime, onMarkAllRead)
+                    PillAction(stringResource(com.deep.lumoraai.R.string.ui_settings), Icons.Default.Settings, Purple, onSettings)
+                }
             }
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
                     .size(56.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Cyan.copy(alpha = 0.14f)),
@@ -276,20 +302,20 @@ private fun NotificationHero(
 private fun QuickActionCard(title: String, subtitle: String, icon: ImageVector, accent: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(82.dp),
+        modifier = modifier.defaultMinSize(minHeight = 82.dp),
         shape = CardShape,
         color = NotificationCard,
         border = BorderStroke(1.dp, NotificationStroke.copy(alpha = 0.58f))
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             AccentIcon(icon, accent)
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(title, color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, color = Muted, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold)
+                Text(subtitle, color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
             }
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = accent, modifier = Modifier.size(17.dp))
         }
@@ -330,7 +356,7 @@ private fun NotificationCard(
                         if (!item.isRead) Box(modifier = Modifier.size(7.dp).background(Lime, CircleShape))
                         Text(item.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     }
-                    Text(item.message, color = Muted, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(item.message, color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
                     Text(item.timeLabel, color = Color.White.copy(alpha = 0.48f), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
                 IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
@@ -353,16 +379,16 @@ private fun NotificationCard(
 private fun PillAction(label: String, icon: ImageVector, accent: Color, onClick: () -> Unit) {
     Row(
         modifier = Modifier
-            .height(40.dp)
+            .heightIn(min = 40.dp)
             .clip(RoundedCornerShape(50))
             .background(accent.copy(alpha = 0.14f))
             .clickable(onClick = onClick)
-            .padding(horizontal = 15.dp),
+            .padding(horizontal = 15.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(7.dp)
     ) {
         Icon(icon, contentDescription = label, tint = accent, modifier = Modifier.size(17.dp))
-        Text(label, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
 

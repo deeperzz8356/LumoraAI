@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -116,7 +117,7 @@ private fun SubscriptionContent(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
 ) {
-    val selectedPlan = uiState.plans.firstOrNull { it.id == uiState.selectedPlanId }
+    val selectedPlan = uiState.plans.firstOrNull { it.id == uiState.selectedPlanId }?.let { localizedPlan(it) }
 
     if (uiState.purchaseMessage != null) {
         AlertDialog(
@@ -140,9 +141,9 @@ private fun SubscriptionContent(
         ProHero(isDeveloperMode = uiState.isDeveloperMode)
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            FeatureTile("Faster", "priority runs", Icons.Default.FlashOn, Lime, Modifier.weight(1f))
-            FeatureTile("Storage", "history sync", Icons.Default.CloudDone, Cyan, Modifier.weight(1f))
-            FeatureTile("Tools", "Pro access", Icons.Default.LockOpen, Purple, Modifier.weight(1f))
+            FeatureTile(stringResource(com.deep.lumoraai.R.string.ui_feature_faster), stringResource(com.deep.lumoraai.R.string.ui_feature_faster_sub), Icons.Default.FlashOn, Lime, Modifier.weight(1f))
+            FeatureTile(stringResource(com.deep.lumoraai.R.string.ui_feature_storage), stringResource(com.deep.lumoraai.R.string.ui_feature_storage_sub), Icons.Default.CloudDone, Cyan, Modifier.weight(1f))
+            FeatureTile(stringResource(com.deep.lumoraai.R.string.ui_feature_tools), stringResource(com.deep.lumoraai.R.string.ui_feature_tools_sub), Icons.Default.LockOpen, Purple, Modifier.weight(1f))
         }
 
         Text(stringResource(com.deep.lumoraai.R.string.ui_choose_plan), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
@@ -155,7 +156,7 @@ private fun SubscriptionContent(
         }
         uiState.plans.forEach { plan ->
             SubscriptionPlanCard(
-                plan = plan,
+                plan = localizedPlan(plan),
                 isSelected = plan.id == uiState.selectedPlanId,
                 onClick = { onSelectPlan(plan.id) }
             )
@@ -171,7 +172,7 @@ private fun SubscriptionContent(
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(com.deep.lumoraai.R.string.ui_ready_to_create_more), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        Text(selectedPlan?.name ?: "Select a plan", color = Muted, fontSize = 12.sp)
+                        Text(selectedPlan?.name ?: stringResource(com.deep.lumoraai.R.string.ui_select_a_plan), color = Muted, fontSize = 12.sp)
                     }
                     Text(selectedPlan?.price.orEmpty(), color = Lime, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
                 }
@@ -185,7 +186,7 @@ private fun SubscriptionContent(
                     if (uiState.isPurchasing) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), color = SubBackground, strokeWidth = 2.dp)
                     } else {
-                        Text(if (uiState.isDeveloperMode) "Activate Plan (Dev)" else "Subscribe Now", color = SubBackground, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                        Text(if (uiState.isDeveloperMode) stringResource(com.deep.lumoraai.R.string.ui_activate_plan_dev) else stringResource(com.deep.lumoraai.R.string.ui_subscribe_now), color = SubBackground, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                     }
                 }
             }
@@ -226,20 +227,29 @@ private fun PageTopBar(title: String, subtitle: String, onBack: () -> Unit) {
 @Composable
 private fun ProHero(isDeveloperMode: Boolean) {
     Surface(
-        modifier = Modifier.fillMaxWidth().height(184.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
         color = SubCard,
         border = BorderStroke(1.dp, Lime.copy(alpha = 0.26f))
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
-            Column(modifier = Modifier.fillMaxWidth(0.72f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(com.deep.lumoraai.R.string.ui_lumora_pro), color = Lime, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
                 Text(stringResource(com.deep.lumoraai.R.string.ui_create_without_limits), color = Color.White, fontSize = 29.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold)
-                Text(if (isDeveloperMode) "Developer mode gives unlimited trial access." else "Credits, priority generation, and premium creative workflows.", color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
+                Text(
+                    if (isDeveloperMode) stringResource(com.deep.lumoraai.R.string.ui_sub_hero_dev)
+                    else stringResource(com.deep.lumoraai.R.string.ui_sub_hero_body),
+                    color = Muted,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp
+                )
             }
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
                     .size(58.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Pink.copy(alpha = 0.16f)),
@@ -254,19 +264,19 @@ private fun ProHero(isDeveloperMode: Boolean) {
 @Composable
 private fun FeatureTile(title: String, subtitle: String, icon: ImageVector, accent: Color, modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.height(92.dp),
+        modifier = modifier.defaultMinSize(minHeight = 92.dp),
         shape = CardShape,
         color = SubCard,
         border = BorderStroke(1.dp, SubStroke.copy(alpha = 0.58f))
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
             AccentIcon(icon, accent)
             Column {
-                Text(title, color = Color.White, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, color = Muted, fontSize = 10.sp, lineHeight = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, color = Color.White, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold)
+                Text(subtitle, color = Muted, fontSize = 10.sp, lineHeight = 12.sp)
             }
         }
     }
@@ -323,6 +333,42 @@ private fun SubscriptionPlanCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun localizedPlan(plan: SubscriptionPlan): SubscriptionPlan {
+    return when (plan.id) {
+        "pro_monthly" -> plan.copy(
+            name = stringResource(com.deep.lumoraai.R.string.ui_plan_pro_monthly),
+            billingPeriod = stringResource(com.deep.lumoraai.R.string.ui_per_month),
+            features = listOf(
+                stringResource(com.deep.lumoraai.R.string.ui_plan_monthly_feat_1),
+                stringResource(com.deep.lumoraai.R.string.ui_plan_monthly_feat_2),
+                stringResource(com.deep.lumoraai.R.string.ui_plan_monthly_feat_3),
+            )
+        )
+        "pro_annual" -> plan.copy(
+            name = stringResource(com.deep.lumoraai.R.string.ui_plan_pro_annual),
+            billingPeriod = stringResource(com.deep.lumoraai.R.string.ui_per_year),
+            features = listOf(
+                stringResource(com.deep.lumoraai.R.string.ui_plan_annual_feat_1),
+                stringResource(com.deep.lumoraai.R.string.ui_plan_annual_feat_2),
+                stringResource(com.deep.lumoraai.R.string.ui_plan_annual_feat_3),
+                stringResource(com.deep.lumoraai.R.string.ui_plan_annual_feat_4),
+            )
+        )
+        "elite_pro" -> plan.copy(
+            name = stringResource(com.deep.lumoraai.R.string.ui_plan_elite_pro),
+            billingPeriod = stringResource(com.deep.lumoraai.R.string.ui_per_year),
+            features = listOf(
+                stringResource(com.deep.lumoraai.R.string.ui_plan_elite_feat_1),
+                stringResource(com.deep.lumoraai.R.string.ui_plan_elite_feat_2),
+                stringResource(com.deep.lumoraai.R.string.ui_plan_elite_feat_3),
+                stringResource(com.deep.lumoraai.R.string.ui_plan_elite_feat_4),
+            )
+        )
+        else -> plan
     }
 }
 

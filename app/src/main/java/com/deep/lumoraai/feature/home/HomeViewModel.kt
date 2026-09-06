@@ -62,9 +62,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             GuestIdentity.subtitle(getApplication(), user).removePrefix("@")
         }
         val planLabel = when {
-            user == null -> "Free"
-            user.isAnonymous -> "Guest"
-            else -> "Premium"
+            user == null -> getApplication<Application>().getString(R.string.ui_free_tier)
+            user.isAnonymous -> getApplication<Application>().getString(R.string.ui_plan_guest)
+            else -> getApplication<Application>().getString(R.string.ui_plan_premium)
         }
 
         viewModelScope.launch {

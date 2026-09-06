@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -142,7 +143,7 @@ private fun CreditsContent(
     onClearRewardMessage: () -> Unit,
     onNavigate: (String) -> Unit
 ) {
-    val balanceLabel = if (isDeveloperMode || credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else "$credits"
+    val balanceLabel = if (isDeveloperMode || credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) stringResource(com.deep.lumoraai.R.string.ui_unlimited) else "$credits"
     val showSpinWheel = remember { mutableStateOf(false) }
     val spinReward = rewards.firstOrNull { it.id == "spin" }
 
@@ -173,8 +174,8 @@ private fun CreditsContent(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreditStatCard("Images", "1 credit", Icons.Default.Star, Purple, Modifier.weight(1f))
-            CreditStatCard("Videos", "5 credits", Icons.Default.Bolt, Pink, Modifier.weight(1f))
+            CreditStatCard(stringResource(com.deep.lumoraai.R.string.ui_stat_images), stringResource(com.deep.lumoraai.R.string.ui_credit_cost_one), Icons.Default.Star, Purple, Modifier.weight(1f))
+            CreditStatCard(stringResource(com.deep.lumoraai.R.string.ui_stat_videos), stringResource(com.deep.lumoraai.R.string.ui_credit_cost_five), Icons.Default.Bolt, Pink, Modifier.weight(1f))
         }
 
         if (rewardMessage != null) {
@@ -198,13 +199,13 @@ private fun CreditsContent(
 
         Surface(
             onClick = { onNavigate(Screen.Subscription.route) },
-            modifier = Modifier.fillMaxWidth().height(74.dp),
+            modifier = Modifier.fillMaxWidth(),
             shape = CardShape,
             color = CredCard,
             border = BorderStroke(1.dp, CredStroke.copy(alpha = 0.72f))
         ) {
             Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 14.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -233,9 +234,9 @@ private fun CreditsContent(
         )
 
         Text(stringResource(com.deep.lumoraai.R.string.ui_top_up), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-        CreditPackageCard("Starter", "50 credits", "$4.99", Purple, onBuy = { onBuy(50) })
-        CreditPackageCard("Creator", "150 credits", "$12.99", Lime, highlighted = true, badge = "Popular", onBuy = { onBuy(150) })
-        CreditPackageCard("Studio", "500 credits", "$39.99", Cyan, badge = "Best for video", onBuy = { onBuy(500) })
+        CreditPackageCard(stringResource(com.deep.lumoraai.R.string.ui_pack_starter), stringResource(com.deep.lumoraai.R.string.ui_credits_count_format, 50), "$4.99", Purple, onBuy = { onBuy(50) })
+        CreditPackageCard(stringResource(com.deep.lumoraai.R.string.ui_pack_creator), stringResource(com.deep.lumoraai.R.string.ui_credits_count_format, 150), "$12.99", Lime, highlighted = true, badge = stringResource(com.deep.lumoraai.R.string.ui_pack_popular), onBuy = { onBuy(150) })
+        CreditPackageCard(stringResource(com.deep.lumoraai.R.string.ui_pack_studio), stringResource(com.deep.lumoraai.R.string.ui_credits_count_format, 500), "$39.99", Cyan, badge = stringResource(com.deep.lumoraai.R.string.ui_pack_best_for_video), onBuy = { onBuy(500) })
 
         Spacer(modifier = Modifier.height(2.dp))
     }
@@ -249,7 +250,14 @@ private fun SpinWheelDialog(
     onSpin: () -> Unit,
 ) {
     val wheelColors = listOf(Color(0xFF222B42), Lime, Cyan, Purple, Pink, Color(0xFF7D86FF))
-    val prizeLabels = listOf("Better\nluck", "+2", "+2", "+10", "+25", "+50")
+    val prizeLabels = listOf(
+        stringResource(com.deep.lumoraai.R.string.ui_spin_prize_better_luck),
+        "+2",
+        "+2",
+        "+10",
+        "+25",
+        "+50"
+    )
     var spinning by remember { mutableStateOf(false) }
     var rotationTarget by remember { mutableStateOf(0f) }
     val wheelRotation by animateFloatAsState(
@@ -379,9 +387,9 @@ private fun SpinWheelDialog(
                 ) {
                     Text(
                         when {
-                            spinning -> "Spinning..."
-                            reward.isAvailable -> "Spin Weekly Wheel"
-                            else -> "Weekly Spin Used"
+                            spinning -> stringResource(com.deep.lumoraai.R.string.ui_spinning)
+                            reward.isAvailable -> stringResource(com.deep.lumoraai.R.string.ui_spin_weekly_wheel)
+                            else -> stringResource(com.deep.lumoraai.R.string.ui_weekly_spin_used)
                         },
                         color = if (reward.isAvailable) Color.Black else Muted,
                         fontSize = 15.sp,
@@ -461,13 +469,13 @@ private fun SpinRewardCard(
     Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.fillMaxWidth().height(112.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
         color = Color(0xFF131D34),
         border = BorderStroke(1.dp, Lime.copy(alpha = if (reward.isAvailable) 0.56f else 0.22f))
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(14.dp),
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -484,7 +492,7 @@ private fun SpinRewardCard(
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(reward.title, color = Color.White, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.ExtraBold)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_tap_to_open_the_weekly_wheel_rewards_50_25_10_2_2_or_better_luck), color = Muted, fontSize = 11.sp, lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_tap_to_open_the_weekly_wheel_rewards_50_25_10_2_2_or_better_luck), color = Muted, fontSize = 11.sp, lineHeight = 15.sp)
             }
             Text(reward.actionLabel, color = if (reward.isAvailable) Lime else Muted, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.ExtraBold)
         }
@@ -553,7 +561,7 @@ private fun DayRewardPill(
     }
     Column(
         modifier = modifier
-            .height(58.dp)
+            .defaultMinSize(minHeight = 58.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(color.copy(alpha = if (selected) 0.18f else 0.08f))
             .border(1.dp, color.copy(alpha = if (selected) 0.46f else 0.16f), RoundedCornerShape(12.dp))
@@ -561,7 +569,7 @@ private fun DayRewardPill(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text("D$day", color = color, fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(com.deep.lumoraai.R.string.ui_day_short_format, day), color = color, fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.Bold)
         Text("+$amount", color = Color.White, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
@@ -595,13 +603,13 @@ private fun RewardSummaryTile(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.height(82.dp),
+        modifier = modifier.defaultMinSize(minHeight = 82.dp),
         shape = RoundedCornerShape(12.dp),
         color = Color(0xFF10192D),
         border = BorderStroke(1.dp, CredStroke.copy(alpha = 0.58f))
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -735,20 +743,23 @@ private fun PageTopBar(title: String, subtitle: String, onBack: () -> Unit) {
 @Composable
 private fun BalanceHero(balanceLabel: String, isDeveloperMode: Boolean) {
     Surface(
-        modifier = Modifier.fillMaxWidth().height(176.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
         color = CredCard,
         border = BorderStroke(1.dp, Lime.copy(alpha = 0.32f))
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(com.deep.lumoraai.R.string.ui_current_balance), color = Muted, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(balanceLabel, color = Color.White, fontSize = 40.sp, lineHeight = 44.sp, fontWeight = FontWeight.ExtraBold)
-                Text(if (isDeveloperMode) "Developer mode active" else "LUM credits available", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(if (isDeveloperMode) stringResource(com.deep.lumoraai.R.string.ui_developer_mode_active) else stringResource(com.deep.lumoraai.R.string.ui_lum_credits_available), color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
                     .size(58.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Lime.copy(alpha = 0.14f)),
@@ -763,13 +774,13 @@ private fun BalanceHero(balanceLabel: String, isDeveloperMode: Boolean) {
 @Composable
 private fun CreditStatCard(title: String, value: String, icon: ImageVector, accent: Color, modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.height(82.dp),
+        modifier = modifier.defaultMinSize(minHeight = 82.dp),
         shape = CardShape,
         color = CredCard,
         border = BorderStroke(1.dp, CredStroke.copy(alpha = 0.58f))
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {

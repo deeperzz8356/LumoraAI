@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -125,7 +126,7 @@ private fun AIToolsContent(
                 onClick = { onNavigate(bgStudioRoute("replace")) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(116.dp),
+                    .defaultMinSize(minHeight = 116.dp),
                 prominent = true
             )
             ToolBentoCard(
@@ -136,7 +137,7 @@ private fun AIToolsContent(
                 onClick = { onNavigate(Screen.PhotoEnhance.route) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(116.dp),
+                    .defaultMinSize(minHeight = 116.dp),
                 prominent = true
             )
         }
@@ -152,7 +153,7 @@ private fun AIToolsContent(
                 onClick = { onNavigate(Screen.PromoVideo.route) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(116.dp),
+                    .defaultMinSize(minHeight = 116.dp),
                 prominent = true
             )
             ToolBentoCard(
@@ -163,7 +164,7 @@ private fun AIToolsContent(
                 onClick = { onNavigate(bgStudioRoute("remove")) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(116.dp),
+                    .defaultMinSize(minHeight = 116.dp),
                 prominent = true
             )
         }
@@ -175,7 +176,7 @@ private fun AIToolsContent(
             onClick = { onNavigate(Screen.Compress.route) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(116.dp),
+                    .defaultMinSize(minHeight = 116.dp),
             prominent = true
         )
 
@@ -186,32 +187,33 @@ private fun AIToolsContent(
 @Composable
 private fun AIToolsHero() {
     Surface(
-        modifier = Modifier.fillMaxWidth().height(150.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
         color = AIToolsCard,
         border = BorderStroke(1.dp, Cyan.copy(alpha = 0.36f))
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .background(
                     Brush.horizontalGradient(
                         listOf(AIToolsCard, Color(0xFF122C3A), Color(0xFF251A3E))
                     )
                 )
-                .padding(16.dp)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(0.7f),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 Text(stringResource(com.deep.lumoraai.R.string.ui_studio_tools), color = Lime, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.ExtraBold)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_edit_faster_with_focused_ai_actions), color = Color.White, fontSize = 24.sp, lineHeight = 27.sp, fontWeight = FontWeight.ExtraBold)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_replace_backgrounds_improve_photos_make_promo_clips_and_compress_files), color = Muted, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_edit_faster_with_focused_ai_actions), color = Color.White, fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_replace_backgrounds_improve_photos_make_promo_clips_and_compress_files), color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
             }
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
                     .size(56.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Pink.copy(alpha = 0.18f)),
@@ -299,7 +301,7 @@ private fun ToolBentoCard(
         border = BorderStroke(1.dp, AIToolsStroke.copy(alpha = 0.58f))
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(if (prominent) 14.dp else 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(if (prominent) 14.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(11.dp)
         ) {
@@ -331,9 +333,7 @@ private fun ToolBentoCard(
                     color = Muted,
                     fontSize = if (prominent) 11.sp else 11.sp,
                     lineHeight = if (prominent) 13.sp else 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    fontWeight = FontWeight.Medium
                 )
             }
         }

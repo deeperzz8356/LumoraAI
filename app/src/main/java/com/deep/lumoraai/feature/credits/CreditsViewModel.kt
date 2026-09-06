@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.R
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
@@ -277,25 +278,26 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         val checkInAmount = WEEKLY_CHECK_IN_REWARDS[checkInIndex()]
 
         fun available(value: Boolean) = value && !isDeveloperMode
-        fun label(action: String, value: Boolean) = when {
-            isDeveloperMode -> "Unlimited"
-            value -> action
-            else -> "Claimed"
+        fun label(actionRes: Int, value: Boolean) = when {
+            isDeveloperMode -> getApplication<Application>().getString(R.string.ui_unlimited)
+            value -> getApplication<Application>().getString(actionRes)
+            else -> getApplication<Application>().getString(R.string.ui_action_claimed)
         }
         fun autoLabel(claimed: Boolean) = when {
-            isDeveloperMode -> "Unlimited"
-            claimed -> "Added"
-            else -> "Auto"
+            isDeveloperMode -> getApplication<Application>().getString(R.string.ui_unlimited)
+            claimed -> getApplication<Application>().getString(R.string.ui_action_added)
+            else -> getApplication<Application>().getString(R.string.ui_action_auto)
         }
+        val app = getApplication<Application>()
 
         return listOf(
-            CreditRewardUi(REWARD_SPIN, "Spin the Wheel", "1 free spin resets every week.", "Up to +50", label("Spin", weeklySpinAvailable), available(weeklySpinAvailable)),
-            CreditRewardUi(REWARD_CHECK_IN, "Daily Week Check-in", "Claim today on the 7-day track below.", "+$checkInAmount", label("Claim", checkInAvailable), available(checkInAvailable)),
-            CreditRewardUi(REWARD_DAILY_RESET, "Every Day Reset", "Automatically adds 2 credits when you open the app each day.", "+2", autoLabel(dailyResetClaimed), false, isAutomatic = true),
-            CreditRewardUi(REWARD_SIGNUP, "Signup Bonus", "Automatically adds after account signup.", "+2", autoLabel(signupClaimed), false, isAutomatic = true),
-            CreditRewardUi(REWARD_EMAIL_LOGIN, "Email Login Bonus", "Automatically adds after email login.", "+1", autoLabel(emailLoginClaimed), false, isAutomatic = true),
-            CreditRewardUi(REWARD_REFERRAL, "App Referral", "Referrer earns after a verified Play Store install from their referral link.", "+5", "Verify", false),
-            CreditRewardUi(REWARD_SOCIAL_SHARE, "Social Share", "Earn after a creation is posted to supported social apps.", "+3", "Verify", false),
+            CreditRewardUi(REWARD_SPIN, app.getString(R.string.ui_spin_the_wheel), app.getString(R.string.ui_reward_spin_subtitle), app.getString(R.string.ui_reward_up_to_plus), label(R.string.ui_action_spin, weeklySpinAvailable), available(weeklySpinAvailable)),
+            CreditRewardUi(REWARD_CHECK_IN, app.getString(R.string.ui_reward_check_in_title), app.getString(R.string.ui_reward_check_in_subtitle), "+$checkInAmount", label(R.string.ui_action_claim, checkInAvailable), available(checkInAvailable)),
+            CreditRewardUi(REWARD_DAILY_RESET, app.getString(R.string.ui_reward_daily_reset_title), app.getString(R.string.ui_reward_daily_reset_subtitle), "+2", autoLabel(dailyResetClaimed), false, isAutomatic = true),
+            CreditRewardUi(REWARD_SIGNUP, app.getString(R.string.ui_reward_signup_title), app.getString(R.string.ui_reward_signup_subtitle), "+2", autoLabel(signupClaimed), false, isAutomatic = true),
+            CreditRewardUi(REWARD_EMAIL_LOGIN, app.getString(R.string.ui_reward_email_login_title), app.getString(R.string.ui_reward_email_login_subtitle), "+1", autoLabel(emailLoginClaimed), false, isAutomatic = true),
+            CreditRewardUi(REWARD_REFERRAL, app.getString(R.string.ui_reward_referral_title), app.getString(R.string.ui_reward_referral_subtitle), "+5", app.getString(R.string.ui_action_verify), false),
+            CreditRewardUi(REWARD_SOCIAL_SHARE, app.getString(R.string.ui_reward_social_share_title), app.getString(R.string.ui_reward_social_share_subtitle), "+3", app.getString(R.string.ui_action_verify), false),
         )
     }
 

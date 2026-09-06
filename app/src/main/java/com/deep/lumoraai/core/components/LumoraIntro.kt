@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -133,12 +132,10 @@ fun LumoraIntroPrimaryButton(
             when {
                 leadingContent != null -> {
                     Box(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(20.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(modifier = Modifier.offset(y = 2.dp)) {
-                            leadingContent()
-                        }
+                        leadingContent()
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                 }
@@ -232,7 +229,7 @@ fun GoogleBrandIcon(
         val iconSize = 24f
         val scale = minOf(size.width / iconSize, size.height / iconSize)
         val offsetX = (size.width - iconSize * scale) / 2f
-        val offsetY = (size.height - iconSize * scale) / 2f + 1.5f * scale
+        val offsetY = (size.height - iconSize * scale) / 2f
         drawContext.canvas.save()
         drawContext.transform.translate(offsetX, offsetY)
         drawContext.transform.scale(scale, scale)

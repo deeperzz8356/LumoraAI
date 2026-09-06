@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -555,17 +557,17 @@ fun GenerationAspectRatioSection(
 private fun RatioChip(ratio: GenerationAspectRatio, selected: Boolean, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(86.dp)
-            .height(60.dp)
+            .widthIn(min = 92.dp)
+            .defaultMinSize(minHeight = 64.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(if (selected) GenerationLime.copy(alpha = 0.15f) else Color(0xFF10182A))
             .border(1.dp, if (selected) GenerationLime.copy(alpha = 0.72f) else Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(ratio.label, color = if (selected) GenerationLime else Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-        Text(stringResource(ratio.descriptionRes), color = GenerationMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(stringResource(ratio.descriptionRes), color = GenerationMuted, fontSize = 10.sp, lineHeight = 13.sp)
     }
 }
 

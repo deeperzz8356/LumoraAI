@@ -134,11 +134,20 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
         val percent = progress?.let { (it * 100).toInt() }
         val done = job.isCompleted
         val route = if (done) Screen.History.route else Screen.Queue.route
+        val mediaLabel = if (job.mediaType.equals("VIDEO", ignoreCase = true)) {
+            appContext.getString(com.deep.lumoraai.R.string.ui_filter_video)
+        } else {
+            appContext.getString(com.deep.lumoraai.R.string.ui_filter_image)
+        }
         return NotificationModel(
             id = "job:${job.title}:${job.statusText}",
-            title = if (done) "${job.title} is ready" else job.title,
-            message = if (done) "Your ${job.mediaType.lowercase()} finished rendering." else "${job.statusText}${percent?.let { " - $it%" }.orEmpty()}",
-            timeLabel = if (done) "Ready now" else "In progress",
+            title = if (done) appContext.getString(com.deep.lumoraai.R.string.notif_job_ready_title, job.title) else job.title,
+            message = if (done) {
+                appContext.getString(com.deep.lumoraai.R.string.notif_job_finished_body, mediaLabel)
+            } else {
+                percent?.let { appContext.getString(com.deep.lumoraai.R.string.notif_progress_percent, job.statusText, it) } ?: job.statusText
+            },
+            timeLabel = if (done) appContext.getString(com.deep.lumoraai.R.string.notif_ready_now) else appContext.getString(com.deep.lumoraai.R.string.notif_in_progress),
             type = NotificationType.Generation,
             route = route,
             progress = if (done) null else progress
@@ -150,7 +159,7 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
             id = event.id,
             title = event.title,
             message = event.message,
-            timeLabel = "Just now",
+            timeLabel = appContext.getString(com.deep.lumoraai.R.string.notif_just_now),
             type = NotificationType.Generation,
             route = event.route
         )
@@ -160,9 +169,13 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
         val isLow = !isUnlimited && balance <= 10
         return NotificationModel(
             id = "credits:$balance",
-            title = if (isLow) "Credits running low" else "Credits balance updated",
-            message = if (isUnlimited) "Developer mode is active with unlimited credits." else "You have $balance LUM credits available.",
-            timeLabel = "Now",
+            title = if (isLow) appContext.getString(com.deep.lumoraai.R.string.notif_credits_low_title) else appContext.getString(com.deep.lumoraai.R.string.notif_credits_updated_title),
+            message = if (isUnlimited) {
+                appContext.getString(com.deep.lumoraai.R.string.notif_credits_dev_body)
+            } else {
+                appContext.getString(com.deep.lumoraai.R.string.notif_credits_balance_body, balance)
+            },
+            timeLabel = appContext.getString(com.deep.lumoraai.R.string.notif_now),
             type = NotificationType.Credits,
             route = if (isLow) Screen.Credits.route else Screen.Profile.route
         )
@@ -171,9 +184,9 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
     private fun disabledNotification(): NotificationModel =
         NotificationModel(
             id = "settings:notifications-disabled",
-            title = "Push notifications are off",
-            message = "Turn them on in Settings to keep up with generation updates.",
-            timeLabel = "Action needed",
+            title = appContext.getString(com.deep.lumoraai.R.string.notif_push_off_title),
+            message = appContext.getString(com.deep.lumoraai.R.string.notif_push_off_body),
+            timeLabel = appContext.getString(com.deep.lumoraai.R.string.notif_action_needed),
             type = NotificationType.Account,
             route = Screen.Settings.route
         )
