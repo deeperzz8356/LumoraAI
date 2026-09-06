@@ -92,7 +92,7 @@ fun PrivacySecurityScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Privacy Settings",
+                    stringResource(com.deep.lumoraai.R.string.ui_privacy_settings),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontSize = 21.sp,
@@ -116,7 +116,7 @@ fun PrivacySecurityScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Security Settings",
+                    stringResource(com.deep.lumoraai.R.string.ui_security_settings),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontSize = 21.sp,
@@ -140,7 +140,7 @@ fun PrivacySecurityScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Data Management",
+                    stringResource(com.deep.lumoraai.R.string.ui_data_management),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontSize = 21.sp,

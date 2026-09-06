@@ -390,7 +390,7 @@ private fun SpinWheelDialog(
                 }
 
                 Text(
-                    "Odds: better luck 40%, +2 credits 30%, +10 credits 15%, +25 credits 5%, +50 credits 1%.",
+                    stringResource(com.deep.lumoraai.R.string.ui_odds_better_luck_40_2_credits_30_10_credits_15_25_credits_5_50_credits),
                     color = Muted,
                     fontSize = 11.sp,
                     lineHeight = 15.sp

@@ -5,6 +5,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.text.TextUtilsCompat
+import java.util.Locale as JavaLocale
 
 private val AppColorScheme = darkColorScheme(
     primary = LumoraPrimary,
@@ -42,7 +47,20 @@ fun LumoraTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    CompositionLocalProvider(LocalSpacing provides LumoraSpacing()) {
+    // Derive the layout direction from the applied locale on every render so a
+    // language change (e.g. to Arabic) reliably lays out RTL, while every LTR
+    // locale stays LTR. The configuration is re-read on recreate, so this
+    // follows the currently applied locale.
+    val localeTag = Locale.current.language
+    val layoutDirection = run {
+        val locale = JavaLocale.forLanguageTag(localeTag)
+        val dir = TextUtilsCompat.getLayoutDirectionFromLocale(locale)
+        if (dir == android.view.View.LAYOUT_DIRECTION_RTL) LayoutDirection.Rtl else LayoutDirection.Ltr
+    }
+    CompositionLocalProvider(
+        LocalSpacing provides LumoraSpacing(),
+        LocalLayoutDirection provides layoutDirection,
+    ) {
         MaterialTheme(
             colorScheme = AppColorScheme,
             typography = LumoraTypography,

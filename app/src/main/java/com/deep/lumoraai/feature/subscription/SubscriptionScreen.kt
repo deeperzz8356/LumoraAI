@@ -148,7 +148,7 @@ private fun SubscriptionContent(
         Text(stringResource(com.deep.lumoraai.R.string.ui_choose_plan), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         if (uiState.billingState is BillingState.Unavailable) {
             Text(
-                "Google Play subscriptions are currently unavailable. Please try again later.",
+                stringResource(com.deep.lumoraai.R.string.ui_google_play_subscriptions_are_currently_unavailable_please_try_again_l),
                 color = Muted,
                 fontSize = 12.sp
             )
@@ -298,7 +298,7 @@ private fun SubscriptionPlanCard(
                     Text(plan.billingPeriod, color = Muted, fontSize = 12.sp)
                     if (plan.highlighted) {
                         Text(
-                            "Best value",
+                            stringResource(com.deep.lumoraai.R.string.ui_best_value),
                             color = Color.Black,
                             fontSize = 10.sp,
                             lineHeight = 12.sp,

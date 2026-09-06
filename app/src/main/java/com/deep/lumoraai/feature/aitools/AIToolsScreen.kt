@@ -107,7 +107,7 @@ private fun AIToolsContent(
         AIToolsHero()
 
         Text(
-            "Quick Tools",
+            stringResource(com.deep.lumoraai.R.string.ui_quick_tools),
             color = Color.White,
             fontSize = 21.sp,
             fontWeight = FontWeight.ExtraBold,

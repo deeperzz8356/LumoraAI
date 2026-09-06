@@ -86,7 +86,7 @@ fun HelpSupportScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Get in Touch",
+                    stringResource(com.deep.lumoraai.R.string.ui_get_in_touch),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontSize = 21.sp,
@@ -114,7 +114,7 @@ fun HelpSupportScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Resources",
+                    stringResource(com.deep.lumoraai.R.string.ui_resources),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontSize = 21.sp,
@@ -148,7 +148,7 @@ fun HelpSupportScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Report an Issue",
+                    stringResource(com.deep.lumoraai.R.string.ui_report_an_issue),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontSize = 21.sp,
@@ -169,13 +169,13 @@ fun HelpSupportScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            "Report a Bug",
+                            stringResource(com.deep.lumoraai.R.string.ui_report_a_bug),
                             style = MaterialTheme.typography.titleMedium,
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "Tell us about any issues you've encountered so we can fix them quickly",
+                            stringResource(com.deep.lumoraai.R.string.ui_tell_us_about_any_issues_you_ve_encountered_so_we_can_fix_them_quickly),
                             style = MaterialTheme.typography.bodySmall,
                             color = Muted
                         )
@@ -192,7 +192,7 @@ fun HelpSupportScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Contact Info",
+                    stringResource(com.deep.lumoraai.R.string.ui_contact_info),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     fontSize = 21.sp,

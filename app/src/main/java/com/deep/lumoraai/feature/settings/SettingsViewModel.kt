@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.BuildConfig
+import com.deep.lumoraai.core.localization.LocaleManager
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.combine
@@ -40,8 +41,21 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             isDarkMode = repository.isDarkMode,
             notificationsEnabled = repository.notificationsEnabled,
             highQualityMode = repository.highQualityMode,
-            selectedLanguage = repository.localeCode
+            selectedLanguage = LocaleManager.currentAppLocale(repository.localeCode)
         )
+    }
+
+    /**
+     * Re-reads the currently applied locale so the language subtitle stays in
+     * sync after the user returns from the language picker. The ViewModel can
+     * survive an Activity recreate(), so its one-time [init] snapshot goes stale;
+     * calling this on screen resume refreshes it without a manual reload.
+     */
+    fun refreshLanguage() {
+        val active = LocaleManager.currentAppLocale(repository.localeCode)
+        if (active != uiState.selectedLanguage) {
+            uiState = uiState.copy(selectedLanguage = active)
+        }
     }
 
     fun toggleDarkMode(enabled: Boolean) {

@@ -29,13 +29,17 @@ fun LanguageRoute(
         onDone = {
             viewModel.persistSelection()
             val selected = (viewModel.uiState as? LanguageUiState.Success)?.selectedLanguageCode ?: "en"
-            // Apply app-wide via the AndroidX per-app locale API so the locale
-            // survives process restarts and future activities pick it up.
-            LocaleManager.applyAppLocale(selected)
+            // Route through the single coordinator so all three persistence paths
+            // (SharedPreferences, DataStore, per-app locale) agree BEFORE any
+            // refresh happens (Bug C). The synchronous stores are written before
+            // this returns, so attachBaseContext re-reads the fresh locale.
+            LocaleManager.setLocale(context, selected)
             // The host is a ComponentActivity (not AppCompatActivity), so it is
-            // not auto-recreated by the delegate. Recreate it explicitly to make
-            // the change visible immediately; attachBaseContext re-reads the
-            // freshly persisted locale.
+            // not auto-recreated by the delegate. Trigger a single, deterministic
+            // recreation AFTER the locale is fully applied and persisted, removing
+            // the race between the async delegate apply and a manual recreate()
+            // (Bug B). attachBaseContext re-reads the freshly persisted locale so
+            // the whole UI (RTL included for Arabic) re-renders in the new language.
             (context as? Activity)?.recreate()
             checkAndRequestNotificationPermission(
                 context = context,

@@ -54,7 +54,9 @@ class LanguageViewModel(application: Application) : AndroidViewModel(application
 
     fun persistSelection() {
         val state = uiState as? LanguageUiState.Success ?: return
-        settingsRepository.localeCode = state.selectedLanguageCode
+        // Route through the single coordinator so SharedPreferences, DataStore,
+        // and the per-app locale all agree by construction (Bug C).
+        LocaleManager.setLocale(getApplication(), state.selectedLanguageCode)
     }
 
     fun updateSearchQuery(query: String) {

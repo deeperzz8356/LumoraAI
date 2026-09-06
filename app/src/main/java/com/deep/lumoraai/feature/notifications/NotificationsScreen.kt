@@ -142,7 +142,7 @@ private fun NotificationsContent(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(com.deep.lumoraai.R.string.ui_inbox), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
             Text(
-                "Restore dismissed",
+                stringResource(com.deep.lumoraai.R.string.ui_restore_dismissed),
                 color = Lime,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
@@ -201,7 +201,7 @@ private fun EmptyNotifications(
             }
         }
         Text(
-            "Restore dismissed notifications",
+            stringResource(com.deep.lumoraai.R.string.ui_restore_dismissed_notifications),
             color = Lime,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
@@ -240,7 +240,7 @@ private fun NotificationHero(
         Box(modifier = Modifier.fillMaxSize().padding(18.dp)) {
             Column(modifier = Modifier.fillMaxWidth(0.72f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(if (notificationsEnabled) "Inbox Live" else "Notifications Off", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-                Text("$unreadCount unread", color = Color.White, fontSize = 34.sp, lineHeight = 38.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(com.deep.lumoraai.R.string.ui_unread_count_format, unreadCount), color = Color.White, fontSize = 34.sp, lineHeight = 38.sp, fontWeight = FontWeight.ExtraBold)
                 Text(
                     if (notificationsEnabled) "Track renders, credits, and account updates."
                     else "Enable alerts in Settings for generation updates.",

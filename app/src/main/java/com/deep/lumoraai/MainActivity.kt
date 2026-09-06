@@ -110,9 +110,14 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        val code = newBase.getSharedPreferences("lumora_settings", Context.MODE_PRIVATE)
-            .getString("locale_code", "en")
-        super.attachBaseContext(LocaleManager.apply(newBase, code ?: "en"))
+        // Read the locale through the single coordinator precedence: the applied
+        // per-app locale wins, falling back to the persisted SharedPreferences
+        // value. This guarantees the first frame agrees with what the user last
+        // selected across all persistence paths.
+        val persisted = newBase.getSharedPreferences("lumora_settings", Context.MODE_PRIVATE)
+            .getString("locale_code", "en") ?: "en"
+        val code = LocaleManager.currentAppLocale(persisted)
+        super.attachBaseContext(LocaleManager.apply(newBase, code))
     }
 
     override fun onNewIntent(intent: Intent) {
