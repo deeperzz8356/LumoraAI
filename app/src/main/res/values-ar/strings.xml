@@ -68,6 +68,7 @@
     <string name="ui_dismiss">تجاهل</string>
     <string name="ui_done">تم</string>
     <string name="ui_download">تنزيل</string>
+    <string name="ui_downloading">جارٍ التنزيل…</string>
     <string name="ui_download_now">نزّل الآن</string>
     <string name="ui_edit_faster_with_focused_ai_actions">حرّر بشكل أسرع بإجراءات ذكاء اصطناعي مركّزة</string>
     <string name="ui_email_address">عنوان البريد الإلكتروني</string>
@@ -281,6 +282,7 @@
     <string name="loading">جارٍ التحميل</string>
     <string name="full_name_required">الاسم الكامل مطلوب.</string>
     <string name="username_invalid">يجب أن يتكوّن اسم المستخدم من 3 إلى 30 حرفًا وأن يستخدم أحرفًا أو أرقامًا أو نقاطًا أو شرطات سفلية.</string>
+    <string name="username_taken">اسم المستخدم هذا مُستخدَم بالفعل. يُرجى اختيار اسم آخر.</string>
     <string name="profile_saved">تم حفظ الملف الشخصي بنجاح.</string>
     <string name="profile_save_failed">تعذّر حفظ الملف الشخصي. يُرجى المحاولة مرة أخرى.</string>
     <string name="crop_profile_image">قص صورة الملف الشخصي</string>

@@ -45,7 +45,10 @@ fun TextToImageRoute(
         onCreativityChanged = viewModel::setCreativity,
         onGenerationsChanged = viewModel::setGenerations,
         onGenerate = viewModel::generate,
-        onEditResult = viewModel::clearResult,
+        // Editing must keep the generated media visible in-place. The preview is
+        // cleared naturally when the user changes the prompt, so tapping Edit
+        // should only return focus to the editor, not wipe the result.
+        onEditResult = {},
         onDismissError = viewModel::dismissError,
     )
 }

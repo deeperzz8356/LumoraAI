@@ -68,6 +68,7 @@
     <string name="ui_dismiss">Dispensar</string>
     <string name="ui_done">Concluído</string>
     <string name="ui_download">Baixar</string>
+    <string name="ui_downloading">Baixando…</string>
     <string name="ui_download_now">Baixar agora</string>
     <string name="ui_edit_faster_with_focused_ai_actions">Edite mais rápido com ações de IA focadas</string>
     <string name="ui_email_address">Endereço de e-mail</string>
@@ -281,6 +282,7 @@
     <string name="loading">Carregando</string>
     <string name="full_name_required">O nome completo é obrigatório.</string>
     <string name="username_invalid">O nome de usuário deve ter de 3 a 30 caracteres e usar letras, números, pontos ou sublinhados.</string>
+    <string name="username_taken">Esse nome de usuário já está em uso. Escolha outro.</string>
     <string name="profile_saved">Perfil salvo com sucesso.</string>
     <string name="profile_save_failed">Não foi possível salvar o perfil. Tente novamente.</string>
     <string name="crop_profile_image">Recortar imagem de perfil</string>

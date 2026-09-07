@@ -132,20 +132,25 @@ fun EditProfileScreen(
         isSaving = true
         scope.launch {
             try {
-                // Save locally first
+                // Validate the username against the backend BEFORE persisting so
+                // a duplicate can never be saved locally. A CONFLICT surfaces as
+                // an IllegalArgumentException ("Username is already taken.").
+                val backendResult = profileRepository.updateCurrentUserProfile(draftProfile)
+                val conflict = backendResult.exceptionOrNull() as? IllegalArgumentException
+                if (conflict != null) {
+                    Toast.makeText(context, context.getString(R.string.username_taken), Toast.LENGTH_LONG).show()
+                    isSaving = false
+                    return@launch
+                }
+                backendResult.onFailure { error ->
+                    // Non-conflict failures (offline, timeout) shouldn't block the
+                    // local save — the profile still works offline.
+                    android.util.Log.w("ProfileUpdate", "Backend update failed but continuing with local save", error)
+                }
+
+                // Backend accepted (or was unreachable) — persist locally.
                 ProfilePreferences.save(context, user, draftProfile)
-                
-                // Try to update backend (but don't fail if this doesn't work)
-                profileRepository.updateCurrentUserProfile(draftProfile).fold(
-                    onSuccess = { 
-                        // Backend update successful
-                    },
-                    onFailure = { error ->
-                        // Log error but don't show it to user since local save worked
-                        android.util.Log.w("ProfileUpdate", "Backend update failed but local save succeeded", error)
-                    }
-                )
-                
+
                 // Update Firebase user profile if possible
                 if (user != null && !user.isAnonymous) {
                     runCatching {

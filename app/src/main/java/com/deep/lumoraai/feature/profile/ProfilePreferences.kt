@@ -33,10 +33,15 @@ object ProfilePreferences {
     fun load(context: Context, user: FirebaseUser?): EditableProfile {
         val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val fallbackName = GuestIdentity.displayName(context, user)
-        val fallbackUsername = GuestIdentity.subtitle(context, user).removePrefix("@")
+        // Username must start blank by default in Edit Profile. Only surface a
+        // handle the user has explicitly saved; never auto-fill it from the
+        // account email (subtitle returns the full email for real accounts).
+        val savedUsername = prefs.getString(scopedKey(user, KEY_USERNAME), null)
+            ?.ifBlank { null }
+            ?.takeUnless { it.contains('@') }
         return EditableProfile(
             fullName = prefs.getString(scopedKey(user, KEY_FULL_NAME), null)?.ifBlank { null } ?: fallbackName,
-            username = prefs.getString(scopedKey(user, KEY_USERNAME), null)?.ifBlank { null } ?: fallbackUsername,
+            username = savedUsername.orEmpty(),
             email = prefs.getString(scopedKey(user, KEY_EMAIL), null)?.ifBlank { null } ?: user?.email.orEmpty(),
             bio = prefs.getString(scopedKey(user, KEY_BIO), "").orEmpty(),
             location = prefs.getString(scopedKey(user, KEY_LOCATION), "").orEmpty(),

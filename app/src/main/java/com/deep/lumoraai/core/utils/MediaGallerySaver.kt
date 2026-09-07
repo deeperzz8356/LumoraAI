@@ -37,10 +37,21 @@ object MediaGallerySaver {
         runCatching {
             val source = File(filePath)
             if (!source.exists()) error("Media file not found")
+            if (source.length() <= 0L) error("Media file is empty")
 
             val isVideo = mediaType.equals("VIDEO", ignoreCase = true) ||
                 mimeType.startsWith("video/", ignoreCase = true)
-            val displayName = source.name
+            // Guarantee a valid, correctly-extensioned, unique display name.
+            // Compressed clips are always saved as MP4; using the raw source
+            // name risks a missing/incorrect extension that makes the MediaStore
+            // reject the video, which surfaced as "download failed" in History.
+            val extension = if (isVideo) "mp4" else {
+                source.extension.lowercase().takeIf { it.isNotBlank() } ?: "jpg"
+            }
+            val baseName = source.nameWithoutExtension.ifBlank {
+                if (isVideo) "lumora_video" else "lumora_image"
+            }
+            val displayName = "${baseName}_${System.currentTimeMillis()}.$extension"
             val resolver = context.contentResolver
 
             val collection = if (isVideo) {

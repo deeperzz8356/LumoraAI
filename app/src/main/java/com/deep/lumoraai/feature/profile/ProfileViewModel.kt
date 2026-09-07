@@ -99,6 +99,16 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             val user = FirebaseAuth.getInstance().currentUser
             try {
                 if (user != null && !user.isAnonymous) {
+                    // Refresh the session before deleting. A freshly created /
+                    // auto-logged-in account has a valid token, but the cached
+                    // FirebaseUser can be stale enough to trigger a spurious
+                    // "recent login required" check. Reloading and forcing a
+                    // fresh ID token proves the session is live so the delete
+                    // proceeds without forcing the user to sign in again.
+                    runCatching {
+                        user.reload().await()
+                        user.getIdToken(true).await()
+                    }
                     user.delete().await()
                 }
                 clearLocalData()

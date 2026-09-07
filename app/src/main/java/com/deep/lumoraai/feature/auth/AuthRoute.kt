@@ -46,13 +46,18 @@ fun AuthRoute(
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
             if (uiState.isNewAccount) {
+                // Option A: don't drop a freshly created account into the app.
+                // Confirm creation, sign back out, and send the user to the
+                // login form to sign in manually.
                 Toast.makeText(
                     context,
                     context.getString(com.deep.lumoraai.R.string.auth_account_created),
                     Toast.LENGTH_LONG
                 ).show()
+                viewModel.signOutForManualLogin()
+            } else {
+                onNext()
             }
-            onNext()
         }
     }
 

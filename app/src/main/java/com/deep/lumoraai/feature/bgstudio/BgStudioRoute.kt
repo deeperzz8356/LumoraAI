@@ -45,7 +45,8 @@ fun BgStudioRoute(
         onSimilarityChanged = viewModel::setSimilarity,
         onImageSelected = viewModel::loadImage,
         onCreate = viewModel::create,
-        onEditResult = viewModel::clearResult,
+        // Keep the generated media visible in-place while editing.
+        onEditResult = {},
         onDismissError = viewModel::resetStatus,
     )
 }

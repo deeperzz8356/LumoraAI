@@ -138,6 +138,8 @@
 
     <string name="ui_download">Download</string>
 
+    <string name="ui_downloading">Downloading…</string>
+
     <string name="ui_download_now">Download Now</string>
 
     <string name="ui_edit_faster_with_focused_ai_actions">Edit faster with focused AI actions</string>
@@ -563,6 +565,8 @@
     <string name="full_name_required">Full name is required.</string>
 
     <string name="username_invalid">Username must be 3–30 characters and use letters, numbers, dots, or underscores.</string>
+
+    <string name="username_taken">That username is already taken. Please choose another.</string>
 
     <string name="profile_saved">Profile saved successfully.</string>
 

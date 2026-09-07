@@ -68,6 +68,7 @@
     <string name="ui_dismiss">닫기</string>
     <string name="ui_done">완료</string>
     <string name="ui_download">다운로드</string>
+    <string name="ui_downloading">다운로드 중…</string>
     <string name="ui_download_now">지금 다운로드</string>
     <string name="ui_edit_faster_with_focused_ai_actions">집중된 AI 작업으로 더 빠르게 편집하세요</string>
     <string name="ui_email_address">이메일 주소</string>
@@ -281,6 +282,7 @@
     <string name="loading">로딩 중</string>
     <string name="full_name_required">전체 이름은 필수입니다.</string>
     <string name="username_invalid">사용자 이름은 3~30자여야 하며 문자, 숫자, 마침표 또는 밑줄을 사용해야 합니다.</string>
+    <string name="username_taken">이미 사용 중인 사용자 이름입니다. 다른 이름을 선택해 주세요.</string>
     <string name="profile_saved">프로필이 성공적으로 저장되었습니다.</string>
     <string name="profile_save_failed">프로필을 저장할 수 없습니다. 다시 시도해 주세요.</string>
     <string name="crop_profile_image">프로필 이미지 자르기</string>

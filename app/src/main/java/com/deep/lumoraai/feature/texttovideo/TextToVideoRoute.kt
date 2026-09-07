@@ -47,7 +47,8 @@ fun TextToVideoRoute(
         onDurationChanged = viewModel::setDuration,
         onGenerationsChanged = viewModel::setGenerations,
         onGenerate = viewModel::generate,
-        onEditResult = viewModel::clearResult,
+        // Keep the generated media visible in-place while editing.
+        onEditResult = {},
         onDismissError = viewModel::dismissError,
     )
 }

@@ -26,6 +26,16 @@ class AuthViewModel(
     }
 
     /**
+     * Option A sign-up flow: after creating a brand-new account we sign the
+     * user back out so they authenticate manually, then drop them on the
+     * sign-in email form (isSignUp = false) instead of navigating into the app.
+     */
+    fun signOutForManualLogin() {
+        runCatching { auth.signOut() }
+        uiState = AuthUiState.EmailForm(isSignUp = false)
+    }
+
+    /**
      * Clears a stuck full-screen loading state. Only resets when currently
      * Loading so it never clobbers a Success (which drives navigation) or an
      * Error the user still needs to see. Safe to call on navigation-away.

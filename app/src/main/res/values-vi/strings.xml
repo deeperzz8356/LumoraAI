@@ -68,6 +68,7 @@
     <string name="ui_dismiss">Bỏ qua</string>
     <string name="ui_done">Xong</string>
     <string name="ui_download">Tải xuống</string>
+    <string name="ui_downloading">Đang tải xuống…</string>
     <string name="ui_download_now">Tải xuống ngay</string>
     <string name="ui_edit_faster_with_focused_ai_actions">Chỉnh sửa nhanh hơn với các thao tác AI tập trung</string>
     <string name="ui_email_address">Địa chỉ email</string>
@@ -281,6 +282,7 @@
     <string name="loading">Đang tải</string>
     <string name="full_name_required">Họ và tên là bắt buộc.</string>
     <string name="username_invalid">Tên người dùng phải có từ 3 đến 30 ký tự và dùng chữ cái, số, dấu chấm hoặc dấu gạch dưới.</string>
+    <string name="username_taken">Tên người dùng đó đã được sử dụng. Vui lòng chọn tên khác.</string>
     <string name="profile_saved">Đã lưu hồ sơ thành công.</string>
     <string name="profile_save_failed">Không thể lưu hồ sơ. Vui lòng thử lại.</string>
     <string name="crop_profile_image">Cắt ảnh hồ sơ</string>

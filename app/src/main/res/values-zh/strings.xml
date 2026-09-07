@@ -68,6 +68,7 @@
     <string name="ui_dismiss">忽略</string>
     <string name="ui_done">完成</string>
     <string name="ui_download">下载</string>
+    <string name="ui_downloading">正在下载…</string>
     <string name="ui_download_now">立即下载</string>
     <string name="ui_edit_faster_with_focused_ai_actions">通过专注的 AI 操作更快地编辑</string>
     <string name="ui_email_address">电子邮件地址</string>
@@ -281,6 +282,7 @@
     <string name="loading">加载中</string>
     <string name="full_name_required">全名为必填项。</string>
     <string name="username_invalid">用户名必须为 3–30 个字符，并且使用字母、数字、点或下划线。</string>
+    <string name="username_taken">该用户名已被占用。请选择其他用户名。</string>
     <string name="profile_saved">个人资料保存成功。</string>
     <string name="profile_save_failed">无法保存个人资料。请重试。</string>
     <string name="crop_profile_image">裁剪个人资料图像</string>

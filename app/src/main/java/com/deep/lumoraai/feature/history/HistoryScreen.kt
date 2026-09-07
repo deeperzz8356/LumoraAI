@@ -501,6 +501,13 @@ private fun HistoryMediaViewer(
                         contentDescription = stringResource(com.deep.lumoraai.R.string.ui_download),
                         tint = Lime,
                         onClick = {
+                            // Immediate feedback: confirm the download has started
+                            // the moment the user taps, then report the result.
+                            Toast.makeText(
+                                context,
+                                context.getString(com.deep.lumoraai.R.string.ui_downloading),
+                                Toast.LENGTH_SHORT
+                            ).show()
                             scope.launch {
                                 val result = MediaGallerySaver.saveToGallery(
                                     context = context,
@@ -522,7 +529,7 @@ private fun HistoryMediaViewer(
                                             }
                                         }
                                     ),
-                                    Toast.LENGTH_SHORT
+                                    Toast.LENGTH_LONG
                                 ).show()
                             }
                         }

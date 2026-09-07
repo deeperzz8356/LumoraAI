@@ -68,6 +68,7 @@
     <string name="ui_dismiss">Kapat</string>
     <string name="ui_done">Bitti</string>
     <string name="ui_download">İndir</string>
+    <string name="ui_downloading">İndiriliyor…</string>
     <string name="ui_download_now">Şimdi indir</string>
     <string name="ui_edit_faster_with_focused_ai_actions">Odaklanmış yapay zekâ eylemleriyle daha hızlı düzenleyin</string>
     <string name="ui_email_address">E-posta adresi</string>
@@ -281,6 +282,7 @@
     <string name="loading">Yükleniyor</string>
     <string name="full_name_required">Ad soyad gereklidir.</string>
     <string name="username_invalid">Kullanıcı adı 3–30 karakter olmalı ve harf, rakam, nokta veya alt çizgi kullanmalıdır.</string>
+    <string name="username_taken">Bu kullanıcı adı zaten alınmış. Lütfen başka birini seçin.</string>
     <string name="profile_saved">Profil başarıyla kaydedildi.</string>
     <string name="profile_save_failed">Profil kaydedilemedi. Lütfen tekrar deneyin.</string>
     <string name="crop_profile_image">Profil resmini kırp</string>
