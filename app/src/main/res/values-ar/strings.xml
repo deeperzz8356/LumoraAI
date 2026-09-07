@@ -564,4 +564,5 @@
     <string name="ui_sub_hero_body">رصيد وتوليد بأولوية ومسارات إبداعية مميزة.</string>
     <string name="ui_plan_guest">ضيف</string>
     <string name="ui_plan_premium">مميز</string>
+    <string name="ui_profile_tip">اضغط على صورتك الرمزية لفتح الملف الشخصي</string>
 </resources>

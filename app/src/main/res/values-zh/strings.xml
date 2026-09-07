@@ -564,5 +564,6 @@
     <string name="ui_sub_hero_body">积分、优先生成和高级创作流程。</string>
     <string name="ui_plan_guest">访客</string>
     <string name="ui_plan_premium">高级版</string>
+    <string name="ui_profile_tip">点击您的头像以打开个人资料</string>
 </resources>
 

@@ -47,25 +47,48 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     private val mediaStorage = MediaStorageRepository.getInstance(application)
     private val historyRepository = HistoryRepository(LumoraDatabase.getInstance(application).historyDao)
     private val notificationManager = NotificationManager(LumoraDatabase.getInstance(application).notificationDao, application)
-    private var sourceImageB64: String? = null
-
     var uiState: ImageToImageUiState by mutableStateOf(ImageToImageUiState())
         private set
 
-    fun loadImage(uri: Uri) {
+    fun loadImages(uris: List<Uri>) {
+        if (uiState.isGenerating || uiState.isLoadingSources) return
+        val existingUris = uiState.sourceImages.map { it.uri.toString() }.toSet()
+        val availableSlots = ImageToImageBatch.MAX_SOURCE_IMAGES - uiState.sourceImages.size
+        val candidates = uris.distinctBy(Uri::toString)
+            .filter { it.toString() !in existingUris }
+            .take(availableSlots)
+        if (candidates.isEmpty()) return
+
         viewModelScope.launch {
-            uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null, generatedPaths = emptyList())
+            uiState = uiState.copy(isLoadingSources = true, error = null, generatedPath = null, generatedPaths = emptyList())
             val decoded = withContext(Dispatchers.IO) {
-                runCatching { decodeBitmap(uri) }.getOrNull()
+                candidates.mapNotNull { uri ->
+                    runCatching {
+                        val bitmap = decodeBitmap(uri)
+                        ImageToImageSource(
+                            id = uri.toString(),
+                            uri = uri,
+                            bitmap = bitmap,
+                            base64 = bitmap.toJpegBase64(),
+                        )
+                    }.getOrNull()
+                }
             }
-            if (decoded == null) {
-                sourceImageB64 = null
-                uiState = uiState.copy(isGenerating = false, error = "Could not open that image.")
+            if (decoded.isEmpty()) {
+                uiState = uiState.copy(isLoadingSources = false, error = "Could not open those images.")
                 return@launch
             }
-            sourceImageB64 = withContext(Dispatchers.Default) { decoded.toJpegBase64() }
-            uiState = uiState.copy(sourceBitmap = decoded, isGenerating = false, error = null)
+            uiState = uiState.copy(
+                sourceImages = (uiState.sourceImages + decoded).take(ImageToImageBatch.MAX_SOURCE_IMAGES),
+                isLoadingSources = false,
+                error = if (decoded.size < candidates.size) "Some selected images could not be opened." else null,
+            )
         }
+    }
+
+    fun removeSource(sourceId: String) {
+        if (uiState.isGenerating || uiState.isLoadingSources) return
+        uiState = uiState.copy(sourceImages = uiState.sourceImages.filterNot { it.id == sourceId })
     }
 
     fun updatePrompt(prompt: String) {
@@ -93,9 +116,9 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun generate() {
-        val source = sourceImageB64
-        if (uiState.sourceBitmap == null || source.isNullOrBlank()) {
-            uiState = uiState.copy(error = "Upload an image first.")
+        val sources = uiState.sourceImages
+        if (sources.isEmpty()) {
+            uiState = uiState.copy(error = "Upload at least one image first.")
             return
         }
         if (uiState.prompt.isBlank()) {
@@ -115,14 +138,15 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                if (!GenerationGate.canGenerateImage(credits, isDev, uiState.generations)) {
+                val creditCost = GenerationGate.imageCreditCost(sources.size, uiState.generations)
+                if (!GenerationGate.canGenerateImage(credits, isDev, creditCost)) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
             } else {
                 authRepository.syncCurrentUser()
             }
-            startImageJobs(source, isDev)
+            startImageJobs(sources, isDev)
         }
     }
 
@@ -156,26 +180,27 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         uiState = uiState.copy(generatedPath = null, generatedPaths = emptyList())
     }
 
-    private fun startImageJobs(sourceImage: String, developerMode: Boolean) {
+    private suspend fun startImageJobs(sources: List<ImageToImageSource>, developerMode: Boolean) {
         val prompt = buildPrompt()
         val requestedGenerations = uiState.generations.coerceIn(1, 4)
+        val totalRequests = ImageToImageBatch.creditCost(sources.size, requestedGenerations)
         uiState = uiState.copy(
             isGenerating = true,
             generationProgress = 0f,
-            generationStatusText = "Image 1 of $requestedGenerations generating",
+            generationStatusText = "Image 1 of ${sources.size}, output 1 of $requestedGenerations generating",
             error = null,
             generatedPath = null,
             generatedPaths = emptyList()
         )
 
-        viewModelScope.launch {
-            var completed = 0
-            repeat(requestedGenerations) { index ->
+        var completed = 0
+        sources.forEachIndexed { sourceIndex, source ->
+            repeat(requestedGenerations) { outputIndex ->
                 uiState = uiState.copy(
                     generationProgress = 0f,
-                    generationStatusText = "Image ${index + 1} of $requestedGenerations generating"
+                    generationStatusText = "Image ${sourceIndex + 1} of ${sources.size}, output ${outputIndex + 1} of $requestedGenerations generating"
                 )
-                val jobTitle = "Image 2 Image ${shortTimestamp()} #${index + 1}"
+                val jobTitle = "Image 2 Image ${shortTimestamp()} source ${sourceIndex + 1} output ${outputIndex + 1}"
                 val taskId = UUID.randomUUID().toString()
                 notificationManager.sendTaskStartNotification(
                     taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
@@ -185,7 +210,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                 GenerationRepository.addJob(
                     ActiveJobInfo(
                         title = jobTitle,
-                        subtitle = "Generating variation ${index + 1} of $requestedGenerations...",
+                        subtitle = "Source ${sourceIndex + 1} of ${sources.size}, output ${outputIndex + 1} of $requestedGenerations...",
                         badgeText = "Image 2 Image",
                         statusText = "Queued",
                         progressPercent = 0.0f,
@@ -194,19 +219,20 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                         mediaType = MediaStorageRepository.MEDIA_IMAGE,
                     )
                 )
-                val progressJob = launchProgressJob(jobTitle, index + 1, requestedGenerations)
+                val progressJob = launchProgressJob(jobTitle, sourceIndex + 1, sources.size, outputIndex + 1, requestedGenerations)
                 val result = generationRepository.generateImage(
                     prompt = prompt,
                     style = uiState.selectedStyle.apiStyle,
                     width = uiState.aspectRatio.width,
                     height = uiState.aspectRatio.height,
                     negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy" },
-                    sourceImageB64 = sourceImage,
+                    sourceImageB64 = source.base64,
                     developerMode = developerMode,
                 )
                 progressJob.cancel()
                 if (result.isSuccess) {
-                    persistGeneratedImage(result.getOrThrow(), jobTitle, prompt, taskId, keepGenerating = index < requestedGenerations - 1)
+                    val hasMoreRequests = completed + 1 < totalRequests
+                    persistGeneratedImage(result.getOrThrow(), jobTitle, prompt, taskId, keepGenerating = hasMoreRequests)
                     completed += 1
                 } else {
                     val message = result.exceptionOrNull()?.message ?: "Could not generate image."
@@ -220,23 +246,25 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                         displayName = "Image to Image",
                         errorMessage = message
                     )
-                    return@launch
+                    CreditBalanceStore.refresh()
+                    return
                 }
             }
-            uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = null)
-            if (completed > 1) {
-                LumoraNotificationCenter.notifyCompletion(
-                    context = getApplication<Application>(),
-                    title = "$completed images ready",
-                    message = "Your Image 2 Image batch has finished.",
-                    route = Screen.History.route,
-                    mediaType = MediaStorageRepository.MEDIA_IMAGE,
-                )
-            }
+        }
+        uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = null)
+        CreditBalanceStore.refresh()
+        if (completed > 1) {
+            LumoraNotificationCenter.notifyCompletion(
+                context = getApplication<Application>(),
+                title = "$completed images ready",
+                message = "Your Image 2 Image batch has finished.",
+                route = Screen.History.route,
+                mediaType = MediaStorageRepository.MEDIA_IMAGE,
+            )
         }
     }
 
-    private fun launchProgressJob(jobTitle: String, current: Int, total: Int) = viewModelScope.launch {
+    private fun launchProgressJob(jobTitle: String, sourceIndex: Int, sourceTotal: Int, outputIndex: Int, outputTotal: Int) = viewModelScope.launch {
         val steps = listOf(
             0.18f to "Reading source image...",
             0.42f to "Applying style direction...",
@@ -247,7 +275,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             delay(1800)
             uiState = uiState.copy(
                 generationProgress = step.first,
-                generationStatusText = "Image $current of $total generating"
+                generationStatusText = "Image $sourceIndex of $sourceTotal, output $outputIndex of $outputTotal generating"
             )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
@@ -274,13 +302,6 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             generatedPath = saved.filePath,
             generatedPaths = uiState.generatedPaths + saved.filePath,
             generatedMimeType = saved.mimeType
-        )
-        LumoraNotificationCenter.notifyCompletion(
-            context = getApplication<Application>(),
-            title = "Image ready",
-            message = "Your Image 2 Image creation has finished.",
-            route = Screen.History.route,
-            mediaType = MediaStorageRepository.MEDIA_IMAGE,
         )
         GenerationRepository.updateJob(jobTitle) { job ->
             job.copy(

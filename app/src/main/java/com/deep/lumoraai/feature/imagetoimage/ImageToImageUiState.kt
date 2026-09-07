@@ -1,16 +1,25 @@
 package com.deep.lumoraai.feature.imagetoimage
 
 import android.graphics.Bitmap
+import android.net.Uri
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 
+data class ImageToImageSource(
+    val id: String,
+    val uri: Uri,
+    val bitmap: Bitmap,
+    val base64: String,
+)
+
 data class ImageToImageUiState(
-    val sourceBitmap: Bitmap? = null,
+    val sourceImages: List<ImageToImageSource> = emptyList(),
     val prompt: String = "",
     val negativePrompt: String = "",
     val selectedStyle: ImageStyle = ImageStyle.NoStyle,
     val aspectRatio: GenerationAspectRatio = GenerationAspectRatio.Portrait,
     val similarity: Float = 0.5f,
     val generations: Int = 2,
+    val isLoadingSources: Boolean = false,
     val isGenerating: Boolean = false,
     val generationProgress: Float? = null,
     val generationStatusText: String? = null,

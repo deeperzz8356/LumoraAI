@@ -8,6 +8,9 @@ object GenerationGate {
     fun canGenerateImage(credits: Int, isDeveloperMode: Boolean, generations: Int = 1): Boolean =
         isDeveloperMode || credits >= CREDITS_PER_IMAGE * generations.coerceAtLeast(1)
 
+    fun imageCreditCost(sourceCount: Int, outputsPerSource: Int): Int =
+        CREDITS_PER_IMAGE * sourceCount.coerceAtLeast(0) * outputsPerSource.coerceAtLeast(1)
+
     fun canGenerateVideo(credits: Int, isDeveloperMode: Boolean, generations: Int = 1): Boolean =
         isDeveloperMode || credits >= CREDITS_PER_VIDEO * generations.coerceAtLeast(1)
 

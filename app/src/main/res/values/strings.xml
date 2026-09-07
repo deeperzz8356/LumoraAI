@@ -896,4 +896,5 @@
     <string name="ui_sub_hero_body">Credits, priority generation, and premium creative workflows.</string>
     <string name="ui_plan_guest">Guest</string>
     <string name="ui_plan_premium">Premium</string>
+    <string name="ui_profile_tip">Tap your avatar to open Profile</string>
 </resources>

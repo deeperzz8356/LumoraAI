@@ -564,5 +564,6 @@
     <string name="ui_sub_hero_body">Crediti, generazione prioritaria e flussi premium.</string>
     <string name="ui_plan_guest">Ospite</string>
     <string name="ui_plan_premium">Premium</string>
+    <string name="ui_profile_tip">Tocca il tuo avatar per aprire il profilo</string>
 </resources>
 

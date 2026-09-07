@@ -564,5 +564,6 @@
     <string name="ui_sub_hero_body">Tín dụng, tạo ưu tiên và quy trình sáng tạo cao cấp.</string>
     <string name="ui_plan_guest">Khách</string>
     <string name="ui_plan_premium">Cao cấp</string>
+    <string name="ui_profile_tip">Chạm vào ảnh đại diện để mở Hồ sơ</string>
 </resources>
 

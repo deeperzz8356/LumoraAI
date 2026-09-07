@@ -37,7 +37,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +55,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
+import androidx.compose.material.icons.filled.ArrowUpward
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
@@ -60,6 +67,7 @@ import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.utils.OnboardingPreferences
 import com.deep.lumoraai.core.navigation.bgStudioRoute
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import coil.compose.AsyncImage
@@ -118,6 +126,12 @@ private fun HomeContent(
     unreadCount: Int = 0,
     onNotificationClick: (() -> Unit)? = null,
 ) {
+    val context = LocalContext.current
+    var showProfileHint by remember { mutableStateOf(!OnboardingPreferences.isProfileHintSeen(context)) }
+    val dismissProfileHint = {
+        OnboardingPreferences.markProfileHintSeen(context)
+        showProfileHint = false
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -131,13 +145,64 @@ private fun HomeContent(
             credits = uiState.credits,
             onNavigate = onNavigate,
             unreadCount = unreadCount,
-            onNotificationClick = onNotificationClick
+            onNotificationClick = onNotificationClick,
         )
         HomeHero(onExploreRecent = { onNavigate(Screen.History.route) })
         MainCreateGrid(onNavigate = onNavigate)
         RecentCreationsSection(items = uiState.recentItems, onNavigate = onNavigate)
         ToolsSection(onNavigate = onNavigate)
         Spacer(modifier = Modifier.height(2.dp))
+    }
+    if (showProfileHint) {
+        ProfileHintOverlay(
+            onDismiss = dismissProfileHint,
+            onOpenProfile = {
+                dismissProfileHint()
+                onNavigate(Screen.Profile.route)
+            },
+        )
+    }
+}
+
+@Composable
+private fun ProfileHintOverlay(
+    onDismiss: () -> Unit,
+    onOpenProfile: () -> Unit,
+) {
+    Popup(
+        alignment = Alignment.TopStart,
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(onClick = onDismiss),
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(start = 12.dp, top = 10.dp)
+                    .size(56.dp)
+                    .clickable(onClick = onOpenProfile),
+            )
+            Surface(
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 72.dp)
+                    .width(210.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFF172A4A),
+                border = BorderStroke(1.dp, Lime.copy(alpha = 0.65f)),
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = Lime)
+                    Text(stringResource(R.string.ui_profile_tip), color = Color.White, fontWeight = FontWeight.Medium)
+                }
+            }
+        }
     }
 }
 
