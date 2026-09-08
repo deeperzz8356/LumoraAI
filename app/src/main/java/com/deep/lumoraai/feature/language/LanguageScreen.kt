@@ -119,11 +119,10 @@ fun LanguageContent(
             onLanguageSelected = onLanguageSelected,
             modifier = Modifier.weight(1f)
         )
-        // Native ad below the language list — the list owns the weighted space so
-        // the ad never covers the selectable language options.
+        // Native ad below the language list — touches the left/right/bottom edges
+        // (no padding), while the weighted list keeps the options uncovered.
         PlacementNativeAd(
             placement = AdPlacement.NATIVE_LANGUAGE,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
         )
     }
 }

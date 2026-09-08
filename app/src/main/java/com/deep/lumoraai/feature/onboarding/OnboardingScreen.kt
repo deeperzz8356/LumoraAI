@@ -125,10 +125,8 @@ fun OnboardingScreen(
                 else -> null
             }
             if (stepPlacement != null) {
-                PlacementNativeAd(
-                    placement = stepPlacement,
-                    modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp),
-                )
+                // Native touches the left/right/bottom edges (no padding).
+                PlacementNativeAd(placement = stepPlacement)
             }
         }
     }

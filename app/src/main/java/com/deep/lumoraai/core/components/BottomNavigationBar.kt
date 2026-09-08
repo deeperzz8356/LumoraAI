@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -84,12 +83,13 @@ private fun ResponsiveBottomNav(
     )
 
     // Nav row only. The persistent banner (banner_all) is hoisted to the
-    // navigation root (NavGraph) so it survives tab switches and is never
-    // recreated. Keep navigationBarsPadding so the nav row clears the system nav.
+    // navigation root (NavGraph) and rendered directly BELOW this nav row, with
+    // the system-nav inset applied under the banner there. So this row sits
+    // flush (no navigationBarsPadding) — that removes the black gap between the
+    // nav bar and the banner.
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
             .height(88.dp),
         contentAlignment = Alignment.BottomCenter
     ) {

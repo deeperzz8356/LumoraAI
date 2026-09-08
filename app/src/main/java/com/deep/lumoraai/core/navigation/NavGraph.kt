@@ -4,8 +4,11 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -338,7 +341,22 @@ fun NavGraph(
         }
     }
         if (showBanner) {
-            com.deep.lumoraai.ads.banner.PersistentBannerSlot(modifier = Modifier.fillMaxWidth())
+            // Banner sits flush directly under the nav row (the nav bar no longer
+            // adds its own bottom inset on primary tabs). The system-nav inset is
+            // applied BELOW the banner so there's no black gap between them.
+            com.deep.lumoraai.ads.banner.PersistentBannerSlot(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF11192B)),
+            )
+            androidx.compose.foundation.layout.Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF11192B))
+                    .windowInsetsBottomHeight(
+                        androidx.compose.foundation.layout.WindowInsets.navigationBars
+                    ),
+            )
         }
     } // end Column
 }
