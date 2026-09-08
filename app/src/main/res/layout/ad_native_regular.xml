@@ -82,15 +82,12 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Media shown in full (FIT_CENTER); adapts to the creative up to a max. -->
+        <!-- Fixed, compact media box; FIT_CENTER shrinks the creative to fit. -->
         <com.google.android.gms.ads.nativead.MediaView
             android:id="@+id/ad_media"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:maxHeight="150dp"
-            android:minHeight="90dp"
-            android:adjustViewBounds="true" />
+            android:layout_height="110dp"
+            android:layout_marginTop="10dp" />
 
         <Button
             android:id="@+id/ad_call_to_action"
