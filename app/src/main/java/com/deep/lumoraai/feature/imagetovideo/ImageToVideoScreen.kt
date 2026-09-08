@@ -110,7 +110,8 @@ fun ImageToVideoScreen(
                     onPromptChanged = onPromptChanged,
                     onImprovePrompt = onImprovePrompt,
                     onNegativePromptChanged = onNegativePromptChanged,
-                    onUpload = { imagePicker.launch("image/*") },
+                    // Upload button removed from the composer; the image is chosen
+                    // via the UploadImagePanel above.
                     isSettingsOpen = showAdvancedSettings.value,
                     onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                 )

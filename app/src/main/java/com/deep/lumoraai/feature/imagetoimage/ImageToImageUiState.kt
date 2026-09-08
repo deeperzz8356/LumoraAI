@@ -91,3 +91,35 @@ val VideoStyle.promptDirective: String
     } else {
         " Style: $label ($promptHint)."
     }
+
+/**
+ * Ad/marketing-oriented style presets for the Promo Video screen. These replace
+ * the generic cinematic/anime video styles with promo-focused looks. Reuses the
+ * existing video thumbnail assets.
+ */
+enum class PromoVideoStyle(
+    val label: String,
+    val promptHint: String,
+    val assetFileName: String,
+    @androidx.annotation.StringRes val labelRes: Int,
+    @androidx.annotation.StringRes val descriptionRes: Int,
+) {
+    NoStyle("No Style", "follow only the prompt without a preset promo look", "nostyle.jpg", com.deep.lumoraai.R.string.ui_style_no_style, com.deep.lumoraai.R.string.ui_promo_style_desc_no_style),
+    ProductShowcase("Product Showcase", "clean studio product hero shots, glossy reflections, premium lighting, smooth reveals", "advertvideo.png", com.deep.lumoraai.R.string.ui_promo_style_product_showcase, com.deep.lumoraai.R.string.ui_promo_style_desc_product_showcase),
+    SocialPromo("Social Promo", "punchy vertical social-media ad, fast cuts, bold text moments, trendy energy", "musicvideo.png", com.deep.lumoraai.R.string.ui_promo_style_social_promo, com.deep.lumoraai.R.string.ui_promo_style_desc_social_promo),
+    AppPromo("App Promo", "sleek app/tech promo, UI mockups, dynamic transitions, modern gradients", "expivideo.png", com.deep.lumoraai.R.string.ui_promo_style_app_promo, com.deep.lumoraai.R.string.ui_promo_style_desc_app_promo),
+    SaleOffer("Sale / Offer", "high-energy sale promo, discount callouts, urgency, vibrant colors", "advertvideo.png", com.deep.lumoraai.R.string.ui_promo_style_sale_offer, com.deep.lumoraai.R.string.ui_promo_style_desc_sale_offer),
+    BrandReveal("Brand Reveal", "cinematic brand/logo reveal, elegant motion, dramatic lighting, premium feel", "cinematicvideo.png", com.deep.lumoraai.R.string.ui_promo_style_brand_reveal, com.deep.lumoraai.R.string.ui_promo_style_desc_brand_reveal),
+    Testimonial("Testimonial", "authentic testimonial/lifestyle ad, natural light, real-people feel, warm tone", "documentaryvideo.png", com.deep.lumoraai.R.string.ui_promo_style_testimonial, com.deep.lumoraai.R.string.ui_promo_style_desc_testimonial),
+    LuxuryCinematic("Luxury Cinematic", "high-end luxury commercial, slow elegant motion, rich contrast, aspirational mood", "slowmovideo.png", com.deep.lumoraai.R.string.ui_promo_style_luxury_cinematic, com.deep.lumoraai.R.string.ui_promo_style_desc_luxury_cinematic),
+}
+
+val PromoVideoStyle.apiStyle: String
+    get() = if (this == PromoVideoStyle.NoStyle) "Default" else label
+
+val PromoVideoStyle.promptDirective: String
+    get() = if (this == PromoVideoStyle.NoStyle) {
+        ""
+    } else {
+        " Promo style: $label ($promptHint)."
+    }

@@ -793,6 +793,23 @@
     <string name="ui_style_desc_fantasy_art">Magical environments, creatures, epic landscapes</string>
     <string name="ui_style_desc_retro_vintage">Film grain, faded colors, nostalgic design</string>
     <string name="ui_style_desc_no_style_video">Follow only the prompt without a preset motion style</string>
+
+    <!-- Promo video ad-style presets -->
+    <string name="ui_promo_style_product_showcase">Product Showcase</string>
+    <string name="ui_promo_style_social_promo">Social Promo</string>
+    <string name="ui_promo_style_app_promo">App Promo</string>
+    <string name="ui_promo_style_sale_offer">Sale / Offer</string>
+    <string name="ui_promo_style_brand_reveal">Brand Reveal</string>
+    <string name="ui_promo_style_testimonial">Testimonial</string>
+    <string name="ui_promo_style_luxury_cinematic">Luxury Cinematic</string>
+    <string name="ui_promo_style_desc_no_style">Follow only the prompt without a preset promo look</string>
+    <string name="ui_promo_style_desc_product_showcase">Studio product hero shots, glossy reflections, smooth reveals</string>
+    <string name="ui_promo_style_desc_social_promo">Punchy vertical social ad, fast cuts, trendy energy</string>
+    <string name="ui_promo_style_desc_app_promo">Sleek app/tech promo with UI mockups and modern gradients</string>
+    <string name="ui_promo_style_desc_sale_offer">High-energy sale promo with discount callouts and urgency</string>
+    <string name="ui_promo_style_desc_brand_reveal">Cinematic brand/logo reveal with elegant motion</string>
+    <string name="ui_promo_style_desc_testimonial">Authentic testimonial/lifestyle ad, natural light, warm tone</string>
+    <string name="ui_promo_style_desc_luxury_cinematic">High-end luxury commercial, slow elegant motion, rich contrast</string>
     <string name="ui_style_desc_cinematic_film">Movie-quality shots, dramatic lighting, shallow depth</string>
     <string name="ui_style_desc_anime_animation">Animated anime scenes with expressive movement</string>
     <string name="ui_style_desc_photorealistic_live_action">Realistic humans, environments, physics and motion</string>

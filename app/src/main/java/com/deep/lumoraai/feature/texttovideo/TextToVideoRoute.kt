@@ -44,6 +44,7 @@ fun TextToVideoRoute(
         onAspectRatioChanged = viewModel::setAspectRatio,
         onImprovePrompt = viewModel::improvePrompt,
         onStyleSelected = viewModel::selectStyle,
+        onPromoStyleSelected = viewModel::selectPromoStyle,
         onMotionChanged = viewModel::setMotion,
         onDurationChanged = viewModel::setDuration,
         onGenerationsChanged = viewModel::setGenerations,

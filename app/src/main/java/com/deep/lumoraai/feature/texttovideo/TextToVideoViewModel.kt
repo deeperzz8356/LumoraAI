@@ -91,6 +91,10 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
         uiState = uiState.copy(selectedStyle = style)
     }
 
+    fun selectPromoStyle(style: com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle) {
+        uiState = uiState.copy(selectedPromoStyle = style)
+    }
+
     fun selectEngine(engine: VideoEngine) {
         uiState = uiState.copy(selectedEngine = engine)
     }
@@ -187,7 +191,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                     motionStrength = (uiState.motion * 100).toInt().coerceIn(20, 90),
                     duration = uiState.duration,
                     aspectRatio = uiState.aspectRatio.label,
-                    style = uiState.selectedStyle.apiStyle,
+                    style = if (isPromoMode) uiState.selectedPromoStyle.apiStyle else uiState.selectedStyle.apiStyle,
                     developerMode = isDev,
                 )
                 progressJob.cancel()
@@ -225,7 +229,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             val result = generationRepository.enhancePrompt(
                 prompt = uiState.prompt,
                 mediaType = "VIDEO",
-                style = uiState.selectedStyle.apiStyle,
+                style = if (isPromoMode) uiState.selectedPromoStyle.apiStyle else uiState.selectedStyle.apiStyle,
                 negativePrompt = uiState.negativePrompt,
             )
             uiState = if (result.isSuccess) {
@@ -329,7 +333,13 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             "Create a cinematic text-to-video scene with natural motion, camera movement, depth, and coherent subject action."
         }
         val negative = uiState.negativePrompt.takeIf { it.isNotBlank() }?.let { " Avoid: $it." }.orEmpty()
-        val stylePrompt = uiState.selectedStyle.promptDirective
+        // Promo mode uses the ad/marketing style presets; regular mode uses the
+        // standard video styles.
+        val stylePrompt = if (isPromoMode) {
+            uiState.selectedPromoStyle.promptDirective
+        } else {
+            uiState.selectedStyle.promptDirective
+        }
         return "$base User prompt: ${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Motion strength: $motion%.$negative"
     }
 

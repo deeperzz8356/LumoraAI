@@ -33,6 +33,7 @@ import com.deep.lumoraai.feature.generation.GenerationErrorText
 import com.deep.lumoraai.feature.generation.GenerationScreenBg
 import com.deep.lumoraai.feature.generation.GenerationTopBar
 import com.deep.lumoraai.feature.generation.PromptComposerCard
+import com.deep.lumoraai.feature.generation.PromoVideoStyleSection
 import com.deep.lumoraai.feature.generation.VideoStyleSection
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import kotlinx.coroutines.delay
@@ -48,6 +49,7 @@ fun TextToVideoScreen(
     onAspectRatioChanged: (GenerationAspectRatio) -> Unit,
     onImprovePrompt: () -> Unit,
     onStyleSelected: (VideoStyle) -> Unit,
+    onPromoStyleSelected: (com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle) -> Unit = {},
     onMotionChanged: (Float) -> Unit,
     onDurationChanged: (Int) -> Unit,
     onGenerationsChanged: (Int) -> Unit,
@@ -124,7 +126,14 @@ fun TextToVideoScreen(
                         onGenerationsChanged = onGenerationsChanged
                     )
                 }
-                VideoStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
+                if (isPromo) {
+                    PromoVideoStyleSection(
+                        selected = uiState.selectedPromoStyle,
+                        onSelected = onPromoStyleSelected,
+                    )
+                } else {
+                    VideoStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
+                }
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
                     enabled = uiState.prompt.isNotBlank(),

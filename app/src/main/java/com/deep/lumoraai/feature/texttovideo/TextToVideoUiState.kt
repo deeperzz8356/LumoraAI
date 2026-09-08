@@ -11,6 +11,9 @@ data class TextToVideoUiState(
     val prompt: String = "",
     val negativePrompt: String = "",
     val selectedStyle: VideoStyle = VideoStyle.NoStyle,
+    // Ad/marketing style used only in Promo Video mode.
+    val selectedPromoStyle: com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle =
+        com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle.NoStyle,
     val selectedEngine: VideoEngine = VideoEngine.FAST_DRAFT,
     val aspectRatio: GenerationAspectRatio = GenerationAspectRatio.Story,
     val motion: Float = 0.5f,

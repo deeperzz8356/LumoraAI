@@ -136,9 +136,8 @@ fun ImageToImageScreen(
                     onPromptChanged = onPromptChanged,
                     onImprovePrompt = onImprovePrompt,
                     onNegativePromptChanged = onNegativePromptChanged,
-                    onUpload = {
-                        imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    },
+                    // Upload button removed here; images are added via the source
+                    // images panel above, so the composer no longer duplicates it.
                     isSettingsOpen = showAdvancedSettings.value,
                     onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                 )

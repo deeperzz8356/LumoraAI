@@ -362,6 +362,22 @@ fun VideoStyleSection(
     )
 }
 
+/** Ad/marketing style presets for the Promo Video screen. */
+@Composable
+fun PromoVideoStyleSection(
+    selected: com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle,
+    onSelected: (com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    StyleSection(
+        title = stringResource(com.deep.lumoraai.R.string.ui_style),
+        items = com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle.entries.map {
+            StyleItem(it.labelRes, it.descriptionRes, it.assetFileName, selected == it) { onSelected(it) }
+        },
+        modifier = modifier
+    )
+}
+
 private data class StyleItem(
     @androidx.annotation.StringRes val labelRes: Int,
     @androidx.annotation.StringRes val descriptionRes: Int,
