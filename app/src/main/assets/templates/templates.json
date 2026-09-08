@@ -213,7 +213,7 @@
           "title": "News Presenter",
           "subtitle": "Professional news avatar",
           "prompt": "Create a professional news presenter avatar delivering the provided script with clear pronunciation, controlled gestures, confident eye contact, professional posture, and broadcast-quality presentation style.",
-          "assetFileName": "news_presenter.jpeg",
+          "assetFileName": "news_presenter.png",
           "action": "CREATE_AVATAR"
         },
         {
