@@ -17,8 +17,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -58,7 +60,9 @@ private val TemplateBackground = Color(0xFF081020)
 
 private val TemplatePanel = Color(0xFF111A2D)
 
-private val TemplateSelected = Color(0xFF57647A)
+// Match the History filter selection accent (lime).
+private val TemplateStroke = Color(0xFF1B2A44)
+private val Lime = Color(0xFFD6FF2F)
 
 private val Muted = Color(0xFF9BA6BA)
 
@@ -221,7 +225,7 @@ private fun TemplateCategoryTabs(
 
         CategoryTab(
             label = "Promo Video",
-            icon = Icons.Default.VideoLibrary,
+            icon = Icons.Default.Campaign,
             selected = selectedCategory == TemplateCategory.PROMO_VIDEO,
         ) {
             onSelected(TemplateCategory.PROMO_VIDEO)
@@ -229,7 +233,7 @@ private fun TemplateCategoryTabs(
 
         CategoryTab(
             label = "Logo Creation",
-            icon = Icons.Default.Image,
+            icon = Icons.Default.Star,
             selected = selectedCategory == TemplateCategory.LOGO_CREATION,
         ) {
             onSelected(TemplateCategory.LOGO_CREATION)
@@ -248,10 +252,16 @@ private fun TemplateCategoryTabs(
 @Composable
 private fun CategoryTab(label: String, icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
 
+    // Selection styling mirrors the History filter chips: lime fill, lime
+    // border, and lime text/icon when active.
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
-        color = if (selected) TemplateSelected else TemplatePanel,
+        color = if (selected) Lime.copy(alpha = 0.16f) else TemplatePanel,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (selected) Lime.copy(alpha = 0.8f) else TemplateStroke,
+        ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -260,7 +270,7 @@ private fun CategoryTab(label: String, icon: ImageVector, selected: Boolean, onC
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color.White.copy(alpha = if (selected) 0.95f else 0.65f),
+                tint = if (selected) Lime else Color.White.copy(alpha = 0.65f),
                 modifier = Modifier.size(15.dp),
             )
 
@@ -268,7 +278,7 @@ private fun CategoryTab(label: String, icon: ImageVector, selected: Boolean, onC
 
             Text(
                 text = label,
-                color = Color.White.copy(alpha = if (selected) 1f else 0.78f),
+                color = if (selected) Lime else Color.White.copy(alpha = 0.78f),
                 fontSize = 11.sp,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             )

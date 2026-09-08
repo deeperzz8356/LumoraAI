@@ -27,10 +27,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,14 +40,23 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.feature.templates.model.TemplateListItem
 import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import java.util.Locale
 
+// Shared design-system palette (matches History and the rest of the app).
 private val CardColor = Color(0xFF0E172A)
 private val CardStroke = Color(0xFF1B2A44)
-private val Muted = Color(0xFF9BA6BA)
+private val Muted = Color(0xFF94A0B8)
 private val Lime = Color(0xFFD6FF2F)
+
+// Every template card uses the same media aspect ratio so all cards render at a
+// uniform height regardless of the intrinsic size of the image/video. 4:3 works
+// well for the mixed landscape/portrait template art without harsh cropping.
+private const val CARD_MEDIA_ASPECT_RATIO = 4f / 3f
+
+// Fixed height for the title/subtitle strip so the text area is identical on
+// every card even when a subtitle is one line vs two.
+private val CardInfoHeight = 56.dp
 
 @Composable
 fun FeatureCard(
@@ -87,6 +93,7 @@ fun FeatureCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(CardInfoHeight)
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -114,7 +121,7 @@ fun FeatureCard(
                         color = Muted,
                         fontSize = 10.sp,
                         lineHeight = 13.sp,
-                        maxLines = 2,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
@@ -154,10 +161,6 @@ private fun AutoSizeImage(
 ) {
     val context = LocalContext.current
 
-    var aspectRatio by remember {
-        mutableFloatStateOf(1f)
-    }
-
     val imageRequest = remember(fileName) {
         ImageRequest.Builder(context)
             .data("file:///android_asset/templates/$fileName")
@@ -165,25 +168,20 @@ private fun AutoSizeImage(
             .build()
     }
 
+    // Fixed aspect ratio + crop keeps every card the same height.
     AsyncImage(
         model = imageRequest,
         contentDescription = contentDescription,
+        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatioSafe(aspectRatio),
-        onState = { state ->
-            if (state is AsyncImagePainter.State.Success) {
-                val drawable = state.result.drawable
-
-                val width = drawable.intrinsicWidth
-                val height = drawable.intrinsicHeight
-
-                if (width > 0 && height > 0) {
-                    aspectRatio =
-                        width.toFloat() / height.toFloat()
-                }
-            }
-        }
+            .aspectRatioSafe(CARD_MEDIA_ASPECT_RATIO)
+            .clip(
+                RoundedCornerShape(
+                    topStart = 12.dp,
+                    topEnd = 12.dp
+                )
+            )
     )
 }
 
@@ -193,85 +191,48 @@ private fun AutoPlayVideo(
 ) {
     val context = LocalContext.current
 
-    var aspectRatio by remember {
-        mutableFloatStateOf(16f / 9f)
-    }
-
-    val mediaPlayer = remember {
-        MediaPlayer()
-    }
-
-    val surfaceView = remember {
-        SurfaceView(context)
-    }
+    // Key the player and surface to the file. Without this key the same
+    // MediaPlayer/SurfaceView instance was reused when switching tabs (e.g.
+    // Video -> Promo Video), so the surface callback fired against a stale
+    // player and the new clip never rendered until the card was fully recreated
+    // (the "visit Logo then come back" workaround). Re-keying rebuilds them
+    // cleanly for each file.
+    val mediaPlayer = remember(fileName) { MediaPlayer() }
+    val surfaceView = remember(fileName) { SurfaceView(context) }
 
     AndroidView(
+        // Keyed factory: recreated when fileName changes.
         factory = {
-
             surfaceView.apply {
-
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
 
+                fun startPlayback(holder: SurfaceHolder) {
+                    try {
+                        val afd = context.assets.openFd("templates/$fileName")
+                        mediaPlayer.reset()
+                        mediaPlayer.setDataSource(
+                            afd.fileDescriptor,
+                            afd.startOffset,
+                            afd.length
+                        )
+                        afd.close()
+                        mediaPlayer.setDisplay(holder)
+                        mediaPlayer.isLooping = true
+                        mediaPlayer.setVolume(0f, 0f)
+                        mediaPlayer.setOnPreparedListener { player -> player.start() }
+                        mediaPlayer.prepareAsync()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
                 holder.addCallback(
                     object : SurfaceHolder.Callback {
-
-                        override fun surfaceCreated(
-                            holder: SurfaceHolder
-                        ) {
-                            try {
-
-                                val afd =
-                                    context.assets.openFd(
-                                        "templates/$fileName"
-                                    )
-
-                                mediaPlayer.reset()
-
-                                mediaPlayer.setDataSource(
-                                    afd.fileDescriptor,
-                                    afd.startOffset,
-                                    afd.length
-                                )
-
-                                afd.close()
-
-                                mediaPlayer.setDisplay(holder)
-
-                                mediaPlayer.isLooping = true
-
-                                mediaPlayer.setVolume(
-                                    0f,
-                                    0f
-                                )
-
-                                mediaPlayer.setOnPreparedListener { player ->
-
-                                    val width =
-                                        player.videoWidth
-
-                                    val height =
-                                        player.videoHeight
-
-                                    if (
-                                        width > 0 &&
-                                        height > 0
-                                    ) {
-                                        aspectRatio =
-                                            width.toFloat() /
-                                                height.toFloat()
-                                    }
-
-                                    player.start()
-                                }
-
-                                mediaPlayer.prepareAsync()
-
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
+                        override fun surfaceCreated(holder: SurfaceHolder) {
+                            startPlayback(holder)
                         }
 
                         override fun surfaceChanged(
@@ -282,20 +243,27 @@ private fun AutoPlayVideo(
                         ) {
                         }
 
-                        override fun surfaceDestroyed(
-                            holder: SurfaceHolder
-                        ) {
-                            if (mediaPlayer.isPlaying) {
-                                mediaPlayer.pause()
+                        override fun surfaceDestroyed(holder: SurfaceHolder) {
+                            try {
+                                if (mediaPlayer.isPlaying) mediaPlayer.pause()
+                            } catch (_: Exception) {
                             }
                         }
                     }
                 )
+
+                // If the surface already exists (view reused before the callback
+                // fires), start immediately so playback never gets stuck waiting
+                // for a surfaceCreated that won't come again.
+                if (holder.surface?.isValid == true) {
+                    startPlayback(holder)
+                }
             }
         },
+        // Fixed aspect ratio so all cards are the same height as the images.
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatioSafe(aspectRatio)
+            .aspectRatioSafe(CARD_MEDIA_ASPECT_RATIO)
             .clip(
                 RoundedCornerShape(
                     topStart = 12.dp,
@@ -312,8 +280,8 @@ private fun AutoPlayVideo(
                 }
             } catch (_: Exception) {
             }
-
             mediaPlayer.reset()
+            mediaPlayer.release()
         }
     }
 }
