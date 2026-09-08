@@ -44,7 +44,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.deep.lumoraai.R
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsManager
+import com.deep.lumoraai.ads.PlacementNativeAd
+import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.core.components.LumoraIntroBackground
 import com.deep.lumoraai.core.theme.IntroPalette
 import androidx.compose.ui.res.stringResource
@@ -59,6 +67,17 @@ fun OnboardingScreen(
     val coroutineScope = rememberCoroutineScope()
     val currentStep = pagerState.currentPage + 1
 
+    val ads = LocalAdsManager.current
+    val activity = rememberCurrentActivity()
+    // Guard so OB_INTER never shows twice for the same completion/skip event.
+    var completing by remember { mutableStateOf(false) }
+    val completeOnboarding: () -> Unit = {
+        if (!completing) {
+            completing = true
+            if (ads == null) onNext() else ads.showInterstitial(activity, AdPlacement.OB_INTER) { onNext() }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -70,7 +89,7 @@ fun OnboardingScreen(
                 .fillMaxSize()
                 .systemBarsPadding()
         ) {
-            OnboardingTopBar(onSkip = onNext)
+            OnboardingTopBar(onSkip = completeOnboarding)
             
             HorizontalPager(
                 state = pagerState,
@@ -90,7 +109,7 @@ fun OnboardingScreen(
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }
                     } else {
-                        onNext()
+                        completeOnboarding()
                     }
                 },
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -176,6 +195,19 @@ fun StandardStepScreen(currentStep: Int) {
         StepDescription(step = currentStep)
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        // One large native per onboarding step (step index 0..3 -> OB_NATIVE_1..4).
+        val stepPlacement = when (currentStep) {
+            1 -> AdPlacement.OB_NATIVE_1
+            2 -> AdPlacement.OB_NATIVE_2
+            3 -> AdPlacement.OB_NATIVE_3
+            4 -> AdPlacement.OB_NATIVE_4
+            else -> null
+        }
+        if (stepPlacement != null) {
+            PlacementNativeAd(placement = stepPlacement)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
     }
 }
 

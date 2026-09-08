@@ -268,6 +268,26 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         uiState = currentState.copy(rewardMessage = null)
     }
 
+    /**
+     * Grant credits earned from a rewarded ad. Called ONLY from the genuine
+     * rewarded onReward callback. Uses the existing optimistic credit mechanism
+     * ([CreditBalanceStore]) so the header updates immediately, then reconciles
+     * with the authoritative server balance.
+     */
+    fun addRewardedCredits(amount: Int) {
+        if (amount <= 0) return
+        val currentState = uiState as? CreditsUiState.Success ?: return
+        if (currentState.isDeveloperMode) return
+        // Optimistically reflect the reward everywhere the header reads.
+        CreditBalanceStore.applyOptimistic(amount)
+        uiState = currentState.copy(
+            credits = (currentState.credits + amount).coerceAtLeast(0),
+            rewardMessage = "+$amount credits added from watching an ad.",
+        )
+        // Reconcile with the server's authoritative balance.
+        forceRefresh()
+    }
+
     private fun buildRewardTasks(isDeveloperMode: Boolean): List<CreditRewardUi> {
         val today = todayKey()
         val weeklySpinAvailable = rewardPrefs.getString(KEY_SPIN_WEEK, "") != weekKey()

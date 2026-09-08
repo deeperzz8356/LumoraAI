@@ -15,6 +15,9 @@
         android:maxSdkVersion="28"
         tools:ignore="ScopedStorage" />
 
+    <!-- Required by the Google Mobile Ads SDK for personalized advertising. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
 
     <application
         android:name=".LumoraApplication"
@@ -26,7 +29,31 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.LumoraAI">
-        
+
+        <!-- Google Mobile Ads (AdMob) App ID.
+             This is Google's official SAMPLE App ID for development/testing.
+             Replace with the real AdMob App ID before publishing. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
+        <!-- Optimize ad loading: defer SDK measurement init so app start isn't
+             blocked; MobileAds.initialize() is still called explicitly. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.OPTIMIZE_INITIALIZATION"
+            android:value="true" />
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.OPTIMIZE_AD_LOADING"
+            android:value="true" />
+
+        <!-- Firebase Analytics and the Ads SDK both declare this Privacy Sandbox
+             AD_SERVICES_CONFIG property; resolve the merge conflict in favour of
+             the Ads SDK config. -->
+        <property
+            android:name="android.adservices.AD_SERVICES_CONFIG"
+            android:resource="@xml/gma_ad_services_config"
+            tools:replace="android:resource" />
+
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"

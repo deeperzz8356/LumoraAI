@@ -20,6 +20,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.deep.lumoraai.ads.AdsConfigStore
+import com.deep.lumoraai.ads.AdsManager
+import com.deep.lumoraai.ads.AdsProvider
 import com.deep.lumoraai.core.network.hasInternetConnection
 import com.deep.lumoraai.core.localization.LocaleManager
 import com.deep.lumoraai.core.navigation.NavGraph
@@ -27,10 +30,17 @@ import com.deep.lumoraai.core.theme.LumoraTheme
 import com.deep.lumoraai.feature.network.NoInternetScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private var notificationRoute by mutableStateOf<String?>(null)
+
+    @Inject
+    lateinit var adsManager: AdsManager
+
+    @Inject
+    lateinit var adsConfigStore: AdsConfigStore
 
     companion object {
         const val NOTIFICATION_ROUTE_EXTRA = "lumora_destination_route"
@@ -46,6 +56,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LumoraTheme {
+              AdsProvider(adsManager = adsManager, adsConfigStore = adsConfigStore) {
                 val context = LocalContext.current
                 var hasInternet by remember { mutableStateOf(true) }
 
@@ -105,6 +116,7 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
+              }
             }
         }
     }

@@ -21,6 +21,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.feature.generation.GenerateNowButton
@@ -87,6 +89,7 @@ fun ImageToVideoScreen(
 
             Column(
                 modifier = Modifier
+                    .weight(1f)
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .imePadding()
@@ -158,6 +161,8 @@ fun ImageToVideoScreen(
                 GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
                 Spacer(modifier = Modifier.height(72.dp))
             }
+
+            PlacementBanner(placement = AdPlacement.BANNER_IMG2VIDEO, applyNavBarPadding = false)
         }
     }
 }

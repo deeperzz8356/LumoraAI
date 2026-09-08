@@ -35,6 +35,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.feature.language.model.LanguageModel
 import androidx.compose.ui.res.stringResource
 import com.deep.lumoraai.R
@@ -93,6 +95,12 @@ fun LanguageContent(
             selectedLanguageCode = state.selectedLanguageCode,
             onLanguageSelected = onLanguageSelected,
             modifier = Modifier.weight(1f)
+        )
+        // Native ad below the language list — the list owns the weighted space so
+        // the ad never covers the selectable language options.
+        PlacementNativeAd(
+            placement = AdPlacement.NATIVE_LANGUAGE,
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
         )
     }
 }

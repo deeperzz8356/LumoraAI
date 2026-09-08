@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Banner container / loading state. A FrameLayout that hosts the adaptive AdView
+  at runtime. match_parent width + wrap_content height keeps it responsive and
+  free of fixed pixel dimensions. The container collapses (GONE) on failure.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/banner_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#081020"
+    android:minHeight="50dp">
+
+    <!-- Lightweight skeleton shown while the banner loads. -->
+    <View
+        android:id="@+id/banner_skeleton"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:background="#16223A" />
+</FrameLayout>

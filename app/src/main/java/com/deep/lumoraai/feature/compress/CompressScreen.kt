@@ -52,6 +52,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
 import androidx.core.content.ContextCompat
@@ -184,6 +186,8 @@ fun CompressScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
+
+                PlacementNativeAd(placement = AdPlacement.NATIVE_COMPRESS)
 
                 if (uiState.result == null) {
                     Spacer(modifier = Modifier.height(220.dp))

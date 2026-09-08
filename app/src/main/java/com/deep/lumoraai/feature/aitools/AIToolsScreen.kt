@@ -43,6 +43,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.navigation.Screen
@@ -179,6 +181,8 @@ private fun AIToolsContent(
                     .defaultMinSize(minHeight = 116.dp),
             prominent = true
         )
+
+        PlacementNativeAd(placement = AdPlacement.NATIVE_TOOLS)
 
         Spacer(modifier = Modifier.height(2.dp))
     }

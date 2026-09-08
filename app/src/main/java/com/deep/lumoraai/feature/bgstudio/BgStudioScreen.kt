@@ -53,6 +53,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
 import androidx.compose.ui.res.stringResource
@@ -106,9 +108,11 @@ fun BgStudioScreen(
             .background(StudioBackground)
             .systemBarsPadding()
     ) {
+      Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .verticalScroll(scrollState)
                 .imePadding()
         ) {
@@ -186,6 +190,9 @@ fun BgStudioScreen(
                 Spacer(modifier = Modifier.height(72.dp))
             }
         }
+
+        PlacementBanner(placement = AdPlacement.BANNER_BG, applyNavBarPadding = false)
+      }
     }
 }
 

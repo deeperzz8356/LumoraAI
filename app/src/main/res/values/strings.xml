@@ -837,6 +837,8 @@
     <string name="ui_credits_count_format">%1$d credits</string>
     <string name="ui_developer_mode_active">Developer mode active</string>
     <string name="ui_lum_credits_available">LUM credits available</string>
+    <string name="ui_watch_ad_for_credits">Watch ad for credits</string>
+    <string name="ui_watch_ad_for_credits_subtitle">Watch a short video to earn free credits</string>
     <string name="ui_pack_starter">Starter</string>
     <string name="ui_pack_creator">Creator</string>
     <string name="ui_pack_studio">Studio</string>

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
@@ -63,6 +64,9 @@ import androidx.compose.ui.unit.sp
 import android.widget.Toast
 import coil.compose.AsyncImage
 import com.deep.lumoraai.R
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsConfigStore
+import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
@@ -213,27 +217,40 @@ private fun HistoryGallery(
                 onCancel = { selectedIds = emptySet() }
             )
         }
+        val historyInterval = LocalAdsConfigStore.current?.current?.nativeHistoryInterval ?: 8
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(9.dp),
             verticalArrangement = Arrangement.spacedBy(9.dp),
         ) {
-            items(filteredItems, key = { it.id }) { item ->
-                val selected = item.id in selectedIds
-                HistoryTile(
-                    item = item,
-                    selected = selected,
-                    selectionMode = selectionMode,
-                    onClick = {
-                        if (selectionMode) {
-                            selectedIds = selectedIds.toggle(item.id)
-                        } else {
-                            onSelected(item)
-                        }
-                    },
-                    onLongPress = { selectedIds = selectedIds + item.id },
-                )
+            filteredItems.forEachIndexed { index, item ->
+                item(key = item.id) {
+                    val selected = item.id in selectedIds
+                    HistoryTile(
+                        item = item,
+                        selected = selected,
+                        selectionMode = selectionMode,
+                        onClick = {
+                            if (selectionMode) {
+                                selectedIds = selectedIds.toggle(item.id)
+                            } else {
+                                onSelected(item)
+                            }
+                        },
+                        onLongPress = { selectedIds = selectedIds + item.id },
+                    )
+                }
+                // Full-width native ad after every N items; keyed by insertion
+                // index so each slot loads once and is not requested per recycle.
+                if ((index + 1) % historyInterval == 0) {
+                    item(
+                        key = "native_history_${index + 1}",
+                        span = { GridItemSpan(maxLineSpan) },
+                    ) {
+                        PlacementNativeAd(placement = AdPlacement.NATIVE_HISTORY)
+                    }
+                }
             }
         }
     }

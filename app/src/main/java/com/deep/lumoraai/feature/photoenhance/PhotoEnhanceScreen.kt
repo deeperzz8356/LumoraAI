@@ -63,6 +63,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.core.components.LumoraCreditsChip
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
@@ -96,9 +98,11 @@ fun PhotoEnhanceScreen(
             .background(EnhanceBackground)
             .systemBarsPadding()
     ) {
+      Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
                 .padding(top = 14.dp, bottom = 24.dp),
@@ -191,6 +195,9 @@ fun PhotoEnhanceScreen(
                 }
             }
         }
+
+        PlacementBanner(placement = AdPlacement.BANNER_ENHANCER, applyNavBarPadding = false)
+      }
     }
 }
 

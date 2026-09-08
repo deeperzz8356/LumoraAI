@@ -59,7 +59,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.runtime.LaunchedEffect
 import com.deep.lumoraai.R
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsManager
+import com.deep.lumoraai.ads.PlacementBanner
+import com.deep.lumoraai.ads.PlacementNativeAd
+import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
@@ -115,6 +121,14 @@ fun HomeScreen(
                     onNotificationClick = onNotificationClick,
                 )
             }
+
+            // Banner sits above the bottom navigation (Scaffold already reserves
+            // space for the nav bar, so no nav-bar padding here).
+            PlacementBanner(
+                placement = AdPlacement.BANNER_ALL,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                applyNavBarPadding = false,
+            )
         }
     }
 }
@@ -127,6 +141,25 @@ private fun HomeContent(
     onNotificationClick: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
+    val ads = LocalAdsManager.current
+    val activity = rememberCurrentActivity()
+
+    // Preload the feature-selection interstitial when Home is shown.
+    LaunchedEffect(Unit) { ads?.preloadInterstitial(context, AdPlacement.INTER_ALL) }
+
+    // Feature-selection navigation goes through the INTER_ALL trigger. Bottom-nav
+    // taps use onNavigate directly and never call this (no recordFeatureTrigger).
+    val onFeatureSelect: (String) -> Unit = { route ->
+        if (ads == null) {
+            onNavigate(route)
+        } else {
+            ads.recordFeatureTrigger()
+            ads.showInterstitial(activity, AdPlacement.INTER_ALL, requireTrigger = true) {
+                onNavigate(route)
+            }
+        }
+    }
+
     var showProfileHint by remember { mutableStateOf(!OnboardingPreferences.isProfileHintSeen(context)) }
     val dismissProfileHint = {
         OnboardingPreferences.markProfileHintSeen(context)
@@ -148,10 +181,12 @@ private fun HomeContent(
             onNotificationClick = onNotificationClick,
         )
         HomeHero(onExploreRecent = { onNavigate(Screen.History.route) })
-        MainCreateGrid(onNavigate = onNavigate)
+        MainCreateGrid(onNavigate = onFeatureSelect)
         RecentCreationsSection(items = uiState.recentItems, onNavigate = onNavigate)
-        ToolsSection(onNavigate = onNavigate)
-        Spacer(modifier = Modifier.height(2.dp))
+        // Large native between the Create/Recent area and the Tools section.
+        PlacementNativeAd(placement = AdPlacement.NATIVE_HOME)
+        ToolsSection(onNavigate = onFeatureSelect)
+        Spacer(modifier = Modifier.height(72.dp))
     }
     if (showProfileHint) {
         ProfileHintOverlay(

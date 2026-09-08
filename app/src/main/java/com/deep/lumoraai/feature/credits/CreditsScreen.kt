@@ -65,6 +65,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import android.app.Activity
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsConfigStore
+import com.deep.lumoraai.ads.LocalAdsManager
+import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
@@ -95,6 +99,18 @@ fun CreditsScreen(
     modifier: Modifier = Modifier
 ) {
     val activity = LocalContext.current as? Activity
+    val ads = LocalAdsManager.current
+    val adActivity = rememberCurrentActivity()
+    val rewardAmount = LocalAdsConfigStore.current?.current?.rewardCreditsAmount ?: 2
+    // Show a rewarded ad; grant credits ONLY on the genuine onReward callback.
+    val onWatchAdForCredits: () -> Unit = {
+        ads?.showRewarded(
+            activity = adActivity,
+            placement = AdPlacement.REWARD_CREDITS,
+            onReward = { viewModel.addRewardedCredits(rewardAmount) },
+            onClosed = {},
+        )
+    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = CredBackground,
@@ -121,7 +137,10 @@ fun CreditsScreen(
                     onBuy = { viewModel.buyCredits(it, activity) },
                     onClaimReward = { viewModel.claimReward(it) },
                     onClearRewardMessage = { viewModel.clearRewardMessage() },
-                    onNavigate = onNavigate
+                    onNavigate = onNavigate,
+                    rewardAdAmount = rewardAmount,
+                    showWatchAd = ads != null && !uiState.isDeveloperMode,
+                    onWatchAdForCredits = onWatchAdForCredits,
                 )
             }
         }
@@ -141,7 +160,10 @@ private fun CreditsContent(
     onBuy: (Int) -> Unit,
     onClaimReward: (String) -> Unit,
     onClearRewardMessage: () -> Unit,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    rewardAdAmount: Int = 2,
+    showWatchAd: Boolean = false,
+    onWatchAdForCredits: () -> Unit = {},
 ) {
     val balanceLabel = if (isDeveloperMode || credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) stringResource(com.deep.lumoraai.R.string.ui_unlimited) else "$credits"
     val showSpinWheel = remember { mutableStateOf(false) }
@@ -232,6 +254,10 @@ private fun CreditsContent(
                 }
             }
         )
+
+        if (showWatchAd) {
+            WatchAdForCreditsCard(amount = rewardAdAmount, onClick = onWatchAdForCredits)
+        }
 
         Text(stringResource(com.deep.lumoraai.R.string.ui_top_up), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         CreditPackageCard(stringResource(com.deep.lumoraai.R.string.ui_pack_starter), stringResource(com.deep.lumoraai.R.string.ui_credits_count_format, 50), "$4.99", Purple, onBuy = { onBuy(50) })
@@ -842,6 +868,49 @@ private fun CreditPackageCard(
                 modifier = Modifier.height(40.dp).widthIn(min = 82.dp)
             ) {
                 Text(price, color = if (accent == Lime) Color.Black else Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun WatchAdForCreditsCard(amount: Int, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        color = CredCard,
+        border = BorderStroke(1.dp, Lime.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            AccentIcon(Icons.Default.Bolt, Lime)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    stringResource(com.deep.lumoraai.R.string.ui_watch_ad_for_credits),
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    stringResource(com.deep.lumoraai.R.string.ui_watch_ad_for_credits_subtitle),
+                    color = Muted,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Lime)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text("+$amount", color = Color.Black, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
     }

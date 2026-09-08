@@ -82,6 +82,7 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -117,6 +118,9 @@ dependencies {
 
     // OneSignal Push Notifications
     implementation("com.onesignal:OneSignal:5.6.1")
+
+    // Google Mobile Ads (AdMob) — Banner, Native, Interstitial, Rewarded, App Open
+    implementation(libs.play.services.ads)
 
     // Per-app locale support (AppCompatDelegate.setApplicationLocales)
     implementation("androidx.appcompat:appcompat:1.7.0")

@@ -42,6 +42,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsConfigStore
+import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.core.components.AppEmptyScreen
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
@@ -177,8 +180,11 @@ private fun TemplatesContent(
             EmptyCategory(category = selectedCategory)
         } else {
 
+            // Insert a native ad after every N template cards (config interval).
+            val templateInterval =
+                LocalAdsConfigStore.current?.current?.nativeTemplateInterval ?: 6
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                templates.forEach { item ->
+                templates.forEachIndexed { index, item ->
                     FeatureCard(
                         item = item,
                         onCopy = {
@@ -188,6 +194,11 @@ private fun TemplatesContent(
                         },
                         onClick = { navigateTemplate(item = item, onNavigate = onNavigate) },
                     )
+                    // After each block of N cards, render one native (each insertion
+                    // index is a stable composition slot -> one load per index).
+                    if ((index + 1) % templateInterval == 0) {
+                        PlacementNativeAd(placement = AdPlacement.NATIVE_TEMPLATE)
+                    }
                 }
             }
         }

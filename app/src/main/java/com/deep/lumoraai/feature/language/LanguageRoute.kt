@@ -9,18 +9,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsManager
+import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.core.localization.LocaleManager
 import android.app.Activity
 
 @Composable
 fun LanguageRoute(
     onNext: () -> Unit,
+    source: String? = null,
     viewModel: LanguageViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val ads = LocalAdsManager.current
+    val adActivity = rememberCurrentActivity()
+
+    // Choose the placement by entry source; both must never block the flow.
+    val interPlacement = if (source == "settings") {
+        AdPlacement.INTER_SETTING_LANGUAGE
+    } else {
+        AdPlacement.INTER_LANGUAGE
+    }
+    // Wrap the final navigation continuation with the interstitial. Language
+    // save + locale apply already happened before this runs, so proceeding is
+    // guaranteed regardless of whether an ad shows.
+    val proceed: () -> Unit = {
+        if (ads == null) onNext() else ads.showInterstitial(adActivity, interPlacement) { onNext() }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { onNext() }
+    ) { proceed() }
 
     LanguageScreen(
         uiState = viewModel.uiState,
@@ -43,7 +63,7 @@ fun LanguageRoute(
             (context as? Activity)?.recreate()
             checkAndRequestNotificationPermission(
                 context = context,
-                onGranted = onNext,
+                onGranted = proceed,
                 onRequest = { permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) }
             )
         }

@@ -43,7 +43,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsManager
+import com.deep.lumoraai.ads.PlacementBanner
+import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.ui.theme.tokens.Spacing
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 
@@ -53,14 +58,34 @@ fun SplashScreen(
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val ads = LocalAdsManager.current
+    val activity = rememberCurrentActivity()
+    val context = LocalContext.current
+
     LaunchedEffect(isReady) {
         if (isReady) {
             delay(1400)
-            onNext()
+            // Post-splash interstitial: never on absolute first launch, and never
+            // block navigation. On first launch we just mark and proceed; the App
+            // Open observer handles the cold-start full-screen (no double show).
+            if (ads == null) {
+                onNext()
+            } else if (ads.isFirstLaunch(context)) {
+                ads.markLaunched(context)
+                onNext()
+            } else {
+                ads.showInterstitial(activity, AdPlacement.INTER_POST_SPLASH) { onNext() }
+            }
         }
     }
     SplashBackground(modifier = modifier) {
         SplashBottomContent()
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            PlacementBanner(placement = AdPlacement.BANNER_SPLASH)
+        }
     }
 }
 

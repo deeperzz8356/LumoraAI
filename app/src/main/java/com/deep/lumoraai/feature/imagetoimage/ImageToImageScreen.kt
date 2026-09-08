@@ -44,6 +44,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.R
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.feature.generation.GenerateNowButton
@@ -110,6 +112,7 @@ fun ImageToImageScreen(
 
             Column(
                 modifier = Modifier
+                    .weight(1f)
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .imePadding()
@@ -183,6 +186,8 @@ fun ImageToImageScreen(
                 GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
                 Spacer(modifier = Modifier.height(72.dp))
             }
+
+            PlacementBanner(placement = AdPlacement.BANNER_IMG2IMG, applyNavBarPadding = false)
         }
     }
 }
