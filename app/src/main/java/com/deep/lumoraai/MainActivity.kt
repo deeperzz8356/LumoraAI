@@ -64,7 +64,9 @@ class MainActivity : ComponentActivity() {
                 val screenWidthDp = LocalConfiguration.current.screenWidthDp
                 val persistentBanner = remember(screenWidthDp) {
                     com.deep.lumoraai.ads.banner.PersistentBannerAd(
-                        appContext = applicationContext,
+                        // AdView requires an Activity context to render; the app
+                        // context makes the banner silently fail to display.
+                        activityContext = this@MainActivity,
                         configStore = adsConfigStore,
                         widthDp = screenWidthDp,
                     )

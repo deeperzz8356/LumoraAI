@@ -23,7 +23,8 @@ import com.google.android.gms.ads.LoadAdError
  * it can be detached from one screen and attached to another without reload.
  */
 class PersistentBannerAd(
-    private val appContext: Context,
+    // Must be an Activity context: the Mobile Ads SDK needs it to render banners.
+    private val activityContext: Context,
     private val configStore: AdsConfigStore,
     private val widthDp: Int,
 ) {
@@ -33,10 +34,10 @@ class PersistentBannerAd(
 
     private var onStateChanged: ((Boolean?) -> Unit)? = null
 
-    val adSize: AdSize = resolveAdSize(appContext, widthDp)
+    val adSize: AdSize = resolveAdSize(activityContext, widthDp)
 
     /** Stable host view that always contains the single AdView. */
-    val host: FrameLayout = FrameLayout(appContext).apply {
+    val host: FrameLayout = FrameLayout(activityContext).apply {
         layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -45,7 +46,7 @@ class PersistentBannerAd(
 
     private var adView: AdView? = null
 
-    fun heightPx(): Int = adSize.getHeightInPixels(appContext)
+    fun heightPx(): Int = adSize.getHeightInPixels(activityContext)
 
     /** Create + load the AdView once. Safe to call repeatedly (no-op if built). */
     fun ensureLoaded() {
@@ -57,7 +58,7 @@ class PersistentBannerAd(
         if (adView != null) return
 
         val resolvedSize = this.adSize
-        val view = AdView(appContext).apply {
+        val view = AdView(activityContext).apply {
             setAdSize(resolvedSize)
             adUnitId = config.unitIdFor(AdFormat.BANNER)
             adListener = object : AdListener() {
@@ -110,8 +111,9 @@ class PersistentBannerAd(
     private companion object {
         fun resolveAdSize(context: Context, widthDp: Int): AdSize {
             if (widthDp <= 0) return AdSize.BANNER
+            // Anchored adaptive banner: the standard, reliable bottom banner size.
             val adaptive: AdSize? =
-                AdSize.getCurrentOrientationInlineAdaptiveBannerAdSize(context, widthDp)
+                AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp)
             return adaptive ?: AdSize.BANNER
         }
     }

@@ -159,8 +159,8 @@ private fun populate(adView: NativeAdView, ad: NativeAd) {
         }
     }
     adView.mediaView?.let { mv ->
-        // Fill the fixed-height media area like a banner (matches the reference).
-        mv.setImageScaleType(android.widget.ImageView.ScaleType.CENTER_CROP)
+        // FIT_CENTER shows the FULL ad creative without cropping/cutting it.
+        mv.setImageScaleType(android.widget.ImageView.ScaleType.FIT_CENTER)
         ad.mediaContent?.let { mv.mediaContent = it }
     }
     adView.setNativeAd(ad)

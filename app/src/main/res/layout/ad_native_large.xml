@@ -73,13 +73,16 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Media image: fixed, balanced banner-like height so the card never
-             grows oversized. Cropped to fill the width like the reference. -->
+        <!-- Media: adapts to the creative's aspect ratio (up to a max) and is
+             shown in full (FIT_CENTER) so no part of the ad is cut off. -->
         <com.google.android.gms.ads.nativead.MediaView
             android:id="@+id/ad_media"
             android:layout_width="match_parent"
-            android:layout_height="175dp"
-            android:layout_marginTop="12dp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:maxHeight="220dp"
+            android:minHeight="140dp"
+            android:adjustViewBounds="true" />
 
         <Button
             android:id="@+id/ad_call_to_action"
