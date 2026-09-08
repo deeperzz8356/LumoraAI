@@ -47,7 +47,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.window.Dialog
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -76,7 +78,7 @@ import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlin.random.Random
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.res.stringResource
 
 private val CredBackground = Color(0xFF081020)
@@ -133,10 +135,12 @@ fun CreditsScreen(
                     purchaseMessage = uiState.purchaseMessage,
                     isRewardBusy = uiState.isRewardBusy,
                     checkInDayIndex = uiState.checkInDayIndex,
+                    spinResult = uiState.spinResult,
                     onBack = onBack,
                     onBuy = { viewModel.buyCredits(it, activity) },
                     onClaimReward = { viewModel.claimReward(it) },
                     onClearRewardMessage = { viewModel.clearRewardMessage() },
+                    onClearSpinResult = { viewModel.clearSpinResult() },
                     onNavigate = onNavigate,
                     rewardAdAmount = rewardAmount,
                     showWatchAd = ads != null && !uiState.isDeveloperMode,
@@ -156,10 +160,12 @@ private fun CreditsContent(
     purchaseMessage: String?,
     isRewardBusy: Boolean,
     checkInDayIndex: Int,
+    spinResult: SpinResult?,
     onBack: () -> Unit,
     onBuy: (Int) -> Unit,
     onClaimReward: (String) -> Unit,
     onClearRewardMessage: () -> Unit,
+    onClearSpinResult: () -> Unit,
     onNavigate: (String) -> Unit,
     rewardAdAmount: Int = 2,
     showWatchAd: Boolean = false,
@@ -173,11 +179,12 @@ private fun CreditsContent(
         SpinWheelDialog(
             reward = spinReward,
             isRewardBusy = isRewardBusy,
-            onDismiss = { showSpinWheel.value = false },
-            onSpin = {
+            spinResult = spinResult,
+            onDismiss = {
                 showSpinWheel.value = false
-                onClaimReward(spinReward.id)
-            }
+                onClearSpinResult()
+            },
+            onSpin = { onClaimReward(spinReward.id) },
         )
     }
 
@@ -272,10 +279,13 @@ private fun CreditsContent(
 private fun SpinWheelDialog(
     reward: CreditRewardUi,
     isRewardBusy: Boolean,
+    spinResult: SpinResult?,
     onDismiss: () -> Unit,
     onSpin: () -> Unit,
 ) {
     val wheelColors = listOf(Color(0xFF222B42), Lime, Cyan, Purple, Pink, Color(0xFF7D86FF))
+    // Prize amount per segment (index-aligned with prizeLabels below).
+    val prizeAmounts = listOf(0, 2, 2, 10, 25, 50)
     val prizeLabels = listOf(
         stringResource(com.deep.lumoraai.R.string.ui_spin_prize_better_luck),
         "+2",
@@ -284,19 +294,45 @@ private fun SpinWheelDialog(
         "+25",
         "+50"
     )
+    val sweepDeg = 360f / wheelColors.size
+
+    // spinning = backend call in flight (waiting for the authoritative result);
+    // landed = the wheel finished animating to the winning segment.
     var spinning by remember { mutableStateOf(false) }
-    var rotationTarget by remember { mutableStateOf(0f) }
+    var landed by remember { mutableStateOf(false) }
+    var rotationTarget by remember { mutableFloatStateOf(0f) }
+    // Track which spinResult we've already animated so we react once per spin.
+    var handledNonce by remember { mutableStateOf<Long?>(null) }
+    var landedAmount by remember { mutableStateOf<Int?>(null) }
+
     val wheelRotation by animateFloatAsState(
         targetValue = rotationTarget,
-        animationSpec = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 2600, easing = FastOutSlowInEasing),
         finishedListener = {
             if (spinning) {
                 spinning = false
-                onSpin()
+                landed = true
             }
         },
         label = "spinWheelRotation"
     )
+
+    // When the server result arrives, spin the wheel so it LANDS on the segment
+    // matching the awarded amount (the visual now always matches the credits).
+    LaunchedEffect(spinResult?.nonce) {
+        val result = spinResult ?: return@LaunchedEffect
+        if (handledNonce == result.nonce) return@LaunchedEffect
+        handledNonce = result.nonce
+        // Pick the segment whose amount equals the award (first match).
+        val targetIndex = prizeAmounts.indexOf(result.creditsAwarded).let { if (it >= 0) it else 0 }
+        // The pointer is at the top (-90°). Segment i center sits at
+        // (-90 + i*sweep + sweep/2) in wheel space; rotate so that lands at -90.
+        val segmentCenter = targetIndex * sweepDeg + sweepDeg / 2f
+        val currentMod = ((rotationTarget % 360f) + 360f) % 360f
+        val needed = (360f - segmentCenter - currentMod + 360f) % 360f
+        rotationTarget += 360f * 5 + needed // 5 full turns then settle on target
+        landedAmount = result.creditsAwarded
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -395,14 +431,43 @@ private fun SpinWheelDialog(
                     }
                 }
 
+                // Result banner shown after the wheel lands, so the user clearly
+                // sees what they won (matching the segment the wheel stopped on).
+                if (landed && landedAmount != null) {
+                    val amount = landedAmount ?: 0
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = Lime.copy(alpha = 0.14f),
+                        border = BorderStroke(1.dp, Lime.copy(alpha = 0.4f)),
+                    ) {
+                        Text(
+                            text = if (amount > 0) {
+                                stringResource(com.deep.lumoraai.R.string.ui_spin_you_won, amount)
+                            } else {
+                                stringResource(com.deep.lumoraai.R.string.ui_spin_better_luck_result)
+                            },
+                            color = Lime,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                        )
+                    }
+                }
+
                 Button(
                     onClick = {
-                        if (!spinning) {
+                        if (landed) {
+                            onDismiss()
+                        } else if (!spinning && reward.isAvailable) {
+                            // Ask the server for the authoritative result; the wheel
+                            // lands on the matching segment when it arrives.
                             spinning = true
-                            rotationTarget += 1440f + Random.nextInt(120, 480)
+                            onSpin()
                         }
                     },
-                    enabled = reward.isAvailable && !isRewardBusy && !spinning,
+                    enabled = landed || (reward.isAvailable && !isRewardBusy && !spinning),
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -413,11 +478,12 @@ private fun SpinWheelDialog(
                 ) {
                     Text(
                         when {
+                            landed -> stringResource(com.deep.lumoraai.R.string.ui_done)
                             spinning -> stringResource(com.deep.lumoraai.R.string.ui_spinning)
                             reward.isAvailable -> stringResource(com.deep.lumoraai.R.string.ui_spin_weekly_wheel)
                             else -> stringResource(com.deep.lumoraai.R.string.ui_weekly_spin_used)
                         },
-                        color = if (reward.isAvailable) Color.Black else Muted,
+                        color = if (landed || reward.isAvailable) Color.Black else Muted,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold
                     )

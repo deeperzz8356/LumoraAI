@@ -16,7 +16,7 @@ enum class AdPlacement(
     // 01
     BANNER_SPLASH("banner_splash", AdFormat.BANNER),
     // 02
-    NATIVE_LANGUAGE("native_language", AdFormat.NATIVE, NativeAdStyle.REGULAR),
+    NATIVE_LANGUAGE("native_language", AdFormat.NATIVE, NativeAdStyle.LARGE),
     // 03
     INTER_LANGUAGE("inter_language", AdFormat.INTERSTITIAL),
     // 04-07

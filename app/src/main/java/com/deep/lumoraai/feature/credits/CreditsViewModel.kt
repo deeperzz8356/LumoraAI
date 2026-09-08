@@ -253,12 +253,17 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
             // Publish so the header (and any other screen) reflects earned credits.
             CreditBalanceStore.set(newCredits)
 
+            // For a spin, the wheel dialog drives result presentation (landing +
+            // "you won" text), so we set spinResult and suppress the top banner
+            // message. Other rewards keep the inline message.
+            val isSpin = rewardId == REWARD_SPIN
             uiState = (uiState as? CreditsUiState.Success ?: currentState).copy(
                 credits = newCredits,
                 rewards = buildRewardTasks(isDeveloperMode = false),
-                rewardMessage = message,
+                rewardMessage = if (isSpin) null else message,
                 isRewardBusy = false,
-                checkInDayIndex = checkInIndex()
+                checkInDayIndex = checkInIndex(),
+                spinResult = if (isSpin) SpinResult(awarded, System.nanoTime()) else null,
             )
         }
     }
@@ -266,6 +271,11 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
     fun clearRewardMessage() {
         val currentState = uiState as? CreditsUiState.Success ?: return
         uiState = currentState.copy(rewardMessage = null)
+    }
+
+    fun clearSpinResult() {
+        val currentState = uiState as? CreditsUiState.Success ?: return
+        uiState = currentState.copy(spinResult = null)
     }
 
     /**

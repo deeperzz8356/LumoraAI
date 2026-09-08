@@ -43,7 +43,7 @@ data class AdsConfig(
     val rewardMaxClaimsPerDay: Int = 3,
 
     // ---- List insertion intervals for native-in-list placements ----
-    val nativeTemplateInterval: Int = 6,
+    val nativeTemplateInterval: Int = 3,
     val nativeHistoryInterval: Int = 8,
 
     // ---- Native styling (validated; malformed values fall back to defaults) ----

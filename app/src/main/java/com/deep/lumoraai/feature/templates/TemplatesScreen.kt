@@ -180,9 +180,11 @@ private fun TemplatesContent(
             EmptyCategory(category = selectedCategory)
         } else {
 
-            // Insert a native ad after every N template cards (config interval).
+            // Insert a native ad after every Nth template card (default 3),
+            // never after the last item (no ad at the very bottom).
             val templateInterval =
-                LocalAdsConfigStore.current?.current?.nativeTemplateInterval ?: 6
+                (LocalAdsConfigStore.current?.current?.nativeTemplateInterval ?: 3).coerceAtLeast(1)
+            val lastIndex = templates.lastIndex
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 templates.forEachIndexed { index, item ->
                     FeatureCard(
@@ -194,9 +196,8 @@ private fun TemplatesContent(
                         },
                         onClick = { navigateTemplate(item = item, onNavigate = onNavigate) },
                     )
-                    // After each block of N cards, render one native (each insertion
-                    // index is a stable composition slot -> one load per index).
-                    if ((index + 1) % templateInterval == 0) {
+                    // After every Nth card, but not after the final card.
+                    if ((index + 1) % templateInterval == 0 && index != lastIndex) {
                         PlacementNativeAd(placement = AdPlacement.NATIVE_TEMPLATE)
                     }
                 }

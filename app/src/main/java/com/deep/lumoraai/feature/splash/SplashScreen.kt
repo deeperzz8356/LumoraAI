@@ -79,7 +79,10 @@ fun SplashScreen(
         }
     }
     SplashBackground(modifier = modifier) {
-        SplashBottomContent()
+        // Loader content sits in the space above the bottom banner; the banner is
+        // pinned to the very bottom. Extra bottom padding keeps the progress bar
+        // and status text clear of the banner (no overlap).
+        SplashBottomContent(bottomPadding = 132.dp)
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter,
@@ -128,13 +131,13 @@ fun SplashBackground(
 }
 
 @Composable
-fun SplashBottomContent() {
+fun SplashBottomContent(bottomPadding: androidx.compose.ui.unit.Dp = 72.dp) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom,
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 72.dp, start = Spacing.containerMargin, end = Spacing.containerMargin)
+            .padding(bottom = bottomPadding, start = Spacing.containerMargin, end = Spacing.containerMargin)
     ) {
         SplashLogo()
         Spacer(modifier = Modifier.height(48.dp))

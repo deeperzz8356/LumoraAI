@@ -848,6 +848,8 @@
     <string name="ui_weekly_spin_used">Weekly Spin Used</string>
     <string name="ui_spinning">Spinning...</string>
     <string name="ui_spin_prize_better_luck">Better\nluck</string>
+    <string name="ui_spin_you_won">You won +%1$d credits!</string>
+    <string name="ui_spin_better_luck_result">Better luck next time!</string>
     <string name="ui_reward_spin_subtitle">1 free spin resets every week.</string>
     <string name="ui_reward_check_in_title">Daily Week Check-in</string>
     <string name="ui_reward_check_in_subtitle">Claim today on the 7-day track below.</string>

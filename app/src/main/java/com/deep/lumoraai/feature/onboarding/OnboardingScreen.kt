@@ -114,6 +114,22 @@ fun OnboardingScreen(
                 },
                 modifier = Modifier.padding(bottom = 8.dp)
             )
+
+            // Large native below the page indicator + Next/Get Started row.
+            // Step 1..4 map to OB_NATIVE_1..4; the final step shows none.
+            val stepPlacement = when (currentStep) {
+                1 -> AdPlacement.OB_NATIVE_1
+                2 -> AdPlacement.OB_NATIVE_2
+                3 -> AdPlacement.OB_NATIVE_3
+                4 -> AdPlacement.OB_NATIVE_4
+                else -> null
+            }
+            if (stepPlacement != null) {
+                PlacementNativeAd(
+                    placement = stepPlacement,
+                    modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp),
+                )
+            }
         }
     }
 }
@@ -195,19 +211,6 @@ fun StandardStepScreen(currentStep: Int) {
         StepDescription(step = currentStep)
 
         Spacer(modifier = Modifier.height(8.dp))
-
-        // One large native per onboarding step (step index 0..3 -> OB_NATIVE_1..4).
-        val stepPlacement = when (currentStep) {
-            1 -> AdPlacement.OB_NATIVE_1
-            2 -> AdPlacement.OB_NATIVE_2
-            3 -> AdPlacement.OB_NATIVE_3
-            4 -> AdPlacement.OB_NATIVE_4
-            else -> null
-        }
-        if (stepPlacement != null) {
-            PlacementNativeAd(placement = stepPlacement)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
     }
 }
 

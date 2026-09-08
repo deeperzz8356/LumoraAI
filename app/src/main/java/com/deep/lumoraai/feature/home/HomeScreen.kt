@@ -159,6 +159,13 @@ private fun HomeContent(
         OnboardingPreferences.markProfileHintSeen(context)
         showProfileHint = false
     }
+    // Auto-dismiss the profile hint after ~2s so it never lingers on screen.
+    LaunchedEffect(showProfileHint) {
+        if (showProfileHint) {
+            kotlinx.coroutines.delay(2_000)
+            dismissProfileHint()
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
