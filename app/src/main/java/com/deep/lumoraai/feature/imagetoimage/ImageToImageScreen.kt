@@ -57,9 +57,9 @@ import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
 import com.deep.lumoraai.feature.generation.GenerationErrorText
 import com.deep.lumoraai.feature.generation.GenerationScreenBg
+import com.deep.lumoraai.feature.generation.CollapsiblePromptComposerCard
 import com.deep.lumoraai.feature.generation.GenerationTopBar
 import com.deep.lumoraai.feature.generation.ImageStyleSection
-import com.deep.lumoraai.feature.generation.PromptComposerCard
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 
@@ -128,7 +128,10 @@ fun ImageToImageScreen(
                     },
                     onRemoveSource = onSourceRemoved,
                 )
-                PromptComposerCard(
+                // Prompt is optional here (generation works from the uploaded
+                // image alone), so it's a collapsible dropdown, collapsed by
+                // default.
+                CollapsiblePromptComposerCard(
                     prompt = uiState.prompt,
                     promptHint = "Describe the image you want to generate...",
                     negativePrompt = uiState.negativePrompt,
@@ -136,8 +139,6 @@ fun ImageToImageScreen(
                     onPromptChanged = onPromptChanged,
                     onImprovePrompt = onImprovePrompt,
                     onNegativePromptChanged = onNegativePromptChanged,
-                    // Upload button removed here; images are added via the source
-                    // images panel above, so the composer no longer duplicates it.
                     isSettingsOpen = showAdvancedSettings.value,
                     onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                 )
@@ -165,7 +166,8 @@ fun ImageToImageScreen(
                 ImageStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
-                    enabled = uiState.prompt.isNotBlank() && uiState.sourceImages.isNotEmpty() && !uiState.isLoadingSources,
+                    // Prompt is optional: only require at least one source image.
+                    enabled = uiState.sourceImages.isNotEmpty() && !uiState.isLoadingSources,
                     creditCost = GenerationGate.imageCreditCost(uiState.sourceImages.size, uiState.generations),
                     onClick = onGenerate
                 )

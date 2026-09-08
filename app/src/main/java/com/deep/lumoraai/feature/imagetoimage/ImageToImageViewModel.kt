@@ -121,10 +121,8 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             uiState = uiState.copy(error = "Upload at least one image first.")
             return
         }
-        if (uiState.prompt.isBlank()) {
-            uiState = uiState.copy(error = "Describe the image you want to generate.")
-            return
-        }
+        // Prompt is optional for image-to-image: generation proceeds from the
+        // uploaded image(s) alone when no prompt is provided.
 
         viewModelScope.launch {
             val isDev = appPreferences.isDeveloperModeEnabled()
@@ -348,7 +346,9 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         } else {
             "Create a new image from the uploaded reference image."
         }
-        return "$sourceClause User prompt: ${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original composition and subject identity while improving the image."
+        // Prompt is optional; only include the user clause when it's provided.
+        val userClause = uiState.prompt.trim().takeIf { it.isNotBlank() }?.let { " User prompt: $it." }.orEmpty()
+        return "$sourceClause$userClause$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original composition and subject identity while improving the image."
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {

@@ -140,6 +140,8 @@
 
     <string name="ui_downloading">Downloading…</string>
 
+    <string name="ui_prompt_optional">Add a prompt (optional)</string>
+
     <string name="ui_download_now">Download Now</string>
 
     <string name="ui_edit_faster_with_focused_ai_actions">Edit faster with focused AI actions</string>

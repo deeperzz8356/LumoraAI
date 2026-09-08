@@ -110,10 +110,8 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             uiState = uiState.copy(error = "Upload an image first.")
             return
         }
-        if (uiState.prompt.isBlank()) {
-            uiState = uiState.copy(error = "Describe the video you want to generate.")
-            return
-        }
+        // Prompt is optional for image-to-video: the uploaded image drives the
+        // generation when no prompt is provided.
 
         viewModelScope.launch {
             val isDev = appPreferences.isDeveloperModeEnabled()
@@ -318,7 +316,9 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
         val similarity = (uiState.similarity * 100).toInt()
         val negative = uiState.negativePrompt.takeIf { it.isNotBlank() }?.let { " Avoid: $it." }.orEmpty()
         val stylePrompt = uiState.selectedStyle.promptDirective
-        return "Animate the uploaded source image into a video. User prompt: ${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original subject and composition while adding natural motion, camera movement, and depth.$negative"
+        // Prompt is optional; only include the user clause when it's provided.
+        val userClause = uiState.prompt.trim().takeIf { it.isNotBlank() }?.let { " User prompt: $it." }.orEmpty()
+        return "Animate the uploaded source image into a video.$userClause$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original subject and composition while adding natural motion, camera movement, and depth.$negative"
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {

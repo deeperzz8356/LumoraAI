@@ -33,9 +33,9 @@ import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
 import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
 import com.deep.lumoraai.feature.generation.GenerationErrorText
+import com.deep.lumoraai.feature.generation.CollapsiblePromptComposerCard
 import com.deep.lumoraai.feature.generation.GenerationScreenBg
 import com.deep.lumoraai.feature.generation.GenerationTopBar
-import com.deep.lumoraai.feature.generation.PromptComposerCard
 import com.deep.lumoraai.feature.generation.UploadImagePanel
 import com.deep.lumoraai.feature.generation.VideoStyleSection
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
@@ -102,7 +102,9 @@ fun ImageToVideoScreen(
                     isBusy = uiState.isGenerating,
                     onUpload = { imagePicker.launch("image/*") }
                 )
-                PromptComposerCard(
+                // Prompt is optional (the uploaded image drives generation), so
+                // it's a collapsible dropdown, collapsed by default.
+                CollapsiblePromptComposerCard(
                     prompt = uiState.prompt,
                     promptHint = "Describe the video you want to generate...",
                     negativePrompt = uiState.negativePrompt,
@@ -110,8 +112,6 @@ fun ImageToVideoScreen(
                     onPromptChanged = onPromptChanged,
                     onImprovePrompt = onImprovePrompt,
                     onNegativePromptChanged = onNegativePromptChanged,
-                    // Upload button removed from the composer; the image is chosen
-                    // via the UploadImagePanel above.
                     isSettingsOpen = showAdvancedSettings.value,
                     onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                 )
@@ -142,7 +142,8 @@ fun ImageToVideoScreen(
                 VideoStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
-                    enabled = uiState.prompt.isNotBlank() && uiState.sourceBitmap != null,
+                    // Prompt is optional: only require an uploaded image.
+                    enabled = uiState.sourceBitmap != null,
                     creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
                     onClick = onGenerate
                 )

@@ -42,6 +42,8 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
@@ -332,6 +334,146 @@ private fun SquareActionButton(
                 tint = if (enabled) GenerationLime else Color.White.copy(alpha = 0.35f),
                 modifier = Modifier.size(23.dp)
             )
+        }
+    }
+}
+
+/**
+ * Collapsible, optional prompt composer. Shows a tappable header ("Add a prompt
+ * (optional)") that expands to reveal the prompt text box and its action
+ * buttons. Collapsed by default because these screens generate from the
+ * uploaded image alone — a prompt is optional. When a prompt exists, the header
+ * previews it so the user knows it's set even while collapsed.
+ */
+@Composable
+fun CollapsiblePromptComposerCard(
+    prompt: String,
+    promptHint: String,
+    negativePrompt: String,
+    isImproving: Boolean,
+    onPromptChanged: (String) -> Unit,
+    onImprovePrompt: () -> Unit,
+    onNegativePromptChanged: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    isSettingsOpen: Boolean = false,
+    onSettingsClick: () -> Unit = {},
+) {
+    // Auto-expand if a prompt is already present (e.g. from a template prefill).
+    var expanded by remember { mutableStateOf(prompt.isNotBlank()) }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(GenerationPanel)
+            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+    ) {
+        // Header row — tap to expand/collapse.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = null,
+                tint = GenerationLime,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(com.deep.lumoraai.R.string.ui_prompt_optional),
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (!expanded && prompt.isNotBlank()) {
+                    Text(
+                        text = prompt,
+                        color = GenerationMuted,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Icon(
+                imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.size(24.dp),
+            )
+        }
+
+        if (expanded) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+            ) {
+                OutlinedTextField(
+                    value = prompt,
+                    onValueChange = onPromptChanged,
+                    placeholder = {
+                        Text(
+                            text = promptHint,
+                            color = GenerationMuted.copy(alpha = 0.68f),
+                            fontSize = 16.sp,
+                            lineHeight = 24.sp
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 12.dp)
+                        .padding(bottom = 60.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = GenerationLime
+                    ),
+                    textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Start
+                    )
+                )
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 18.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    SquareActionButton(
+                        icon = Icons.Default.AutoAwesome,
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_improve_prompt),
+                        enabled = prompt.isNotBlank() && !isImproving,
+                        onClick = onImprovePrompt,
+                        isLoading = isImproving
+                    )
+                    SquareActionButton(
+                        icon = Icons.Default.Tune,
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_advanced_settings_2),
+                        onClick = onSettingsClick,
+                        highlighted = isSettingsOpen || negativePrompt.isNotBlank()
+                    )
+                }
+                Text(
+                    text = "${prompt.length}/1000",
+                    color = Color.White.copy(alpha = 0.78f),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 20.dp, bottom = 20.dp)
+                )
+            }
         }
     }
 }
