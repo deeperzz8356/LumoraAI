@@ -28,6 +28,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +51,9 @@ private val LanguageTopBar = Color(0xFF0D1426)
 private val LanguageRow = Color(0xFF23253C)
 private val LanguageAccent = Color(0xFF6DE7EA)
 private val LanguageDone = Color(0xFFD8FF2F)
+
+// Done unlocks this long after the user selects a language.
+private const val DONE_UNLOCK_DELAY_MS = 3_000L
 
 @Composable
 fun LanguageScreen(
@@ -84,12 +92,27 @@ fun LanguageContent(
     onLanguageSelected: (String) -> Unit,
     onDone: () -> Unit
 ) {
+    val hasSelection = state.selectedLanguageCode.isNotBlank()
+
+    // Done unlocks only 3 seconds AFTER the user selects a language. The timer
+    // restarts whenever the selection changes; if nothing is selected the button
+    // stays disabled. Keyed by the selected code so re-selecting resets the wait.
+    var delayElapsed by remember(state.selectedLanguageCode) { mutableStateOf(false) }
+    LaunchedEffect(state.selectedLanguageCode) {
+        delayElapsed = false
+        if (hasSelection) {
+            kotlinx.coroutines.delay(DONE_UNLOCK_DELAY_MS)
+            delayElapsed = true
+        }
+    }
+    val doneEnabled = hasSelection && delayElapsed
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .systemBarsPadding()
     ) {
-        LanguageTopBar(onDone = onDone)
+        LanguageTopBar(onDone = onDone, enabled = doneEnabled)
         LanguageList(
             languages = state.languages,
             selectedLanguageCode = state.selectedLanguageCode,
@@ -106,7 +129,7 @@ fun LanguageContent(
 }
 
 @Composable
-fun LanguageTopBar(onDone: () -> Unit) {
+fun LanguageTopBar(onDone: () -> Unit, enabled: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -131,14 +154,19 @@ fun LanguageTopBar(onDone: () -> Unit) {
         Spacer(modifier = Modifier.weight(1f))
         Button(
             onClick = onDone,
+            enabled = enabled,
             modifier = Modifier.height(36.dp),
             shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(containerColor = LanguageDone),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = LanguageDone,
+                contentColor = Color.Black,
+                disabledContainerColor = LanguageDone.copy(alpha = 0.35f),
+                disabledContentColor = Color.Black.copy(alpha = 0.45f),
+            ),
             contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp)
         ) {
             Text(
                 text = stringResource(R.string.done),
-                color = Color.Black,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )

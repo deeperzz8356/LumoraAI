@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.deep.lumoraai.ads.AdsConfigStore
 import com.deep.lumoraai.ads.AdsManager
@@ -58,6 +59,19 @@ class MainActivity : ComponentActivity() {
             LumoraTheme {
               AdsProvider(adsManager = adsManager, adsConfigStore = adsConfigStore) {
                 val context = LocalContext.current
+                // One long-lived banner_all AdView, created once and re-parented
+                // across primary tabs (never recreated/refreshed on tab switch).
+                val screenWidthDp = LocalConfiguration.current.screenWidthDp
+                val persistentBanner = remember(screenWidthDp) {
+                    com.deep.lumoraai.ads.banner.PersistentBannerAd(
+                        appContext = applicationContext,
+                        configStore = adsConfigStore,
+                        widthDp = screenWidthDp,
+                    )
+                }
+                androidx.compose.runtime.CompositionLocalProvider(
+                    com.deep.lumoraai.ads.banner.LocalPersistentBanner provides persistentBanner
+                ) {
                 var hasInternet by remember { mutableStateOf(true) }
 
                 LaunchedEffect(context) {
@@ -115,6 +129,7 @@ class MainActivity : ComponentActivity() {
                             hasInternet = context.hasInternetConnection()
                         }
                     )
+                }
                 }
               }
             }

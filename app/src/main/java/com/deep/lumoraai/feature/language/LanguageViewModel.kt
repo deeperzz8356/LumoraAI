@@ -33,13 +33,12 @@ class LanguageViewModel(application: Application) : AndroidViewModel(application
             LanguageModel("ko", "한국어", "🇰🇷"),
             LanguageModel("zh", "中文", "🇨🇳")
         )
-        // Reflect the locale that is actually applied to the app, falling back to
-        // the persisted setting. This keeps the selection in sync with reality
-        // instead of always defaulting to English.
-        val activeCode = LocaleManager.currentAppLocale(settingsRepository.localeCode)
+        // No language is preselected: the user must actively choose one. Done
+        // stays disabled until a selection is made (and the required delay has
+        // elapsed — enforced in the UI).
         uiState = LanguageUiState.Success(
             languages = languages,
-            selectedLanguageCode = activeCode,
+            selectedLanguageCode = "",
             searchQuery = ""
         )
     }

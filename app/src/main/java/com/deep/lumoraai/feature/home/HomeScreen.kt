@@ -63,7 +63,6 @@ import androidx.compose.runtime.LaunchedEffect
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.LocalAdsManager
-import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.core.components.AppEmptyScreen
@@ -121,14 +120,9 @@ fun HomeScreen(
                     onNotificationClick = onNotificationClick,
                 )
             }
-
-            // Banner sits above the bottom navigation (Scaffold already reserves
-            // space for the nav bar, so no nav-bar padding here).
-            PlacementBanner(
-                placement = AdPlacement.BANNER_ALL,
-                modifier = Modifier.align(Alignment.BottomCenter),
-                applyNavBarPadding = false,
-            )
+            // banner_all is now a single persistent instance rendered by the
+            // bottom navigation bar (shared across all primary tabs), so no
+            // per-screen banner is placed here.
         }
     }
 }

@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.deep.lumoraai.ads.banner.PersistentBannerSlot
 import com.deep.lumoraai.core.theme.IntroPalette
 import com.deep.lumoraai.core.theme.IntroTypography
 import com.deep.lumoraai.core.theme.LumoraTheme
@@ -55,7 +56,8 @@ fun BottomNavigationBar(
     items: List<String>,
     selected: String,
     onSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showPersistentBanner: Boolean = true,
 ) {
     // Check screen size for responsive behavior
     val configuration = LocalConfiguration.current
@@ -66,6 +68,7 @@ fun BottomNavigationBar(
         ResponsiveBottomNav(
             selected = selected,
             onSelected = onSelected,
+            showPersistentBanner = showPersistentBanner,
             modifier = modifier
         )
     }
@@ -75,6 +78,7 @@ fun BottomNavigationBar(
 private fun ResponsiveBottomNav(
     selected: String,
     onSelected: (String) -> Unit,
+    showPersistentBanner: Boolean,
     modifier: Modifier = Modifier
 ) {
     val centerSize by animateDpAsState(
@@ -82,11 +86,14 @@ private fun ResponsiveBottomNav(
         animationSpec = tween(180, easing = FastOutSlowInEasing),
         label = "centerCreateSize"
     )
-    
-    Box(
-        modifier = modifier
+
+    // Column so the persistent banner (banner_all) can sit DIRECTLY below the
+    // nav row, above the system navigation inset. The same single AdView is
+    // re-parented here on every primary tab (never recreated).
+    Column(modifier = modifier.fillMaxWidth()) {
+      Box(
+        modifier = Modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
             .height(88.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
@@ -160,7 +167,22 @@ private fun ResponsiveBottomNav(
                 )
             }
         }
-    }
+      } // end nav-row Box
+
+      // Persistent bottom banner (banner_all) directly below the nav bar. The
+      // single AdView instance is re-parented here on each primary tab.
+      if (showPersistentBanner) {
+          PersistentBannerSlot(
+              modifier = Modifier
+                  .fillMaxWidth()
+                  .background(Color(0xFF11192B)),
+          )
+      }
+
+      // System navigation inset lives below the banner so nothing overlaps the
+      // gesture/nav region.
+      Spacer(modifier = Modifier.navigationBarsPadding())
+    } // end Column
 }
 
 @Composable
