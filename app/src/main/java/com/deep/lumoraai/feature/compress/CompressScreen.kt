@@ -119,7 +119,8 @@ fun CompressScreen(
 
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 22.dp)
                     .padding(top = 14.dp, bottom = 24.dp),
@@ -187,12 +188,14 @@ fun CompressScreen(
                     )
                 }
 
-                PlacementNativeAd(placement = AdPlacement.NATIVE_COMPRESS)
-
-                if (uiState.result == null) {
-                    Spacer(modifier = Modifier.height(220.dp))
-                }
             }
+
+            // Large native pinned at the bottom (like the banner), below the
+            // scrolling content and above the system nav inset.
+            PlacementNativeAd(
+                placement = AdPlacement.NATIVE_COMPRESS,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
         }
     }
 }

@@ -77,8 +77,10 @@ fun NativeRegularShimmer(modifier: Modifier = Modifier) {
                 Box(Modifier.fillMaxWidth(0.9f).height(12.dp).clip(RoundedCornerShape(4.dp)).background(brush))
             }
         }
-        Spacer(Modifier.height(14.dp))
-        Box(Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(10.dp)).background(brush))
+        Spacer(Modifier.height(10.dp))
+        Box(Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(10.dp)).background(brush))
+        Spacer(Modifier.height(10.dp))
+        Box(Modifier.fillMaxWidth().height(46.dp).clip(RoundedCornerShape(10.dp)).background(brush))
     }
 }
 
@@ -99,8 +101,8 @@ fun NativeLargeShimmer(modifier: Modifier = Modifier) {
             Box(Modifier.fillMaxWidth(0.6f).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
         }
         Spacer(Modifier.height(12.dp))
-        Box(Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(10.dp)).background(brush))
+        Box(Modifier.fillMaxWidth().height(175.dp).clip(RoundedCornerShape(10.dp)).background(brush))
         Spacer(Modifier.height(12.dp))
-        Box(Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(10.dp)).background(brush))
+        Box(Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(10.dp)).background(brush))
     }
 }
