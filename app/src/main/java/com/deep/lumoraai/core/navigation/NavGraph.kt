@@ -3,14 +3,19 @@ package com.deep.lumoraai.core.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.deep.lumoraai.core.components.AppShell
 import com.deep.lumoraai.data.repository.AuthRepository
@@ -65,10 +70,23 @@ fun NavGraph(
         onNotificationRouteConsumed()
     }
 
+    // Hoist a SINGLE persistent banner to the navigation root so it survives tab
+    // switches and is never recreated. Only show it on the 5 primary tabs.
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+    val showBanner = currentRoute != null && (
+        currentRoute == "home" ||
+        currentRoute == "templates" ||
+        currentRoute == "aitools" ||
+        currentRoute == "history" ||
+        currentRoute.startsWith("createhub")
+    )
+
+    Column(modifier = modifier.fillMaxSize().background(Color(0xFF081020))) {
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route,
-        modifier = modifier.background(Color(0xFF081020)),
+        modifier = Modifier.weight(1f),
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
@@ -319,4 +337,8 @@ fun NavGraph(
             )
         }
     }
+        if (showBanner) {
+            com.deep.lumoraai.ads.banner.PersistentBannerSlot(modifier = Modifier.fillMaxWidth())
+        }
+    } // end Column
 }
