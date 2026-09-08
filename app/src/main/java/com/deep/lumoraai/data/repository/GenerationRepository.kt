@@ -120,6 +120,7 @@ class GenerationRepository {
         height: Int = 1024,
         negativePrompt: String? = null,
         sourceImageB64: String? = null,
+        sourceImagesB64: List<String> = emptyList(),
         developerMode: Boolean = false,
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -138,8 +139,18 @@ class GenerationRepository {
                 if (!negativePrompt.isNullOrBlank()) {
                     put("negative_prompt", negativePrompt)
                 }
-                if (sourceImageB64 != null) {
-                    put("source_image_b64", sourceImageB64)
+                // Prefer the multi-image list (2-3 references sent together).
+                // Fall back to the single legacy field for older callers.
+                val references = when {
+                    sourceImagesB64.isNotEmpty() -> sourceImagesB64
+                    sourceImageB64 != null -> listOf(sourceImageB64)
+                    else -> emptyList()
+                }
+                if (references.isNotEmpty()) {
+                    put("source_images_b64", org.json.JSONArray(references))
+                    // Keep source_image_b64 populated with the first reference so
+                    // any older backend path still receives a usable image.
+                    put("source_image_b64", references.first())
                 }
             }.toString()
 

@@ -139,6 +139,8 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                     return@launch
                 }
                 val creditCost = GenerationGate.imageCreditCost(sources.size, uiState.generations)
+                // creditCost now equals the requested output count regardless of
+                // how many references were uploaded.
                 if (!GenerationGate.canGenerateImage(credits, isDev, creditCost)) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
@@ -181,74 +183,74 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     }
 
     private suspend fun startImageJobs(sources: List<ImageToImageSource>, developerMode: Boolean) {
-        val prompt = buildPrompt()
+        val prompt = buildPrompt(sources.size)
+        // All uploaded references are analyzed together for each output, so the
+        // run produces exactly the number of outputs the user asked for.
         val requestedGenerations = uiState.generations.coerceIn(1, 4)
-        val totalRequests = ImageToImageBatch.creditCost(sources.size, requestedGenerations)
+        val references = sources.map { it.base64 }
         uiState = uiState.copy(
             isGenerating = true,
             generationProgress = 0f,
-            generationStatusText = "Image 1 of ${sources.size}, output 1 of $requestedGenerations generating",
+            generationStatusText = "Output 1 of $requestedGenerations generating",
             error = null,
             generatedPath = null,
             generatedPaths = emptyList()
         )
 
         var completed = 0
-        sources.forEachIndexed { sourceIndex, source ->
-            repeat(requestedGenerations) { outputIndex ->
-                uiState = uiState.copy(
-                    generationProgress = 0f,
-                    generationStatusText = "Image ${sourceIndex + 1} of ${sources.size}, output ${outputIndex + 1} of $requestedGenerations generating"
+        repeat(requestedGenerations) { outputIndex ->
+            uiState = uiState.copy(
+                generationProgress = 0f,
+                generationStatusText = "Output ${outputIndex + 1} of $requestedGenerations generating"
+            )
+            val jobTitle = "Image 2 Image ${shortTimestamp()} output ${outputIndex + 1}"
+            val taskId = UUID.randomUUID().toString()
+            notificationManager.sendTaskStartNotification(
+                taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
+                taskId = taskId,
+                displayName = "Image to Image"
+            )
+            GenerationRepository.addJob(
+                ActiveJobInfo(
+                    title = jobTitle,
+                    subtitle = "Using ${sources.size} reference image${if (sources.size > 1) "s" else ""}, output ${outputIndex + 1} of $requestedGenerations...",
+                    badgeText = "Image 2 Image",
+                    statusText = "Queued",
+                    progressPercent = 0.0f,
+                    isCompleted = false,
+                    imageRes = R.drawable.style_anime,
+                    mediaType = MediaStorageRepository.MEDIA_IMAGE,
                 )
-                val jobTitle = "Image 2 Image ${shortTimestamp()} source ${sourceIndex + 1} output ${outputIndex + 1}"
-                val taskId = UUID.randomUUID().toString()
-                notificationManager.sendTaskStartNotification(
+            )
+            val progressJob = launchProgressJob(jobTitle, outputIndex + 1, requestedGenerations)
+            val result = generationRepository.generateImage(
+                prompt = prompt,
+                style = uiState.selectedStyle.apiStyle,
+                width = uiState.aspectRatio.width,
+                height = uiState.aspectRatio.height,
+                negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy" },
+                sourceImagesB64 = references,
+                developerMode = developerMode,
+            )
+            progressJob.cancel()
+            if (result.isSuccess) {
+                val hasMoreRequests = completed + 1 < requestedGenerations
+                persistGeneratedImage(result.getOrThrow(), jobTitle, prompt, taskId, keepGenerating = hasMoreRequests)
+                completed += 1
+            } else {
+                val message = result.exceptionOrNull()?.message ?: "Could not generate image."
+                uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = message)
+                GenerationRepository.updateJob(jobTitle) { job ->
+                    job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
+                }
+                notificationManager.sendTaskFailureNotification(
                     taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
                     taskId = taskId,
-                    displayName = "Image to Image"
+                    displayName = "Image to Image",
+                    errorMessage = message
                 )
-                GenerationRepository.addJob(
-                    ActiveJobInfo(
-                        title = jobTitle,
-                        subtitle = "Source ${sourceIndex + 1} of ${sources.size}, output ${outputIndex + 1} of $requestedGenerations...",
-                        badgeText = "Image 2 Image",
-                        statusText = "Queued",
-                        progressPercent = 0.0f,
-                        isCompleted = false,
-                        imageRes = R.drawable.style_anime,
-                        mediaType = MediaStorageRepository.MEDIA_IMAGE,
-                    )
-                )
-                val progressJob = launchProgressJob(jobTitle, sourceIndex + 1, sources.size, outputIndex + 1, requestedGenerations)
-                val result = generationRepository.generateImage(
-                    prompt = prompt,
-                    style = uiState.selectedStyle.apiStyle,
-                    width = uiState.aspectRatio.width,
-                    height = uiState.aspectRatio.height,
-                    negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy" },
-                    sourceImageB64 = source.base64,
-                    developerMode = developerMode,
-                )
-                progressJob.cancel()
-                if (result.isSuccess) {
-                    val hasMoreRequests = completed + 1 < totalRequests
-                    persistGeneratedImage(result.getOrThrow(), jobTitle, prompt, taskId, keepGenerating = hasMoreRequests)
-                    completed += 1
-                } else {
-                    val message = result.exceptionOrNull()?.message ?: "Could not generate image."
-                    uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = message)
-                    GenerationRepository.updateJob(jobTitle) { job ->
-                        job.copy(progressPercent = null, statusText = "Failed", subtitle = message)
-                    }
-                    notificationManager.sendTaskFailureNotification(
-                        taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
-                        taskId = taskId,
-                        displayName = "Image to Image",
-                        errorMessage = message
-                    )
-                    CreditBalanceStore.refresh()
-                    return
-                }
+                CreditBalanceStore.refresh()
+                return
             }
         }
         uiState = uiState.copy(isGenerating = false, generationProgress = null, generationStatusText = null, error = null)
@@ -264,9 +266,9 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    private fun launchProgressJob(jobTitle: String, sourceIndex: Int, sourceTotal: Int, outputIndex: Int, outputTotal: Int) = viewModelScope.launch {
+    private fun launchProgressJob(jobTitle: String, outputIndex: Int, outputTotal: Int) = viewModelScope.launch {
         val steps = listOf(
-            0.18f to "Reading source image...",
+            0.18f to "Analyzing reference images...",
             0.42f to "Applying style direction...",
             0.70f to "Balancing similarity...",
             0.90f to "Finishing image..."
@@ -275,7 +277,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             delay(1800)
             uiState = uiState.copy(
                 generationProgress = step.first,
-                generationStatusText = "Image $sourceIndex of $sourceTotal, output $outputIndex of $outputTotal generating"
+                generationStatusText = "Output $outputIndex of $outputTotal generating"
             )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")
@@ -338,10 +340,15 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         return credits
     }
 
-    private fun buildPrompt(): String {
+    private fun buildPrompt(sourceCount: Int): String {
         val similarity = (uiState.similarity * 100).toInt()
         val stylePrompt = uiState.selectedStyle.promptDirective
-        return "Create a new image from the uploaded source. User prompt: ${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original composition and subject identity while improving the image."
+        val sourceClause = if (sourceCount > 1) {
+            "Analyze the $sourceCount uploaded reference images together and combine their key subjects, details, and composition into a single cohesive new image."
+        } else {
+            "Create a new image from the uploaded reference image."
+        }
+        return "$sourceClause User prompt: ${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Preserve about $similarity% of the original composition and subject identity while improving the image."
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap {
