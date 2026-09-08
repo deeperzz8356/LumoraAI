@@ -1,0 +1,238 @@
+{
+  "categories": [
+    {
+      "id": "image",
+      "title": "Image",
+      "templates": [
+        {
+          "id": "cyberpunk_portrait",
+          "title": "Cyberpunk Portrait",
+          "subtitle": "Neon cinematic character portrait",
+          "prompt": "A neon-drenched cyberpunk portrait of a confident futuristic creator, dramatic high-contrast lighting, wet city reflections, intricate face detail, premium cinematic color grading.",
+          "assetFileName": "cyberpunk.png",
+          "action": "TEXT_TO_IMAGE"
+        },
+        {
+          "id": "luxury_product",
+          "title": "Luxury Product Shot",
+          "subtitle": "Premium studio product image",
+          "prompt": "A luxury product hero shot on a glossy black surface, softbox reflections, rim lighting, shallow depth of field, clean premium commercial photography.",
+          "assetFileName": "luxuryproduct.png",
+          "action": "TEXT_TO_IMAGE"
+        },
+        {
+          "id": "fantasy_forest",
+          "title": "Fantasy Forest",
+          "subtitle": "Mystic glowing landscape",
+          "prompt": "An enchanted fantasy forest with glowing blue mist, ancient trees, tiny luminous flowers, cinematic moonlight, highly detailed environment concept art.",
+          "assetFileName": "fanstayforest.png",
+          "action": "TEXT_TO_IMAGE"
+        },
+        {
+          "id": "anime_hero",
+          "title": "Anime Hero",
+          "subtitle": "Stylized character poster",
+          "prompt": "A dynamic anime hero poster, wind-swept hair, intense expression, glowing energy effects, dramatic background, crisp linework and vibrant color.",
+          "assetFileName": "animehero.png",
+          "action": "TEXT_TO_IMAGE"
+        },
+        {
+          "id": "fashion_editorial",
+          "title": "Fashion Editorial",
+          "subtitle": "High-end magazine portrait",
+          "prompt": "A high-fashion editorial portrait with avant-garde styling, studio lighting, elegant pose, rich fabric texture, luxury magazine photography.",
+          "assetFileName": "fashioneditorial.png",
+          "action": "TEXT_TO_IMAGE"
+        }
+      ]
+    },
+
+    {
+      "id": "video",
+      "title": "Video",
+      "templates": [
+        {
+          "id": "cinematic_product_spin",
+          "title": "Cinematic Product Spin",
+          "subtitle": "Smooth premium product reveal",
+          "prompt": "A cinematic product spin video with glossy reflections, dramatic rim light, slow camera orbit, premium studio background, elegant commercial pacing.",
+          "assetFileName": "cinematic product.png",
+          "action": "TEXT_TO_VIDEO"
+        },
+        {
+          "id": "character_reveal",
+          "title": "AI Character Reveal",
+          "subtitle": "Dramatic character entrance",
+          "prompt": "A dramatic AI character reveal, glowing particles, slow push-in camera, neon atmosphere, confident stance, cinematic smoke and light movement.",
+          "assetFileName": "animehero.png",
+          "action": "TEXT_TO_VIDEO"
+        },
+        {
+          "id": "travel_flythrough",
+          "title": "Travel Flythrough",
+          "subtitle": "Dream destination motion",
+          "prompt": "A dreamlike travel flythrough over a surreal glowing landscape, smooth drone camera, atmospheric fog, sunrise light, cinematic depth.",
+          "assetFileName": "Travel Flythrough.png",
+          "action": "TEXT_TO_VIDEO"
+        },
+        {
+          "id": "fashion_runway",
+          "title": "Fashion Runway",
+          "subtitle": "Editorial motion scene",
+          "prompt": "A fashion runway video with confident model walk, soft spotlight sweeps, luxury editorial atmosphere, cinematic slow motion fabric movement.",
+          "assetFileName": "fashion runway.png",
+          "action": "TEXT_TO_VIDEO"
+        },
+        {
+          "id": "car_tunnel",
+          "title": "Car Tunnel Chase",
+          "subtitle": "Fast cinematic vehicle shot",
+          "prompt": "A futuristic sports car racing through a glowing tunnel, dynamic tracking camera, blue light trails, speed ramp motion, cinematic action.",
+          "assetFileName": "car tunnel.png",
+          "action": "TEXT_TO_VIDEO"
+        }
+      ]
+    },
+
+    {
+      "id": "promo_video",
+      "title": "Promo Video",
+      "templates": [
+        {
+          "id": "product_launch",
+          "title": "Product Launch",
+          "subtitle": "Cinematic product announcement",
+          "prompt": "Create a premium cinematic product launch video. Begin with a dramatic close-up, reveal the product through smooth camera movement, use sophisticated studio lighting, emphasize product details, and finish with a strong hero shot suitable for a modern advertisement.",
+          "assetFileName": "product_launch.png",
+          "action": "PROMO_VIDEO"
+        },
+        {
+          "id": "limited_offer",
+          "title": "Limited Time Offer",
+          "subtitle": "High-converting promotional ad",
+          "prompt": "Create a high-energy promotional advertisement for a limited-time offer, featuring the product prominently, dynamic camera movement, clean commercial lighting, bold visual emphasis, fast transitions, and a strong final promotional frame.",
+          "assetFileName": "limited_offer.png",
+          "action": "PROMO_VIDEO"
+        },
+        {
+          "id": "app_launch",
+          "title": "App Launch",
+          "subtitle": "Modern app promotional video",
+          "prompt": "Create a sleek mobile app launch video with floating interface panels, smooth parallax motion, premium dark UI, elegant transitions, and a strong final product reveal.",
+          "assetFileName": "app_launch.png",
+          "action": "PROMO_VIDEO"
+        },
+        {
+          "id": "restaurant_promo",
+          "title": "Restaurant Promo",
+          "subtitle": "Food and restaurant advertisement",
+          "prompt": "Create a cinematic restaurant advertisement featuring beautifully plated food, macro close-ups, steam and natural movement, warm premium lighting, smooth camera motion, appetizing details, and an elegant final restaurant hero shot.",
+          "assetFileName": "restaurant_promo.png",
+          "action": "PROMO_VIDEO"
+        },
+        {
+          "id": "sale_campaign",
+          "title": "Sale Campaign",
+          "subtitle": "High-energy sale advertisement",
+          "prompt": "Create a high-energy sale campaign video featuring premium product closeups, dynamic camera movement, energetic transitions, strong promotional visuals, and a memorable final offer reveal.",
+          "assetFileName": "sale_campaign.png",
+          "action": "PROMO_VIDEO"
+        }
+      ]
+    },
+
+    {
+  "id": "logo_creation",
+  "title": "Logo Creation",
+  "templates": [
+    {
+      "id": "logo_minimal_brand",
+      "title": "Minimal Brand Logo",
+      "subtitle": "Create a clean, modern logo for any brand",
+      "prompt": "Create a premium minimalist logo for a modern brand. Use a simple memorable symbol, clean geometric shapes, balanced proportions, and professional typography. Keep the design flat, scalable, elegant, and recognizable at small sizes. Use a refined color palette with strong contrast and a clean white or transparent background.",
+      "assetFileName": "logo_minimal_brand.webp",
+      "action": "LOGO_CREATION"
+    },
+    {
+      "id": "logo_tech_startup",
+      "title": "Tech Startup Logo",
+      "subtitle": "Modern identity for technology startups",
+      "prompt": "Design a futuristic professional logo for a technology startup. Create an original abstract symbol inspired by innovation, connectivity, intelligence, and digital technology. Use sharp but balanced geometry, modern typography, and a sophisticated tech color palette. The logo should look premium, trustworthy, scalable, and suitable for an app icon, website, and business cards.",
+      "assetFileName": "logo_tech_startup.webp",
+      "action": "LOGO_CREATION"
+    },
+    {
+      "id": "logo_luxury_brand",
+      "title": "Luxury Brand Logo",
+      "subtitle": "Elegant identity with a premium feel",
+      "prompt": "Create an elegant luxury brand logo with a sophisticated emblem and refined typography. Use balanced symmetry, subtle geometric details, generous spacing, and a timeless visual style. The design should communicate exclusivity, quality, confidence, and premium craftsmanship. Keep it minimal and suitable for packaging, storefronts, websites, and social media.",
+      "assetFileName": "logo_luxury_brand.webp",
+      "action": "LOGO_CREATION"
+    },
+    {
+      "id": "logo_food_restaurant",
+      "title": "Restaurant Logo",
+      "subtitle": "Distinctive branding for food businesses",
+      "prompt": "Design a memorable logo for a modern restaurant or food brand. Create a distinctive symbol related to food, cooking, hospitality, or the restaurant concept without using generic clip-art. Combine the symbol with bold, readable typography and a warm professional color palette. Make the identity versatile for menus, packaging, signage, delivery apps, and social media.",
+      "assetFileName": "logo_food_restaurant.webp",
+      "action": "LOGO_CREATION"
+    },
+    {
+      "id": "logo_personal_brand",
+      "title": "Personal Brand Logo",
+      "subtitle": "Build a recognizable creator identity",
+      "prompt": "Create a distinctive personal brand logo for a creator, entrepreneur, consultant, or professional. Develop a memorable monogram or abstract symbol based on the brand identity, combined with clean modern typography. Keep the design confident, minimal, versatile, and highly recognizable. It should work perfectly as a profile picture, website logo, social media identity, and watermark.",
+      "assetFileName": "logo_personal_brand.webp",
+      "action": "LOGO_CREATION"
+    }
+  ]
+},
+
+    {
+      "id": "avatar",
+      "title": "Create Your Avatar",
+      "templates": [
+        {
+          "id": "professional_presenter",
+          "title": "Professional Presenter",
+          "subtitle": "Corporate AI presenter",
+          "prompt": "Create a professional AI presenter avatar delivering the provided script with confident natural body language, subtle facial expressions, realistic eye contact, professional posture, clean studio lighting, and polished corporate presentation style.",
+          "assetFileName": "professional_presenter.png",
+          "action": "CREATE_AVATAR"
+        },
+        {
+          "id": "social_creator",
+          "title": "Social Media Creator",
+          "subtitle": "Influencer-style avatar",
+          "prompt": "Create a natural social-media creator avatar delivering the provided script with energetic expression, conversational body language, direct eye contact, subtle gestures, and engaging short-form creator presentation style.",
+          "assetFileName": "social_creator.png",
+          "action": "CREATE_AVATAR"
+        },
+        {
+          "id": "news_presenter",
+          "title": "News Presenter",
+          "subtitle": "Professional news avatar",
+          "prompt": "Create a professional news presenter avatar delivering the provided script with clear pronunciation, controlled gestures, confident eye contact, professional posture, and broadcast-quality presentation style.",
+          "assetFileName": "news_presenter.png",
+          "action": "CREATE_AVATAR"
+        },
+        {
+          "id": "product_spokesperson",
+          "title": "Product Spokesperson",
+          "subtitle": "Product presentation avatar",
+          "prompt": "Create a polished AI spokesperson presenting the product clearly and confidently. Use natural facial expressions, professional gestures, direct eye contact, and premium commercial presentation style.",
+          "assetFileName": "product_spokesperson.png",
+          "action": "CREATE_AVATAR"
+        },
+        {
+          "id": "course_instructor",
+          "title": "Course Instructor",
+          "subtitle": "Educational AI presenter",
+          "prompt": "Create an educational AI instructor avatar delivering the provided lesson with clear communication, friendly facial expressions, natural gestures, confident posture, and professional educational presentation style.",
+          "assetFileName": "course_instructor.png",
+          "action": "CREATE_AVATAR"
+        }
+      ]
+    }
+  ]
+}
