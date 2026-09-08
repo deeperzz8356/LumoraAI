@@ -56,7 +56,7 @@
           "title": "Cinematic Product Spin",
           "subtitle": "Smooth premium product reveal",
           "prompt": "A cinematic product spin video with glossy reflections, dramatic rim light, slow camera orbit, premium studio background, elegant commercial pacing.",
-          "assetFileName": "cinematic product.png",
+          "assetFileName": "cinematic product.mp4",
           "action": "TEXT_TO_VIDEO"
         },
         {
@@ -64,7 +64,7 @@
           "title": "AI Character Reveal",
           "subtitle": "Dramatic character entrance",
           "prompt": "A dramatic AI character reveal, glowing particles, slow push-in camera, neon atmosphere, confident stance, cinematic smoke and light movement.",
-          "assetFileName": "animehero.png",
+          "assetFileName": "animehero.mp4",
           "action": "TEXT_TO_VIDEO"
         },
         {
@@ -72,7 +72,7 @@
           "title": "Travel Flythrough",
           "subtitle": "Dream destination motion",
           "prompt": "A dreamlike travel flythrough over a surreal glowing landscape, smooth drone camera, atmospheric fog, sunrise light, cinematic depth.",
-          "assetFileName": "Travel Flythrough.png",
+          "assetFileName": "Travel Flythrough.mp4",
           "action": "TEXT_TO_VIDEO"
         },
         {
@@ -80,7 +80,7 @@
           "title": "Fashion Runway",
           "subtitle": "Editorial motion scene",
           "prompt": "A fashion runway video with confident model walk, soft spotlight sweeps, luxury editorial atmosphere, cinematic slow motion fabric movement.",
-          "assetFileName": "fashion runway.png",
+          "assetFileName": "fashion runway.mp4",
           "action": "TEXT_TO_VIDEO"
         },
         {
@@ -88,7 +88,7 @@
           "title": "Car Tunnel Chase",
           "subtitle": "Fast cinematic vehicle shot",
           "prompt": "A futuristic sports car racing through a glowing tunnel, dynamic tracking camera, blue light trails, speed ramp motion, cinematic action.",
-          "assetFileName": "car tunnel.png",
+          "assetFileName": "car tunnel.mp4",
           "action": "TEXT_TO_VIDEO"
         }
       ]
@@ -103,7 +103,7 @@
           "title": "Product Launch",
           "subtitle": "Cinematic product announcement",
           "prompt": "Create a premium cinematic product launch video. Begin with a dramatic close-up, reveal the product through smooth camera movement, use sophisticated studio lighting, emphasize product details, and finish with a strong hero shot suitable for a modern advertisement.",
-          "assetFileName": "product_launch.png",
+          "assetFileName": "product_launch.mp4",
           "action": "PROMO_VIDEO"
         },
         {
@@ -111,7 +111,7 @@
           "title": "Limited Time Offer",
           "subtitle": "High-converting promotional ad",
           "prompt": "Create a high-energy promotional advertisement for a limited-time offer, featuring the product prominently, dynamic camera movement, clean commercial lighting, bold visual emphasis, fast transitions, and a strong final promotional frame.",
-          "assetFileName": "limited_offer.png",
+          "assetFileName": "limited_offer.mp4",
           "action": "PROMO_VIDEO"
         },
         {
@@ -119,7 +119,7 @@
           "title": "App Launch",
           "subtitle": "Modern app promotional video",
           "prompt": "Create a sleek mobile app launch video with floating interface panels, smooth parallax motion, premium dark UI, elegant transitions, and a strong final product reveal.",
-          "assetFileName": "app_launch.png",
+          "assetFileName": "app_launch.mp4",
           "action": "PROMO_VIDEO"
         },
         {
@@ -127,7 +127,7 @@
           "title": "Restaurant Promo",
           "subtitle": "Food and restaurant advertisement",
           "prompt": "Create a cinematic restaurant advertisement featuring beautifully plated food, macro close-ups, steam and natural movement, warm premium lighting, smooth camera motion, appetizing details, and an elegant final restaurant hero shot.",
-          "assetFileName": "restaurant_promo.png",
+          "assetFileName": "restaurant_promo.mp4",
           "action": "PROMO_VIDEO"
         },
         {
@@ -135,7 +135,7 @@
           "title": "Sale Campaign",
           "subtitle": "High-energy sale advertisement",
           "prompt": "Create a high-energy sale campaign video featuring premium product closeups, dynamic camera movement, energetic transitions, strong promotional visuals, and a memorable final offer reveal.",
-          "assetFileName": "sale_campaign.png",
+          "assetFileName": "sale_campaign.mp4",
           "action": "PROMO_VIDEO"
         }
       ]
@@ -150,7 +150,7 @@
       "title": "Minimal Brand Logo",
       "subtitle": "Create a clean, modern logo for any brand",
       "prompt": "Create a premium minimalist logo for a modern brand. Use a simple memorable symbol, clean geometric shapes, balanced proportions, and professional typography. Keep the design flat, scalable, elegant, and recognizable at small sizes. Use a refined color palette with strong contrast and a clean white or transparent background.",
-      "assetFileName": "logo_minimal_brand.webp",
+      "assetFileName": "logo_minimal_brand.png",
       "action": "LOGO_CREATION"
     },
     {
@@ -158,7 +158,7 @@
       "title": "Tech Startup Logo",
       "subtitle": "Modern identity for technology startups",
       "prompt": "Design a futuristic professional logo for a technology startup. Create an original abstract symbol inspired by innovation, connectivity, intelligence, and digital technology. Use sharp but balanced geometry, modern typography, and a sophisticated tech color palette. The logo should look premium, trustworthy, scalable, and suitable for an app icon, website, and business cards.",
-      "assetFileName": "logo_tech_startup.webp",
+      "assetFileName": "logo_tech_startup.png",
       "action": "LOGO_CREATION"
     },
     {
@@ -166,7 +166,7 @@
       "title": "Luxury Brand Logo",
       "subtitle": "Elegant identity with a premium feel",
       "prompt": "Create an elegant luxury brand logo with a sophisticated emblem and refined typography. Use balanced symmetry, subtle geometric details, generous spacing, and a timeless visual style. The design should communicate exclusivity, quality, confidence, and premium craftsmanship. Keep it minimal and suitable for packaging, storefronts, websites, and social media.",
-      "assetFileName": "logo_luxury_brand.webp",
+      "assetFileName": "logo_luxury_brand.png",
       "action": "LOGO_CREATION"
     },
     {
@@ -174,7 +174,7 @@
       "title": "Restaurant Logo",
       "subtitle": "Distinctive branding for food businesses",
       "prompt": "Design a memorable logo for a modern restaurant or food brand. Create a distinctive symbol related to food, cooking, hospitality, or the restaurant concept without using generic clip-art. Combine the symbol with bold, readable typography and a warm professional color palette. Make the identity versatile for menus, packaging, signage, delivery apps, and social media.",
-      "assetFileName": "logo_food_restaurant.webp",
+      "assetFileName": "logo_food_restaurant.png",
       "action": "LOGO_CREATION"
     },
     {
@@ -182,7 +182,7 @@
       "title": "Personal Brand Logo",
       "subtitle": "Build a recognizable creator identity",
       "prompt": "Create a distinctive personal brand logo for a creator, entrepreneur, consultant, or professional. Develop a memorable monogram or abstract symbol based on the brand identity, combined with clean modern typography. Keep the design confident, minimal, versatile, and highly recognizable. It should work perfectly as a profile picture, website logo, social media identity, and watermark.",
-      "assetFileName": "logo_personal_brand.webp",
+      "assetFileName": "logo_personal_brand.png",
       "action": "LOGO_CREATION"
     }
   ]
@@ -197,7 +197,7 @@
           "title": "Professional Presenter",
           "subtitle": "Corporate AI presenter",
           "prompt": "Create a professional AI presenter avatar delivering the provided script with confident natural body language, subtle facial expressions, realistic eye contact, professional posture, clean studio lighting, and polished corporate presentation style.",
-          "assetFileName": "professional_presenter.png",
+          "assetFileName": "professional_presenter.jpeg",
           "action": "CREATE_AVATAR"
         },
         {
@@ -205,7 +205,7 @@
           "title": "Social Media Creator",
           "subtitle": "Influencer-style avatar",
           "prompt": "Create a natural social-media creator avatar delivering the provided script with energetic expression, conversational body language, direct eye contact, subtle gestures, and engaging short-form creator presentation style.",
-          "assetFileName": "social_creator.png",
+          "assetFileName": "social_creator.jpeg",
           "action": "CREATE_AVATAR"
         },
         {
@@ -213,7 +213,7 @@
           "title": "News Presenter",
           "subtitle": "Professional news avatar",
           "prompt": "Create a professional news presenter avatar delivering the provided script with clear pronunciation, controlled gestures, confident eye contact, professional posture, and broadcast-quality presentation style.",
-          "assetFileName": "news_presenter.png",
+          "assetFileName": "news_presenter.jpeg",
           "action": "CREATE_AVATAR"
         },
         {
@@ -221,14 +221,14 @@
           "title": "Product Spokesperson",
           "subtitle": "Product presentation avatar",
           "prompt": "Create a polished AI spokesperson presenting the product clearly and confidently. Use natural facial expressions, professional gestures, direct eye contact, and premium commercial presentation style.",
-          "assetFileName": "product_spokesperson.png",
+          "assetFileName": "product_spokesperson.jpeg",
           "action": "CREATE_AVATAR"
         },
         {
           "id": "course_instructor",
-          "title": "Course Instructor",
-          "subtitle": "Educational AI presenter",
-          "prompt": "Create an educational AI instructor avatar delivering the provided lesson with clear communication, friendly facial expressions, natural gestures, confident posture, and professional educational presentation style.",
+          "title": "God avatar",
+          "subtitle": "Create a avatar of any god",
+          "prompt": "Centered avatar portrait of Zeus, the Greek god of thunder, sitting on a majestic marble throne inside an ancient temple. He has a powerful build, white hair, a long silver beard, and a laurel wreath crown. He is looking directly at the camera with a joyful expression, smiling broadly and laughing heartily. Bright crackling lightning arcs from his hands and surrounds his body. Detailed armor with ornate gold embellishments and deep blue drapery. Stormy blue atmosphere, cinematic lighting, epic fantasy art style, high detail.",
           "assetFileName": "course_instructor.png",
           "action": "CREATE_AVATAR"
         }
