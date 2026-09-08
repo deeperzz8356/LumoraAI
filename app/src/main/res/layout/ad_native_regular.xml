@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Regular native ad layout. Root is a NativeAdView; all asset views carry the
-  IDs the renderer registers (headline, body, icon, cta, media, ad attribution).
-  Includes a media image (like the large variant) but with a smaller media
-  height, so every native ad shows the ad "banner" image. Responsive: no fixed
-  clipping widths.
+  Regular/standard native ad — compact, media-less layout (like the reference:
+  icon + headline + "Ad" badge row, then a full-width CTA). Removing the
+  MediaView avoids AdMob's "MediaView too small for video" warning while keeping
+  the card small. The container has a visible rounded border/background.
 -->
 <com.google.android.gms.ads.nativead.NativeAdView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/native_ad_view"
@@ -15,6 +14,7 @@
         android:id="@+id/ad_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/ad_native_bg"
         android:orientation="vertical"
         android:padding="14dp">
 
@@ -26,9 +26,9 @@
 
             <ImageView
                 android:id="@+id/ad_app_icon"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_marginEnd="10dp"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="12dp"
                 android:adjustViewBounds="true"
                 android:contentDescription="@null"
                 android:scaleType="fitCenter" />
@@ -39,9 +39,20 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
+                <TextView
+                    android:id="@+id/ad_headline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -49,7 +60,7 @@
                         android:id="@+id/ad_attribution"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
+                        android:layout_marginEnd="8dp"
                         android:background="#D6FF2F"
                         android:paddingStart="6dp"
                         android:paddingTop="1dp"
@@ -61,39 +72,22 @@
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/ad_headline"
+                        android:id="@+id/ad_body"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:textColor="#94A0B8"
+                        android:textSize="12sp" />
                 </LinearLayout>
-
-                <TextView
-                    android:id="@+id/ad_body"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="2"
-                    android:textColor="#94A0B8"
-                    android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
-
-        <!-- Fixed, compact media box; FIT_CENTER shrinks the creative to fit. -->
-        <com.google.android.gms.ads.nativead.MediaView
-            android:id="@+id/ad_media"
-            android:layout_width="match_parent"
-            android:layout_height="110dp"
-            android:layout_marginTop="10dp" />
 
         <Button
             android:id="@+id/ad_call_to_action"
             android:layout_width="match_parent"
             android:layout_height="46dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:background="#D6FF2F"
             android:textAllCaps="false"
             android:textColor="#081020"

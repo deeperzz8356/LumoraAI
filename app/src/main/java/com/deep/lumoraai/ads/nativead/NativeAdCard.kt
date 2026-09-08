@@ -115,6 +115,8 @@ private fun applyStyle(adView: NativeAdView, style: NativeStyleConfig) {
     val bg = GradientDrawable().apply {
         setColor(style.backgroundColor.toInt())
         cornerRadius = style.cornerRadiusDp * density
+        // Always keep a visible border on the native ad card.
+        setStroke((1 * density).toInt(), 0x33D6FF2F.toInt())
     }
     container?.background = bg
     val pad = (style.paddingDp * density).toInt()
