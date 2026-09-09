@@ -120,6 +120,7 @@ fun CreateHubScreen(
                 onBack = onBack,
                 onNotifications = { onNavigate(Screen.Notifications.route) },
                 hasUnreadNotifications = unreadCount > 0,
+                onCredits = { onNavigate(Screen.Credits.route) },
                 modifier = Modifier.statusBarsPadding()
             )
 

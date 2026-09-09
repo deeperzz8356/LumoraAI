@@ -217,7 +217,8 @@ private fun HistoryGallery(
                 onCancel = { selectedIds = emptySet() }
             )
         }
-        val historyInterval = LocalAdsConfigStore.current?.current?.nativeHistoryInterval ?: 8
+        val historyRowInterval = LocalAdsConfigStore.current?.current?.nativeHistoryInterval ?: 3
+        val historyItemInterval = historyRowInterval * 2
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
@@ -241,14 +242,17 @@ private fun HistoryGallery(
                         onLongPress = { selectedIds = selectedIds + item.id },
                     )
                 }
-                // Full-width native ad after every N items; keyed by insertion
-                // index so each slot loads once and is not requested per recycle.
-                if ((index + 1) % historyInterval == 0) {
+                // Full-width native ad after every N rows. History is a
+                // two-column grid, so 3 rows means after every 6 history cards.
+                if ((index + 1) % historyItemInterval == 0) {
                     item(
                         key = "native_history_${index + 1}",
                         span = { GridItemSpan(maxLineSpan) },
                     ) {
-                        PlacementNativeAd(placement = AdPlacement.NATIVE_HISTORY)
+                        PlacementNativeAd(
+                            placement = AdPlacement.NATIVE_HISTORY,
+                            slotKey = "native_history_${index + 1}",
+                        )
                     }
                 }
             }

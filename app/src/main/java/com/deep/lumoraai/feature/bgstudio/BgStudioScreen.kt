@@ -39,6 +39,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -55,8 +56,10 @@ import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementBanner
+import com.deep.lumoraai.core.components.LumoraCreditsChip
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import androidx.compose.ui.res.stringResource
 import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
 import com.deep.lumoraai.feature.generation.GeneratedMediaResult
@@ -64,6 +67,7 @@ import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.generation.GenerationBottomBar
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
 import kotlinx.coroutines.delay
+import androidx.compose.runtime.collectAsState
 
 private val StudioBackground = Color(0xFF081020)
 private val StudioPanel = Color(0xFF121A2E)
@@ -118,7 +122,8 @@ fun BgStudioScreen(
         ) {
             StudioTopBar(
                 onBack = onBack,
-                onNotifications = { onNavigate(Screen.Notifications.route) }
+                onNotifications = { onNavigate(Screen.Notifications.route) },
+                onCredits = { onNavigate(Screen.Credits.route) }
             )
 
             Column(
@@ -213,7 +218,9 @@ private fun StudioTopBar(
     onBack: () -> Unit,
     onNotifications: () -> Unit,
     hasUnreadNotifications: Boolean = false,
+    onCredits: () -> Unit = {},
 ) {
+    val credits by CreditBalanceStore.balance.collectAsState()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -244,10 +251,13 @@ private fun StudioTopBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        LumoraNotificationBell(
-            hasUnreadNotifications = hasUnreadNotifications,
-            onClick = onNotifications
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            LumoraCreditsChip(credits = credits ?: 0, onClick = onCredits)
+            LumoraNotificationBell(
+                hasUnreadNotifications = hasUnreadNotifications,
+                onClick = onNotifications
+            )
+        }
     }
 }
 

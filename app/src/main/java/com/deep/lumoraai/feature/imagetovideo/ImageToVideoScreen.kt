@@ -82,7 +82,8 @@ fun ImageToVideoScreen(
             GenerationTopBar(
                 title = stringResource(com.deep.lumoraai.R.string.ui_image_2_video),
                 onBack = onBack,
-                onNotifications = { onNavigate(Screen.Notifications.route) }
+                onNotifications = { onNavigate(Screen.Notifications.route) },
+                onCredits = { onNavigate(Screen.Credits.route) }
             )
 
             Box(modifier = Modifier.weight(1f).fillMaxSize()) {

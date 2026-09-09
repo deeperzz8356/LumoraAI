@@ -44,7 +44,7 @@ data class AdsConfig(
 
     // ---- List insertion intervals for native-in-list placements ----
     val nativeTemplateInterval: Int = 3,
-    val nativeHistoryInterval: Int = 8,
+    val nativeHistoryInterval: Int = 3,
 
     // ---- Native styling (validated; malformed values fall back to defaults) ----
     val nativeStyle: NativeStyleConfig = NativeStyleConfig(),

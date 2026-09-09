@@ -84,7 +84,8 @@ fun TextToImageScreen(
             GenerationTopBar(
                 title = stringResource(titleRes),
                 onBack = onBack,
-                onNotifications = { onNavigate(Screen.Notifications.route) }
+                onNotifications = { onNavigate(Screen.Notifications.route) },
+                onCredits = { onNavigate(Screen.Credits.route) }
             )
 
             // Content scrolls behind the pinned Generate button. The button is

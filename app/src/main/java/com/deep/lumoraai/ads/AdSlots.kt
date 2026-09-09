@@ -33,6 +33,7 @@ fun PlacementBanner(
 fun PlacementNativeAd(
     placement: AdPlacement,
     modifier: Modifier = Modifier,
+    slotKey: String? = null,
 ) {
     val manager = LocalAdsManager.current ?: return
     val store = LocalAdsConfigStore.current ?: return
@@ -41,5 +42,6 @@ fun PlacementNativeAd(
         nativeAdManager = manager.nativeManager,
         configStore = store,
         modifier = modifier,
+        slotKey = slotKey,
     )
 }

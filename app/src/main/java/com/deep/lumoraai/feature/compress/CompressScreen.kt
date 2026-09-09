@@ -54,10 +54,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementNativeAd
+import com.deep.lumoraai.core.components.LumoraCreditsChip
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.collectAsState
 
 private val CompressBackground = Color(0xFF081020)
 private val CompressPanel = Color(0xFF121A2E)
@@ -114,7 +117,8 @@ fun CompressScreen(
         ) {
             CompressTopBar(
                 onBack = onBack,
-                onNotifications = { onNavigate(Screen.Notifications.route) }
+                onNotifications = { onNavigate(Screen.Notifications.route) },
+                onCredits = { onNavigate(Screen.Credits.route) }
             )
 
             Column(
@@ -205,7 +209,9 @@ private fun CompressTopBar(
     onBack: () -> Unit,
     onNotifications: () -> Unit,
     hasUnreadNotifications: Boolean = false,
+    onCredits: () -> Unit = {},
 ) {
+    val credits by CreditBalanceStore.balance.collectAsState()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -233,10 +239,13 @@ private fun CompressTopBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        LumoraNotificationBell(
-            hasUnreadNotifications = hasUnreadNotifications,
-            onClick = onNotifications
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            LumoraCreditsChip(credits = credits ?: 0, onClick = onCredits)
+            LumoraNotificationBell(
+                hasUnreadNotifications = hasUnreadNotifications,
+                onClick = onNotifications
+            )
+        }
     }
 }
 

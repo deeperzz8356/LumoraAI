@@ -109,7 +109,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import coil.compose.AsyncImage
 import com.deep.lumoraai.core.components.LocalVideoPlayer
+import com.deep.lumoraai.core.components.LumoraCreditsChip
 import com.deep.lumoraai.core.components.LumoraNotificationBell
+import com.deep.lumoraai.core.utils.CreditBalanceStore
 import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.core.utils.MediaShareUtils
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
@@ -117,6 +119,7 @@ import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import kotlinx.coroutines.launch
 import java.io.File
 import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.collectAsState
 
 val GenerationScreenBg = Color(0xFF081020)
 val GenerationPanel = Color(0xFF151D31)
@@ -155,7 +158,9 @@ fun GenerationTopBar(
     onNotifications: () -> Unit,
     modifier: Modifier = Modifier,
     hasUnreadNotifications: Boolean = false,
+    onCredits: (() -> Unit)? = null,
 ) {
+    val credits by CreditBalanceStore.balance.collectAsState()
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -186,10 +191,15 @@ fun GenerationTopBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        LumoraNotificationBell(
-            hasUnreadNotifications = hasUnreadNotifications,
-            onClick = onNotifications
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (onCredits != null) {
+                LumoraCreditsChip(credits = credits ?: 0, onClick = onCredits)
+            }
+            LumoraNotificationBell(
+                hasUnreadNotifications = hasUnreadNotifications,
+                onClick = onNotifications
+            )
+        }
     }
 }
 

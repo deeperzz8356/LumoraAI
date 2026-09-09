@@ -84,7 +84,8 @@ fun TextToVideoScreen(
             GenerationTopBar(
                 title = uiState.title,
                 onBack = onBack,
-                onNotifications = { onNavigate(Screen.Notifications.route) }
+                onNotifications = { onNavigate(Screen.Notifications.route) },
+                onCredits = { onNavigate(Screen.Credits.route) }
             )
 
             Box(modifier = Modifier.weight(1f).fillMaxSize()) {

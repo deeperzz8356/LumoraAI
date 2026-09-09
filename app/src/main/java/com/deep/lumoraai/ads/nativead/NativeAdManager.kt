@@ -34,6 +34,7 @@ class NativeAdManager @Inject constructor(
     fun load(
         context: Context,
         placement: AdPlacement,
+        cacheKey: String = placement.key,
         onLoaded: (NativeAd) -> Unit,
         onFailed: () -> Unit = {},
     ) {
@@ -41,7 +42,7 @@ class NativeAdManager @Inject constructor(
         if (!config.formatEnabled(AdFormat.NATIVE)) {
             onFailed(); return
         }
-        val key = placement.key
+        val key = cacheKey
         cache[key]?.let { onLoaded(it); return }
         if (key in loading) return
         loading.add(key)
