@@ -78,71 +78,74 @@ fun TextToImageScreen(
                 onNotifications = { onNavigate(Screen.Notifications.route) }
             )
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .imePadding()
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 18.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                PromptComposerCard(
-                    prompt = uiState.prompt,
-                    promptHint = "Describe the image you want to generate...",
-                    negativePrompt = uiState.negativePrompt,
-                    isImproving = uiState.isImprovingPrompt,
-                    onPromptChanged = onPromptChanged,
-                    onImprovePrompt = onImprovePrompt,
-                    onNegativePromptChanged = onNegativePromptChanged,
-                    isSettingsOpen = showAdvancedSettings.value,
-                    onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
-                )
-                GenerationAspectRatioSection(
-                    selected = uiState.aspectRatio,
-                    onSelected = onAspectRatioChanged
-                )
-                // "No. of generations" selector hidden per UI change request (state/callbacks kept).
-                // GenerationCountSection(
-                //     generations = uiState.generations,
-                //     onGenerationsChanged = onGenerationsChanged
-                // )
-                if (showAdvancedSettings.value) {
-                    GenerationControlsPanel(
-                        mediaType = "Image",
-                        selectedAspectRatio = uiState.aspectRatio,
-                        onAspectRatioSelected = onAspectRatioChanged,
+            // Content scrolls behind the pinned Generate button. The button is
+            // overlaid at the bottom of this Box (like the banner), and the
+            // scroll content reserves bottom space so nothing hides under it.
+            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .imePadding()
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 18.dp, bottom = 96.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+                    PromptComposerCard(
+                        prompt = uiState.prompt,
+                        promptHint = "Describe the image you want to generate...",
                         negativePrompt = uiState.negativePrompt,
+                        isImproving = uiState.isImprovingPrompt,
+                        onPromptChanged = onPromptChanged,
+                        onImprovePrompt = onImprovePrompt,
                         onNegativePromptChanged = onNegativePromptChanged,
-                        creativity = uiState.creativity,
-                        onCreativityChanged = onCreativityChanged,
-                        generations = uiState.generations,
-                        onGenerationsChanged = onGenerationsChanged
+                        isSettingsOpen = showAdvancedSettings.value,
+                        onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                     )
+                    GenerationAspectRatioSection(
+                        selected = uiState.aspectRatio,
+                        onSelected = onAspectRatioChanged
+                    )
+                    if (showAdvancedSettings.value) {
+                        GenerationControlsPanel(
+                            mediaType = "Image",
+                            selectedAspectRatio = uiState.aspectRatio,
+                            onAspectRatioSelected = onAspectRatioChanged,
+                            negativePrompt = uiState.negativePrompt,
+                            onNegativePromptChanged = onNegativePromptChanged,
+                            creativity = uiState.creativity,
+                            onCreativityChanged = onCreativityChanged,
+                            generations = uiState.generations,
+                            onGenerationsChanged = onGenerationsChanged
+                        )
+                    }
+                    ImageStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
+                    GeneratedMediaLoading(
+                        isVisible = uiState.isGenerating,
+                        mediaType = "IMAGE",
+                        progress = uiState.generationProgress,
+                        statusText = uiState.generationStatusText
+                    )
+                    GeneratedMediaResult(
+                        filePath = uiState.generatedPath,
+                        filePaths = uiState.generatedPaths,
+                        mediaType = "IMAGE",
+                        mimeType = uiState.generatedMimeType,
+                        onEdit = onEditResult
+                    )
+                    GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
                 }
-                ImageStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
+
+                // Pinned Generate button at the bottom of the content area.
                 GenerateNowButton(
                     isGenerating = uiState.isGenerating,
                     enabled = uiState.prompt.isNotBlank(),
                     creditCost = GenerationGate.CREDITS_PER_IMAGE * uiState.generations,
-                    onClick = onGenerate
+                    onClick = onGenerate,
+                    modifier = Modifier
+                        .align(androidx.compose.ui.Alignment.BottomCenter)
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
                 )
-                GeneratedMediaLoading(
-                    isVisible = uiState.isGenerating,
-                    mediaType = "IMAGE",
-                    progress = uiState.generationProgress,
-                    statusText = uiState.generationStatusText
-                )
-                GeneratedMediaResult(
-                    filePath = uiState.generatedPath,
-                    filePaths = uiState.generatedPaths,
-                    mediaType = "IMAGE",
-                    mimeType = uiState.generatedMimeType,
-                    onEdit = onEditResult
-                )
-                GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
-                Spacer(modifier = Modifier.height(72.dp))
             }
 
             PlacementBanner(placement = AdPlacement.BANNER_TEXT2IMG, applyNavBarPadding = false)

@@ -89,14 +89,14 @@ fun TextToVideoScreen(
                 onNotifications = { onNavigate(Screen.Notifications.route) }
             )
 
+            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
             Column(
                 modifier = Modifier
-                    .weight(1f)
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .imePadding()
                     .padding(horizontal = 20.dp)
-                    .padding(top = 18.dp, bottom = 24.dp),
+                    .padding(top = 18.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 // Promo Video supports an optional uploaded source image.
@@ -151,12 +151,6 @@ fun TextToVideoScreen(
                 } else {
                     VideoStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
                 }
-                GenerateNowButton(
-                    isGenerating = uiState.isGenerating,
-                    enabled = uiState.prompt.isNotBlank(),
-                    creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
-                    onClick = onGenerate
-                )
                 GeneratedMediaLoading(
                     isVisible = uiState.isGenerating,
                     mediaType = "VIDEO",
@@ -171,7 +165,18 @@ fun TextToVideoScreen(
                     onEdit = onEditResult
                 )
                 GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
-                Spacer(modifier = Modifier.height(72.dp))
+            }
+
+                // Pinned Generate button at the bottom of the content area.
+                GenerateNowButton(
+                    isGenerating = uiState.isGenerating,
+                    enabled = uiState.prompt.isNotBlank(),
+                    creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
+                    onClick = onGenerate,
+                    modifier = Modifier
+                        .align(androidx.compose.ui.Alignment.BottomCenter)
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                )
             }
 
             PlacementBanner(

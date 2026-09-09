@@ -125,6 +125,7 @@ fun CreateHubScreen(
                 modifier = Modifier.statusBarsPadding()
             )
 
+            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -132,7 +133,7 @@ fun CreateHubScreen(
                     .imePadding()
                     .padding(padding)
                     .padding(horizontal = 20.dp)
-                    .padding(top = 18.dp, bottom = 24.dp),
+                    .padding(top = 18.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 CreateHubModeTabs(
@@ -213,6 +214,20 @@ fun CreateHubScreen(
                 } else {
                     ImageStyleSection(selected = imageStyle, onSelected = { imageStyle = it })
                 }
+                GeneratedMediaLoading(
+                    isVisible = isGenerating && generatedPath == null,
+                    mediaType = if (selectedMode == CreateHubMode.Video) "VIDEO" else "IMAGE"
+                )
+                GeneratedMediaResult(
+                    filePath = generatedPath,
+                    mediaType = if (selectedMode == CreateHubMode.Video) "VIDEO" else "IMAGE",
+                    mimeType = generatedMimeType,
+                    onEdit = onResetState
+                )
+                GenerationErrorText(error = error, onDismissError = onResetState)
+            }
+
+                // Pinned Generate button at the bottom of the content area.
                 GenerateNowButton(
                     isGenerating = isGenerating,
                     enabled = generatedPath == null,
@@ -242,20 +257,12 @@ fun CreateHubScreen(
                                 null
                             )
                         }
-                    }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(padding)
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
                 )
-                GeneratedMediaLoading(
-                    isVisible = isGenerating && generatedPath == null,
-                    mediaType = if (selectedMode == CreateHubMode.Video) "VIDEO" else "IMAGE"
-                )
-                GeneratedMediaResult(
-                    filePath = generatedPath,
-                    mediaType = if (selectedMode == CreateHubMode.Video) "VIDEO" else "IMAGE",
-                    mimeType = generatedMimeType,
-                    onEdit = onResetState
-                )
-                GenerationErrorText(error = error, onDismissError = onResetState)
-                Spacer(modifier = Modifier.height(72.dp))
             }
         }
         }

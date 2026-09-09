@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -234,13 +235,16 @@ fun PromptComposerCard(
     isSettingsOpen: Boolean = false,
     onSettingsClick: () -> Unit = {},
 ) {
-    Box(
+    // Auto-expanding prompt card: grows with the text (up to the scroll area)
+    // so a long/pasted prompt is fully visible. Smaller default text size that
+    // stays readable.
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(170.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(GenerationPanel)
             .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         OutlinedTextField(
             value = prompt,
@@ -249,14 +253,15 @@ fun PromptComposerCard(
                 Text(
                     text = promptHint,
                     color = GenerationMuted.copy(alpha = 0.68f),
-                    fontSize = 17.sp,
-                    lineHeight = 25.sp
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
                 )
             },
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-                .padding(bottom = 66.dp),
+                .fillMaxWidth()
+                .heightIn(min = 96.dp),
+            // Grows with content instead of scrolling inside a fixed box.
+            maxLines = Int.MAX_VALUE,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
@@ -268,15 +273,17 @@ fun PromptComposerCard(
             ),
             textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
                 textAlign = TextAlign.Start
             )
         )
         Row(
             modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 18.dp, bottom = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                .fillMaxWidth()
+                .padding(start = 6.dp, end = 8.dp, top = 4.dp, bottom = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (onUpload != null) {
                 SquareActionButton(icon = Icons.Default.Upload, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_upload_image_2), onClick = onUpload)
@@ -296,16 +303,14 @@ fun PromptComposerCard(
                 onClick = onSettingsClick,
                 highlighted = isSettingsOpen || negativePrompt.isNotBlank()
             )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "${prompt.length}/1000",
+                color = Color.White.copy(alpha = 0.78f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+            )
         }
-        Text(
-            text = "${prompt.length}/1000",
-            color = Color.White.copy(alpha = 0.78f),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 23.dp)
-        )
     }
 }
 
@@ -414,7 +419,6 @@ fun CollapsiblePromptComposerCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
             ) {
                 OutlinedTextField(
                     value = prompt,
@@ -423,14 +427,16 @@ fun CollapsiblePromptComposerCard(
                         Text(
                             text = promptHint,
                             color = GenerationMuted.copy(alpha = 0.68f),
-                            fontSize = 16.sp,
-                            lineHeight = 24.sp
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp
                         )
                     },
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 12.dp)
-                        .padding(bottom = 60.dp),
+                        .fillMaxWidth()
+                        .heightIn(min = 88.dp)
+                        .padding(horizontal = 12.dp),
+                    // Grows with content so a long/pasted prompt is fully visible.
+                    maxLines = Int.MAX_VALUE,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
@@ -442,15 +448,17 @@ fun CollapsiblePromptComposerCard(
                     ),
                     textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
                         color = Color.White,
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
                         textAlign = TextAlign.Start
                     )
                 )
                 Row(
                     modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = 18.dp, bottom = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        .fillMaxWidth()
+                        .padding(start = 18.dp, end = 18.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     /* Prompt Enhancer (improve prompt) hidden per UI change request.
                     SquareActionButton(
@@ -467,16 +475,14 @@ fun CollapsiblePromptComposerCard(
                         onClick = onSettingsClick,
                         highlighted = isSettingsOpen || negativePrompt.isNotBlank()
                     )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = "${prompt.length}/1000",
+                        color = Color.White.copy(alpha = 0.78f),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
-                Text(
-                    text = "${prompt.length}/1000",
-                    color = Color.White.copy(alpha = 0.78f),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 20.dp, bottom = 20.dp)
-                )
             }
         }
     }
