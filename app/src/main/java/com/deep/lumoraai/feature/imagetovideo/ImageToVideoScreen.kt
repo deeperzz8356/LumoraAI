@@ -120,11 +120,10 @@ fun ImageToVideoScreen(
                     onSelected = onAspectRatioChanged,
                     options = GenerationAspectRatio.videoRatios
                 )
-                // "No. of generations" selector hidden per UI change request (state/callbacks kept).
-                // GenerationCountSection(
-                //     generations = uiState.generations,
-                //     onGenerationsChanged = onGenerationsChanged
-                // )
+                GenerationCountSection(
+                    generations = uiState.generations,
+                    onGenerationsChanged = onGenerationsChanged
+                )
                 if (showAdvancedSettings.value) {
                     GenerationControlsPanel(
                         mediaType = "Video",

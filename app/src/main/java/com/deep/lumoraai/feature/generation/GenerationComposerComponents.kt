@@ -786,26 +786,52 @@ private fun SliderBlock(label: String, valueText: String, value: Float, onValueC
 }
 
 @Composable
-fun GenerationCountSection(generations: Int, onGenerationsChanged: (Int) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(stringResource(com.deep.lumoraai.R.string.ui_no_of_generations), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+fun GenerationCountSection(
+    generations: Int,
+    onGenerationsChanged: (Int) -> Unit,
+    maxCount: Int = 4,
+) {
+    // "Number of Generations" as a row of selectable pills (1..maxCount), the
+    // selected one highlighted with a lime border — matches the app's ratio/
+    // resolution selectors.
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = stringResource(com.deep.lumoraai.R.string.ui_no_of_generations),
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+        )
         Row(
             modifier = Modifier
-                .height(48.dp)
-                .clip(RoundedCornerShape(50))
-                .background(Color(0xFF182137))
-                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(50))
-                .padding(horizontal = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(32.dp)
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("-", color = Color.White.copy(alpha = 0.72f), fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onGenerationsChanged(generations - 1) })
-            Text("$generations", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Text("+", color = GenerationLime, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onGenerationsChanged(generations + 1) })
+            (1..maxCount).forEach { count ->
+                val selected = count == generations
+                Box(
+                    modifier = Modifier
+                        .height(52.dp)
+                        .widthIn(min = 88.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (selected) GenerationLime.copy(alpha = 0.14f) else Color(0xFF182137))
+                        .border(
+                            1.dp,
+                            if (selected) GenerationLime else Color.White.copy(alpha = 0.08f),
+                            RoundedCornerShape(12.dp),
+                        )
+                        .clickable { onGenerationsChanged(count) }
+                        .padding(horizontal = 22.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "$count",
+                        color = if (selected) GenerationLime else Color.White.copy(alpha = 0.82f),
+                        fontSize = 16.sp,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    )
+                }
+            }
         }
     }
 }

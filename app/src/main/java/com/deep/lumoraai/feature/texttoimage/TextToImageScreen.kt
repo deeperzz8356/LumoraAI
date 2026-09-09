@@ -106,6 +106,10 @@ fun TextToImageScreen(
                         selected = uiState.aspectRatio,
                         onSelected = onAspectRatioChanged
                     )
+                    GenerationCountSection(
+                        generations = uiState.generations,
+                        onGenerationsChanged = onGenerationsChanged
+                    )
                     if (showAdvancedSettings.value) {
                         GenerationControlsPanel(
                             mediaType = "Image",
