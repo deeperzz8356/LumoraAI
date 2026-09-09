@@ -18,7 +18,7 @@ data class ImageToImageUiState(
     val selectedStyle: ImageStyle = ImageStyle.NoStyle,
     val aspectRatio: GenerationAspectRatio = GenerationAspectRatio.Portrait,
     val similarity: Float = 0.5f,
-    val generations: Int = 2,
+    val generations: Int = 1,
     val isLoadingSources: Boolean = false,
     val isGenerating: Boolean = false,
     val generationProgress: Float? = null,

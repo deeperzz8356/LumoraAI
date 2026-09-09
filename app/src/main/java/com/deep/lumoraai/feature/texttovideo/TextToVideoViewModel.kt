@@ -1,6 +1,12 @@
 package com.deep.lumoraai.feature.texttovideo
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.util.Base64
 import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,8 +32,11 @@ import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import com.deep.lumoraai.feature.imagetoimage.apiStyle
 import com.deep.lumoraai.feature.imagetoimage.promptDirective
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -76,6 +85,25 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             modeState
         } else {
             uiState
+        }
+    }
+
+    /**
+     * Loads and decodes an uploaded image for the Promo Video path. Stores the
+     * decoded bitmap (for preview) and its base64 JPEG (for generation).
+     */
+    fun loadImage(uri: Uri) {
+        viewModelScope.launch {
+            uiState = uiState.copy(isGenerating = true, error = null, generatedPath = null, generatedPaths = emptyList())
+            val decoded = withContext(Dispatchers.IO) {
+                runCatching { decodeBitmap(uri) }.getOrNull()
+            }
+            if (decoded == null) {
+                uiState = uiState.copy(isGenerating = false, error = "Could not open that image.", sourceBitmap = null, sourceImageB64 = null)
+                return@launch
+            }
+            val b64 = withContext(Dispatchers.Default) { decoded.toJpegBase64() }
+            uiState = uiState.copy(sourceBitmap = decoded, sourceImageB64 = b64, isGenerating = false, error = null)
         }
     }
 
@@ -187,7 +215,8 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                 val result = generationRepository.generateVideo(
                     prompt = prompt,
                     engine = uiState.selectedEngine.modelId,
-                    sourceImageB64 = null,
+                    // Promo Video supports an optional uploaded source image.
+                    sourceImageB64 = if (isPromoMode) uiState.sourceImageB64 else null,
                     motionStrength = (uiState.motion * 100).toInt().coerceIn(20, 90),
                     duration = uiState.duration,
                     aspectRatio = uiState.aspectRatio.label,
@@ -341,6 +370,27 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             uiState.selectedStyle.promptDirective
         }
         return "$base User prompt: ${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Motion strength: $motion%.$negative"
+    }
+
+    private fun decodeBitmap(uri: Uri): Bitmap {
+        val resolver = getApplication<Application>().contentResolver
+        val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(resolver, uri)) { decoder, _, _ ->
+                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                decoder.isMutableRequired = false
+            }
+        } else {
+            resolver.openInputStream(uri).use { input ->
+                BitmapFactory.decodeStream(input) ?: error("Unsupported image file.")
+            }
+        }
+        return bitmap.copy(Bitmap.Config.ARGB_8888, false)
+    }
+
+    private fun Bitmap.toJpegBase64(): String {
+        val outputStream = ByteArrayOutputStream()
+        compress(Bitmap.CompressFormat.JPEG, 88, outputStream)
+        return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
     }
 
     private fun currentTimestamp(): String =

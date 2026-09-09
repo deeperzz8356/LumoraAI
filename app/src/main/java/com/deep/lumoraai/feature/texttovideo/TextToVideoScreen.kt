@@ -1,5 +1,8 @@
 package com.deep.lumoraai.feature.texttovideo
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +37,7 @@ import com.deep.lumoraai.feature.generation.GenerationScreenBg
 import com.deep.lumoraai.feature.generation.GenerationTopBar
 import com.deep.lumoraai.feature.generation.PromptComposerCard
 import com.deep.lumoraai.feature.generation.PromoVideoStyleSection
+import com.deep.lumoraai.feature.generation.UploadImagePanel
 import com.deep.lumoraai.feature.generation.VideoStyleSection
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import kotlinx.coroutines.delay
@@ -44,6 +48,7 @@ fun TextToVideoScreen(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     isPromo: Boolean = false,
+    onImageSelected: (Uri) -> Unit = {},
     onPromptChanged: (String) -> Unit,
     onNegativePromptChanged: (String) -> Unit,
     onAspectRatioChanged: (GenerationAspectRatio) -> Unit,
@@ -60,6 +65,9 @@ fun TextToVideoScreen(
 ) {
     val scrollState = rememberScrollState()
     val showAdvancedSettings = remember { mutableStateOf(false) }
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) onImageSelected(uri)
+    }
 
     LaunchedEffect(uiState.isGenerating, uiState.generatedPaths) {
         if (uiState.isGenerating || uiState.generatedPaths.isNotEmpty()) {
@@ -91,6 +99,14 @@ fun TextToVideoScreen(
                     .padding(top = 18.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
+                // Promo Video supports an optional uploaded source image.
+                if (isPromo) {
+                    UploadImagePanel(
+                        bitmap = uiState.sourceBitmap,
+                        isBusy = uiState.isGenerating,
+                        onUpload = { imagePicker.launch("image/*") }
+                    )
+                }
                 PromptComposerCard(
                     prompt = uiState.prompt,
                     promptHint = uiState.promptHint,
@@ -107,10 +123,11 @@ fun TextToVideoScreen(
                     onSelected = onAspectRatioChanged,
                     options = GenerationAspectRatio.videoRatios
                 )
-                GenerationCountSection(
-                    generations = uiState.generations,
-                    onGenerationsChanged = onGenerationsChanged
-                )
+                // "No. of generations" selector hidden per UI change request (state/callbacks kept).
+                // GenerationCountSection(
+                //     generations = uiState.generations,
+                //     onGenerationsChanged = onGenerationsChanged
+                // )
                 if (showAdvancedSettings.value) {
                     GenerationControlsPanel(
                         mediaType = "Video",

@@ -15,13 +15,9 @@ fun BgStudioRoute(
     val uiState = viewModel.uiState
 
     LaunchedEffect(initialMode) {
-        viewModel.selectMode(
-            if (initialMode.equals("remove", ignoreCase = true)) {
-                BgStudioMode.Remove
-            } else {
-                BgStudioMode.Replace
-            }
-        )
+        // AI Replace mode hidden per UI change request — always resolve to Remove
+        // regardless of the requested initialMode (Home/AITools may pass "replace").
+        viewModel.selectMode(BgStudioMode.Remove)
     }
 
     LaunchedEffect(uiState.status) {

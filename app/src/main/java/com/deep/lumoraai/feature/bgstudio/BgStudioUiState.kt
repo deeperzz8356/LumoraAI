@@ -18,7 +18,8 @@ sealed interface BgStudioStatus {
 }
 
 data class BgStudioUiState(
-    val mode: BgStudioMode = BgStudioMode.Replace,
+    // Default to Remove; Replace (AI Replace) is hidden from the UI per change request.
+    val mode: BgStudioMode = BgStudioMode.Remove,
     val prompt: String = "",
     val negativePrompt: String = "",
     val aspectRatio: GenerationAspectRatio = GenerationAspectRatio.Portrait,

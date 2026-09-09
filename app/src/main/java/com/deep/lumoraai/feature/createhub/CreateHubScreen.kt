@@ -174,10 +174,11 @@ fun CreateHubScreen(
                     onSelected = { aspectRatio = it },
                     options = if (isVideoMode) GenerationAspectRatio.videoRatios else GenerationAspectRatio.entries
                 )
-                GenerationCountSection(
-                    generations = generations,
-                    onGenerationsChanged = { generations = it.coerceIn(1, 4) }
-                )
+                // "No. of generations" selector hidden per UI change request (state/callbacks kept).
+                // GenerationCountSection(
+                //     generations = generations,
+                //     onGenerationsChanged = { generations = it.coerceIn(1, 4) }
+                // )
                 if (showAdvancedSettings) {
                     GenerationControlsPanel(
                         mediaType = if (selectedMode == CreateHubMode.Video) "Video" else "Image",

@@ -146,10 +146,11 @@ fun ImageToImageScreen(
                     selected = uiState.aspectRatio,
                     onSelected = onAspectRatioChanged
                 )
-                GenerationCountSection(
-                    generations = uiState.generations,
-                    onGenerationsChanged = onGenerationsChanged
-                )
+                // "No. of generations" selector hidden per UI change request (state/callbacks kept).
+                // GenerationCountSection(
+                //     generations = uiState.generations,
+                //     onGenerationsChanged = onGenerationsChanged
+                // )
                 if (showAdvancedSettings.value) {
                     GenerationControlsPanel(
                         mediaType = "Image",

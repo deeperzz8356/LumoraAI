@@ -39,6 +39,7 @@ fun TextToVideoRoute(
         onBack = onBack,
         onNavigate = onNavigate,
         isPromo = isPromo,
+        onImageSelected = viewModel::loadImage,
         onPromptChanged = viewModel::updatePrompt,
         onNegativePromptChanged = viewModel::updateNegativePrompt,
         onAspectRatioChanged = viewModel::setAspectRatio,

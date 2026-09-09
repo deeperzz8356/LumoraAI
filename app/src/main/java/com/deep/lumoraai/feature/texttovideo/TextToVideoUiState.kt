@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.texttovideo
 
+import android.graphics.Bitmap
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
@@ -9,6 +10,9 @@ data class TextToVideoUiState(
     val promptHint: String = "Describe the video you want to generate...",
     val jobBadge: String = "Text 2 Video",
     val prompt: String = "",
+    // Optional source image used by the Promo Video path (upload support).
+    val sourceBitmap: Bitmap? = null,
+    val sourceImageB64: String? = null,
     val negativePrompt: String = "",
     val selectedStyle: VideoStyle = VideoStyle.NoStyle,
     // Ad/marketing style used only in Promo Video mode.

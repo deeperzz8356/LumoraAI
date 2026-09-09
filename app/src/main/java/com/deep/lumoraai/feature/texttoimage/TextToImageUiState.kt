@@ -10,7 +10,7 @@ data class TextToImageUiState(
     val selectedModel: ImageModel = ImageModel.IMAGEN,
     val aspectRatio: GenerationAspectRatio = GenerationAspectRatio.Portrait,
     val creativity: Float = 0.5f,
-    val generations: Int = 2,
+    val generations: Int = 1,
     val isGenerating: Boolean = false,
     val generationProgress: Float? = null,
     val generationStatusText: String? = null,

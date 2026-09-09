@@ -281,6 +281,7 @@ fun PromptComposerCard(
             if (onUpload != null) {
                 SquareActionButton(icon = Icons.Default.Upload, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_upload_image_2), onClick = onUpload)
             }
+            /* Prompt Enhancer (improve prompt) hidden per UI change request.
             SquareActionButton(
                 icon = Icons.Default.AutoAwesome,
                 contentDescription = stringResource(com.deep.lumoraai.R.string.ui_improve_prompt),
@@ -288,6 +289,7 @@ fun PromptComposerCard(
                 onClick = onImprovePrompt,
                 isLoading = isImproving
             )
+            */
             SquareActionButton(
                 icon = Icons.Default.Tune,
                 contentDescription = stringResource(com.deep.lumoraai.R.string.ui_advanced_settings_2),
@@ -450,6 +452,7 @@ fun CollapsiblePromptComposerCard(
                         .padding(start = 18.dp, bottom = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    /* Prompt Enhancer (improve prompt) hidden per UI change request.
                     SquareActionButton(
                         icon = Icons.Default.AutoAwesome,
                         contentDescription = stringResource(com.deep.lumoraai.R.string.ui_improve_prompt),
@@ -457,6 +460,7 @@ fun CollapsiblePromptComposerCard(
                         onClick = onImprovePrompt,
                         isLoading = isImproving
                     )
+                    */
                     SquareActionButton(
                         icon = Icons.Default.Tune,
                         contentDescription = stringResource(com.deep.lumoraai.R.string.ui_advanced_settings_2),
@@ -659,8 +663,9 @@ fun GenerationControlsPanel(
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
-        NegativePromptField(value = negativePrompt, onValueChange = onNegativePromptChanged)
-        GenerationDivider()
+        // Negative prompt UI hidden per UI change request (state/callbacks kept).
+        // NegativePromptField(value = negativePrompt, onValueChange = onNegativePromptChanged)
+        // GenerationDivider()
         if (similarity != null && onSimilarityChanged != null) {
             SliderBlock(
                 similarityLabel.ifBlank { stringResource(com.deep.lumoraai.R.string.ui_image_similarity) },

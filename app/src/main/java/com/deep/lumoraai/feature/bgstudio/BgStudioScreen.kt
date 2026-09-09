@@ -128,7 +128,9 @@ fun BgStudioScreen(
                     .padding(top = 28.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                ModeSwitch(selectedMode = uiState.mode, onModeSelected = onModeSelected)
+                // AI Replace mode hidden per UI change request — only Remove Background
+                // is available now, so the Remove/Replace toggle is hidden entirely.
+                // ModeSwitch(selectedMode = uiState.mode, onModeSelected = onModeSelected)
 
                 if (uiState.mode == BgStudioMode.Replace) {
                     SourceImagePanel(uiState = uiState, onUpload = { imagePicker.launch("image/*") })
