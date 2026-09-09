@@ -190,7 +190,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                     style = mode.apiStyle(uiState.selectedStyle),
                     width = uiState.aspectRatio.width,
                     height = uiState.aspectRatio.height,
-                    negativePrompt = mode.negativePrompt(uiState.negativePrompt),
+                    negativePrompt = mode.negativePrompt(uiState.negativePrompt).take(API_PROMPT_LIMIT),
                     sourceImageB64 = null,
                     developerMode = developerMode,
                 )
@@ -316,7 +316,32 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     private fun buildPrompt(mode: TextToImageMode): String {
         val creativity = (uiState.creativity * 100).toInt()
         val stylePrompt = if (mode == TextToImageMode.TextToImage) uiState.selectedStyle.promptDirective else ""
-        return "${mode.promptDirective(uiState.prompt)}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Creativity level: $creativity%."
+        return when (mode) {
+            TextToImageMode.TextToImage -> buildApiPrompt(
+                prefix = "",
+                userPrompt = uiState.prompt,
+                suffix = ".$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Creativity level: $creativity%."
+            )
+
+            TextToImageMode.Logo -> buildApiPrompt(
+                prefix = "Logo for: ",
+                userPrompt = uiState.prompt,
+                suffix = ". Make it a real logo: simple iconic mark or mascot emblem, clean vector-like shapes, centered 1:1 composition, minimal background, no mockup or poster scene. Creativity $creativity%."
+            )
+
+            TextToImageMode.Avatar -> buildApiPrompt(
+                prefix = "Avatar for: ",
+                userPrompt = uiState.prompt,
+                suffix = ". Make it a profile avatar: centered head-and-shoulders character or mascot portrait, clear face/identity, clean background, social profile ready. Creativity $creativity%."
+            )
+        }
+    }
+
+    private fun buildApiPrompt(prefix: String, userPrompt: String, suffix: String): String {
+        val normalizedPrompt = userPrompt.trim().replace(Regex("\\s+"), " ")
+        val overhead = prefix.length + suffix.length
+        val availablePromptLength = (API_PROMPT_LIMIT - overhead).coerceAtLeast(32)
+        return (prefix + normalizedPrompt.take(availablePromptLength).trimEnd() + suffix).take(API_PROMPT_LIMIT)
     }
 
     private fun currentTimestamp(): String =
@@ -325,6 +350,8 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
 }
+
+private const val API_PROMPT_LIMIT = 500
 
 private val TextToImageMode.displayName: String
     get() = when (this) {
@@ -359,23 +386,6 @@ private fun TextToImageMode.promptEnhancerSeed(prompt: String): String =
         TextToImageMode.TextToImage -> prompt
         TextToImageMode.Logo -> "Create a professional logo concept for: $prompt"
         TextToImageMode.Avatar -> "Create a polished avatar concept for: $prompt"
-    }
-
-private fun TextToImageMode.promptDirective(prompt: String): String =
-    when (this) {
-        TextToImageMode.TextToImage -> prompt
-        TextToImageMode.Logo -> buildString {
-            append("Create a clean professional logo for: ")
-            append(prompt)
-            append(". The output must read as a logo, not a general illustration. ")
-            append("Use a simple iconic mark or mascot emblem, strong silhouette, balanced vector-like shapes, centered composition, app-brand ready, minimal background, no mockup, no poster scene, no photorealistic environment")
-        }
-        TextToImageMode.Avatar -> buildString {
-            append("Create a polished avatar for: ")
-            append(prompt)
-            append(". The output must read as an avatar/profile picture, not a general scene. ")
-            append("Use a centered head-and-shoulders character or mascot portrait, clear face/identity, expressive design, clean background, high detail, social profile ready")
-        }
     }
 
 private fun TextToImageMode.negativePrompt(userNegativePrompt: String): String {
