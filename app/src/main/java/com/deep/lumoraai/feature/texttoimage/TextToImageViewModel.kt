@@ -78,10 +78,10 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         uiState = uiState.copy(aspectRatio = value)
     }
 
-    fun generate() {
+    fun generate(mode: TextToImageMode = TextToImageMode.TextToImage) {
         if (uiState.isGenerating) return
         if (uiState.prompt.isBlank()) {
-            uiState = uiState.copy(error = "Describe the image you want to generate.")
+            uiState = uiState.copy(error = mode.emptyPromptError())
             return
         }
 
@@ -110,21 +110,21 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             if (!isDev) {
                 CreditBalanceStore.applyOptimistic(-GenerationGate.CREDITS_PER_IMAGE * requestedGenerationsFor())
             }
-            startImageJobs(developerMode = isDev)
+            startImageJobs(mode = mode, developerMode = isDev)
         }
     }
 
     private fun requestedGenerationsFor(): Int = uiState.generations.coerceIn(1, 4)
 
-    fun improvePrompt() {
+    fun improvePrompt(mode: TextToImageMode = TextToImageMode.TextToImage) {
         if (uiState.isImprovingPrompt || uiState.prompt.isBlank()) return
 
         viewModelScope.launch {
             uiState = uiState.copy(isImprovingPrompt = true, error = null)
             val result = generationRepository.enhancePrompt(
-                prompt = uiState.prompt,
+                prompt = mode.promptEnhancerSeed(uiState.prompt),
                 mediaType = "IMAGE",
-                style = uiState.selectedStyle.apiStyle,
+                style = mode.apiStyle(uiState.selectedStyle),
                 negativePrompt = uiState.negativePrompt,
             )
             uiState = if (result.isSuccess) {
@@ -146,13 +146,13 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         uiState = uiState.copy(generatedPath = null, generatedPaths = emptyList())
     }
 
-    private fun startImageJobs(developerMode: Boolean) {
-        val prompt = buildPrompt()
+    private fun startImageJobs(mode: TextToImageMode, developerMode: Boolean) {
+        val prompt = buildPrompt(mode)
         val requestedGenerations = uiState.generations.coerceIn(1, 4)
             uiState = uiState.copy(
                 isGenerating = true,
                 generationProgress = 0f,
-                generationStatusText = "Image 1 of $requestedGenerations generating",
+                generationStatusText = "${mode.displayName} 1 of $requestedGenerations generating",
                 error = null,
                 generatedPath = null,
                 generatedPaths = emptyList()
@@ -163,20 +163,20 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             repeat(requestedGenerations) { index ->
                 uiState = uiState.copy(
                     generationProgress = 0f,
-                    generationStatusText = "Image ${index + 1} of $requestedGenerations generating"
+                    generationStatusText = "${mode.displayName} ${index + 1} of $requestedGenerations generating"
                 )
-                val jobTitle = "Text 2 Image ${shortTimestamp()} #${index + 1}"
+                val jobTitle = "${mode.displayName} ${shortTimestamp()} #${index + 1}"
                 val taskId = UUID.randomUUID().toString()
                 notificationManager.sendTaskStartNotification(
                     taskType = TaskNotificationHelper.TEXT_TO_IMAGE,
                     taskId = taskId,
-                    displayName = "Text to Image"
+                    displayName = mode.displayName
                 )
                 GenerationRepository.addJob(
                     ActiveJobInfo(
                         title = jobTitle,
-                        subtitle = "Generating image ${index + 1} of $requestedGenerations...",
-                        badgeText = "Text 2 Image",
+                        subtitle = "Generating ${mode.displayName.lowercase()} ${index + 1} of $requestedGenerations...",
+                        badgeText = mode.displayName,
                         statusText = "Queued",
                         progressPercent = 0.0f,
                         isCompleted = false,
@@ -187,10 +187,10 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                 val progressJob = launchProgressJob(jobTitle, index + 1, requestedGenerations)
                 val result = generationRepository.generateImage(
                     prompt = prompt,
-                    style = uiState.selectedStyle.apiStyle,
+                    style = mode.apiStyle(uiState.selectedStyle),
                     width = uiState.aspectRatio.width,
                     height = uiState.aspectRatio.height,
-                    negativePrompt = uiState.negativePrompt.ifBlank { "low quality, blurry, distorted face, extra limbs, bad anatomy, watermark, text artifacts" },
+                    negativePrompt = mode.negativePrompt(uiState.negativePrompt),
                     sourceImageB64 = null,
                     developerMode = developerMode,
                 )
@@ -207,7 +207,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                     notificationManager.sendTaskFailureNotification(
                         taskType = TaskNotificationHelper.TEXT_TO_IMAGE,
                         taskId = taskId,
-                        displayName = "Text to Image",
+                        displayName = mode.displayName,
                         errorMessage = message
                     )
                     return@launch
@@ -220,8 +220,8 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             if (completed > 1) {
                 LumoraNotificationCenter.notifyCompletion(
                     context = getApplication<Application>(),
-                    title = "$completed images ready",
-                    message = "Your Text 2 Image batch has finished.",
+                    title = "$completed ${mode.outputPlural} ready",
+                    message = "Your ${mode.displayName} batch has finished.",
                     route = Screen.History.route,
                     mediaType = MediaStorageRepository.MEDIA_IMAGE,
                 )
@@ -313,10 +313,10 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         return credits
     }
 
-    private fun buildPrompt(): String {
+    private fun buildPrompt(mode: TextToImageMode): String {
         val creativity = (uiState.creativity * 100).toInt()
-        val stylePrompt = uiState.selectedStyle.promptDirective
-        return "${uiState.prompt}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Creativity level: $creativity%."
+        val stylePrompt = if (mode == TextToImageMode.TextToImage) uiState.selectedStyle.promptDirective else ""
+        return "${mode.promptDirective(uiState.prompt)}.$stylePrompt Format: ${uiState.aspectRatio.promptHint}. Creativity level: $creativity%."
     }
 
     private fun currentTimestamp(): String =
@@ -324,6 +324,67 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
 
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+}
+
+private val TextToImageMode.displayName: String
+    get() = when (this) {
+        TextToImageMode.TextToImage -> "Text 2 Image"
+        TextToImageMode.Logo -> "Logo"
+        TextToImageMode.Avatar -> "Avatar"
+    }
+
+private val TextToImageMode.outputPlural: String
+    get() = when (this) {
+        TextToImageMode.TextToImage -> "images"
+        TextToImageMode.Logo -> "logos"
+        TextToImageMode.Avatar -> "avatars"
+    }
+
+private fun TextToImageMode.emptyPromptError(): String =
+    when (this) {
+        TextToImageMode.TextToImage -> "Describe the image you want to generate."
+        TextToImageMode.Logo -> "Describe the logo you want to generate."
+        TextToImageMode.Avatar -> "Describe the avatar you want to generate."
+    }
+
+private fun TextToImageMode.apiStyle(selectedStyle: ImageStyle): String =
+    when (this) {
+        TextToImageMode.TextToImage -> selectedStyle.apiStyle
+        TextToImageMode.Logo -> "logo"
+        TextToImageMode.Avatar -> "avatar"
+    }
+
+private fun TextToImageMode.promptEnhancerSeed(prompt: String): String =
+    when (this) {
+        TextToImageMode.TextToImage -> prompt
+        TextToImageMode.Logo -> "Create a professional logo concept for: $prompt"
+        TextToImageMode.Avatar -> "Create a polished avatar concept for: $prompt"
+    }
+
+private fun TextToImageMode.promptDirective(prompt: String): String =
+    when (this) {
+        TextToImageMode.TextToImage -> prompt
+        TextToImageMode.Logo -> buildString {
+            append("Create a clean professional logo for: ")
+            append(prompt)
+            append(". The output must read as a logo, not a general illustration. ")
+            append("Use a simple iconic mark or mascot emblem, strong silhouette, balanced vector-like shapes, centered composition, app-brand ready, minimal background, no mockup, no poster scene, no photorealistic environment")
+        }
+        TextToImageMode.Avatar -> buildString {
+            append("Create a polished avatar for: ")
+            append(prompt)
+            append(". The output must read as an avatar/profile picture, not a general scene. ")
+            append("Use a centered head-and-shoulders character or mascot portrait, clear face/identity, expressive design, clean background, high detail, social profile ready")
+        }
+    }
+
+private fun TextToImageMode.negativePrompt(userNegativePrompt: String): String {
+    val defaults = when (this) {
+        TextToImageMode.TextToImage -> "low quality, blurry, distorted face, extra limbs, bad anatomy, watermark, text artifacts"
+        TextToImageMode.Logo -> "photorealistic scene, poster, flyer, mockup, busy background, complex environment, tiny unreadable details, watermark, text artifacts, low quality, blurry"
+        TextToImageMode.Avatar -> "full body distant shot, landscape scene, busy background, distorted face, extra limbs, bad anatomy, watermark, text artifacts, low quality, blurry"
+    }
+    return userNegativePrompt.ifBlank { defaults }
 }
 
 

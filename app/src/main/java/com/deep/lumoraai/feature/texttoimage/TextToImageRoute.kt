@@ -50,11 +50,11 @@ fun TextToImageRoute(
         onPromptChanged = viewModel::updatePrompt,
         onNegativePromptChanged = viewModel::updateNegativePrompt,
         onAspectRatioChanged = viewModel::setAspectRatio,
-        onImprovePrompt = viewModel::improvePrompt,
+        onImprovePrompt = { viewModel.improvePrompt(mode) },
         onStyleSelected = viewModel::selectStyle,
         onCreativityChanged = viewModel::setCreativity,
         onGenerationsChanged = viewModel::setGenerations,
-        onGenerate = viewModel::generate,
+        onGenerate = { viewModel.generate(mode) },
         // Editing must keep the generated media visible in-place. The preview is
         // cleared naturally when the user changes the prompt, so tapping Edit
         // should only return focus to the editor, not wipe the result.
