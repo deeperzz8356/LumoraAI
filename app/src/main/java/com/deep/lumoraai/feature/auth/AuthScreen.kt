@@ -1,46 +1,13 @@
 package com.deep.lumoraai.feature.auth
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import android.view.LayoutInflater
+import android.view.View
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.deep.lumoraai.core.components.GoogleBrandIcon
-import com.deep.lumoraai.core.components.LumoraIntroBackground
-import com.deep.lumoraai.core.components.LumoraIntroLogo
-import com.deep.lumoraai.core.components.LumoraIntroPrimaryButton
-import com.deep.lumoraai.core.components.LumoraIntroSecondaryButton
-import com.deep.lumoraai.core.components.LumoraIntroTextField
-import com.deep.lumoraai.core.theme.IntroPalette
+import androidx.compose.ui.viewinterop.AndroidView
+import com.deep.lumoraai.R
+import com.deep.lumoraai.databinding.ScreenAuthBinding
 
 @Composable
 fun AuthScreen(
@@ -53,327 +20,63 @@ fun AuthScreen(
     allowGuestSignIn: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(IntroPalette.BackgroundBase)
-            .systemBarsPadding()
-    ) {
-        LumoraIntroBackground()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
-            LumoraIntroLogo()
-            Spacer(modifier = Modifier.height(24.dp))
-            AuthHeroSection(uiState = uiState)
-            Spacer(modifier = Modifier.height(32.dp))
-            AuthFormContainer(
-                uiState = uiState,
-                onGoogleSignIn = onGoogleSignIn,
-                onEmailSignIn = onEmailSignIn,
-                onGuestSignIn = onGuestSignIn,
-                onEmailOptionClick = onEmailOptionClick,
-                onBack = onBack,
-                modifier = Modifier.weight(1f)
+    AndroidView(
+        factory = { context -> ScreenAuthBinding.inflate(LayoutInflater.from(context)).root },
+        update = { root ->
+            bindAuth(
+                ScreenAuthBinding.bind(root), uiState, allowGuestSignIn,
+                onGoogleSignIn, onEmailSignIn, onGuestSignIn, onEmailOptionClick, onBack
             )
-            AuthFooter(
-                uiState = uiState,
-                onSignInClick = { onEmailOptionClick(false) },
-                onSignUpClick = { onEmailOptionClick(true) },
-                onGuestSignIn = onGuestSignIn,
-                allowGuestSignIn = allowGuestSignIn
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-private fun AuthHeroSection(uiState: AuthUiState) {
-    Crossfade(targetState = uiState, label = "authHero") { state ->
-        when (state) {
-            is AuthUiState.EmailForm -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = if (state.isSignUp) stringResource(com.deep.lumoraai.R.string.auth_create_account) else stringResource(com.deep.lumoraai.R.string.auth_welcome_back),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = IntroPalette.TextPrimary,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = if (state.isSignUp) {
-                            stringResource(com.deep.lumoraai.R.string.auth_signup_description)
-                        } else {
-                            stringResource(com.deep.lumoraai.R.string.auth_signin_description)
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = IntroPalette.TextMuted,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
-                    )
-                }
-            }
-            else -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = stringResource(com.deep.lumoraai.R.string.auth_unlock),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = IntroPalette.TextPrimary
-                    )
-                    Text(
-                        text = stringResource(com.deep.lumoraai.R.string.auth_ai_creation),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = IntroPalette.SecondaryText
-                    )
-                    Text(
-                        text = stringResource(com.deep.lumoraai.R.string.auth_tagline),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = IntroPalette.TextMuted,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 20.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AuthFormContainer(
-    uiState: AuthUiState,
-    onGoogleSignIn: () -> Unit,
-    onEmailSignIn: (String, String, Boolean) -> Unit,
-    onGuestSignIn: () -> Unit,
-    onEmailOptionClick: (Boolean) -> Unit,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Crossfade(
-        targetState = uiState,
-        label = "authForm",
-        modifier = modifier.fillMaxWidth()
-    ) { state ->
-        when (state) {
-            AuthUiState.Loading -> AuthLoading()
-            is AuthUiState.EmailForm -> EmailAuthForm(
-                isSignUp = state.isSignUp,
-                onSubmit = onEmailSignIn,
-                onCancel = onBack
-            )
-            else -> AuthMainActions(
-                onGoogle = onGoogleSignIn,
-                onEmail = { onEmailOptionClick(false) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun AuthMainActions(
-    onGoogle: () -> Unit,
-    onEmail: () -> Unit
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = stringResource(com.deep.lumoraai.R.string.auth_sign_in_caps),
-            style = MaterialTheme.typography.labelSmall,
-            fontSize = 9.sp,
-            color = IntroPalette.TextSubtle,
-            letterSpacing = 2.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        LumoraIntroPrimaryButton(
-            text = stringResource(com.deep.lumoraai.R.string.auth_continue_google),
-            onClick = onGoogle,
-            leadingContent = { GoogleBrandIcon(modifier = Modifier.size(20.dp)) }
-        )
-        LumoraIntroSecondaryButton(
-            text = stringResource(com.deep.lumoraai.R.string.auth_continue_email),
-            onClick = onEmail,
-            leadingIcon = Icons.Default.Email,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun EmailAuthForm(
-    isSignUp: Boolean,
-    onSubmit: (String, String, Boolean) -> Unit,
-    onCancel: () -> Unit
-) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        LumoraIntroTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = stringResource(com.deep.lumoraai.R.string.ui_email_address)
-        )
-        LumoraIntroTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = stringResource(com.deep.lumoraai.R.string.ui_password),
-            isPassword = true
-        )
-        LumoraIntroPrimaryButton(
-            text = if (isSignUp) stringResource(com.deep.lumoraai.R.string.auth_create) else stringResource(com.deep.lumoraai.R.string.auth_sign_in),
-            onClick = { onSubmit(email, password, isSignUp) }
-        )
-        Text(
-            text = stringResource(com.deep.lumoraai.R.string.auth_back_options),
-            color = IntroPalette.TextSubtle,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .clickable { onCancel() }
-                .padding(8.dp)
-        )
-    }
-}
-
-@Composable
-private fun AuthFooter(
-    uiState: AuthUiState,
-    onSignInClick: () -> Unit,
-    onSignUpClick: () -> Unit,
-    onGuestSignIn: () -> Unit,
-    allowGuestSignIn: Boolean
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        if (uiState is AuthUiState.Error) {
-            Text(
-                text = uiState.message,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
-        if (uiState !is AuthUiState.EmailForm && allowGuestSignIn) {
-            TextButton(onClick = onGuestSignIn) {
-                Text(
-                    text = stringResource(com.deep.lumoraai.R.string.auth_continue_guest),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = IntroPalette.TextMuted
-                )
-            }
-        } else if (uiState !is AuthUiState.EmailForm) {
-            Text(
-                text = stringResource(com.deep.lumoraai.R.string.auth_trial_finished),
-                color = IntroPalette.TextMuted,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
-        FooterSwitchRow(
-            uiState = uiState,
-            onSignInClick = onSignInClick,
-            onSignUpClick = onSignUpClick
-        )
-        FooterSecureRow()
-        FooterCopyrightText()
-    }
-}
-
-@Composable
-private fun FooterSwitchRow(
-    uiState: AuthUiState,
-    onSignInClick: () -> Unit,
-    onSignUpClick: () -> Unit
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        val isSignUp = uiState is AuthUiState.EmailForm && uiState.isSignUp
-        Text(
-            text = if (isSignUp) stringResource(com.deep.lumoraai.R.string.auth_have_account) else stringResource(com.deep.lumoraai.R.string.auth_no_account),
-            style = MaterialTheme.typography.bodySmall,
-            color = IntroPalette.TextSubtle
-        )
-        Text(
-            text = if (isSignUp) stringResource(com.deep.lumoraai.R.string.auth_sign_in) else stringResource(com.deep.lumoraai.R.string.auth_sign_up),
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
-            color = IntroPalette.TextPrimary,
-            modifier = Modifier.clickable {
-                if (isSignUp) onSignInClick() else onSignUpClick()
-            }
-        )
-    }
-}
-
-@Composable
-private fun FooterSecureRow() {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 4.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Lock,
-            contentDescription = null,
-            tint = IntroPalette.TextSubtle,
-            modifier = Modifier.size(14.dp)
-        )
-        Text(
-            text = stringResource(com.deep.lumoraai.R.string.auth_data_secure),
-            style = MaterialTheme.typography.labelSmall,
-            color = IntroPalette.TextSubtle
-        )
-    }
-}
-
-@Composable
-private fun FooterCopyrightText() {
-    Text(
-        text = stringResource(com.deep.lumoraai.R.string.auth_legal),
-        style = MaterialTheme.typography.labelSmall,
-        fontSize = 9.sp,
-        color = IntroPalette.TextLegal,
-        textAlign = TextAlign.Center
+        },
+        modifier = modifier.fillMaxSize()
     )
 }
 
-@Composable
-private fun AuthLoading() {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 48.dp)
-    ) {
-        CircularProgressIndicator(
-            color = IntroPalette.PrimaryButton,
-            modifier = Modifier.size(36.dp)
-        )
+private fun bindAuth(
+    binding: ScreenAuthBinding,
+    state: AuthUiState,
+    allowGuest: Boolean,
+    onGoogle: () -> Unit,
+    onEmailSubmit: (String, String, Boolean) -> Unit,
+    onGuest: () -> Unit,
+    onEmailOption: (Boolean) -> Unit,
+    onBack: () -> Unit
+) {
+    val context = binding.root.context
+    val emailState = state as? AuthUiState.EmailForm
+    val showEmail = emailState != null
+    val loading = state is AuthUiState.Loading
+
+    binding.mainActions.visibility = if (!showEmail && !loading) View.VISIBLE else View.GONE
+    binding.emailForm.visibility = if (showEmail) View.VISIBLE else View.GONE
+    binding.loading.visibility = if (loading) View.VISIBLE else View.GONE
+    binding.errorText.visibility = if (state is AuthUiState.Error) View.VISIBLE else View.GONE
+    binding.errorText.text = (state as? AuthUiState.Error)?.message.orEmpty()
+
+    if (showEmail) {
+        val signUp = emailState?.isSignUp == true
+        binding.title.setText(if (signUp) R.string.auth_create_account else R.string.auth_welcome_back)
+        binding.subtitle.setText(if (signUp) R.string.auth_signup_description else R.string.auth_signin_description)
+        binding.submitButton.setText(if (signUp) R.string.auth_create else R.string.auth_sign_in)
+        binding.accountPrompt.setText(if (signUp) R.string.auth_have_account else R.string.auth_no_account)
+        binding.accountAction.setText(if (signUp) R.string.auth_sign_in else R.string.auth_sign_up)
+        binding.submitButton.setOnClickListener {
+            onEmailSubmit(binding.emailInput.text.toString(), binding.passwordInput.text.toString(), signUp)
+        }
+        binding.accountSwitch.setOnClickListener { onEmailOption(!signUp) }
+    } else {
+        binding.title.setText(R.string.auth_unlock)
+        binding.subtitle.text = context.getString(R.string.auth_ai_creation) + "\n" + context.getString(R.string.auth_tagline)
+        binding.accountPrompt.setText(R.string.auth_no_account)
+        binding.accountAction.setText(R.string.auth_sign_up)
+        binding.accountSwitch.setOnClickListener { onEmailOption(true) }
     }
+
+    binding.googleButton.setOnClickListener { onGoogle() }
+    binding.emailOptionButton.setOnClickListener { onEmailOption(false) }
+    binding.backButton.setOnClickListener { onBack() }
+    binding.guestButton.visibility = if (!showEmail) View.VISIBLE else View.GONE
+    binding.guestButton.isEnabled = allowGuest
+    binding.guestButton.setText(if (allowGuest) R.string.auth_continue_guest else R.string.auth_trial_finished)
+    binding.guestButton.setOnClickListener { if (allowGuest) onGuest() else onEmailOption(false) }
 }

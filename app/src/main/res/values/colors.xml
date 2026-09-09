@@ -9,4 +9,14 @@
     <color name="white">#FFFFFFFF</color>
     <color name="lumora_splash_background">#FF000000</color>
     <color name="lumora_app_background">#FF081020</color>
+    <color name="lumora_surface">#FF0D1426</color>
+    <color name="lumora_surface_container">#FF23253C</color>
+    <color name="lumora_primary">#FF7C5CFF</color>
+    <color name="lumora_secondary">#FF6DE7EA</color>
+    <color name="lumora_lime">#FFD8FF2F</color>
+    <color name="lumora_pink">#FFFF4F91</color>
+    <color name="lumora_text_primary">#FFFFFFFF</color>
+    <color name="lumora_text_muted">#FFADB5C7</color>
+    <color name="lumora_text_subtle">#FF747D91</color>
+    <color name="lumora_error">#FFFF6B6B</color>
 </resources>
