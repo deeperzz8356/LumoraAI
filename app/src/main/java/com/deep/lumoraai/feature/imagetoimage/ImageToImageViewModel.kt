@@ -108,7 +108,8 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun setGenerations(value: Int) {
-        uiState = uiState.copy(generations = value.coerceIn(1, 4))
+        // Number of generations is hidden for this release; keep a single output.
+        uiState = uiState.copy(generations = 1)
     }
 
     fun setAspectRatio(value: GenerationAspectRatio) {
@@ -136,7 +137,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                val creditCost = GenerationGate.imageCreditCost(sources.size, uiState.generations)
+                val creditCost = GenerationGate.imageCreditCost(sources.size, 1)
                 // creditCost now equals the requested output count regardless of
                 // how many references were uploaded.
                 if (!GenerationGate.canGenerateImage(credits, isDev, creditCost)) {
@@ -182,14 +183,14 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
 
     private suspend fun startImageJobs(sources: List<ImageToImageSource>, developerMode: Boolean) {
         val prompt = buildPrompt(sources.size)
-        // All uploaded references are analyzed together for each output, so the
-        // run produces exactly the number of outputs the user asked for.
-        val requestedGenerations = uiState.generations.coerceIn(1, 4)
+        // All uploaded references are analyzed together for a single output.
+        // Restore uiState.generations.coerceIn(1, 4) when count selection returns.
+        val requestedGenerations = 1
         val references = sources.map { it.base64 }
         uiState = uiState.copy(
             isGenerating = true,
             generationProgress = 0f,
-            generationStatusText = "Output 1 of $requestedGenerations generating",
+            generationStatusText = "Output generating",
             error = null,
             generatedPath = null,
             generatedPaths = emptyList()
@@ -199,7 +200,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
         repeat(requestedGenerations) { outputIndex ->
             uiState = uiState.copy(
                 generationProgress = 0f,
-                generationStatusText = "Output ${outputIndex + 1} of $requestedGenerations generating"
+                generationStatusText = "Output generating"
             )
             val jobTitle = "Image 2 Image ${shortTimestamp()} output ${outputIndex + 1}"
             val taskId = UUID.randomUUID().toString()
@@ -211,7 +212,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             GenerationRepository.addJob(
                 ActiveJobInfo(
                     title = jobTitle,
-                    subtitle = "Using ${sources.size} reference image${if (sources.size > 1) "s" else ""}, output ${outputIndex + 1} of $requestedGenerations...",
+                    subtitle = "Using ${sources.size} reference image${if (sources.size > 1) "s" else ""}...",
                     badgeText = "Image 2 Image",
                     statusText = "Queued",
                     progressPercent = 0.0f,
@@ -275,7 +276,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             delay(1800)
             uiState = uiState.copy(
                 generationProgress = step.first,
-                generationStatusText = "Output $outputIndex of $outputTotal generating"
+                generationStatusText = "Output generating"
             )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")

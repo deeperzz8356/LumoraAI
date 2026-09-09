@@ -53,7 +53,7 @@ fun TextToImageRoute(
         onImprovePrompt = { viewModel.improvePrompt(mode) },
         onStyleSelected = viewModel::selectStyle,
         onCreativityChanged = viewModel::setCreativity,
-        onGenerationsChanged = viewModel::setGenerations,
+        onGenerationsChanged = { /* Number of generations hidden for this release. */ },
         onGenerate = { viewModel.generate(mode) },
         // Editing must keep the generated media visible in-place. The preview is
         // cleared naturally when the user changes the prompt, so tapping Edit

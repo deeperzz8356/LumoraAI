@@ -40,7 +40,7 @@ fun ImageToImageRoute(
         onImprovePrompt = viewModel::improvePrompt,
         onStyleSelected = viewModel::selectStyle,
         onSimilarityChanged = viewModel::setSimilarity,
-        onGenerationsChanged = viewModel::setGenerations,
+        onGenerationsChanged = { /* Number of generations hidden for this release. */ },
         onGenerate = viewModel::generate,
         // Keep the generated media visible in-place while editing.
         onEditResult = {},

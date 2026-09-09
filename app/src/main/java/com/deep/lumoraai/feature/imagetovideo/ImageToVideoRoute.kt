@@ -40,7 +40,7 @@ fun ImageToVideoRoute(
         onStyleSelected = viewModel::selectStyle,
         onSimilarityChanged = viewModel::setSimilarity,
         onDurationChanged = viewModel::setDuration,
-        onGenerationsChanged = viewModel::setGenerations,
+        onGenerationsChanged = { /* Number of generations hidden for this release. */ },
         onGenerate = viewModel::generate,
         // Keep the generated media visible in-place while editing.
         onEditResult = {},

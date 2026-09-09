@@ -912,56 +912,55 @@ private fun SliderBlock(label: String, valueText: String, value: Float, onValueC
     }
 }
 
-@Composable
-fun GenerationCountSection(
-    generations: Int,
-    onGenerationsChanged: (Int) -> Unit,
-    maxCount: Int = 4,
-) {
-    // "Number of Generations" as a row of selectable pills (1..maxCount), the
-    // selected one highlighted with a lime border — matches the app's ratio/
-    // resolution selectors.
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = stringResource(com.deep.lumoraai.R.string.ui_no_of_generations),
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            (1..maxCount).forEach { count ->
-                val selected = count == generations
-                Box(
-                    modifier = Modifier
-                        .height(52.dp)
-                        .widthIn(min = 88.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (selected) GenerationLime.copy(alpha = 0.14f) else Color(0xFF182137))
-                        .border(
-                            1.dp,
-                            if (selected) GenerationLime else Color.White.copy(alpha = 0.08f),
-                            RoundedCornerShape(12.dp),
-                        )
-                        .clickable { onGenerationsChanged(count) }
-                        .padding(horizontal = 22.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "$count",
-                        color = if (selected) GenerationLime else Color.White.copy(alpha = 0.82f),
-                        fontSize = 16.sp,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    )
-                }
-            }
-        }
-    }
-}
+// Number of generations is hidden for this release. Keep this old selector
+// parked here so it can be restored quickly when batching returns.
+// @Composable
+// fun GenerationCountSection(
+//     generations: Int,
+//     onGenerationsChanged: (Int) -> Unit,
+//     maxCount: Int = 4,
+// ) {
+//     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+//         Text(
+//             text = stringResource(com.deep.lumoraai.R.string.ui_no_of_generations),
+//             color = Color.White,
+//             fontSize = 16.sp,
+//             fontWeight = FontWeight.Bold,
+//         )
+//         Row(
+//             modifier = Modifier
+//                 .fillMaxWidth()
+//                 .horizontalScroll(rememberScrollState()),
+//             horizontalArrangement = Arrangement.spacedBy(10.dp),
+//         ) {
+//             (1..maxCount).forEach { count ->
+//                 val selected = count == generations
+//                 Box(
+//                     modifier = Modifier
+//                         .height(52.dp)
+//                         .widthIn(min = 88.dp)
+//                         .clip(RoundedCornerShape(12.dp))
+//                         .background(if (selected) GenerationLime.copy(alpha = 0.14f) else Color(0xFF182137))
+//                         .border(
+//                             1.dp,
+//                             if (selected) GenerationLime else Color.White.copy(alpha = 0.08f),
+//                             RoundedCornerShape(12.dp),
+//                         )
+//                         .clickable { onGenerationsChanged(count) }
+//                         .padding(horizontal = 22.dp),
+//                     contentAlignment = Alignment.Center,
+//                 ) {
+//                     Text(
+//                         text = "$count",
+//                         color = if (selected) GenerationLime else Color.White.copy(alpha = 0.82f),
+//                         fontSize = 16.sp,
+//                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+//                     )
+//                 }
+//             }
+//         }
+//     }
+// }
 
 @Composable
 private fun GenerationDivider() {
@@ -1678,7 +1677,7 @@ fun GenerationBottomBar(
     modifier: Modifier = Modifier,
     styleItems: List<StyleItem> = emptyList(),
     maxGenerations: Int = 4,
-    showCount: Boolean = true,
+    showCount: Boolean = false,
     showRatio: Boolean = true,
     generateLabel: String? = null,
     creditNote: String? = null,
@@ -1690,7 +1689,8 @@ fun GenerationBottomBar(
     )
     val hasStyles = styleItems.isNotEmpty()
     // Whether there's anything to reveal in the expandable panel.
-    val hasExpandablePanel = hasStyles || showRatio || showCount
+    // Count controls are disabled even if a caller opts in during this release.
+    val hasExpandablePanel = hasStyles || showRatio // || showCount
     // Label of the currently-selected style (defaults to the first item, which
     // is "No Style"). Shown in the collapsed summary instead of a quality chip.
     val selectedStyleLabelRes = remember(styleItems) {
@@ -1735,13 +1735,14 @@ fun GenerationBottomBar(
                         if (hasStyles) SummaryDivider()
                         SummaryChip(icon = Icons.Default.AspectRatio, text = selectedAspectRatio.label)
                     }
-                    if (showCount) {
-                        SummaryDivider()
-                        SummaryChip(
-                            icon = Icons.Default.Layers,
-                            text = stringResource(com.deep.lumoraai.R.string.ui_creations_count, generations),
-                        )
-                    }
+                    // Number of generations is hidden for this release.
+                    // if (showCount) {
+                    //     SummaryDivider()
+                    //     SummaryChip(
+                    //         icon = Icons.Default.Layers,
+                    //         text = stringResource(com.deep.lumoraai.R.string.ui_creations_count, generations),
+                    //     )
+                    // }
                     Spacer(modifier = Modifier.weight(1f))
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowUp,
@@ -1796,13 +1797,14 @@ fun GenerationBottomBar(
                                         options = aspectRatioOptions,
                                     )
                                 }
-                                if (showCount) {
-                                    BottomBarCountRow(
-                                        generations = generations,
-                                        onGenerationsChanged = onGenerationsChanged,
-                                        maxCount = maxGenerations,
-                                    )
-                                }
+                                // Number of generations is hidden for this release.
+                                // if (showCount) {
+                                //     BottomBarCountRow(
+                                //         generations = generations,
+                                //         onGenerationsChanged = onGenerationsChanged,
+                                //         maxCount = maxGenerations,
+                                //     )
+                                // }
                             }
                         }
                     }
@@ -2016,42 +2018,44 @@ private fun BottomBarRatioRow(
     }
 }
 
-@Composable
-private fun BottomBarCountRow(
-    generations: Int,
-    onGenerationsChanged: (Int) -> Unit,
-    maxCount: Int,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        BottomBarSectionTitle(stringResource(com.deep.lumoraai.R.string.ui_no_of_generations))
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            (1..maxCount).forEach { count ->
-                val isSelected = count == generations
-                Box(
-                    modifier = Modifier
-                        .height(42.dp)
-                        .widthIn(min = 62.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isSelected) GenerationLime.copy(alpha = 0.14f) else Color(0xFF182137))
-                        .border(
-                            1.dp,
-                            if (isSelected) GenerationLime else Color.White.copy(alpha = 0.08f),
-                            RoundedCornerShape(10.dp),
-                        )
-                        .clickable { onGenerationsChanged(count) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "$count",
-                        color = if (isSelected) GenerationLime else Color.White.copy(alpha = 0.82f),
-                        fontSize = 14.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    )
-                }
-            }
-        }
-    }
-}
+// Number of generations is hidden for this release. Keep this old selector
+// parked here so it can be restored quickly when batching returns.
+// @Composable
+// private fun BottomBarCountRow(
+//     generations: Int,
+//     onGenerationsChanged: (Int) -> Unit,
+//     maxCount: Int,
+// ) {
+//     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+//         BottomBarSectionTitle(stringResource(com.deep.lumoraai.R.string.ui_no_of_generations))
+//         Row(
+//             modifier = Modifier.horizontalScroll(rememberScrollState()),
+//             horizontalArrangement = Arrangement.spacedBy(8.dp),
+//         ) {
+//             (1..maxCount).forEach { count ->
+//                 val isSelected = count == generations
+//                 Box(
+//                     modifier = Modifier
+//                         .height(42.dp)
+//                         .widthIn(min = 62.dp)
+//                         .clip(RoundedCornerShape(10.dp))
+//                         .background(if (isSelected) GenerationLime.copy(alpha = 0.14f) else Color(0xFF182137))
+//                         .border(
+//                             1.dp,
+//                             if (isSelected) GenerationLime else Color.White.copy(alpha = 0.08f),
+//                             RoundedCornerShape(10.dp),
+//                         )
+//                         .clickable { onGenerationsChanged(count) },
+//                     contentAlignment = Alignment.Center,
+//                 ) {
+//                     Text(
+//                         text = "$count",
+//                         color = if (isSelected) GenerationLime else Color.White.copy(alpha = 0.82f),
+//                         fontSize = 14.sp,
+//                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+//                     )
+//                 }
+//             }
+//         }
+//     }
+// }

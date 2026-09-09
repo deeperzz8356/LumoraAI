@@ -71,7 +71,8 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun setGenerations(value: Int) {
-        uiState = uiState.copy(generations = value.coerceIn(1, 4))
+        // Number of generations is hidden for this release; keep a single output.
+        uiState = uiState.copy(generations = 1)
     }
 
     fun setAspectRatio(value: GenerationAspectRatio) {
@@ -97,7 +98,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                if (!GenerationGate.canGenerateImage(credits, isDev, uiState.generations)) {
+                if (!GenerationGate.canGenerateImage(credits, isDev, 1)) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
@@ -114,7 +115,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    private fun requestedGenerationsFor(): Int = uiState.generations.coerceIn(1, 4)
+    private fun requestedGenerationsFor(): Int = 1
 
     fun improvePrompt(mode: TextToImageMode = TextToImageMode.TextToImage) {
         if (uiState.isImprovingPrompt || uiState.prompt.isBlank()) return
@@ -148,11 +149,11 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
 
     private fun startImageJobs(mode: TextToImageMode, developerMode: Boolean) {
         val prompt = buildPrompt(mode)
-        val requestedGenerations = uiState.generations.coerceIn(1, 4)
+        val requestedGenerations = 1
             uiState = uiState.copy(
                 isGenerating = true,
                 generationProgress = 0f,
-                generationStatusText = "${mode.displayName} 1 of $requestedGenerations generating",
+                generationStatusText = "${mode.displayName} generating",
                 error = null,
                 generatedPath = null,
                 generatedPaths = emptyList()
@@ -163,7 +164,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             repeat(requestedGenerations) { index ->
                 uiState = uiState.copy(
                     generationProgress = 0f,
-                    generationStatusText = "${mode.displayName} ${index + 1} of $requestedGenerations generating"
+                    generationStatusText = "${mode.displayName} generating"
                 )
                 val jobTitle = "${mode.displayName} ${shortTimestamp()} #${index + 1}"
                 val taskId = UUID.randomUUID().toString()
@@ -175,7 +176,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                 GenerationRepository.addJob(
                     ActiveJobInfo(
                         title = jobTitle,
-                        subtitle = "Generating ${mode.displayName.lowercase()} ${index + 1} of $requestedGenerations...",
+                        subtitle = "Generating ${mode.displayName.lowercase()}...",
                         badgeText = mode.displayName,
                         statusText = "Queued",
                         progressPercent = 0.0f,
@@ -240,7 +241,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             delay(1800)
             uiState = uiState.copy(
                 generationProgress = step.first,
-                generationStatusText = "Image $current of $total generating"
+                generationStatusText = "Image generating"
             )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")

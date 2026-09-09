@@ -97,7 +97,8 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun setGenerations(value: Int) {
-        uiState = uiState.copy(generations = value.coerceIn(1, 4))
+        // Number of generations is hidden for this release; keep a single output.
+        uiState = uiState.copy(generations = 1)
     }
 
     fun setAspectRatio(value: GenerationAspectRatio) {
@@ -125,17 +126,17 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                if (!GenerationGate.canGenerateVideo(credits, isDev, uiState.generations)) {
+                if (!GenerationGate.canGenerateVideo(credits, isDev, 1)) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
             }
 
-            val requestedGenerations = uiState.generations.coerceIn(1, 4)
+            val requestedGenerations = 1
             uiState = uiState.copy(
                 isGenerating = true,
                 generationProgress = 0.1f,
-                generationStatusText = "Video 1 of $requestedGenerations generating",
+                generationStatusText = "Video generating",
                 error = null,
                 generatedPath = null,
                 generatedPaths = emptyList()
@@ -145,7 +146,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             repeat(requestedGenerations) { index ->
                 uiState = uiState.copy(
                     generationProgress = 0.1f,
-                    generationStatusText = "Video ${index + 1} of $requestedGenerations generating"
+                    generationStatusText = "Video generating"
                 )
                 val taskId = UUID.randomUUID().toString()
                 val jobTitle = "Image 2 Video ${shortTimestamp()} #${index + 1}"
@@ -157,7 +158,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                 GenerationRepository.addJob(
                     ActiveJobInfo(
                         title = jobTitle,
-                        subtitle = "Animating clip ${index + 1} of $requestedGenerations...",
+                        subtitle = "Animating clip...",
                         badgeText = "Image 2 Video",
                         statusText = "Queued",
                         progressPercent = 0.1f,
@@ -242,7 +243,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
             delay(2400)
             uiState = uiState.copy(
                 generationProgress = step.first,
-                generationStatusText = "Video $current of $total generating"
+                generationStatusText = "Video generating"
             )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")

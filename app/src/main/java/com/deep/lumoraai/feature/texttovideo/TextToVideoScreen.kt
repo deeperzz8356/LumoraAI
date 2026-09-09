@@ -129,7 +129,7 @@ fun TextToVideoScreen(
                         onMotionChanged = onMotionChanged,
                         duration = uiState.duration,
                         onDurationChanged = onDurationChanged,
-                        generations = uiState.generations,
+                        generations = 1,
                         onGenerationsChanged = onGenerationsChanged
                     )
                 }
@@ -160,11 +160,11 @@ fun TextToVideoScreen(
                 selectedAspectRatio = uiState.aspectRatio,
                 onAspectRatioSelected = onAspectRatioChanged,
                 aspectRatioOptions = GenerationAspectRatio.videoRatios,
-                generations = uiState.generations,
+                generations = 1,
                 onGenerationsChanged = onGenerationsChanged,
                 isGenerating = uiState.isGenerating,
                 generateEnabled = uiState.prompt.isNotBlank(),
-                creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
+                creditCost = GenerationGate.CREDITS_PER_VIDEO,
                 onGenerate = onGenerate,
             )
 

@@ -140,7 +140,8 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun setGenerations(value: Int) {
-        uiState = uiState.copy(generations = value.coerceIn(1, 4))
+        // Number of generations is hidden for this release; keep a single output.
+        uiState = uiState.copy(generations = 1)
     }
 
     fun generate() {
@@ -162,7 +163,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                     uiState = uiState.copy(error = s(R.string.credits_verification_failed))
                     return@launch
                 }
-                if (!GenerationGate.canGenerateVideo(credits, isDev, uiState.generations)) {
+                if (!GenerationGate.canGenerateVideo(credits, isDev, 1)) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
@@ -170,7 +171,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
 
             val taskType = if (isPromoMode) TaskNotificationHelper.PROMO_VIDEO else TaskNotificationHelper.TEXT_TO_VIDEO
             val displayName = if (isPromoMode) s(R.string.ui_promo_videos) else s(R.string.ui_text_to_video)
-            val requestedGenerations = uiState.generations.coerceIn(1, 4)
+            val requestedGenerations = 1
             // Optimistic: drop the header instantly by the expected cost
             // (5 credits per video). Reconciled by the post-completion refresh.
             if (!isDev) {
@@ -179,7 +180,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             uiState = uiState.copy(
                 isGenerating = true,
                 generationProgress = 0.1f,
-                generationStatusText = s(R.string.video_generation_progress, 1, requestedGenerations),
+                generationStatusText = "Video generating",
                 error = null,
                 generatedPath = null,
                 generatedPaths = emptyList()
@@ -190,7 +191,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             repeat(requestedGenerations) { index ->
                 uiState = uiState.copy(
                     generationProgress = 0.1f,
-                    generationStatusText = s(R.string.video_generation_progress, index + 1, requestedGenerations)
+                    generationStatusText = "Video generating"
                 )
                 val taskId = UUID.randomUUID().toString()
                 val jobTitle = "${uiState.jobBadge} ${shortTimestamp()} #${index + 1}"
@@ -202,7 +203,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                 GenerationRepository.addJob(
                     ActiveJobInfo(
                         title = jobTitle,
-                        subtitle = "Generating video ${index + 1} of $requestedGenerations...",
+                        subtitle = "Generating video...",
                         badgeText = uiState.jobBadge,
                         statusText = "Queued",
                         progressPercent = 0.1f,
@@ -291,7 +292,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             delay(2400)
             uiState = uiState.copy(
                 generationProgress = step.first,
-                generationStatusText = s(R.string.video_generation_progress, current, total)
+                generationStatusText = "Video generating"
             )
             GenerationRepository.updateJob(jobTitle) { job ->
                 job.copy(progressPercent = step.first, statusText = step.second, subtitle = "${(step.first * 100).toInt()}% completed")

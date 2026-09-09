@@ -126,7 +126,7 @@ fun ImageToVideoScreen(
                         onSimilarityChanged = onSimilarityChanged,
                         duration = uiState.duration,
                         onDurationChanged = onDurationChanged,
-                        generations = uiState.generations,
+                        generations = 1,
                         onGenerationsChanged = onGenerationsChanged
                     )
                 }
@@ -153,12 +153,12 @@ fun ImageToVideoScreen(
                 selectedAspectRatio = uiState.aspectRatio,
                 onAspectRatioSelected = onAspectRatioChanged,
                 aspectRatioOptions = GenerationAspectRatio.videoRatios,
-                generations = uiState.generations,
+                generations = 1,
                 onGenerationsChanged = onGenerationsChanged,
                 isGenerating = uiState.isGenerating,
                 // Prompt is optional: only require an uploaded image.
                 generateEnabled = uiState.sourceBitmap != null,
-                creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
+                creditCost = GenerationGate.CREDITS_PER_VIDEO,
                 onGenerate = onGenerate,
             )
 

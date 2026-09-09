@@ -151,7 +151,7 @@ fun ImageToImageScreen(
                         onNegativePromptChanged = onNegativePromptChanged,
                         similarity = uiState.similarity,
                         onSimilarityChanged = onSimilarityChanged,
-                        generations = uiState.generations,
+                        generations = 1,
                         onGenerationsChanged = onGenerationsChanged
                     )
                 }
@@ -178,12 +178,12 @@ fun ImageToImageScreen(
                 selectedAspectRatio = uiState.aspectRatio,
                 onAspectRatioSelected = onAspectRatioChanged,
                 aspectRatioOptions = GenerationAspectRatio.entries,
-                generations = uiState.generations,
+                generations = 1,
                 onGenerationsChanged = onGenerationsChanged,
                 isGenerating = uiState.isGenerating,
                 // Prompt is optional: only require at least one source image.
                 generateEnabled = uiState.sourceImages.isNotEmpty() && !uiState.isLoadingSources,
-                creditCost = GenerationGate.imageCreditCost(uiState.sourceImages.size, uiState.generations),
+                creditCost = GenerationGate.CREDITS_PER_IMAGE,
                 onGenerate = onGenerate,
             )
 

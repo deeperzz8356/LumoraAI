@@ -122,7 +122,7 @@ fun TextToImageScreen(
                             onNegativePromptChanged = onNegativePromptChanged,
                             creativity = uiState.creativity,
                             onCreativityChanged = onCreativityChanged,
-                            generations = uiState.generations,
+                            generations = 1,
                             onGenerationsChanged = onGenerationsChanged
                         )
                     }
@@ -157,11 +157,11 @@ fun TextToImageScreen(
                 } else {
                     GenerationAspectRatio.entries
                 },
-                generations = uiState.generations,
+                generations = 1,
                 onGenerationsChanged = onGenerationsChanged,
                 isGenerating = uiState.isGenerating,
                 generateEnabled = uiState.prompt.isNotBlank(),
-                creditCost = GenerationGate.CREDITS_PER_IMAGE * uiState.generations,
+                creditCost = GenerationGate.CREDITS_PER_IMAGE,
                 onGenerate = onGenerate,
                 showRatio = mode != TextToImageMode.Logo,
             )

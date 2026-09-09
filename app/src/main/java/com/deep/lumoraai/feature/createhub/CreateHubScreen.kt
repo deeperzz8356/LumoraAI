@@ -83,7 +83,8 @@ fun CreateHubScreen(
     var creativity by remember { mutableStateOf(0.5f) }
     var motion by remember { mutableStateOf(0.5f) }
     var duration by remember { mutableStateOf(5) }
-    var generations by remember { mutableStateOf(1) }
+    // Count selection is hidden for this release; callers below use one output.
+    // var generations by remember { mutableStateOf(1) }
     var showAdvancedSettings by remember { mutableStateOf(false) }
 
     val isGenerating = uiState is CreateHubUiState.Generating
@@ -194,8 +195,8 @@ fun CreateHubScreen(
                         } else {
                             null
                         },
-                        generations = generations,
-                        onGenerationsChanged = { generations = it.coerceIn(1, 4) }
+                        generations = 1,
+                        onGenerationsChanged = { /* Number of generations hidden for this release. */ }
                     )
                 }
                 GeneratedMediaLoading(
@@ -223,14 +224,14 @@ fun CreateHubScreen(
                 selectedAspectRatio = aspectRatio,
                 onAspectRatioSelected = { aspectRatio = it },
                 aspectRatioOptions = if (isVideo) GenerationAspectRatio.videoRatios else GenerationAspectRatio.entries,
-                generations = generations,
-                onGenerationsChanged = { generations = it.coerceIn(1, 4) },
+                generations = 1,
+                onGenerationsChanged = { /* Number of generations hidden for this release. */ },
                 isGenerating = isGenerating,
                 generateEnabled = generatedPath == null,
                 creditCost = if (isVideo) {
-                    GenerationGate.CREDITS_PER_VIDEO * generations
+                    GenerationGate.CREDITS_PER_VIDEO
                 } else {
-                    GenerationGate.CREDITS_PER_IMAGE * generations
+                    GenerationGate.CREDITS_PER_IMAGE
                 },
                 onGenerate = {
                     if (isVideo) {
