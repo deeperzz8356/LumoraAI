@@ -14,11 +14,20 @@ fun TextToImageRoute(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     initialPrompt: String? = null,
+    mode: TextToImageMode = TextToImageMode.TextToImage,
     viewModel: TextToImageViewModel = viewModel()
 ) {
     val context = LocalContext.current
     LaunchedEffect(initialPrompt) {
         viewModel.applyTemplatePrompt(initialPrompt)
+    }
+    LaunchedEffect(mode) {
+        if (mode == TextToImageMode.Logo) {
+            viewModel.setAspectRatio(com.deep.lumoraai.feature.generation.GenerationAspectRatio.Square)
+        }
+        if (mode != TextToImageMode.TextToImage) {
+            viewModel.selectStyle(com.deep.lumoraai.feature.imagetoimage.ImageStyle.NoStyle)
+        }
     }
 
     val uiState = viewModel.uiState
@@ -35,6 +44,7 @@ fun TextToImageRoute(
 
     TextToImageScreen(
         uiState = uiState,
+        mode = mode,
         onBack = onBack,
         onNavigate = onNavigate,
         onPromptChanged = viewModel::updatePrompt,

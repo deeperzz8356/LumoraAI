@@ -22,17 +22,15 @@ import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
-import com.deep.lumoraai.feature.generation.GenerateNowButton
-import com.deep.lumoraai.feature.generation.GenerationAspectRatioSection
+import com.deep.lumoraai.feature.generation.GenerationBottomBar
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
-import com.deep.lumoraai.feature.generation.GenerationCountSection
+import com.deep.lumoraai.feature.generation.imageStyleItems
 import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
 import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
 import com.deep.lumoraai.feature.generation.GenerationErrorText
 import com.deep.lumoraai.feature.generation.GenerationScreenBg
 import com.deep.lumoraai.feature.generation.GenerationTopBar
-import com.deep.lumoraai.feature.generation.ImageStyleSection
 import com.deep.lumoraai.feature.generation.PromptComposerCard
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 import kotlinx.coroutines.delay
@@ -41,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun TextToImageScreen(
     uiState: TextToImageUiState,
+    mode: TextToImageMode = TextToImageMode.TextToImage,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
     onPromptChanged: (String) -> Unit,
@@ -57,6 +56,16 @@ fun TextToImageScreen(
 ) {
     val scrollState = rememberScrollState()
     val showAdvancedSettings = remember { mutableStateOf(false) }
+    val titleRes = when (mode) {
+        TextToImageMode.TextToImage -> com.deep.lumoraai.R.string.ui_text_2_image
+        TextToImageMode.Logo -> com.deep.lumoraai.R.string.ui_logo
+        TextToImageMode.Avatar -> com.deep.lumoraai.R.string.ui_ai_avatar
+    }
+    val promptHint = when (mode) {
+        TextToImageMode.TextToImage -> "Describe the image you want to generate..."
+        TextToImageMode.Logo -> "Describe the logo you want to generate..."
+        TextToImageMode.Avatar -> "Describe the avatar you want to generate..."
+    }
 
     LaunchedEffect(uiState.isGenerating, uiState.generatedPaths) {
         if (uiState.isGenerating || uiState.generatedPaths.isNotEmpty()) {
@@ -73,7 +82,7 @@ fun TextToImageScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             GenerationTopBar(
-                title = stringResource(com.deep.lumoraai.R.string.ui_text_2_image),
+                title = stringResource(titleRes),
                 onBack = onBack,
                 onNotifications = { onNavigate(Screen.Notifications.route) }
             )
@@ -88,27 +97,20 @@ fun TextToImageScreen(
                         .verticalScroll(scrollState)
                         .imePadding()
                         .padding(horizontal = 20.dp)
-                        .padding(top = 18.dp, bottom = 96.dp),
+                        .padding(top = 18.dp, bottom = 18.dp),
                     verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
                     PromptComposerCard(
                         prompt = uiState.prompt,
-                        promptHint = "Describe the image you want to generate...",
+                        promptHint = promptHint,
                         negativePrompt = uiState.negativePrompt,
                         isImproving = uiState.isImprovingPrompt,
                         onPromptChanged = onPromptChanged,
                         onImprovePrompt = onImprovePrompt,
                         onNegativePromptChanged = onNegativePromptChanged,
                         isSettingsOpen = showAdvancedSettings.value,
-                        onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
-                    )
-                    GenerationAspectRatioSection(
-                        selected = uiState.aspectRatio,
-                        onSelected = onAspectRatioChanged
-                    )
-                    GenerationCountSection(
-                        generations = uiState.generations,
-                        onGenerationsChanged = onGenerationsChanged
+                        onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value },
+                        showSettingsAction = false
                     )
                     if (showAdvancedSettings.value) {
                         GenerationControlsPanel(
@@ -123,7 +125,6 @@ fun TextToImageScreen(
                             onGenerationsChanged = onGenerationsChanged
                         )
                     }
-                    ImageStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
                     GeneratedMediaLoading(
                         isVisible = uiState.isGenerating,
                         mediaType = "IMAGE",
@@ -139,20 +140,38 @@ fun TextToImageScreen(
                     )
                     GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
                 }
-
-                // Pinned Generate button at the bottom of the content area.
-                GenerateNowButton(
-                    isGenerating = uiState.isGenerating,
-                    enabled = uiState.prompt.isNotBlank(),
-                    creditCost = GenerationGate.CREDITS_PER_IMAGE * uiState.generations,
-                    onClick = onGenerate,
-                    modifier = Modifier
-                        .align(androidx.compose.ui.Alignment.BottomCenter)
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                )
             }
+
+            // Fixed bottom generate bar with collapsible Style / Ratio / Count.
+            GenerationBottomBar(
+                styleItems = if (mode == TextToImageMode.TextToImage) {
+                    imageStyleItems(uiState.selectedStyle, onStyleSelected)
+                } else {
+                    emptyList()
+                },
+                selectedAspectRatio = uiState.aspectRatio,
+                onAspectRatioSelected = onAspectRatioChanged,
+                aspectRatioOptions = if (mode == TextToImageMode.Logo) {
+                    listOf(GenerationAspectRatio.Square)
+                } else {
+                    GenerationAspectRatio.entries
+                },
+                generations = uiState.generations,
+                onGenerationsChanged = onGenerationsChanged,
+                isGenerating = uiState.isGenerating,
+                generateEnabled = uiState.prompt.isNotBlank(),
+                creditCost = GenerationGate.CREDITS_PER_IMAGE * uiState.generations,
+                onGenerate = onGenerate,
+                showRatio = mode != TextToImageMode.Logo,
+            )
 
             PlacementBanner(placement = AdPlacement.BANNER_TEXT2IMG, applyNavBarPadding = false)
         }
     }
+}
+
+enum class TextToImageMode {
+    TextToImage,
+    Logo,
+    Avatar
 }

@@ -20,7 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Compress
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PhotoCamera
@@ -48,7 +50,9 @@ import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.navigation.avatarRoute
 import com.deep.lumoraai.core.navigation.bgStudioRoute
+import com.deep.lumoraai.core.navigation.logoRoute
 import androidx.compose.ui.res.stringResource
 
 private val AIToolsBackground = Color(0xFF081020)
@@ -120,23 +124,63 @@ private fun AIToolsContent(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
+            // AI Background Replace card hidden per UI change request — replaced
+            // by the Logo card below. Kept commented out (not removed).
+            // ToolBentoCard(
+            //     title = stringResource(com.deep.lumoraai.R.string.ui_ai_background_replace),
+            //     subtitle = stringResource(com.deep.lumoraai.R.string.ui_generate_a_new_scene),
+            //     icon = Icons.Default.AutoAwesome,
+            //     accent = Cyan,
+            //     onClick = { onNavigate(bgStudioRoute("replace")) },
+            //     modifier = Modifier
+            //         .weight(1f)
+            //         .defaultMinSize(minHeight = 116.dp),
+            //     prominent = true
+            // )
             ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_ai_background_replace),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_generate_a_new_scene),
-                icon = Icons.Default.AutoAwesome,
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_logo),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_generate_a_logo),
+                icon = Icons.Default.Brush,
                 accent = Cyan,
-                onClick = { onNavigate(bgStudioRoute("replace")) },
+                onClick = { onNavigate(logoRoute()) },
                 modifier = Modifier
                     .weight(1f)
                     .defaultMinSize(minHeight = 116.dp),
                 prominent = true
             )
             ToolBentoCard(
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_ai_avatar),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_create_your_avatar),
+                icon = Icons.Default.Face,
+                accent = Purple,
+                onClick = { onNavigate(avatarRoute()) },
+                modifier = Modifier
+                    .weight(1f)
+                    .defaultMinSize(minHeight = 116.dp),
+                prominent = true
+            )
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            ToolBentoCard(
                 title = stringResource(com.deep.lumoraai.R.string.ui_photo_enhancer),
                 subtitle = stringResource(com.deep.lumoraai.R.string.ui_improve_quality),
                 icon = Icons.Default.Tune,
                 accent = Purple,
                 onClick = { onNavigate(Screen.PhotoEnhance.route) },
+                modifier = Modifier
+                    .weight(1f)
+                    .defaultMinSize(minHeight = 116.dp),
+                prominent = true
+            )
+            ToolBentoCard(
+                title = stringResource(com.deep.lumoraai.R.string.ui_remove_background),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_cut_subject),
+                icon = Icons.Default.PhotoCamera,
+                accent = BlueAccent,
+                onClick = { onNavigate(bgStudioRoute("remove")) },
                 modifier = Modifier
                     .weight(1f)
                     .defaultMinSize(minHeight = 116.dp),
@@ -159,28 +203,17 @@ private fun AIToolsContent(
                 prominent = true
             )
             ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_remove_background),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_cut_subject),
-                icon = Icons.Default.PhotoCamera,
-                accent = BlueAccent,
-                onClick = { onNavigate(bgStudioRoute("remove")) },
+                title = stringResource(com.deep.lumoraai.R.string.ui_compress),
+                subtitle = stringResource(com.deep.lumoraai.R.string.ui_smaller_files_without_the_mess),
+                icon = Icons.Default.Compress,
+                accent = Lime,
+                onClick = { onNavigate(Screen.Compress.route) },
                 modifier = Modifier
                     .weight(1f)
                     .defaultMinSize(minHeight = 116.dp),
                 prominent = true
             )
         }
-        ToolBentoCard(
-            title = stringResource(com.deep.lumoraai.R.string.ui_compress),
-            subtitle = stringResource(com.deep.lumoraai.R.string.ui_smaller_files_without_the_mess),
-            icon = Icons.Default.Compress,
-            accent = Lime,
-            onClick = { onNavigate(Screen.Compress.route) },
-            modifier = Modifier
-                .fillMaxWidth()
-                    .defaultMinSize(minHeight = 116.dp),
-            prominent = true
-        )
 
         PlacementNativeAd(placement = AdPlacement.NATIVE_TOOLS)
 

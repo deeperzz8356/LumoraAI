@@ -7,6 +7,12 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,6 +51,9 @@ import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
@@ -74,11 +83,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -87,6 +100,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import coil.compose.AsyncImage
 import com.deep.lumoraai.core.components.LocalVideoPlayer
 import com.deep.lumoraai.core.components.LumoraNotificationBell
@@ -234,83 +254,163 @@ fun PromptComposerCard(
     onUpload: (() -> Unit)? = null,
     isSettingsOpen: Boolean = false,
     onSettingsClick: () -> Unit = {},
+    showSettingsAction: Boolean = true,
 ) {
     // Auto-expanding prompt card: grows with the text (up to the scroll area)
     // so a long/pasted prompt is fully visible. Smaller default text size that
     // stays readable.
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(GenerationPanel)
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        OutlinedTextField(
-            value = prompt,
-            onValueChange = onPromptChanged,
-            placeholder = {
-                Text(
-                    text = promptHint,
-                    color = GenerationMuted.copy(alpha = 0.68f),
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp
-                )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 96.dp),
-            // Grows with content instead of scrolling inside a fixed box.
-            maxLines = Int.MAX_VALUE,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedBorderColor = Color.Transparent,
-                unfocusedBorderColor = Color.Transparent,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                cursorColor = GenerationLime
-            ),
-            textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
-                color = Color.White,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                textAlign = TextAlign.Start
-            )
+        // Header: "Prompt" title + "AI prompt enhancer" action.
+        PromptCardHeader(
+            enhanceEnabled = prompt.isNotBlank() && !isImproving,
+            isImproving = isImproving,
+            onEnhance = onImprovePrompt,
         )
-        Row(
+
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 6.dp, end = 8.dp, top = 4.dp, bottom = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .clip(RoundedCornerShape(16.dp))
+                .background(GenerationPanel)
+                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
-            if (onUpload != null) {
-                SquareActionButton(icon = Icons.Default.Upload, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_upload_image_2), onClick = onUpload)
+            OutlinedTextField(
+                value = prompt,
+                onValueChange = onPromptChanged,
+                placeholder = {
+                    Text(
+                        text = promptHint,
+                        color = GenerationMuted.copy(alpha = 0.68f),
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 96.dp),
+                // Grows with content instead of scrolling inside a fixed box.
+                maxLines = Int.MAX_VALUE,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = GenerationLime
+                ),
+                textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    textAlign = TextAlign.Start
+                )
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 6.dp, end = 8.dp, top = 4.dp, bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (onUpload != null) {
+                    SquareActionButton(icon = Icons.Default.Upload, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_upload_image_2), onClick = onUpload)
+                }
+                if (showSettingsAction) {
+                    SquareActionButton(
+                        icon = Icons.Default.Tune,
+                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_advanced_settings_2),
+                        onClick = onSettingsClick,
+                        highlighted = isSettingsOpen || negativePrompt.isNotBlank()
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "${prompt.length}/1000",
+                    color = Color.White.copy(alpha = 0.78f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                )
             }
-            /* Prompt Enhancer (improve prompt) hidden per UI change request.
-            SquareActionButton(
-                icon = Icons.Default.AutoAwesome,
-                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_improve_prompt),
-                enabled = prompt.isNotBlank() && !isImproving,
-                onClick = onImprovePrompt,
-                isLoading = isImproving
+        }
+    }
+}
+
+/**
+ * Header row for the prompt card: a "Prompt" title on the left and an
+ * "AI prompt enhancer" action on the right that rewrites the current prompt
+ * via the enhancer. Disabled until a prompt is entered; shows a spinner while
+ * enhancing.
+ */
+@Composable
+private fun PromptCardHeader(
+    enhanceEnabled: Boolean,
+    isImproving: Boolean,
+    onEnhance: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(com.deep.lumoraai.R.string.ui_prompt),
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold,
+        )
+        PromptEnhancerAction(
+            enhanceEnabled = enhanceEnabled,
+            isImproving = isImproving,
+            onEnhance = onEnhance,
+        )
+    }
+}
+
+/**
+ * The "AI prompt enhancer" clickable action (sparkle icon + label). Rewrites
+ * the current prompt via the enhancer; disabled until a prompt exists and
+ * shows a spinner while enhancing.
+ */
+@Composable
+private fun PromptEnhancerAction(
+    enhanceEnabled: Boolean,
+    isImproving: Boolean,
+    onEnhance: () -> Unit,
+) {
+    val enhancerAccent = Color(0xFFB98CFF)
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(enabled = enhanceEnabled && !isImproving, onClick = onEnhance)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (isImproving) {
+            CircularProgressIndicator(
+                color = enhancerAccent,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(16.dp),
             )
-            */
-            SquareActionButton(
-                icon = Icons.Default.Tune,
-                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_advanced_settings_2),
-                onClick = onSettingsClick,
-                highlighted = isSettingsOpen || negativePrompt.isNotBlank()
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = "${prompt.length}/1000",
-                color = Color.White.copy(alpha = 0.78f),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+        } else {
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = null,
+                tint = if (enhanceEnabled) enhancerAccent else enhancerAccent.copy(alpha = 0.45f),
+                modifier = Modifier.size(18.dp),
             )
         }
+        Text(
+            text = stringResource(com.deep.lumoraai.R.string.ui_ai_prompt_enhancer),
+            color = if (enhanceEnabled || isImproving) enhancerAccent else enhancerAccent.copy(alpha = 0.45f),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
@@ -364,6 +464,7 @@ fun CollapsiblePromptComposerCard(
     modifier: Modifier = Modifier,
     isSettingsOpen: Boolean = false,
     onSettingsClick: () -> Unit = {},
+    showSettingsAction: Boolean = true,
 ) {
     // Auto-expand if a prompt is already present (e.g. from a template prefill).
     var expanded by remember { mutableStateOf(prompt.isNotBlank()) }
@@ -416,9 +517,11 @@ fun CollapsiblePromptComposerCard(
         }
 
         if (expanded) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 OutlinedTextField(
                     value = prompt,
@@ -433,8 +536,7 @@ fun CollapsiblePromptComposerCard(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 88.dp)
-                        .padding(horizontal = 12.dp),
+                        .heightIn(min = 88.dp),
                     // Grows with content so a long/pasted prompt is fully visible.
                     maxLines = Int.MAX_VALUE,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -455,25 +557,23 @@ fun CollapsiblePromptComposerCard(
                 )
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 18.dp, end = 18.dp, bottom = 12.dp),
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    /* Prompt Enhancer (improve prompt) hidden per UI change request.
-                    SquareActionButton(
-                        icon = Icons.Default.AutoAwesome,
-                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_improve_prompt),
-                        enabled = prompt.isNotBlank() && !isImproving,
-                        onClick = onImprovePrompt,
-                        isLoading = isImproving
-                    )
-                    */
-                    SquareActionButton(
-                        icon = Icons.Default.Tune,
-                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_advanced_settings_2),
-                        onClick = onSettingsClick,
-                        highlighted = isSettingsOpen || negativePrompt.isNotBlank()
+                    if (showSettingsAction) {
+                        SquareActionButton(
+                            icon = Icons.Default.Tune,
+                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_advanced_settings_2),
+                            onClick = onSettingsClick,
+                            highlighted = isSettingsOpen || negativePrompt.isNotBlank()
+                        )
+                    }
+                    // AI prompt enhancer action.
+                    PromptEnhancerAction(
+                        enhanceEnabled = prompt.isNotBlank() && !isImproving,
+                        isImproving = isImproving,
+                        onEnhance = onImprovePrompt,
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
@@ -530,13 +630,30 @@ fun PromoVideoStyleSection(
     )
 }
 
-private data class StyleItem(
+data class StyleItem(
     @androidx.annotation.StringRes val labelRes: Int,
     @androidx.annotation.StringRes val descriptionRes: Int,
     val assetFileName: String,
     val selected: Boolean,
     val onClick: () -> Unit,
 )
+
+/** Style presets for the image generation bottom bar (Style row). */
+fun imageStyleItems(selected: ImageStyle, onSelected: (ImageStyle) -> Unit): List<StyleItem> =
+    ImageStyle.entries.map { StyleItem(it.labelRes, it.descriptionRes, it.assetFileName, selected == it) { onSelected(it) } }
+
+/** Style presets for the video generation bottom bar (Style row). */
+fun videoStyleItems(selected: VideoStyle, onSelected: (VideoStyle) -> Unit): List<StyleItem> =
+    VideoStyle.entries.map { StyleItem(it.labelRes, it.descriptionRes, it.assetFileName, selected == it) { onSelected(it) } }
+
+/** Style presets for the promo video generation bottom bar (Style row). */
+fun promoVideoStyleItems(
+    selected: com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle,
+    onSelected: (com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle) -> Unit,
+): List<StyleItem> =
+    com.deep.lumoraai.feature.imagetoimage.PromoVideoStyle.entries.map {
+        StyleItem(it.labelRes, it.descriptionRes, it.assetFileName, selected == it) { onSelected(it) }
+    }
 
 @Composable
 private fun StyleSection(
@@ -1499,5 +1616,432 @@ fun GenerationErrorText(error: String?, onDismissError: () -> Unit) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.clickable(onClick = onDismissError)
         )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Fixed bottom "Generate" bar
+// ---------------------------------------------------------------------------
+
+/**
+ * Positions a popup directly ABOVE its anchor, left-aligned and full anchor
+ * width, with its bottom edge [gapPx] pixels above the anchor's top. Clamps to
+ * the top of the window so tall panels stay on screen.
+ */
+private class AboveAnchorPositionProvider(
+    private val gapPx: Int,
+    private val horizontalOutsetPx: Int = 0,
+) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset {
+        val x = (anchorBounds.left - horizontalOutsetPx).coerceAtLeast(0)
+        val desiredY = anchorBounds.top - popupContentSize.height - gapPx
+        val y = desiredY.coerceAtLeast(0)
+        return IntOffset(x, y)
+    }
+}
+
+/**
+ * Fixed bottom bar for the generation screens (image / video / promo).
+ *
+ * Collapsed: a single summary row showing the selected style, ratio and
+ * number of creations with an up-chevron. Tapping the row (or the chevron)
+ * expands an upward panel with horizontally scrolling Style, Ratio and
+ * Number of Generations selectors. The Generate Now button and the credit
+ * note are always pinned at the bottom.
+ */
+@Composable
+fun GenerationBottomBar(
+    selectedAspectRatio: GenerationAspectRatio,
+    onAspectRatioSelected: (GenerationAspectRatio) -> Unit,
+    aspectRatioOptions: List<GenerationAspectRatio>,
+    generations: Int,
+    onGenerationsChanged: (Int) -> Unit,
+    isGenerating: Boolean,
+    generateEnabled: Boolean,
+    creditCost: Int,
+    onGenerate: () -> Unit,
+    modifier: Modifier = Modifier,
+    styleItems: List<StyleItem> = emptyList(),
+    maxGenerations: Int = 4,
+    showCount: Boolean = true,
+    showRatio: Boolean = true,
+    generateLabel: String? = null,
+    creditNote: String? = null,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        label = "bottomBarChevron",
+    )
+    val hasStyles = styleItems.isNotEmpty()
+    // Whether there's anything to reveal in the expandable panel.
+    val hasExpandablePanel = hasStyles || showRatio || showCount
+    // Label of the currently-selected style (defaults to the first item, which
+    // is "No Style"). Shown in the collapsed summary instead of a quality chip.
+    val selectedStyleLabelRes = remember(styleItems) {
+        (styleItems.firstOrNull { it.selected } ?: styleItems.firstOrNull())?.labelRes
+    }
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val barHorizontalPaddingPx = with(density) { 16.dp.roundToPx() }
+    // Anchor (summary row) width, used to size the pop-up panel to match.
+    var anchorWidthPx by remember { mutableStateOf(0) }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color(0xFF0B1426))
+            .border(1.dp, Color.White.copy(alpha = 0.06f))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        // Collapsed summary row — visible when there are selectors to reveal.
+        // Tapping it opens a bordered pop-up panel above the bar; tapping
+        // outside the panel dismisses it.
+        if (hasExpandablePanel) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned { anchorWidthPx = it.size.width }
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFF151D31))
+                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
+                        .clickable { expanded = !expanded }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (hasStyles && selectedStyleLabelRes != null) {
+                        SummaryChip(
+                            icon = Icons.Default.Palette,
+                            text = stringResource(selectedStyleLabelRes),
+                        )
+                    }
+                    if (showRatio) {
+                        if (hasStyles) SummaryDivider()
+                        SummaryChip(icon = Icons.Default.AspectRatio, text = selectedAspectRatio.label)
+                    }
+                    if (showCount) {
+                        SummaryDivider()
+                        SummaryChip(
+                            icon = Icons.Default.Layers,
+                            text = stringResource(com.deep.lumoraai.R.string.ui_creations_count, generations),
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier
+                            .size(24.dp)
+                            .rotate(chevronRotation),
+                    )
+                }
+
+                if (expanded) {
+                    // Pop-up panel drawn ABOVE the summary row and attached to
+                    // the bottom bar. Dismisses when tapping outside.
+                    Popup(
+                        popupPositionProvider = AboveAnchorPositionProvider(
+                            gapPx = 0,
+                            horizontalOutsetPx = barHorizontalPaddingPx,
+                        ),
+                        onDismissRequest = { expanded = false },
+                        properties = PopupProperties(
+                            focusable = true,
+                            dismissOnBackPress = true,
+                            dismissOnClickOutside = true,
+                        ),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .then(
+                                    if (anchorWidthPx > 0) {
+                                        Modifier.width(with(density) { (anchorWidthPx + barHorizontalPaddingPx * 2).toDp() })
+                                    } else {
+                                        Modifier.fillMaxWidth()
+                                    }
+                                )
+                                .shadow(24.dp, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), clip = false)
+                                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                                .background(Color(0xFF0F1728))
+                                .attachedPanelBorder()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                if (hasStyles) {
+                                    BottomBarStyleRow(items = styleItems)
+                                }
+                                if (showRatio) {
+                                    BottomBarRatioRow(
+                                        selected = selectedAspectRatio,
+                                        onSelected = onAspectRatioSelected,
+                                        options = aspectRatioOptions,
+                                    )
+                                }
+                                if (showCount) {
+                                    BottomBarCountRow(
+                                        generations = generations,
+                                        onGenerationsChanged = onGenerationsChanged,
+                                        maxCount = maxGenerations,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Generate button — always pinned.
+        Button(
+            onClick = onGenerate,
+            enabled = generateEnabled && !isGenerating,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = GenerationLime,
+                disabledContainerColor = GenerationLime.copy(alpha = 0.38f),
+            ),
+        ) {
+            if (isGenerating) {
+                CircularProgressIndicator(color = Color.Black, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
+            } else {
+                Text(
+                    text = generateLabel ?: stringResource(com.deep.lumoraai.R.string.ui_generate_now),
+                    color = Color.Black,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        Text(
+            text = creditNote ?: stringResource(com.deep.lumoraai.R.string.ui_credits_consumed_note, creditCost),
+            color = GenerationMuted,
+            fontSize = 12.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+private fun Modifier.attachedPanelBorder(): Modifier = drawBehind {
+    val borderColor = GenerationLime.copy(alpha = 0.72f)
+    val stroke = 2.dp.toPx()
+    drawLine(
+        color = borderColor,
+        start = androidx.compose.ui.geometry.Offset(0f, stroke / 2f),
+        end = androidx.compose.ui.geometry.Offset(size.width, stroke / 2f),
+        strokeWidth = stroke,
+    )
+    drawLine(
+        color = borderColor,
+        start = androidx.compose.ui.geometry.Offset(stroke / 2f, 0f),
+        end = androidx.compose.ui.geometry.Offset(stroke / 2f, size.height),
+        strokeWidth = stroke,
+    )
+    drawLine(
+        color = borderColor,
+        start = androidx.compose.ui.geometry.Offset(size.width - stroke / 2f, 0f),
+        end = androidx.compose.ui.geometry.Offset(size.width - stroke / 2f, size.height),
+        strokeWidth = stroke,
+    )
+}
+
+@Composable
+private fun SummaryChip(icon: ImageVector, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun SummaryDivider() {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 12.dp)
+            .height(18.dp)
+            .width(1.dp)
+            .background(Color.White.copy(alpha = 0.18f))
+    )
+}
+
+@Composable
+private fun BottomBarSectionTitle(text: String) {
+    Text(text, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+}
+
+@Composable
+private fun BottomBarStyleRow(items: List<StyleItem>) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        BottomBarSectionTitle(stringResource(com.deep.lumoraai.R.string.ui_style))
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items.forEach { item -> CompactStyleCard(item = item) }
+        }
+    }
+}
+
+@Composable
+private fun CompactStyleCard(item: StyleItem) {
+    Box(
+        modifier = Modifier
+            .width(96.dp)
+            .height(120.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (item.selected) GenerationLime.copy(alpha = 0.14f) else GenerationPanel)
+            .border(
+                1.dp,
+                if (item.selected) GenerationLime.copy(alpha = 0.82f) else Color.White.copy(alpha = 0.08f),
+                RoundedCornerShape(12.dp),
+            )
+            .clickable(onClick = item.onClick),
+    ) {
+        AsyncImage(
+            model = assetUri(item.assetFileName),
+            contentDescription = stringResource(item.labelRes),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(88.dp),
+        )
+        if (item.selected) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .size(20.dp)
+                    .background(GenerationLime, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(13.dp))
+            }
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .background(Color(0xDD101827))
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+        ) {
+            Text(
+                text = stringResource(item.labelRes),
+                color = if (item.selected) GenerationLime else Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomBarRatioRow(
+    selected: GenerationAspectRatio,
+    onSelected: (GenerationAspectRatio) -> Unit,
+    options: List<GenerationAspectRatio>,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        BottomBarSectionTitle(stringResource(com.deep.lumoraai.R.string.ui_ratio))
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            options.forEach { ratio ->
+                val isSelected = ratio == selected
+                Row(
+                    modifier = Modifier
+                        .height(42.dp)
+                        .widthIn(min = 84.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isSelected) GenerationLime.copy(alpha = 0.14f) else Color(0xFF182137))
+                        .border(
+                            1.dp,
+                            if (isSelected) GenerationLime else Color.White.copy(alpha = 0.08f),
+                            RoundedCornerShape(10.dp),
+                        )
+                        .clickable { onSelected(ratio) }
+                        .padding(horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Default.AspectRatio,
+                        contentDescription = null,
+                        tint = if (isSelected) GenerationLime else Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = ratio.label,
+                        color = if (isSelected) GenerationLime else Color.White.copy(alpha = 0.85f),
+                        fontSize = 13.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BottomBarCountRow(
+    generations: Int,
+    onGenerationsChanged: (Int) -> Unit,
+    maxCount: Int,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        BottomBarSectionTitle(stringResource(com.deep.lumoraai.R.string.ui_no_of_generations))
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            (1..maxCount).forEach { count ->
+                val isSelected = count == generations
+                Box(
+                    modifier = Modifier
+                        .height(42.dp)
+                        .widthIn(min = 62.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isSelected) GenerationLime.copy(alpha = 0.14f) else Color(0xFF182137))
+                        .border(
+                            1.dp,
+                            if (isSelected) GenerationLime else Color.White.copy(alpha = 0.08f),
+                            RoundedCornerShape(10.dp),
+                        )
+                        .clickable { onGenerationsChanged(count) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "$count",
+                        color = if (isSelected) GenerationLime else Color.White.copy(alpha = 0.82f),
+                        fontSize = 14.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    )
+                }
+            }
+        }
     }
 }

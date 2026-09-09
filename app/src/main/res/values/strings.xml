@@ -180,6 +180,9 @@
 
     <string name="ui_improve_prompt">Improve prompt</string>
 
+    <string name="ui_prompt">Prompt</string>
+    <string name="ui_ai_prompt_enhancer">AI prompt enhancer</string>
+
     <string name="ui_inbox">Inbox</string>
 
     <string name="ui_live">LIVE</string>
@@ -689,6 +692,12 @@
     <string name="ui_tool_promo_videos">Promo Videos</string>
     <string name="ui_tool_remove_background">Remove Background</string>
     <string name="ui_tool_compress">Compress</string>
+    <string name="ui_tool_logo">Logo</string>
+    <string name="ui_tool_ai_avatar">AI Avatar</string>
+    <string name="ui_ai_avatar">AI Avatar</string>
+    <string name="ui_logo">Logo</string>
+    <string name="ui_generate_a_logo">Generate a logo</string>
+    <string name="ui_create_your_avatar">Create your avatar</string>
     <string name="ui_filter_all">All</string>
     <string name="ui_filter_image">Image</string>
     <string name="ui_filter_video">Video</string>
@@ -729,6 +738,11 @@
     <string name="ui_ratio_story">Story</string>
     <string name="ui_ratio_square">Square</string>
     <string name="ui_ratio_wide">Wide</string>
+
+    <!-- Generation bottom bar -->
+    <string name="ui_creations_count">%1$d Creations</string>
+    <string name="ui_generate_now">Generate Now</string>
+    <string name="ui_credits_consumed_note">Creation consume %1$d credits.</string>
 
     <!-- Template titles / subtitles -->
     <string name="ui_tpl_cyberpunk_portrait_title">Cyberpunk Portrait</string>

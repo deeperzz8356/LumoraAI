@@ -76,11 +76,13 @@ private fun ResponsiveBottomNav(
     onSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val centerSize by animateDpAsState(
-        targetValue = if (selected == "createhub") 62.dp else 58.dp,
-        animationSpec = tween(180, easing = FastOutSlowInEasing),
-        label = "centerCreateSize"
-    )
+    // Center Create (Create Hub) button size — kept for when the center button
+    // is restored. Currently unused because the center button is commented out.
+    // val centerSize by animateDpAsState(
+    //     targetValue = if (selected == "createhub") 62.dp else 58.dp,
+    //     animationSpec = tween(180, easing = FastOutSlowInEasing),
+    //     label = "centerCreateSize"
+    // )
 
     // Nav row only. The persistent banner (banner_all) is hoisted to the
     // navigation root (NavGraph) and rendered directly BELOW this nav row, with
@@ -102,6 +104,10 @@ private fun ResponsiveBottomNav(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Nav bar now shows only Home, Templates and History. The AI Tools
+            // item and the center Create (Create Hub) button are hidden per UI
+            // change request — kept commented out (not removed) so they can be
+            // restored later.
             NavItem(
                 icon = Icons.Default.Home,
                 label = stringResource(com.deep.lumoraai.R.string.ui_home),
@@ -117,14 +123,16 @@ private fun ResponsiveBottomNav(
                 onClick = { onSelected("templates") },
                 modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.width(72.dp))
-            NavItem(
-                icon = Icons.Default.AutoAwesome,
-                label = stringResource(com.deep.lumoraai.R.string.ui_ai_tools),
-                isSelected = selected == "aitools",
-                onClick = { onSelected("aitools") },
-                modifier = Modifier.weight(1f)
-            )
+            // Create Hub center-button spacer — hidden with the center button.
+            // Spacer(modifier = Modifier.width(72.dp))
+            // AI Tools nav item — hidden per UI change request.
+            // NavItem(
+            //     icon = Icons.Default.AutoAwesome,
+            //     label = stringResource(com.deep.lumoraai.R.string.ui_ai_tools),
+            //     isSelected = selected == "aitools",
+            //     onClick = { onSelected("aitools") },
+            //     modifier = Modifier.weight(1f)
+            // )
             NavItem(
                 icon = Icons.Default.History,
                 label = stringResource(com.deep.lumoraai.R.string.ui_history),
@@ -133,36 +141,38 @@ private fun ResponsiveBottomNav(
                 modifier = Modifier.weight(1f)
             )
         }
-        
-        Box(
-            modifier = Modifier
-                .padding(bottom = 26.dp)
-                .size(centerSize)
-                .background(IntroPalette.AccentLime, CircleShape)
-                .clickable { onSelected("createhub") },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxHeight()
-            ) {
-                Icon(
-                    Icons.Default.AutoAwesome,
-                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_create),
-                    tint = Color.Black,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.height(3.dp))
-                Text(
-                    stringResource(com.deep.lumoraai.R.string.ui_create),
-                    color = Color.Black,
-                    fontSize = 9.sp,
-                    lineHeight = 11.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+
+        // Center Create (Create Hub) button — hidden per UI change request.
+        // Kept commented out so it can be restored later.
+        // Box(
+        //     modifier = Modifier
+        //         .padding(bottom = 26.dp)
+        //         .size(centerSize)
+        //         .background(IntroPalette.AccentLime, CircleShape)
+        //         .clickable { onSelected("createhub") },
+        //     contentAlignment = Alignment.Center
+        // ) {
+        //     Column(
+        //         horizontalAlignment = Alignment.CenterHorizontally,
+        //         verticalArrangement = Arrangement.Center,
+        //         modifier = Modifier.fillMaxHeight()
+        //     ) {
+        //         Icon(
+        //             Icons.Default.AutoAwesome,
+        //             contentDescription = stringResource(com.deep.lumoraai.R.string.ui_create),
+        //             tint = Color.Black,
+        //             modifier = Modifier.size(22.dp)
+        //         )
+        //         Spacer(modifier = Modifier.height(3.dp))
+        //         Text(
+        //             stringResource(com.deep.lumoraai.R.string.ui_create),
+        //             color = Color.Black,
+        //             fontSize = 9.sp,
+        //             lineHeight = 11.sp,
+        //             fontWeight = FontWeight.Bold
+        //         )
+        //     }
+        // }
     } // end nav-row Box
 }
 

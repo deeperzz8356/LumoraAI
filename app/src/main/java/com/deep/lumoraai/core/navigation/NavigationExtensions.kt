@@ -34,6 +34,20 @@ fun textToImageRoute(prompt: String? = null): String =
         }
     }
 
+fun logoRoute(prompt: String? = null): String =
+    textImageVariantRoute(Screen.Logo.route, prompt)
+
+fun avatarRoute(prompt: String? = null): String =
+    textImageVariantRoute(Screen.Avatar.route, prompt)
+
+private fun textImageVariantRoute(route: String, prompt: String? = null): String =
+    buildString {
+        append(route)
+        if (!prompt.isNullOrBlank()) {
+            append("?prompt=${Uri.encode(prompt)}")
+        }
+    }
+
 fun textToVideoRoute(prompt: String? = null): String =
     buildString {
         append(Screen.TextToVideo.route)

@@ -61,7 +61,7 @@ import androidx.compose.ui.res.stringResource
 import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
 import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
-import com.deep.lumoraai.feature.generation.GenerationAspectRatioSection
+import com.deep.lumoraai.feature.generation.GenerationBottomBar
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
 import kotlinx.coroutines.delay
 
@@ -141,10 +141,6 @@ fun BgStudioScreen(
                         isSettingsOpen = showAdvancedSettings.value,
                         onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
                     )
-                    GenerationAspectRatioSection(
-                        selected = uiState.aspectRatio,
-                        onSelected = onAspectRatioChanged
-                    )
                     if (showAdvancedSettings.value) {
                         GenerationControlsPanel(
                             mediaType = stringResource(com.deep.lumoraai.R.string.ui_image),
@@ -159,20 +155,8 @@ fun BgStudioScreen(
                             onGenerationsChanged = {}
                         )
                     }
-                    StudioPrimaryButton(
-                        text = stringResource(com.deep.lumoraai.R.string.ui_create_credit_cost),
-                        isBusy = isBusy,
-                        enabled = !isBusy && uiState.sourceBitmap != null && uiState.prompt.isNotBlank(),
-                        onClick = onCreate
-                    )
                 } else {
                     RemoveBackgroundPanel(uiState = uiState, onUpload = { imagePicker.launch("image/*") })
-                    StudioPrimaryButton(
-                        text = stringResource(com.deep.lumoraai.R.string.ui_remove_background_credit_cost),
-                        isBusy = isBusy,
-                        enabled = !isBusy && uiState.sourceBitmap != null,
-                        onClick = onCreate
-                    )
                 }
 
                 GeneratedMediaLoading(
@@ -189,9 +173,35 @@ fun BgStudioScreen(
                     onEdit = onEditResult
                 )
                 StatusMessage(status = uiState.status, onDismissError = onDismissError)
-                Spacer(modifier = Modifier.height(72.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
+
+        // Fixed bottom generate bar. Replace mode exposes the ratio selector;
+        // Remove Background mode only needs the action button.
+        val isReplace = uiState.mode == BgStudioMode.Replace
+        GenerationBottomBar(
+            selectedAspectRatio = uiState.aspectRatio,
+            onAspectRatioSelected = onAspectRatioChanged,
+            aspectRatioOptions = GenerationAspectRatio.entries,
+            generations = 1,
+            onGenerationsChanged = {},
+            isGenerating = isBusy,
+            generateEnabled = if (isReplace) {
+                !isBusy && uiState.sourceBitmap != null && uiState.prompt.isNotBlank()
+            } else {
+                !isBusy && uiState.sourceBitmap != null
+            },
+            creditCost = 1,
+            onGenerate = onCreate,
+            showCount = false,
+            showRatio = isReplace,
+            generateLabel = if (isReplace) {
+                stringResource(com.deep.lumoraai.R.string.ui_create_credit_cost)
+            } else {
+                stringResource(com.deep.lumoraai.R.string.ui_remove_background_credit_cost)
+            },
+        )
 
         PlacementBanner(placement = AdPlacement.BANNER_BG, applyNavBarPadding = false)
       }
@@ -438,40 +448,6 @@ private fun PromptPanel(
                 .align(Alignment.BottomEnd)
                 .padding(end = 14.dp, bottom = 14.dp)
         )
-    }
-}
-
-@Composable
-private fun StudioPrimaryButton(
-    text: String,
-    isBusy: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(43.dp),
-        shape = RoundedCornerShape(9.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Lime,
-            disabledContainerColor = Lime.copy(alpha = 0.35f)
-        )
-    ) {
-        if (isBusy) {
-            CircularProgressIndicator(color = Color.Black, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-        } else {
-            Text(
-                text = text,
-                color = Color.Black,
-                fontSize = 13.sp,
-                letterSpacing = 1.sp,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center
-            )
-        }
     }
 }
 

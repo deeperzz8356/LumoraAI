@@ -25,10 +25,9 @@ import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
-import com.deep.lumoraai.feature.generation.GenerateNowButton
-import com.deep.lumoraai.feature.generation.GenerationAspectRatioSection
+import com.deep.lumoraai.feature.generation.GenerationBottomBar
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
-import com.deep.lumoraai.feature.generation.GenerationCountSection
+import com.deep.lumoraai.feature.generation.videoStyleItems
 import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
 import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
@@ -37,7 +36,6 @@ import com.deep.lumoraai.feature.generation.CollapsiblePromptComposerCard
 import com.deep.lumoraai.feature.generation.GenerationScreenBg
 import com.deep.lumoraai.feature.generation.GenerationTopBar
 import com.deep.lumoraai.feature.generation.UploadImagePanel
-import com.deep.lumoraai.feature.generation.VideoStyleSection
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
@@ -94,7 +92,7 @@ fun ImageToVideoScreen(
                     .verticalScroll(scrollState)
                     .imePadding()
                     .padding(horizontal = 20.dp)
-                    .padding(top = 18.dp, bottom = 96.dp),
+                    .padding(top = 18.dp, bottom = 18.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 UploadImagePanel(
@@ -113,16 +111,8 @@ fun ImageToVideoScreen(
                     onImprovePrompt = onImprovePrompt,
                     onNegativePromptChanged = onNegativePromptChanged,
                     isSettingsOpen = showAdvancedSettings.value,
-                    onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
-                )
-                GenerationAspectRatioSection(
-                    selected = uiState.aspectRatio,
-                    onSelected = onAspectRatioChanged,
-                    options = GenerationAspectRatio.videoRatios
-                )
-                GenerationCountSection(
-                    generations = uiState.generations,
-                    onGenerationsChanged = onGenerationsChanged
+                    onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value },
+                    showSettingsAction = false
                 )
                 if (showAdvancedSettings.value) {
                     GenerationControlsPanel(
@@ -139,7 +129,6 @@ fun ImageToVideoScreen(
                         onGenerationsChanged = onGenerationsChanged
                     )
                 }
-                VideoStyleSection(selected = uiState.selectedStyle, onSelected = onStyleSelected)
                 GeneratedMediaLoading(
                     isVisible = uiState.isGenerating,
                     mediaType = "VIDEO",
@@ -155,19 +144,22 @@ fun ImageToVideoScreen(
                 )
                 GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
             }
-
-                // Pinned Generate button at the bottom of the content area.
-                GenerateNowButton(
-                    isGenerating = uiState.isGenerating,
-                    // Prompt is optional: only require an uploaded image.
-                    enabled = uiState.sourceBitmap != null,
-                    creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
-                    onClick = onGenerate,
-                    modifier = Modifier
-                        .align(androidx.compose.ui.Alignment.BottomCenter)
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                )
             }
+
+            // Fixed bottom generate bar with collapsible Style / Ratio / Count.
+            GenerationBottomBar(
+                styleItems = videoStyleItems(uiState.selectedStyle, onStyleSelected),
+                selectedAspectRatio = uiState.aspectRatio,
+                onAspectRatioSelected = onAspectRatioChanged,
+                aspectRatioOptions = GenerationAspectRatio.videoRatios,
+                generations = uiState.generations,
+                onGenerationsChanged = onGenerationsChanged,
+                isGenerating = uiState.isGenerating,
+                // Prompt is optional: only require an uploaded image.
+                generateEnabled = uiState.sourceBitmap != null,
+                creditCost = GenerationGate.CREDITS_PER_VIDEO * uiState.generations,
+                onGenerate = onGenerate,
+            )
 
             PlacementBanner(placement = AdPlacement.BANNER_IMG2VIDEO, applyNavBarPadding = false)
         }

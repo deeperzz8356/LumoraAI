@@ -48,6 +48,7 @@ import com.deep.lumoraai.feature.settings.SettingsRoute
 import com.deep.lumoraai.feature.splash.SplashRoute
 import com.deep.lumoraai.feature.subscription.SubscriptionRoute
 import com.deep.lumoraai.feature.templates.TemplatesRoute
+import com.deep.lumoraai.feature.texttoimage.TextToImageMode
 import com.deep.lumoraai.feature.texttoimage.TextToImageRoute
 import com.deep.lumoraai.feature.texttovideo.TextToVideoRoute
 import com.google.firebase.auth.FirebaseAuth
@@ -189,6 +190,42 @@ fun NavGraph(
                 onBack = { navController.popBackStack() },
                 onNavigate = { navController.goTo(it) },
                 initialPrompt = prompt,
+            )
+        }
+        composable(
+            route = Screen.Logo.route + "?prompt={prompt}",
+            arguments = listOf(
+                navArgument("prompt") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val prompt = backStackEntry.arguments?.getString("prompt")
+            TextToImageRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) },
+                initialPrompt = prompt,
+                mode = TextToImageMode.Logo,
+            )
+        }
+        composable(
+            route = Screen.Avatar.route + "?prompt={prompt}",
+            arguments = listOf(
+                navArgument("prompt") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val prompt = backStackEntry.arguments?.getString("prompt")
+            TextToImageRoute(
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) },
+                initialPrompt = prompt,
+                mode = TextToImageMode.Avatar,
             )
         }
         composable(Screen.ImageToImage.route) {

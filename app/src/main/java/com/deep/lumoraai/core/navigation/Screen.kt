@@ -12,6 +12,8 @@ sealed class Screen(val route: String, val title: String) {
     data object Compress : Screen("compress", "Compress")
     data object ImageToImage : Screen("imagetoimage", "Image 2 Image")
     data object TextToImage : Screen("texttoimage", "Text To Image")
+    data object Logo : Screen("logo", "Logo")
+    data object Avatar : Screen("avatar", "AI Avatar")
     data object ImageToVideo : Screen("imagetovideo", "Image To Video")
     data object TextToVideo : Screen("texttovideo", "Text To Video")
     data object PromoVideo : Screen("promovideo", "Promo Video")
@@ -42,6 +44,8 @@ val navigationSequence = listOf(
     Screen.Compress,
     Screen.ImageToImage,
     Screen.TextToImage,
+    Screen.Logo,
+    Screen.Avatar,
     Screen.ImageToVideo,
     Screen.TextToVideo,
     Screen.PromoVideo,

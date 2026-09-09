@@ -616,7 +616,17 @@ class GenerationRepository {
             val jsonInputString = JSONObject().apply {
                 put("model", GROQ_PROMPT_MODEL)
                 put("temperature", 0.45)
-                put("max_tokens", 260)
+                put(
+                    "response_format",
+                    JSONObject().put("type", "text")
+                )
+                // gpt-oss is a reasoning model: reasoning tokens count against the
+                // completion budget. With a small budget the model spends it all on
+                // reasoning and returns empty `content` (finish_reason = "length").
+                // Keep reasoning minimal and give a generous completion budget so the
+                // enhanced prompt actually comes back in `content`.
+                put("reasoning_effort", "low")
+                put("max_completion_tokens", 1024)
                 put(
                     "messages",
                     org.json.JSONArray()
@@ -644,20 +654,31 @@ class GenerationRepository {
             val responseBody = connection.readResponseBody()
             if (responseCode in 200..299) {
                 val responseJson = JSONObject(responseBody)
-                val enhanced = responseJson
+                val message = responseJson
                     .optJSONArray("choices")
                     ?.optJSONObject(0)
                     ?.optJSONObject("message")
-                    ?.optString("content")
-                    ?.trim()
-                    .orEmpty()
+                // Prefer `content`; fall back to `reasoning`/`reasoning_content`
+                // for reasoning models that may place text there.
+                val enhanced = listOf("content", "reasoning", "reasoning_content")
+                    .asSequence()
+                    .mapNotNull { message?.optString(it)?.trim()?.takeIf(String::isNotBlank) }
+                    .firstOrNull()
+                    ?: responseJson
+                        .optJSONArray("choices")
+                        ?.optJSONObject(0)
+                        ?.optString("text")
+                        ?.trim()
+                        ?.takeIf(String::isNotBlank)
+                    ?: responseJson.optString("output_text").trim().takeIf(String::isNotBlank)
+                    ?: ""
                 if (enhanced.isNotBlank()) {
-                    Result.success(enhanced.trim('"').take(1000))
+                    Result.success(enhanced.stripPromptWrapper().take(1000))
                 } else {
-                    Result.failure(Exception(responseJson.parseApiMessage() ?: "Groq returned no enhanced prompt."))
+                    Result.failure(Exception(responseJson.parseApiMessage() ?: "Prompt enhancer returned no text. Please try again."))
                 }
             } else {
-                Result.failure(Exception(responseBody.parseApiMessage() ?: "Groq prompt enhancer failed ($responseCode)."))
+                Result.failure(Exception(responseBody.parseApiMessage() ?: "Prompt enhancer failed ($responseCode)."))
             }
         } catch (e: Exception) {
             Result.failure(Exception(e.message ?: "Could not improve prompt."))
@@ -697,3 +718,20 @@ private fun JSONObject.parseApiMessage(): String? =
 
 private fun String.parseApiMessage(): String? =
     runCatching { JSONObject(this).parseApiMessage() }.getOrNull()
+
+private fun String.stripPromptWrapper(): String =
+    trim()
+        .let { value ->
+            if (value.startsWith("```")) {
+                value
+                    .removePrefix("```")
+                    .removeSuffix("```")
+                    .lineSequence()
+                    .dropWhile { it.trim().equals("text", ignoreCase = true) || it.trim().equals("prompt", ignoreCase = true) }
+                    .joinToString("\n")
+            } else {
+                value
+            }
+        }
+        .trim()
+        .trim('"')

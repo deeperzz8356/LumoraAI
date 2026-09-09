@@ -57,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -137,7 +138,6 @@ fun CreditsScreen(
                     checkInDayIndex = uiState.checkInDayIndex,
                     spinResult = uiState.spinResult,
                     onBack = onBack,
-                    onBuy = { viewModel.buyCredits(it, activity) },
                     onClaimReward = { viewModel.claimReward(it) },
                     onClearRewardMessage = { viewModel.clearRewardMessage() },
                     onClearSpinResult = { viewModel.clearSpinResult() },
@@ -162,7 +162,6 @@ private fun CreditsContent(
     checkInDayIndex: Int,
     spinResult: SpinResult?,
     onBack: () -> Unit,
-    onBuy: (Int) -> Unit,
     onClaimReward: (String) -> Unit,
     onClearRewardMessage: () -> Unit,
     onClearSpinResult: () -> Unit,
@@ -196,15 +195,15 @@ private fun CreditsContent(
             .padding(top = 18.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        PageTopBar(title = stringResource(com.deep.lumoraai.R.string.ui_credits), subtitle = stringResource(com.deep.lumoraai.R.string.ui_fuel_every_generation), onBack = onBack)
-        BalanceHero(balanceLabel = balanceLabel, isDeveloperMode = isDeveloperMode)
+        PageTopBar(title = "Reward Center", onBack = onBack)
+        RewardCenterHero(
+            balanceLabel = balanceLabel,
+            isDeveloperMode = isDeveloperMode,
+            onSubscribe = { onNavigate(Screen.Subscription.route) },
+            onGenerate = { onNavigate(Screen.Home.route) },
+        )
         if (purchaseMessage != null) {
             Text(purchaseMessage, color = Muted, fontSize = 12.sp)
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreditStatCard(stringResource(com.deep.lumoraai.R.string.ui_stat_images), stringResource(com.deep.lumoraai.R.string.ui_credit_cost_one), Icons.Default.Star, Purple, Modifier.weight(1f))
-            CreditStatCard(stringResource(com.deep.lumoraai.R.string.ui_stat_videos), stringResource(com.deep.lumoraai.R.string.ui_credit_cost_five), Icons.Default.Bolt, Pink, Modifier.weight(1f))
         }
 
         if (rewardMessage != null) {
@@ -226,29 +225,6 @@ private fun CreditsContent(
             }
         }
 
-        Surface(
-            onClick = { onNavigate(Screen.Subscription.route) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = CardShape,
-            color = CredCard,
-            border = BorderStroke(1.dp, CredStroke.copy(alpha = 0.72f))
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
-                    AccentIcon(Icons.Default.CreditCard, Cyan)
-                    Column {
-                        Text(stringResource(com.deep.lumoraai.R.string.ui_subscription_plans), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        Text(stringResource(com.deep.lumoraai.R.string.ui_monthly_refills_and_pro_tools), color = Muted, fontSize = 11.sp)
-                    }
-                }
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
-            }
-        }
-
         CreditRewardsSection(
             rewards = rewards,
             isRewardBusy = isRewardBusy,
@@ -265,11 +241,6 @@ private fun CreditsContent(
         if (showWatchAd) {
             WatchAdForCreditsCard(amount = rewardAdAmount, onClick = onWatchAdForCredits)
         }
-
-        Text(stringResource(com.deep.lumoraai.R.string.ui_top_up), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-        CreditPackageCard(stringResource(com.deep.lumoraai.R.string.ui_pack_starter), stringResource(com.deep.lumoraai.R.string.ui_credits_count_format, 50), "$4.99", Purple, onBuy = { onBuy(50) })
-        CreditPackageCard(stringResource(com.deep.lumoraai.R.string.ui_pack_creator), stringResource(com.deep.lumoraai.R.string.ui_credits_count_format, 150), "$12.99", Lime, highlighted = true, badge = stringResource(com.deep.lumoraai.R.string.ui_pack_popular), onBuy = { onBuy(150) })
-        CreditPackageCard(stringResource(com.deep.lumoraai.R.string.ui_pack_studio), stringResource(com.deep.lumoraai.R.string.ui_credits_count_format, 500), "$39.99", Cyan, badge = stringResource(com.deep.lumoraai.R.string.ui_pack_best_for_video), onBuy = { onBuy(500) })
 
         Spacer(modifier = Modifier.height(2.dp))
     }
@@ -511,32 +482,19 @@ private fun CreditRewardsSection(
     val checkInReward = rewards.firstOrNull { it.id == "check_in" }
     val otherRewards = rewards.filterNot { it.id == "spin" || it.id == "check_in" }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = CredCard,
-        border = BorderStroke(1.dp, Lime.copy(alpha = 0.26f))
-    ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ) {
             Column {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_daily_task), color = Color.White, fontSize = 22.sp, lineHeight = 25.sp, fontWeight = FontWeight.ExtraBold)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_open_check_in_spin_and_earn_verified_rewards), color = Muted, fontSize = 12.sp, lineHeight = 15.sp)
+                Text("Daily Check-in", color = Color.White, fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Check in and earn verified rewards across the week.", color = Muted, fontSize = 13.sp, lineHeight = 17.sp)
             }
             Text(stringResource(com.deep.lumoraai.R.string.ui_live_2), color = Lime, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold)
         }
-
-            if (spinReward != null) {
-                SpinRewardCard(
-                    reward = spinReward,
-                    enabled = spinReward.isAvailable && !isRewardBusy,
-                    onClick = { onClaimReward(spinReward.id) }
-                )
-            }
 
             if (checkInReward != null) {
                 CheckInTrackCard(
@@ -546,8 +504,28 @@ private fun CreditRewardsSection(
                     onClick = { onClaimReward(checkInReward.id) }
                 )
             }
+        }
 
-            RewardSummaryGrid(rewards = otherRewards)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(com.deep.lumoraai.R.string.ui_daily_task), color = Color.White, fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold)
+            if (spinReward != null) {
+                DailyTaskRow(
+                    reward = spinReward,
+                    icon = Icons.Default.Star,
+                    accent = Lime,
+                    enabled = spinReward.isAvailable && !isRewardBusy,
+                    onClick = { onClaimReward(spinReward.id) },
+                )
+            }
+            otherRewards.forEachIndexed { index, reward ->
+                DailyTaskRow(
+                    reward = reward,
+                    icon = rewardIcon(reward.id),
+                    accent = rewardAccent(index),
+                    enabled = reward.isAvailable && !isRewardBusy,
+                    onClick = { onClaimReward(reward.id) },
+                )
+            }
         }
     }
 }
@@ -598,42 +576,41 @@ private fun CheckInTrackCard(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = Color(0xFF131D34),
-        border = BorderStroke(1.dp, Purple.copy(alpha = if (reward.isAvailable) 0.5f else 0.22f))
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(11.dp)) {
-                AccentIcon(Icons.Default.CheckCircle, Purple)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(reward.title, color = Color.White, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.ExtraBold)
-                    Text(stringResource(com.deep.lumoraai.R.string.ui_weekly_credits_1_1_2_2_2_3_4), color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
-                }
-                Button(
-                    onClick = onClick,
-                    enabled = enabled,
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Purple, disabledContainerColor = CredStroke, disabledContentColor = Muted),
-                    modifier = Modifier.height(38.dp).widthIn(min = 72.dp)
-                ) {
-                    Text(reward.actionLabel, color = if (enabled) Color.White else Muted, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-                }
+        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
+            listOf(1, 1, 2, 2, 2, 3, 4).forEachIndexed { index, amount ->
+                DayRewardPill(
+                    day = index + 1,
+                    amount = amount,
+                    selected = index == currentDayIndex,
+                    claimed = index < currentDayIndex,
+                    modifier = Modifier.weight(1f)
+                )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
-                listOf(1, 1, 2, 2, 2, 3, 4).forEachIndexed { index, amount ->
-                    DayRewardPill(
-                        day = index + 1,
-                        amount = amount,
-                        selected = index == currentDayIndex,
-                        claimed = index < currentDayIndex,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
+        }
+        Button(
+            onClick = onClick,
+            enabled = enabled,
+            shape = RoundedCornerShape(50),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF2F80FF),
+                disabledContainerColor = CredStroke,
+                disabledContentColor = Muted
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(58.dp)
+        ) {
+            Text(
+                reward.actionLabel,
+                color = if (enabled) Color.White else Muted,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1
+            )
         }
     }
 }
@@ -653,15 +630,40 @@ private fun DayRewardPill(
     }
     Column(
         modifier = modifier
-            .defaultMinSize(minHeight = 58.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(color.copy(alpha = if (selected) 0.18f else 0.08f))
-            .border(1.dp, color.copy(alpha = if (selected) 0.46f else 0.16f), RoundedCornerShape(12.dp))
-            .padding(vertical = 7.dp),
+            .defaultMinSize(minHeight = 92.dp)
+            .clip(RoundedCornerShape(7.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color.White.copy(alpha = if (selected) 0.16f else 0.10f),
+                        color.copy(alpha = if (selected) 0.20f else 0.08f)
+                    )
+                )
+            )
+            .border(1.dp, color.copy(alpha = if (selected) 0.58f else 0.14f), RoundedCornerShape(7.dp))
+            .padding(horizontal = 4.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(stringResource(com.deep.lumoraai.R.string.ui_day_short_format, day), color = color, fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.Bold)
+        Text(
+            stringResource(com.deep.lumoraai.R.string.ui_day_short_format, day),
+            color = color,
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.10f))
+                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = color, modifier = Modifier.size(17.dp))
+        }
         Text("+$amount", color = Color.White, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
@@ -819,47 +821,207 @@ private fun rewardIcon(id: String): ImageVector =
     }
 
 @Composable
-private fun PageTopBar(title: String, subtitle: String, onBack: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+private fun PageTopBar(title: String, onBack: () -> Unit) {
+    Box(modifier = Modifier.fillMaxWidth()) {
         IconButton(onClick = onBack, modifier = Modifier.size(38.dp)) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back), tint = Color.White)
         }
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
-            Text(title, color = Color.White, fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.Bold)
-            Text(subtitle, color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, lineHeight = 15.sp)
+        Text(
+            title,
+            color = Color.White,
+            fontSize = 25.sp,
+            lineHeight = 30.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Center),
+        )
+    }
+}
+
+@Composable
+private fun RewardCenterHero(
+    balanceLabel: String,
+    isDeveloperMode: Boolean,
+    onSubscribe: () -> Unit,
+    onGenerate: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(22.dp))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0xFF171B2E), Color(0xFF261C44), Color(0xFF131524))
+                    )
+                )
+                .padding(horizontal = 18.dp, vertical = 18.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(com.deep.lumoraai.R.string.ui_monthly_refills_and_pro_tools),
+                color = Color.White,
+                fontSize = 18.sp,
+                lineHeight = 23.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f).padding(end = 12.dp),
+            )
+            Button(
+                onClick = onSubscribe,
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(containerColor = Purple),
+                modifier = Modifier.height(42.dp).widthIn(min = 118.dp),
+            ) {
+                Text(stringResource(com.deep.lumoraai.R.string.ui_subscribe_now), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(142.dp)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0xFF1A1642), Color(0xFF29205A), Color(0xFF10192D))
+                    )
+                )
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawCircle(
+                    color = Purple.copy(alpha = 0.18f),
+                    radius = size.minDimension * 0.42f,
+                    center = androidx.compose.ui.geometry.Offset(size.width * 0.84f, size.height * 0.47f),
+                )
+                drawCircle(
+                    color = Lime.copy(alpha = 0.16f),
+                    radius = size.minDimension * 0.34f,
+                    center = androidx.compose.ui.geometry.Offset(size.width * 0.87f, size.height * 0.55f),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx()),
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 22.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(stringResource(com.deep.lumoraai.R.string.ui_current_balance), color = Color.White.copy(alpha = 0.86f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Lime, modifier = Modifier.size(34.dp))
+                    Text(balanceLabel, color = Color.White, fontSize = 42.sp, lineHeight = 46.sp, fontWeight = FontWeight.ExtraBold)
+                }
+                Text(
+                    if (isDeveloperMode) stringResource(com.deep.lumoraai.R.string.ui_developer_mode_active) else stringResource(com.deep.lumoraai.R.string.ui_lum_credits_available),
+                    color = Muted,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Surface(
+                onClick = onGenerate,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 24.dp),
+                shape = RoundedCornerShape(50),
+                color = Lime,
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.18f)),
+            ) {
+                Text(
+                    stringResource(com.deep.lumoraai.R.string.ui_generate_now),
+                    color = CredBackground,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 11.dp),
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun BalanceHero(balanceLabel: String, isDeveloperMode: Boolean) {
+private fun DailyTaskRow(
+    reward: CreditRewardUi,
+    icon: ImageVector,
+    accent: Color,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = CredCard,
-        border = BorderStroke(1.dp, Lime.copy(alpha = 0.32f))
+        color = Color.Transparent,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(vertical = 15.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_current_balance), color = Muted, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                Text(balanceLabel, color = Color.White, fontSize = 40.sp, lineHeight = 44.sp, fontWeight = FontWeight.ExtraBold)
-                Text(if (isDeveloperMode) stringResource(com.deep.lumoraai.R.string.ui_developer_mode_active) else stringResource(com.deep.lumoraai.R.string.ui_lum_credits_available), color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            }
             Box(
                 modifier = Modifier
-                    .size(58.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Lime.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(accent.copy(alpha = 0.95f), accent.copy(alpha = 0.55f), Color(0xFF2F80FF))
+                        )
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Lime, modifier = Modifier.size(31.dp))
+                Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(29.dp))
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        reward.title,
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        lineHeight = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    RewardAmountPill(reward.rewardLabel)
+                }
+                Text(reward.subtitle, color = Muted.copy(alpha = 0.82f), fontSize = 13.sp, lineHeight = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Surface(
+                onClick = onClick,
+                enabled = enabled,
+                shape = RoundedCornerShape(50),
+                color = Color.White.copy(alpha = if (enabled) 0.08f else 0.045f),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
+                modifier = Modifier.widthIn(min = 86.dp),
+            ) {
+                Text(
+                    reward.actionLabel,
+                    color = if (enabled) Color(0xFF2F80FF) else Muted.copy(alpha = 0.72f),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun RewardAmountPill(text: String) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color.White.copy(alpha = 0.08f))
+            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(50))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+    ) {
+        Text(text, color = Lime, fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
 

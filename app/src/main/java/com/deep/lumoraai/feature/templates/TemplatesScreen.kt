@@ -51,6 +51,8 @@ import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.navigation.avatarRoute
+import com.deep.lumoraai.core.navigation.logoRoute
 import com.deep.lumoraai.core.navigation.promoVideoRoute
 import com.deep.lumoraai.core.navigation.textToImageRoute
 import com.deep.lumoraai.core.navigation.textToVideoRoute
@@ -220,7 +222,7 @@ private fun TemplateCategoryTabs(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CategoryTab(
-            label = "Image",
+            label = "Images",
             icon = Icons.Default.Image,
             selected = selectedCategory == TemplateCategory.IMAGE,
         ) {
@@ -236,6 +238,14 @@ private fun TemplateCategoryTabs(
         }
 
         CategoryTab(
+            label = "Logo",
+            icon = Icons.Default.Star,
+            selected = selectedCategory == TemplateCategory.LOGO_CREATION,
+        ) {
+            onSelected(TemplateCategory.LOGO_CREATION)
+        }
+
+        CategoryTab(
             label = "Promo Video",
             icon = Icons.Default.Campaign,
             selected = selectedCategory == TemplateCategory.PROMO_VIDEO,
@@ -244,15 +254,7 @@ private fun TemplateCategoryTabs(
         }
 
         CategoryTab(
-            label = "Logo Creation",
-            icon = Icons.Default.Star,
-            selected = selectedCategory == TemplateCategory.LOGO_CREATION,
-        ) {
-            onSelected(TemplateCategory.LOGO_CREATION)
-        }
-
-        CategoryTab(
-            label = "Create Your Avatar",
+            label = "Avatar",
             icon = Icons.Default.Person,
             selected = selectedCategory == TemplateCategory.AVATAR,
         ) {
@@ -298,13 +300,6 @@ private fun CategoryTab(label: String, icon: ImageVector, selected: Boolean, onC
     }
 }
 
-/*
- * Navigation for templates whose routes
- * already exist.
- *
- * Voice Dubbing and Avatar are deliberately
- * left for the actual routes in your project.
- */
 private fun navigateTemplate(item: TemplateListItem, onNavigate: (String) -> Unit) {
     when (item.action) {
         TemplateAction.TEXT_TO_IMAGE -> {
@@ -320,19 +315,11 @@ private fun navigateTemplate(item: TemplateListItem, onNavigate: (String) -> Uni
         }
 
         TemplateAction.LOGO_CREATION -> {
-            /*
-             * Logo creation currently uses
-             * the existing Text-to-Image generation route.
-             */
-            onNavigate(textToImageRoute(item.prompt))
+            onNavigate(logoRoute(item.prompt))
         }
 
         TemplateAction.CREATE_AVATAR -> {
-            /*
-             * Avatar route will be connected
-             * when an actual avatar route exists.
-             */
-            onNavigate(textToImageRoute(item.prompt))
+            onNavigate(avatarRoute(item.prompt))
         }
     }
 }

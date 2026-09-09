@@ -36,22 +36,20 @@ import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.feature.createhub.model.VideoEngine
-import com.deep.lumoraai.feature.generation.GenerateNowButton
+import com.deep.lumoraai.feature.generation.GenerationBottomBar
 import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
 import com.deep.lumoraai.feature.generation.GeneratedMediaResult
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
-import com.deep.lumoraai.feature.generation.GenerationAspectRatioSection
+import com.deep.lumoraai.feature.generation.imageStyleItems
+import com.deep.lumoraai.feature.generation.videoStyleItems
 import com.deep.lumoraai.feature.generation.GenerationControlsPanel
-import com.deep.lumoraai.feature.generation.GenerationCountSection
 import com.deep.lumoraai.feature.generation.GenerationErrorText
 import com.deep.lumoraai.feature.generation.GenerationLime
 import com.deep.lumoraai.feature.generation.GenerationMuted
 import com.deep.lumoraai.feature.generation.GenerationPanel
 import com.deep.lumoraai.feature.generation.GenerationScreenBg
 import com.deep.lumoraai.feature.generation.GenerationTopBar
-import com.deep.lumoraai.feature.generation.ImageStyleSection
 import com.deep.lumoraai.feature.generation.PromptComposerCard
-import com.deep.lumoraai.feature.generation.VideoStyleSection
 import com.deep.lumoraai.feature.imagetoimage.ImageStyle
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 import com.deep.lumoraai.feature.imagetoimage.apiStyle
@@ -133,7 +131,7 @@ fun CreateHubScreen(
                     .imePadding()
                     .padding(padding)
                     .padding(horizontal = 20.dp)
-                    .padding(top = 18.dp, bottom = 96.dp),
+                    .padding(top = 18.dp, bottom = 18.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 CreateHubModeTabs(
@@ -170,15 +168,6 @@ fun CreateHubScreen(
                         aspectRatio = GenerationAspectRatio.Story
                     }
                 }
-                GenerationAspectRatioSection(
-                    selected = aspectRatio,
-                    onSelected = { aspectRatio = it },
-                    options = if (isVideoMode) GenerationAspectRatio.videoRatios else GenerationAspectRatio.entries
-                )
-                GenerationCountSection(
-                    generations = generations,
-                    onGenerationsChanged = { generations = it.coerceIn(1, 4) }
-                )
                 if (showAdvancedSettings) {
                     GenerationControlsPanel(
                         mediaType = if (selectedMode == CreateHubMode.Video) "Video" else "Image",
@@ -208,11 +197,6 @@ fun CreateHubScreen(
                         onGenerationsChanged = { generations = it.coerceIn(1, 4) }
                     )
                 }
-                if (selectedMode == CreateHubMode.Video) {
-                    VideoStyleSection(selected = videoStyle, onSelected = { videoStyle = it })
-                } else {
-                    ImageStyleSection(selected = imageStyle, onSelected = { imageStyle = it })
-                }
                 GeneratedMediaLoading(
                     isVisible = isGenerating && generatedPath == null,
                     mediaType = if (selectedMode == CreateHubMode.Video) "VIDEO" else "IMAGE"
@@ -225,44 +209,51 @@ fun CreateHubScreen(
                 )
                 GenerationErrorText(error = error, onDismissError = onResetState)
             }
-
-                // Pinned Generate button at the bottom of the content area.
-                GenerateNowButton(
-                    isGenerating = isGenerating,
-                    enabled = generatedPath == null,
-                    creditCost = if (selectedMode == CreateHubMode.Video) {
-                        GenerationGate.CREDITS_PER_VIDEO * generations
-                    } else {
-                        GenerationGate.CREDITS_PER_IMAGE * generations
-                    },
-                    onClick = {
-                        if (selectedMode == CreateHubMode.Video) {
-                            val styledPrompt = "$prompt${videoStyle.promptDirective}"
-                            onGenerateVideo(
-                                styledPrompt,
-                                VideoEngine.FAST_DRAFT.modelId,
-                                null,
-                                (motion * 100).toInt().coerceIn(20, 90),
-                                null,
-                                duration
-                            )
-                        } else {
-                            onGenerateImage(
-                                prompt,
-                                imageStyle.apiStyle,
-                                aspectRatio.width,
-                                aspectRatio.height,
-                                negativePrompt.takeIf { it.isNotBlank() },
-                                null
-                            )
-                        }
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(padding)
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                )
             }
+
+            // Fixed bottom generate bar with collapsible Style / Ratio / Count.
+            val isVideo = selectedMode == CreateHubMode.Video
+            GenerationBottomBar(
+                styleItems = if (isVideo) {
+                    videoStyleItems(videoStyle) { videoStyle = it }
+                } else {
+                    imageStyleItems(imageStyle) { imageStyle = it }
+                },
+                selectedAspectRatio = aspectRatio,
+                onAspectRatioSelected = { aspectRatio = it },
+                aspectRatioOptions = if (isVideo) GenerationAspectRatio.videoRatios else GenerationAspectRatio.entries,
+                generations = generations,
+                onGenerationsChanged = { generations = it.coerceIn(1, 4) },
+                isGenerating = isGenerating,
+                generateEnabled = generatedPath == null,
+                creditCost = if (isVideo) {
+                    GenerationGate.CREDITS_PER_VIDEO * generations
+                } else {
+                    GenerationGate.CREDITS_PER_IMAGE * generations
+                },
+                onGenerate = {
+                    if (isVideo) {
+                        val styledPrompt = "$prompt${videoStyle.promptDirective}"
+                        onGenerateVideo(
+                            styledPrompt,
+                            VideoEngine.FAST_DRAFT.modelId,
+                            null,
+                            (motion * 100).toInt().coerceIn(20, 90),
+                            null,
+                            duration
+                        )
+                    } else {
+                        onGenerateImage(
+                            prompt,
+                            imageStyle.apiStyle,
+                            aspectRatio.width,
+                            aspectRatio.height,
+                            negativePrompt.takeIf { it.isNotBlank() },
+                            null
+                        )
+                    }
+                },
+            )
         }
         }
     }

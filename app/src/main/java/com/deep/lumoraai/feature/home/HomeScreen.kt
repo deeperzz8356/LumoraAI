@@ -25,7 +25,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Compress
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PhotoCamera
@@ -72,8 +74,10 @@ import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.components.LumoraNotificationBell
 import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.utils.OnboardingPreferences
+import com.deep.lumoraai.core.navigation.avatarRoute
 import com.deep.lumoraai.core.navigation.bgStudioRoute
+import com.deep.lumoraai.core.navigation.logoRoute
+import com.deep.lumoraai.core.utils.OnboardingPreferences
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import coil.compose.AsyncImage
 import java.io.File
@@ -587,23 +591,60 @@ private fun ToolsSection(
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(stringResource(com.deep.lumoraai.R.string.ui_tools), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            // AI Background Replace card hidden per UI change request — replaced
+            // by the Logo card below. Kept commented out (not removed).
+            // ToolBentoCard(
+            //     title = stringResource(com.deep.lumoraai.R.string.ui_tool_ai_bg_replace),
+            //     subtitle = "",
+            //     icon = Icons.Default.AutoAwesome,
+            //     accent = Cyan,
+            //     onClick = { onNavigate(bgStudioRoute("replace")) },
+            //     modifier = Modifier
+            //         .weight(1f)
+            //         .height(140.dp),
+            //     prominent = true
+            // )
             ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_ai_bg_replace),
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_logo),
                 subtitle = "",
-                icon = Icons.Default.AutoAwesome,
+                icon = Icons.Default.Brush,
                 accent = Cyan,
-                onClick = { onNavigate(bgStudioRoute("replace")) },
+                onClick = { onNavigate(logoRoute()) },
                 modifier = Modifier
                     .weight(1f)
                     .height(140.dp),
                 prominent = true
             )
             ToolBentoCard(
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_ai_avatar),
+                subtitle = "",
+                icon = Icons.Default.Face,
+                accent = Purple,
+                onClick = { onNavigate(avatarRoute()) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(140.dp),
+                prominent = true
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            ToolBentoCard(
                 title = stringResource(com.deep.lumoraai.R.string.ui_tool_photo_enhancer),
                 subtitle = "",
                 icon = Icons.Default.Tune,
                 accent = Purple,
                 onClick = { onNavigate(Screen.PhotoEnhance.route) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(140.dp),
+                prominent = true
+            )
+            ToolBentoCard(
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_remove_background),
+                subtitle = "",
+                icon = Icons.Default.PhotoCamera,
+                accent = Color(0xFF7D86FF),
+                onClick = { onNavigate(bgStudioRoute("remove")) },
                 modifier = Modifier
                     .weight(1f)
                     .height(140.dp),
@@ -623,28 +664,17 @@ private fun ToolsSection(
                 prominent = true
             )
             ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_remove_background),
+                title = stringResource(com.deep.lumoraai.R.string.ui_tool_compress),
                 subtitle = "",
-                icon = Icons.Default.PhotoCamera,
-                accent = Color(0xFF7D86FF),
-                onClick = { onNavigate(bgStudioRoute("remove")) },
+                icon = Icons.Default.Compress,
+                accent = Lime,
+                onClick = { onNavigate(Screen.Compress.route) },
                 modifier = Modifier
                     .weight(1f)
                     .height(140.dp),
                 prominent = true
             )
         }
-        ToolBentoCard(
-            title = stringResource(com.deep.lumoraai.R.string.ui_tool_compress),
-            subtitle = "",
-            icon = Icons.Default.Compress,
-            accent = Lime,
-            onClick = { onNavigate(Screen.Compress.route) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            prominent = true
-        )
     }
 }
 

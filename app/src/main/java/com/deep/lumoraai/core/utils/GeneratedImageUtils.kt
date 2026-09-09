@@ -129,6 +129,11 @@ fun humanizeProviderError(raw: String): String {
                 "Request a quota increase in Google Cloud Console or try again later."
         "resource_exhausted" in lower || "rate limit" in lower || "too many requests" in raw.lowercase() || "429" in raw ->
             "The server is busy right now (too many requests). Please wait a moment and try again."
+        "returned no content parts" in lower ||
+            "returned no parts" in lower ||
+            "response contains no image data" in lower ||
+            "returned no usable image" in lower ->
+            "Image generation returned no image. Please adjust the prompt or try again."
         else -> raw
     }
 }

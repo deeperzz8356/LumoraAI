@@ -232,7 +232,7 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
             // the real guard via idempotency). Only mark on a real success/consumed
             // outcome so a transient failure doesn't hide an unclaimed reward.
             if (reward2.isSuccess || reward2.isAlreadyClaimed) {
-                markRewardClaimed(rewardId)
+                markRewardClaimed(rewardId, reward2.streakDay)
             }
 
             val awarded = reward2.creditsAwarded
@@ -300,12 +300,13 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
 
     private fun buildRewardTasks(isDeveloperMode: Boolean): List<CreditRewardUi> {
         val today = todayKey()
+        val checkInIndex = normalizeCheckInStreak()
         val weeklySpinAvailable = rewardPrefs.getString(KEY_SPIN_WEEK, "") != weekKey()
         val checkInAvailable = rewardPrefs.getString(KEY_CHECK_IN_DATE, "") != today
         val dailyResetClaimed = rewardPrefs.getString(KEY_DAILY_RESET_DATE, "") == today
         val signupClaimed = rewardPrefs.getBoolean(KEY_SIGNUP_CLAIMED, false)
         val emailLoginClaimed = rewardPrefs.getBoolean(KEY_EMAIL_LOGIN_CLAIMED, false)
-        val checkInAmount = WEEKLY_CHECK_IN_REWARDS[checkInIndex()]
+        val checkInAmount = WEEKLY_CHECK_IN_REWARDS[checkInIndex]
 
         fun available(value: Boolean) = value && !isDeveloperMode
         fun label(actionRes: Int, value: Boolean) = when {
@@ -371,14 +372,18 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         return latestBalance
     }
 
-    private fun markRewardClaimed(rewardId: String) {
+    private fun markRewardClaimed(rewardId: String, serverStreakDay: Int? = null) {
         val today = todayKey()
         rewardPrefs.edit().apply {
             when (rewardId) {
                 REWARD_SPIN -> putString(KEY_SPIN_WEEK, weekKey())
                 REWARD_CHECK_IN -> {
                     putString(KEY_CHECK_IN_DATE, today)
-                    putInt(KEY_CHECK_IN_STREAK, (checkInIndex() + 1) % WEEKLY_CHECK_IN_REWARDS.size)
+                    val completedDayIndex = serverStreakDay
+                        ?.minus(1)
+                        ?.coerceIn(0, WEEKLY_CHECK_IN_REWARDS.lastIndex)
+                        ?: checkInIndex()
+                    putInt(KEY_CHECK_IN_STREAK, (completedDayIndex + 1) % WEEKLY_CHECK_IN_REWARDS.size)
                 }
                 REWARD_DAILY_RESET -> putString(KEY_DAILY_RESET_DATE, today)
                 REWARD_SIGNUP -> putBoolean(KEY_SIGNUP_CLAIMED, true)
@@ -387,6 +392,16 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
                 REWARD_SOCIAL_SHARE -> putString(KEY_SOCIAL_SHARE_DATE, today)
             }
         }.apply()
+    }
+
+    private fun normalizeCheckInStreak(): Int {
+        val index = checkInIndex()
+        val lastCheckIn = rewardPrefs.getString(KEY_CHECK_IN_DATE, "").orEmpty()
+        val streakExpired = lastCheckIn.isNotBlank() && lastCheckIn != todayKey() && lastCheckIn != yesterdayKey()
+        if (streakExpired && rewardPrefs.getInt(KEY_CHECK_IN_STREAK, 0) != 0) {
+            rewardPrefs.edit().putInt(KEY_CHECK_IN_STREAK, 0).apply()
+        }
+        return index
     }
 
     private fun checkInIndex(): Int {
