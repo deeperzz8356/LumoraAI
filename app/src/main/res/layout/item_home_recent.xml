@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="190dp"
+    android:layout_height="78dp"
+    android:background="@drawable/bg_home_card"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <FrameLayout
+        android:id="@+id/mediaFrame"
+        android:layout_width="58dp"
+        android:layout_height="58dp"
+        android:background="@drawable/bg_home_media">
+
+        <ImageView
+            android:id="@+id/mediaImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/playBadge"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_home_chip"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="▶"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="9dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="2"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:includeFontPadding="false"
+            android:textColor="#FF94A0B8"
+            android:textSize="11sp" />
+    </LinearLayout>
+</LinearLayout>

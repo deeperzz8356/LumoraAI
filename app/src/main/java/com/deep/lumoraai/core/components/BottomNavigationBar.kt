@@ -1,54 +1,16 @@
 package com.deep.lumoraai.core.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import android.graphics.Color
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.deep.lumoraai.core.theme.IntroPalette
-import com.deep.lumoraai.core.theme.IntroTypography
-import com.deep.lumoraai.core.theme.LumoraTheme
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.viewinterop.AndroidView
+import com.deep.lumoraai.databinding.LayoutBottomNavigationBinding
 
-/**
- * Responsive bottom navigation bar
- * Visible only on mobile screens (<600dp width)
- */
 @Composable
 fun BottomNavigationBar(
     items: List<String>,
@@ -56,181 +18,71 @@ fun BottomNavigationBar(
     onSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Check screen size for responsive behavior
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp
-    
-    // Only show on mobile screens
-    if (screenWidth < 600) {
-        ResponsiveBottomNav(
-            selected = selected,
-            onSelected = onSelected,
-            modifier = modifier
-        )
-    }
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    if (screenWidth >= 600) return
+
+    AndroidView(
+        factory = { LayoutBottomNavigationBinding.inflate(LayoutInflater.from(it)).root },
+        update = { root ->
+            bindBottomNavigation(
+                binding = LayoutBottomNavigationBinding.bind(root),
+                selected = selected,
+                onSelected = onSelected,
+            )
+        },
+        modifier = modifier
+    )
 }
 
-@Composable
-private fun ResponsiveBottomNav(
+private fun bindBottomNavigation(
+    binding: LayoutBottomNavigationBinding,
     selected: String,
     onSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
 ) {
-    // Center Create (Create Hub) button size — kept for when the center button
-    // is restored. Currently unused because the center button is commented out.
-    // val centerSize by animateDpAsState(
-    //     targetValue = if (selected == "createhub") 62.dp else 58.dp,
-    //     animationSpec = tween(180, easing = FastOutSlowInEasing),
-    //     label = "centerCreateSize"
-    // )
-
-    // Nav row only. The persistent banner (banner_all) is hoisted to the
-    // navigation root (NavGraph) and rendered directly BELOW this nav row, with
-    // the system-nav inset applied under the banner there. So this row sits
-    // flush (no navigationBarsPadding) — that removes the black gap between the
-    // nav bar and the banner.
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(88.dp),
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .background(Color(0xFF11192B))
-                .border(BorderStroke(1.dp, Color(0xFF1B2A44))),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Nav bar now shows only Home, Templates and History. The AI Tools
-            // item and the center Create (Create Hub) button are hidden per UI
-            // change request — kept commented out (not removed) so they can be
-            // restored later.
-            NavItem(
-                icon = Icons.Default.Home,
-                label = stringResource(com.deep.lumoraai.R.string.ui_home),
-                isHome = true,
-                isSelected = selected == "home",
-                onClick = { onSelected("home") },
-                modifier = Modifier.weight(1f)
-            )
-            NavItem(
-                icon = Icons.Default.Search,
-                label = stringResource(com.deep.lumoraai.R.string.ui_templates),
-                isSelected = selected == "templates",
-                onClick = { onSelected("templates") },
-                modifier = Modifier.weight(1f)
-            )
-            // Create Hub center-button spacer — hidden with the center button.
-            // Spacer(modifier = Modifier.width(72.dp))
-            // AI Tools nav item — hidden per UI change request.
-            // NavItem(
-            //     icon = Icons.Default.AutoAwesome,
-            //     label = stringResource(com.deep.lumoraai.R.string.ui_ai_tools),
-            //     isSelected = selected == "aitools",
-            //     onClick = { onSelected("aitools") },
-            //     modifier = Modifier.weight(1f)
-            // )
-            NavItem(
-                icon = Icons.Default.History,
-                label = stringResource(com.deep.lumoraai.R.string.ui_history),
-                isSelected = selected == "history",
-                onClick = { onSelected("history") },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        // Center Create (Create Hub) button — hidden per UI change request.
-        // Kept commented out so it can be restored later.
-        // Box(
-        //     modifier = Modifier
-        //         .padding(bottom = 26.dp)
-        //         .size(centerSize)
-        //         .background(IntroPalette.AccentLime, CircleShape)
-        //         .clickable { onSelected("createhub") },
-        //     contentAlignment = Alignment.Center
-        // ) {
-        //     Column(
-        //         horizontalAlignment = Alignment.CenterHorizontally,
-        //         verticalArrangement = Arrangement.Center,
-        //         modifier = Modifier.fillMaxHeight()
-        //     ) {
-        //         Icon(
-        //             Icons.Default.AutoAwesome,
-        //             contentDescription = stringResource(com.deep.lumoraai.R.string.ui_create),
-        //             tint = Color.Black,
-        //             modifier = Modifier.size(22.dp)
-        //         )
-        //         Spacer(modifier = Modifier.height(3.dp))
-        //         Text(
-        //             stringResource(com.deep.lumoraai.R.string.ui_create),
-        //             color = Color.Black,
-        //             fontSize = 9.sp,
-        //             lineHeight = 11.sp,
-        //             fontWeight = FontWeight.Bold
-        //         )
-        //     }
-        // }
-    } // end nav-row Box
+    bindNavItem(
+        container = binding.homeItem,
+        icon = binding.homeIcon,
+        label = binding.homeLabel,
+        route = "home",
+        selected = selected,
+        onSelected = onSelected,
+        disableWhenSelected = true,
+    )
+    bindNavItem(
+        container = binding.templatesItem,
+        icon = binding.templatesIcon,
+        label = binding.templatesLabel,
+        route = "templates",
+        selected = selected,
+        onSelected = onSelected,
+    )
+    bindNavItem(
+        container = binding.historyItem,
+        icon = binding.historyIcon,
+        label = binding.historyLabel,
+        route = "history",
+        selected = selected,
+        onSelected = onSelected,
+    )
 }
 
-@Composable
-private fun NavItem(
-    icon: ImageVector,
-    label: String,
-    isHome: Boolean = false,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun bindNavItem(
+    container: LinearLayout,
+    icon: TextView,
+    label: TextView,
+    route: String,
+    selected: String,
+    onSelected: (String) -> Unit,
+    disableWhenSelected: Boolean = false,
 ) {
-    val tint by animateColorAsState(
-        targetValue = if (isSelected) IntroPalette.AccentLime else Color(0xFF8A94A9),
-        animationSpec = tween(180, easing = FastOutSlowInEasing),
-        label = "navTint"
+    val isSelected = selected == route
+    val color = if (isSelected) Color.rgb(214, 255, 47) else Color.rgb(138, 148, 169)
+    icon.setTextColor(color)
+    label.setTextColor(color)
+    label.alpha = if (isSelected) 1f else 0.74f
+    icon.textSize = if (isSelected) 26f else 24f
+    container.isEnabled = !(disableWhenSelected && isSelected)
+    container.setOnClickListener(
+        if (container.isEnabled) View.OnClickListener { onSelected(route) } else null
     )
-    val iconSize by animateDpAsState(
-        targetValue = if (isSelected) 26.dp else 24.dp,
-        animationSpec = tween(180, easing = FastOutSlowInEasing),
-        label = "navIconSize"
-    )
-    val labelAlpha by animateFloatAsState(
-        targetValue = if (isSelected) 1f else 0.74f,
-        animationSpec = tween(180, easing = FastOutSlowInEasing),
-        label = "navLabelAlpha"
-    )
-    val isEnabled = !(isHome && isSelected)
-    
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = modifier
-            .fillMaxHeight()
-            .clickable(enabled = isEnabled, onClick = onClick)
-    ) {
-        Icon(
-            icon,
-            contentDescription = label,
-            tint = tint,
-            modifier = Modifier.size(iconSize)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            label,
-            style = IntroTypography.navLabel.copy(color = tint.copy(alpha = labelAlpha))
-        )
-    }
-}
-
-@Preview(name = "Bottom Navigation - Mobile")
-@Composable
-private fun BottomNavigationBarPreview() {
-    LumoraTheme {
-        BottomNavigationBar(
-            items = emptyList(),
-            selected = "home",
-            onSelected = {}
-        )
-    }
 }

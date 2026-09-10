@@ -1,97 +1,66 @@
 package com.deep.lumoraai.feature.home
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
+import android.graphics.Bitmap
+import android.graphics.drawable.GradientDrawable
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.GridLayout
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Brush
-import androidx.compose.material.icons.filled.Compress
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
+import com.deep.lumoraai.ads.AdFormat
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.AdsConfigStore
+import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.ads.LocalAdsManager
-import com.deep.lumoraai.ads.PlacementNativeAd
+import com.deep.lumoraai.ads.nativead.NativeAdManager
 import com.deep.lumoraai.ads.rememberCurrentActivity
-import com.deep.lumoraai.core.components.AppEmptyScreen
-import com.deep.lumoraai.core.components.AppErrorScreen
-import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.core.components.LumoraNotificationBell
-import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.avatarRoute
 import com.deep.lumoraai.core.navigation.bgStudioRoute
 import com.deep.lumoraai.core.navigation.logoRoute
-import com.deep.lumoraai.core.utils.OnboardingPreferences
 import com.deep.lumoraai.core.restrictions.GenerationGate
-import coil.compose.AsyncImage
+import com.deep.lumoraai.core.utils.OnboardingPreferences
+import com.deep.lumoraai.databinding.ItemHomeActionBinding
+import com.deep.lumoraai.databinding.ItemHomeRecentBinding
+import com.deep.lumoraai.databinding.ItemHomeToolBinding
+import com.deep.lumoraai.databinding.ScreenHomeBinding
+import com.google.android.gms.ads.nativead.MediaView
+import com.google.android.gms.ads.nativead.NativeAd
+import com.google.android.gms.ads.nativead.NativeAdView
+import kotlinx.coroutines.delay
 import java.io.File
-import androidx.compose.ui.res.stringResource
 
-private val HomeBackground = Color(0xFF081020)
-private val HomeCard = Color(0xFF10192D)
-private val HomeStroke = Color(0xFF172238)
-private val Lime = Color(0xFFD6FF2F)
-private val Purple = Color(0xFF9C63FF)
-private val Pink = Color(0xFFFF3D9D)
-private val Cyan = Color(0xFF20E6F2)
-private val Muted = Color(0xFF94A0B8)
-private val CardShape = RoundedCornerShape(14.dp)
+private const val HOME_XML_NATIVE_TAG = "home_xml_native_loaded"
+private const val HomeBackground = 0xFF081020.toInt()
+private const val Lime = 0xFFD6FF2F.toInt()
+private const val Purple = 0xFF9C63FF.toInt()
+private const val Pink = 0xFFFF3D9D.toInt()
+private const val Cyan = 0xFF20E6F2.toInt()
+private const val Indigo = 0xFF7D86FF.toInt()
 
 @Composable
 fun HomeScreen(
@@ -102,52 +71,34 @@ fun HomeScreen(
     onNotificationClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = HomeBackground,
-        bottomBar = { BottomNavigationBar(emptyList(), "home", onNavigate) }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(HomeBackground)
-                .padding(padding)
-        ) {
-        when (uiState) {
-                is HomeUiState.Loading -> AppLoadingScreen()
-                is HomeUiState.Error -> AppErrorScreen(message = uiState.message)
-                is HomeUiState.Empty -> AppEmptyScreen(title = stringResource(com.deep.lumoraai.R.string.ui_no_content), body = "Nothing to see here.")
-                is HomeUiState.Success -> HomeContent(
-                    uiState = uiState,
-                    onNavigate = onNavigate,
-                    unreadCount = unreadCount,
-                    onNotificationClick = onNotificationClick,
-                )
-            }
-            // banner_all is now a single persistent instance rendered by the
-            // bottom navigation bar (shared across all primary tabs), so no
-            // per-screen banner is placed here.
-        }
-    }
-}
-
-@Composable
-private fun HomeContent(
-    uiState: HomeUiState.Success,
-    onNavigate: (String) -> Unit,
-    unreadCount: Int = 0,
-    onNotificationClick: (() -> Unit)? = null,
-) {
     val context = LocalContext.current
     val ads = LocalAdsManager.current
+    val adStore = LocalAdsConfigStore.current
     val activity = rememberCurrentActivity()
+    val handler = remember { Handler(Looper.getMainLooper()) }
+    var showProfileHint by remember { mutableStateOf(!OnboardingPreferences.isProfileHintSeen(context)) }
 
-    // Preload the feature-selection interstitial when Home is shown.
-    LaunchedEffect(Unit) { ads?.preloadInterstitial(context, AdPlacement.INTER_ALL) }
+    LaunchedEffect(Unit) {
+        ads?.preloadInterstitial(context, AdPlacement.INTER_ALL)
+    }
 
-    // Feature-selection navigation goes through the INTER_ALL trigger. Bottom-nav
-    // taps use onNavigate directly and never call this (no recordFeatureTrigger).
-    val onFeatureSelect: (String) -> Unit = { route ->
+    fun dismissProfileHint() {
+        OnboardingPreferences.markProfileHintSeen(context)
+        showProfileHint = false
+    }
+
+    LaunchedEffect(showProfileHint) {
+        if (showProfileHint) {
+            delay(2_000)
+            dismissProfileHint()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { handler.removeCallbacksAndMessages(null) }
+    }
+
+    val featureSelect: (String) -> Unit = { route ->
         if (ads == null) {
             onNavigate(route)
         } else {
@@ -158,588 +109,311 @@ private fun HomeContent(
         }
     }
 
-    var showProfileHint by remember { mutableStateOf(!OnboardingPreferences.isProfileHintSeen(context)) }
-    val dismissProfileHint = {
-        OnboardingPreferences.markProfileHintSeen(context)
-        showProfileHint = false
-    }
-    // Auto-dismiss the profile hint after ~2s so it never lingers on screen.
-    LaunchedEffect(showProfileHint) {
-        if (showProfileHint) {
-            kotlinx.coroutines.delay(2_000)
-            dismissProfileHint()
-        }
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .padding(top = 18.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        HomeTopBar(
-            userName = uiState.userName,
-            credits = uiState.credits,
-            onNavigate = onNavigate,
-            unreadCount = unreadCount,
-            onNotificationClick = onNotificationClick,
-        )
-        HomeHero(onExploreRecent = { onNavigate(Screen.History.route) })
-        MainCreateGrid(onNavigate = onFeatureSelect)
-        RecentCreationsSection(items = uiState.recentItems, onNavigate = onNavigate)
-        // Large native between the Create/Recent area and the Tools section.
-        PlacementNativeAd(placement = AdPlacement.NATIVE_HOME)
-        ToolsSection(onNavigate = onFeatureSelect)
-        Spacer(modifier = Modifier.height(72.dp))
-    }
-    if (showProfileHint) {
-        ProfileHintOverlay(
-            onDismiss = dismissProfileHint,
-            onOpenProfile = {
-                dismissProfileHint()
-                onNavigate(Screen.Profile.route)
-            },
-        )
-    }
-}
-
-@Composable
-private fun ProfileHintOverlay(
-    onDismiss: () -> Unit,
-    onOpenProfile: () -> Unit,
-) {
-    Popup(
-        alignment = Alignment.TopStart,
-        onDismissRequest = onDismiss,
-        properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
-    ) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = ComposeColor(HomeBackground),
+        bottomBar = { BottomNavigationBar(emptyList(), Screen.Home.route, onNavigate) }
+    ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable(onClick = onDismiss),
+                .background(ComposeColor(HomeBackground))
+                .padding(padding)
         ) {
-            Box(
-                modifier = Modifier
-                    .padding(start = 12.dp, top = 10.dp)
-                    .size(56.dp)
-                    .clickable(onClick = onOpenProfile),
+            AndroidView(
+                factory = { ScreenHomeBinding.inflate(LayoutInflater.from(it)).root },
+                update = { root ->
+                    bindHome(
+                        binding = ScreenHomeBinding.bind(root),
+                        uiState = uiState,
+                        unreadCount = unreadCount,
+                        showProfileHint = showProfileHint,
+                        onNavigate = onNavigate,
+                        onFeatureSelect = featureSelect,
+                        onNotificationClick = onNotificationClick,
+                        onDismissProfileHint = { dismissProfileHint() },
+                        bindNativeAd = {
+                            if (ads != null && adStore != null) {
+                                bindNativeAdSlot(root.context, it, ads.nativeManager, adStore)
+                            } else {
+                                it.visibility = View.GONE
+                            }
+                        }
+                    )
+                },
+                modifier = Modifier.fillMaxSize()
             )
-            Surface(
-                modifier = Modifier
-                    .padding(start = 16.dp, top = 72.dp)
-                    .width(210.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF172A4A),
-                border = BorderStroke(1.dp, Lime.copy(alpha = 0.65f)),
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = Lime)
-                    Text(stringResource(R.string.ui_profile_tip), color = Color.White, fontWeight = FontWeight.Medium)
-                }
-            }
         }
     }
 }
 
-@Composable
-private fun HomeTopBar(
-    userName: String,
-    credits: Int,
+private fun bindHome(
+    binding: ScreenHomeBinding,
+    uiState: HomeUiState,
+    unreadCount: Int,
+    showProfileHint: Boolean,
     onNavigate: (String) -> Unit,
-    unreadCount: Int = 0,
-    onNotificationClick: (() -> Unit)? = null,
+    onFeatureSelect: (String) -> Unit,
+    onNotificationClick: (() -> Unit)?,
+    onDismissProfileHint: () -> Unit,
+    bindNativeAd: (ViewGroup) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, Color(0xFF2D77FF), CircleShape)
-                    .clickable { onNavigate(Screen.Profile.route) }
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.user_avatar),
-                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column {
-                val rawName = userName.ifBlank { stringResource(com.deep.lumoraai.R.string.ui_guest) }
-                // Show at most 8 characters; append "..." only when it's longer.
-                val displayName = if (rawName.length > 8) "${rawName.take(8)}..." else rawName
-                Text(
-                    text = stringResource(com.deep.lumoraai.R.string.ui_hi_name, displayName),
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    lineHeight = 21.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = stringResource(com.deep.lumoraai.R.string.ui_good_morning),
-                    color = Color.White.copy(alpha = 0.72f),
-                    fontSize = 12.sp,
-                    lineHeight = 15.sp
-                )
-            }
-        }
+    binding.loading.visibility = if (uiState is HomeUiState.Loading) View.VISIBLE else View.GONE
+    binding.messageState.visibility = View.GONE
+    binding.contentScroll.visibility = View.GONE
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CreditsChip(credits = credits, onClick = { onNavigate(Screen.Credits.route) })
-            LumoraNotificationBell(
-                hasUnreadNotifications = unreadCount > 0,
-                onClick = {
-                    onNotificationClick?.invoke()
-                        ?: onNavigate(Screen.Notifications.route)
-                }
-            )
-        }
+    when (uiState) {
+        is HomeUiState.Loading -> return
+        is HomeUiState.Error -> showMessage(binding, uiState.message, "")
+        is HomeUiState.Empty -> showMessage(
+            binding,
+            binding.root.context.getString(R.string.ui_no_content),
+            "Nothing to see here."
+        )
+        is HomeUiState.Success -> bindSuccess(
+            binding = binding,
+            state = uiState,
+            unreadCount = unreadCount,
+            showProfileHint = showProfileHint,
+            onNavigate = onNavigate,
+            onFeatureSelect = onFeatureSelect,
+            onNotificationClick = onNotificationClick,
+            onDismissProfileHint = onDismissProfileHint,
+            bindNativeAd = bindNativeAd,
+        )
     }
 }
 
-@Composable
-private fun CreditsChip(credits: Int, onClick: () -> Unit) {
-    val label = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
-        "Unlimited"
+private fun showMessage(binding: ScreenHomeBinding, title: String, body: String) {
+    binding.messageState.visibility = View.VISIBLE
+    binding.messageTitle.text = title
+    binding.messageBody.text = body
+    binding.messageBody.visibility = if (body.isBlank()) View.GONE else View.VISIBLE
+}
+
+private fun bindSuccess(
+    binding: ScreenHomeBinding,
+    state: HomeUiState.Success,
+    unreadCount: Int,
+    showProfileHint: Boolean,
+    onNavigate: (String) -> Unit,
+    onFeatureSelect: (String) -> Unit,
+    onNotificationClick: (() -> Unit)?,
+    onDismissProfileHint: () -> Unit,
+    bindNativeAd: (ViewGroup) -> Unit,
+) {
+    val context = binding.root.context
+    binding.contentScroll.visibility = View.VISIBLE
+    binding.profileHintOverlay.visibility = if (showProfileHint) View.VISIBLE else View.GONE
+    binding.profileHintOverlay.setOnClickListener { onDismissProfileHint() }
+    binding.profileHintAvatarHit.setOnClickListener {
+        onDismissProfileHint()
+        onNavigate(Screen.Profile.route)
+    }
+
+    val rawName = state.userName.ifBlank { context.getString(R.string.ui_guest) }
+    val displayName = if (rawName.length > 8) "${rawName.take(8)}..." else rawName
+    binding.greeting.text = context.getString(R.string.ui_hi_name, displayName)
+    binding.avatar.setOnClickListener { onNavigate(Screen.Profile.route) }
+    binding.creditsChip.text = if (state.credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
+        "✦ Unlimited"
     } else {
-        "$credits"
+        "✦ ${state.credits}"
     }
-    Row(
-        modifier = Modifier
-            .height(28.dp)
-            .clip(RoundedCornerShape(50))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text("✦", color = Lime, fontSize = 13.sp, lineHeight = 13.sp)
-        Text(label, color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+    binding.creditsChip.setOnClickListener { onNavigate(Screen.Credits.route) }
+    binding.unreadDot.visibility = if (unreadCount > 0) View.VISIBLE else View.GONE
+    binding.notificationButton.setOnClickListener {
+        onNotificationClick?.invoke() ?: onNavigate(Screen.Notifications.route)
+    }
+    binding.heroPreview.setOnClickListener { onNavigate(Screen.History.route) }
+
+    bindCreateGrid(binding.createGrid, onFeatureSelect)
+    bindRecent(binding, state.recentItems, onNavigate)
+    bindNativeAd(binding.nativeAdSlot)
+    bindToolsGrid(binding.toolsGrid, onFeatureSelect)
+}
+
+private fun bindCreateGrid(grid: GridLayout, onNavigate: (String) -> Unit) {
+    if (grid.childCount == 4) return
+    grid.removeAllViews()
+    val context = grid.context
+    listOf(
+        HomeCardSpec(context.getString(R.string.ui_create_text_to_image), context.getString(R.string.ui_create_dream_it), "*", Lime, Screen.TextToImage.route),
+        HomeCardSpec(context.getString(R.string.ui_create_img_to_img), context.getString(R.string.ui_create_refine_it), "#", Purple, Screen.ImageToImage.route),
+        HomeCardSpec(context.getString(R.string.ui_create_img_to_video), context.getString(R.string.ui_create_animate_it), "◆", Pink, Screen.ImageToVideo.route),
+        HomeCardSpec(context.getString(R.string.ui_create_text_to_video), context.getString(R.string.ui_create_direct_it), "▶", Cyan, Screen.TextToVideo.route),
+    ).forEachIndexed { index, spec ->
+        val card = ItemHomeActionBinding.inflate(LayoutInflater.from(context), grid, false)
+        card.title.text = spec.title
+        card.subtitle.text = spec.subtitle
+        card.iconGlyph.text = spec.glyph
+        card.iconGlyph.setTextColor(spec.accent)
+        card.arrow.setTextColor(spec.accent)
+        card.root.setOnClickListener { onNavigate(spec.route) }
+        grid.addView(card.root, gridParams(index, 118, grid))
     }
 }
 
-@Composable
-private fun HomeHero(onExploreRecent: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(132.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(com.deep.lumoraai.R.string.ui_what_will_we), color = Muted, fontSize = 14.sp, lineHeight = 18.sp)
-            Text(stringResource(com.deep.lumoraai.R.string.ui_create), color = Color.White, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold)
-            Text(stringResource(com.deep.lumoraai.R.string.ui_today), color = Lime, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold)
-            Text(stringResource(com.deep.lumoraai.R.string.ui_turn_ideas_into_stunning_visuals), color = Muted, fontSize = 13.sp, lineHeight = 20.sp)
-            Row(modifier = Modifier.padding(top = 4.dp)) {
-                Box(modifier = Modifier.width(34.dp).height(2.dp).background(Lime))
-                Box(modifier = Modifier.width(34.dp).height(2.dp).background(Purple))
-            }
-        }
-        HeroPreviewArt(onClick = onExploreRecent)
+private fun bindToolsGrid(grid: GridLayout, onNavigate: (String) -> Unit) {
+    if (grid.childCount == 6) return
+    grid.removeAllViews()
+    val context = grid.context
+    listOf(
+        HomeCardSpec(context.getString(R.string.ui_tool_logo), "", "✎", Cyan, logoRoute()),
+        HomeCardSpec(context.getString(R.string.ui_tool_ai_avatar), "", "☺", Purple, avatarRoute()),
+        HomeCardSpec(context.getString(R.string.ui_tool_photo_enhancer), "", "≋", Purple, Screen.PhotoEnhance.route),
+        HomeCardSpec(context.getString(R.string.ui_tool_remove_background), "", "◉", Indigo, bgStudioRoute("remove")),
+        HomeCardSpec(context.getString(R.string.ui_tool_promo_videos), "", "▶", Pink, Screen.PromoVideo.route),
+        HomeCardSpec(context.getString(R.string.ui_tool_compress), "", "⇲", Lime, Screen.Compress.route),
+    ).forEachIndexed { index, spec ->
+        val card = ItemHomeToolBinding.inflate(LayoutInflater.from(context), grid, false)
+        card.title.text = spec.title
+        card.iconGlyph.text = spec.glyph
+        card.iconGlyph.setTextColor(spec.accent)
+        card.iconGlyph.background = roundedFill(accentWithAlpha(spec.accent, 0x24), 12f, grid)
+        card.root.setOnClickListener { onNavigate(spec.route) }
+        grid.addView(card.root, gridParams(index, 140, grid))
     }
 }
 
-@Composable
-private fun HeroPreviewArt(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .width(106.dp)
-            .height(98.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(Color(0xFF6E35E7), Color(0xFF24163F), Color(0xFF10182D))
-                )
-            )
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.group_48096841),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-        Icon(
-            imageVector = Icons.Default.PlayArrow,
-            contentDescription = null,
-            tint = Color.White.copy(alpha = 0.88f),
-            modifier = Modifier
-                .size(34.dp)
-                .shadow(10.dp, CircleShape)
-        )
-    }
-}
-
-@Composable
-private fun MainCreateGrid(
-    onNavigate: (String) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-        Text(stringResource(com.deep.lumoraai.R.string.ui_create), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-        Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreateActionCard(stringResource(com.deep.lumoraai.R.string.ui_create_text_to_image), stringResource(com.deep.lumoraai.R.string.ui_create_dream_it), Icons.Default.AutoAwesome, Lime, { onNavigate(Screen.TextToImage.route) }, Modifier.weight(1f))
-            CreateActionCard(stringResource(com.deep.lumoraai.R.string.ui_create_img_to_img), stringResource(com.deep.lumoraai.R.string.ui_create_refine_it), Icons.Default.Image, Purple, { onNavigate(Screen.ImageToImage.route) }, Modifier.weight(1f))
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            CreateActionCard(stringResource(com.deep.lumoraai.R.string.ui_create_img_to_video), stringResource(com.deep.lumoraai.R.string.ui_create_animate_it), Icons.Default.Movie, Pink, { onNavigate(Screen.ImageToVideo.route) }, Modifier.weight(1f))
-            CreateActionCard(stringResource(com.deep.lumoraai.R.string.ui_create_text_to_video), stringResource(com.deep.lumoraai.R.string.ui_create_direct_it), Icons.Default.PlayArrow, Cyan, { onNavigate(Screen.TextToVideo.route) }, Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun CreateActionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    accent: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(118.dp),
-        shape = CardShape,
-        color = HomeCard,
-        border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.72f))
-    ) {
-        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF18243C)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(21.dp))
-            }
-            Column(modifier = Modifier.align(Alignment.BottomStart)) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = subtitle,
-                    color = Color.White.copy(alpha = 0.58f),
-                    fontSize = 12.sp,
-                    lineHeight = 15.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .size(22.dp)
-                    .align(Alignment.BottomEnd)
-                    .clip(CircleShape)
-                    .background(accent.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = accent, modifier = Modifier.size(15.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecentCreationsSection(
+private fun bindRecent(
+    binding: ScreenHomeBinding,
     items: List<HomeRecentItem>,
     onNavigate: (String) -> Unit,
 ) {
-    if (items.isEmpty()) return
-
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(stringResource(com.deep.lumoraai.R.string.ui_recent), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-            Text(
-                text = "View all",
-                color = Lime,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { onNavigate(Screen.History.route) }
-            )
-        }
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(items, key = { it.id }) { item ->
-                RecentCreationCard(
-                    item = item,
-                    onClick = { onNavigate(Screen.History.route) },
-                    modifier = Modifier.width(190.dp)
-                )
-            }
-        }
+    binding.recentSection.visibility = if (items.isEmpty()) View.GONE else View.VISIBLE
+    binding.viewAllRecent.setOnClickListener { onNavigate(Screen.History.route) }
+    binding.recentList.removeAllViews()
+    items.forEachIndexed { index, item ->
+        val row = ItemHomeRecentBinding.inflate(LayoutInflater.from(binding.root.context), binding.recentList, false)
+        row.title.text = item.title
+        row.time.text = item.timeLabel
+        row.playBadge.visibility = if (item.mediaType.equals("VIDEO", ignoreCase = true)) View.VISIBLE else View.GONE
+        bindRecentImage(row.mediaImage, item)
+        row.root.setOnClickListener { onNavigate(Screen.History.route) }
+        val marginEnd = if (index == items.lastIndex) 0 else dp(row.root, 10)
+        binding.recentList.addView(row.root, ViewGroup.MarginLayoutParams(dp(row.root, 190), dp(row.root, 78)).apply {
+            setMargins(0, 0, marginEnd, 0)
+        })
     }
 }
 
-@Composable
-private fun RecentCreationCard(
-    item: HomeRecentItem,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun bindRecentImage(image: ImageView, item: HomeRecentItem) {
+    val file = item.mediaUrl?.takeIf { it.isNotBlank() }?.let(::File)
+    when {
+        file == null || !file.exists() -> image.setImageResource(item.fallbackImageRes)
+        item.mediaType.equals("VIDEO", ignoreCase = true) -> {
+            videoFrame(file)?.let { image.setImageBitmap(it) } ?: image.setImageResource(item.fallbackImageRes)
+        }
+        else -> image.setImageURI(Uri.fromFile(file))
+    }
+    image.contentDescription = item.title
+}
+
+private fun bindNativeAdSlot(
+    context: android.content.Context,
+    slot: ViewGroup,
+    manager: NativeAdManager,
+    store: AdsConfigStore,
 ) {
-    val isVideo = item.mediaType.equals("VIDEO", ignoreCase = true)
-    val mediaPath = item.mediaUrl.orEmpty()
-    val mediaFile = remember(mediaPath) { File(mediaPath) }
-
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(78.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = HomeCard,
-        border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.58f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(9.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(58.dp)
-                    .clip(RoundedCornerShape(9.dp))
-                    .background(Color.Black),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isVideo && mediaPath.isNotBlank() && mediaFile.exists()) {
-                    VideoFirstFrameThumbnail(
-                        filePath = mediaPath,
-                        contentDescription = item.title,
-                        fallbackImageRes = item.fallbackImageRes,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else if (!isVideo && mediaPath.isNotBlank() && mediaFile.exists()) {
-                    AsyncImage(
-                        model = mediaFile,
-                        contentDescription = item.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = item.fallbackImageRes),
-                        contentDescription = item.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-                if (isVideo) {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .background(Color.Black.copy(alpha = 0.45f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                    }
-                }
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.title,
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    lineHeight = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(item.timeLabel, color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
-            }
-        }
+    val config = store.current
+    if (!config.formatEnabled(AdFormat.NATIVE) || !config.isPlacementEnabled(AdPlacement.NATIVE_HOME)) {
+        slot.visibility = View.GONE
+        return
     }
+    if (slot.tag == HOME_XML_NATIVE_TAG) return
+    slot.tag = HOME_XML_NATIVE_TAG
+    slot.visibility = View.GONE
+    manager.load(
+        context = context,
+        placement = AdPlacement.NATIVE_HOME,
+        cacheKey = "home_xml",
+        onLoaded = { ad ->
+            slot.removeAllViews()
+            val adView = LayoutInflater.from(context).inflate(R.layout.ad_native_large, slot, false) as NativeAdView
+            bindAssetViews(adView)
+            populateNativeAd(adView, ad)
+            slot.addView(adView)
+            slot.visibility = View.VISIBLE
+        },
+        onFailed = {
+            slot.removeAllViews()
+            slot.visibility = View.GONE
+        }
+    )
 }
 
-@Composable
-private fun ToolsSection(
-    onNavigate: (String) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(stringResource(com.deep.lumoraai.R.string.ui_tools), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            // AI Background Replace card hidden per UI change request — replaced
-            // by the Logo card below. Kept commented out (not removed).
-            // ToolBentoCard(
-            //     title = stringResource(com.deep.lumoraai.R.string.ui_tool_ai_bg_replace),
-            //     subtitle = "",
-            //     icon = Icons.Default.AutoAwesome,
-            //     accent = Cyan,
-            //     onClick = { onNavigate(bgStudioRoute("replace")) },
-            //     modifier = Modifier
-            //         .weight(1f)
-            //         .height(140.dp),
-            //     prominent = true
-            // )
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_logo),
-                subtitle = "",
-                icon = Icons.Default.Brush,
-                accent = Cyan,
-                onClick = { onNavigate(logoRoute()) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(140.dp),
-                prominent = true
-            )
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_ai_avatar),
-                subtitle = "",
-                icon = Icons.Default.Face,
-                accent = Purple,
-                onClick = { onNavigate(avatarRoute()) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(140.dp),
-                prominent = true
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_photo_enhancer),
-                subtitle = "",
-                icon = Icons.Default.Tune,
-                accent = Purple,
-                onClick = { onNavigate(Screen.PhotoEnhance.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(140.dp),
-                prominent = true
-            )
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_remove_background),
-                subtitle = "",
-                icon = Icons.Default.PhotoCamera,
-                accent = Color(0xFF7D86FF),
-                onClick = { onNavigate(bgStudioRoute("remove")) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(140.dp),
-                prominent = true
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_promo_videos),
-                subtitle = "",
-                icon = Icons.Default.VideoLibrary,
-                accent = Pink,
-                onClick = { onNavigate(Screen.PromoVideo.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(140.dp),
-                prominent = true
-            )
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_compress),
-                subtitle = "",
-                icon = Icons.Default.Compress,
-                accent = Lime,
-                onClick = { onNavigate(Screen.Compress.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(140.dp),
-                prominent = true
-            )
-        }
-    }
+private fun bindAssetViews(adView: NativeAdView) {
+    adView.headlineView = adView.findViewById<TextView>(R.id.ad_headline)
+    adView.bodyView = adView.findViewById<TextView>(R.id.ad_body)
+    adView.callToActionView = adView.findViewById<Button>(R.id.ad_call_to_action)
+    adView.iconView = adView.findViewById<ImageView>(R.id.ad_app_icon)
+    adView.mediaView = adView.findViewById<MediaView?>(R.id.ad_media)
 }
 
-@Composable
-private fun ToolBentoCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    accent: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    prominent: Boolean = false,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier,
-        shape = CardShape,
-        color = HomeCard,
-        border = BorderStroke(1.dp, HomeStroke.copy(alpha = 0.58f))
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(18.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(if (prominent) 44.dp else 36.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(accent.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(if (prominent) 26.dp else 20.dp))
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = title,
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = if (prominent) 16.sp else 15.sp,
-                        lineHeight = if (prominent) 20.sp else 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Start,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (subtitle.isNotBlank()) {
-                        Text(
-                            text = subtitle,
-                            color = Muted,
-                            fontSize = 12.sp,
-                            lineHeight = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
+private fun populateNativeAd(adView: NativeAdView, ad: NativeAd) {
+    (adView.headlineView as? TextView)?.text = ad.headline
+    (adView.bodyView as? TextView)?.apply {
+        text = ad.body
+        visibility = if (ad.body.isNullOrBlank()) View.GONE else View.VISIBLE
+    }
+    (adView.callToActionView as? Button)?.apply {
+        text = ad.callToAction ?: "Learn more"
+        visibility = if (ad.callToAction.isNullOrBlank()) View.GONE else View.VISIBLE
+    }
+    (adView.iconView as? ImageView)?.apply {
+        val drawable = ad.icon?.drawable
+        if (drawable != null) {
+            setImageDrawable(drawable)
+            visibility = View.VISIBLE
+        } else {
+            visibility = View.GONE
         }
     }
+    adView.mediaView?.let { mediaView ->
+        mediaView.setImageScaleType(ImageView.ScaleType.FIT_CENTER)
+        ad.mediaContent?.let { mediaView.mediaContent = it }
+    }
+    adView.setNativeAd(ad)
 }
+
+private fun gridParams(index: Int, heightDp: Int, view: View): GridLayout.LayoutParams =
+    GridLayout.LayoutParams(
+        GridLayout.spec(index / 2, 1),
+        GridLayout.spec(index % 2, 1f)
+    ).apply {
+        width = 0
+        height = dp(view, heightDp)
+        setMargins(
+            if (index % 2 == 0) 0 else dp(view, 6),
+            if (index < 2) 0 else dp(view, 11),
+            if (index % 2 == 0) dp(view, 6) else 0,
+            0
+        )
+    }
+
+private fun roundedFill(color: Int, radiusDp: Float, view: View): GradientDrawable =
+    GradientDrawable().apply {
+        setColor(color)
+        cornerRadius = radiusDp * view.resources.displayMetrics.density
+    }
+
+private fun accentWithAlpha(color: Int, alpha: Int): Int =
+    (alpha.coerceIn(0, 255) shl 24) or (color and 0x00FFFFFF)
+
+private fun dp(view: View, value: Int): Int = (value * view.resources.displayMetrics.density).toInt()
+
+private fun videoFrame(file: File): Bitmap? = runCatching {
+    MediaMetadataRetriever().use { retriever ->
+        retriever.setDataSource(file.absolutePath)
+        retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+    }
+}.getOrNull()
+
+private data class HomeCardSpec(
+    val title: String,
+    val subtitle: String,
+    val glyph: String,
+    val accent: Int,
+    val route: String,
+)
