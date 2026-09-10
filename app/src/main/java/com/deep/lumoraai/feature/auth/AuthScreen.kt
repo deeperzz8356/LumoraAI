@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
 import com.deep.lumoraai.databinding.ScreenAuthBinding
+import com.deep.lumoraai.core.view.applySystemBarPadding
 
 @Composable
 fun AuthScreen(
@@ -21,7 +22,7 @@ fun AuthScreen(
     modifier: Modifier = Modifier
 ) {
     AndroidView(
-        factory = { context -> ScreenAuthBinding.inflate(LayoutInflater.from(context)).root },
+        factory = { context -> ScreenAuthBinding.inflate(LayoutInflater.from(context)).apply { content.applySystemBarPadding() }.root },
         update = { root ->
             bindAuth(
                 ScreenAuthBinding.bind(root), uiState, allowGuestSignIn,
@@ -54,8 +55,9 @@ private fun bindAuth(
     binding.errorText.text = (state as? AuthUiState.Error)?.message.orEmpty()
 
     if (showEmail) {
-        val signUp = emailState?.isSignUp == true
+        val signUp = emailState.isSignUp
         binding.title.setText(if (signUp) R.string.auth_create_account else R.string.auth_welcome_back)
+        binding.titleSecondary.visibility = View.GONE
         binding.subtitle.setText(if (signUp) R.string.auth_signup_description else R.string.auth_signin_description)
         binding.submitButton.setText(if (signUp) R.string.auth_create else R.string.auth_sign_in)
         binding.accountPrompt.setText(if (signUp) R.string.auth_have_account else R.string.auth_no_account)
@@ -66,7 +68,9 @@ private fun bindAuth(
         binding.accountSwitch.setOnClickListener { onEmailOption(!signUp) }
     } else {
         binding.title.setText(R.string.auth_unlock)
-        binding.subtitle.text = context.getString(R.string.auth_ai_creation) + "\n" + context.getString(R.string.auth_tagline)
+        binding.titleSecondary.visibility = View.VISIBLE
+        binding.titleSecondary.setText(R.string.auth_ai_creation)
+        binding.subtitle.setText(R.string.auth_tagline)
         binding.accountPrompt.setText(R.string.auth_no_account)
         binding.accountAction.setText(R.string.auth_sign_up)
         binding.accountSwitch.setOnClickListener { onEmailOption(true) }

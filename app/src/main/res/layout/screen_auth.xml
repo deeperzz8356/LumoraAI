@@ -1,66 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true"
-    android:background="@color/lumora_app_background" android:fitsSystemWindows="true">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="640dp"
-        android:orientation="vertical" android:gravity="center_horizontal" android:paddingStart="@dimen/intro_horizontal_padding" android:paddingTop="28dp"
-        android:paddingEnd="@dimen/intro_horizontal_padding" android:paddingBottom="20dp">
-        <ImageView android:layout_width="88dp" android:layout_height="88dp" android:src="@drawable/logo"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/lumora_intro_background">
+    <com.deep.lumoraai.core.view.IntroBackgroundView
+        android:layout_width="match_parent" android:layout_height="match_parent" android:importantForAccessibility="no" />
+    <LinearLayout android:id="@+id/content" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:gravity="center_horizontal"
+        android:paddingStart="@dimen/intro_horizontal_padding" android:paddingEnd="@dimen/intro_horizontal_padding">
+        <Space android:layout_width="1dp" android:layout_height="32dp" />
+        <com.deep.lumoraai.core.view.AiBrandView android:layout_width="36dp" android:layout_height="48dp"
             android:contentDescription="@string/ui_lumora_ai_logo" />
-        <TextView android:id="@+id/title" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="20dp" android:gravity="center" android:textColor="@color/lumora_text_primary"
-            android:textSize="28sp" android:textStyle="bold" android:accessibilityHeading="true" />
-        <TextView android:id="@+id/subtitle" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" android:gravity="center" android:textColor="@color/lumora_text_muted"
-            android:textSize="15sp" android:lineSpacingExtra="4dp" />
-        <LinearLayout android:id="@+id/mainActions" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="32dp" android:orientation="vertical">
+        <Space android:layout_width="1dp" android:layout_height="24dp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:gravity="center_horizontal">
+            <TextView android:id="@+id/title" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:gravity="center" android:includeFontPadding="false" android:textColor="@color/lumora_text_primary"
+                android:textSize="28sp" android:textStyle="bold" android:accessibilityHeading="true" />
+            <TextView android:id="@+id/titleSecondary" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:gravity="center" android:includeFontPadding="false"
+                android:textColor="@color/lumora_indicator" android:textSize="28sp" android:textStyle="bold" />
+            <TextView android:id="@+id/subtitle" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:gravity="center" android:includeFontPadding="false"
+                android:textColor="@color/lumora_text_muted" android:textSize="14sp" android:lineSpacingExtra="6dp" />
+        </LinearLayout>
+        <Space android:layout_width="1dp" android:layout_height="32dp" />
+        <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+            <LinearLayout android:id="@+id/mainActions" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="12dp" android:gravity="center"
+                    android:text="@string/auth_sign_in_caps" android:textColor="@color/lumora_text_subtle" android:textSize="9sp"
+                    android:textStyle="bold" android:letterSpacing="0.15" android:includeFontPadding="false" />
+                <Button android:id="@+id/googleButton" android:layout_width="match_parent" android:layout_height="56dp"
+                    android:layout_marginTop="12dp" android:text="@string/auth_continue_google" android:textColor="@color/white"
+                    android:textSize="14sp" android:textStyle="bold" android:background="@drawable/bg_lumora_button" />
+                <Button android:id="@+id/emailOptionButton" android:layout_width="match_parent" android:layout_height="56dp"
+                    android:layout_marginTop="12dp" android:text="@string/auth_continue_email" android:textColor="@color/white"
+                    android:textSize="14sp" android:textStyle="bold" android:drawableStart="@drawable/ic_email"
+                    android:drawablePadding="12dp" android:background="@drawable/bg_lumora_outline" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/emailForm" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+                <EditText android:id="@+id/emailInput" android:layout_width="match_parent" android:layout_height="56dp"
+                    android:hint="@string/ui_email_address" android:inputType="textEmailAddress" android:singleLine="true"
+                    android:textColor="@color/lumora_text_primary" android:textColorHint="@color/lumora_text_subtle"
+                    android:textSize="14sp" android:background="@drawable/bg_lumora_field" />
+                <EditText android:id="@+id/passwordInput" android:layout_width="match_parent" android:layout_height="56dp"
+                    android:layout_marginTop="12dp" android:hint="@string/ui_password" android:inputType="textPassword" android:singleLine="true"
+                    android:textColor="@color/lumora_text_primary" android:textColorHint="@color/lumora_text_subtle"
+                    android:textSize="14sp" android:background="@drawable/bg_lumora_field" />
+                <Button android:id="@+id/submitButton" android:layout_width="match_parent" android:layout_height="56dp"
+                    android:layout_marginTop="12dp" android:textColor="@color/white" android:textSize="14sp" android:textStyle="bold"
+                    android:background="@drawable/bg_lumora_button" />
+                <Button android:id="@+id/backButton" android:layout_width="match_parent" android:layout_height="48dp"
+                    android:text="@string/auth_back_options" android:textColor="@color/lumora_text_subtle" android:textSize="12sp"
+                    android:background="@android:color/transparent" />
+            </LinearLayout>
+            <ProgressBar android:id="@+id/loading" android:layout_width="36dp" android:layout_height="36dp"
+                android:layout_gravity="top|center_horizontal" android:layout_marginTop="48dp"
+                android:indeterminateTint="@color/lumora_primary" android:visibility="gone" />
+        </FrameLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:gravity="center_horizontal">
+            <TextView android:id="@+id/errorText" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingStart="8dp" android:paddingEnd="8dp" android:gravity="center"
+                android:textColor="@color/lumora_error" android:textSize="12sp" android:visibility="gone"
+                android:accessibilityLiveRegion="assertive" />
+            <Button android:id="@+id/guestButton" android:layout_width="match_parent" android:layout_height="48dp"
+                android:text="@string/auth_continue_guest" android:textColor="@color/lumora_text_muted"
+                android:textSize="12sp" android:background="@android:color/transparent" />
+            <LinearLayout android:id="@+id/accountSwitch" android:layout_width="match_parent" android:layout_height="32dp"
+                android:orientation="horizontal" android:gravity="center" android:clickable="true" android:focusable="true"
+                android:paddingStart="8dp" android:paddingEnd="8dp">
+                <TextView android:id="@+id/accountPrompt" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/lumora_text_subtle" android:textSize="12sp" />
+                <TextView android:id="@+id/accountAction" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp" android:textColor="@color/white" android:textStyle="bold" android:textSize="12sp" />
+            </LinearLayout>
+            <TextView android:layout_width="match_parent" android:layout_height="28dp" android:gravity="center"
+                android:text="@string/auth_data_secure" android:textColor="@color/lumora_text_subtle" android:textSize="10sp" />
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center"
-                android:text="@string/auth_sign_in_caps" android:textColor="@color/lumora_text_subtle" android:textSize="10sp"
-                android:textStyle="bold" android:letterSpacing="0.15" />
-            <Button android:id="@+id/googleButton" android:layout_width="match_parent" android:layout_height="56dp"
-                android:layout_marginTop="14dp" android:text="@string/auth_continue_google" android:textColor="@color/white"
-                android:textStyle="bold" android:background="@drawable/bg_lumora_button" />
-            <Button android:id="@+id/emailOptionButton" android:layout_width="match_parent" android:layout_height="56dp"
-                android:layout_marginTop="12dp" android:text="@string/auth_continue_email" android:textColor="@color/lumora_text_primary"
-                android:textStyle="bold" android:background="@drawable/bg_lumora_outline" />
+                android:text="@string/auth_legal" android:textColor="@color/lumora_text_legal" android:textSize="9sp" />
+            <Space android:layout_width="1dp" android:layout_height="16dp" />
         </LinearLayout>
-        <LinearLayout android:id="@+id/emailForm" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="28dp" android:orientation="vertical" android:visibility="gone">
-            <EditText android:id="@+id/emailInput" android:layout_width="match_parent" android:layout_height="56dp"
-                android:hint="@string/ui_email_address" android:inputType="textEmailAddress" android:singleLine="true"
-                android:textColor="@color/lumora_text_primary" android:textColorHint="@color/lumora_text_muted"
-                android:background="@drawable/bg_lumora_field" />
-            <EditText android:id="@+id/passwordInput" android:layout_width="match_parent" android:layout_height="56dp"
-                android:layout_marginTop="12dp" android:hint="@string/ui_password" android:inputType="textPassword" android:singleLine="true"
-                android:textColor="@color/lumora_text_primary" android:textColorHint="@color/lumora_text_muted"
-                android:background="@drawable/bg_lumora_field" />
-            <Button android:id="@+id/submitButton" android:layout_width="match_parent" android:layout_height="56dp"
-                android:layout_marginTop="14dp" android:textColor="@color/white" android:textStyle="bold"
-                android:background="@drawable/bg_lumora_button" />
-            <Button android:id="@+id/backButton" android:layout_width="match_parent" android:layout_height="48dp"
-                android:layout_marginTop="4dp" android:text="@string/auth_back_options" android:textColor="@color/lumora_text_muted"
-                android:background="@android:color/transparent" />
-        </LinearLayout>
-        <ProgressBar android:id="@+id/loading" android:layout_width="48dp" android:layout_height="48dp"
-            android:layout_marginTop="44dp" android:indeterminateTint="@color/lumora_primary" android:visibility="gone" />
-        <TextView android:id="@+id/errorText" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" android:gravity="center" android:textColor="@color/lumora_error"
-            android:textSize="14sp" android:visibility="gone" android:accessibilityLiveRegion="assertive" />
-        <Space android:layout_width="1dp" android:layout_height="20dp" />
-        <Button android:id="@+id/guestButton" android:layout_width="match_parent" android:layout_height="48dp"
-            android:text="@string/auth_continue_guest" android:textColor="@color/lumora_text_muted"
-            android:background="@android:color/transparent" />
-        <LinearLayout android:id="@+id/accountSwitch" android:layout_width="match_parent" android:layout_height="48dp"
-            android:orientation="horizontal" android:gravity="center" android:clickable="true" android:focusable="true">
-            <TextView android:id="@+id/accountPrompt" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:textColor="@color/lumora_text_subtle" android:textSize="13sp" />
-            <TextView android:id="@+id/accountAction" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginStart="6dp" android:textColor="@color/lumora_text_primary" android:textStyle="bold" android:textSize="13sp" />
-        </LinearLayout>
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center"
-            android:text="@string/auth_data_secure" android:textColor="@color/lumora_text_subtle" android:textSize="11sp" />
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"
-            android:gravity="center" android:text="@string/auth_legal" android:textColor="@color/lumora_text_subtle" android:textSize="9sp" />
     </LinearLayout>
-</ScrollView>
+</FrameLayout>

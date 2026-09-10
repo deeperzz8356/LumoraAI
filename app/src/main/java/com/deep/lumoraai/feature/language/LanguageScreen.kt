@@ -5,18 +5,19 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.LayoutInflater
 import android.view.View
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.databinding.ItemLanguageBinding
 import com.deep.lumoraai.databinding.ScreenLanguageBinding
+import com.deep.lumoraai.core.view.applySystemBarPadding
 
 private const val DONE_UNLOCK_DELAY_MS = 3_000L
 
@@ -30,9 +31,9 @@ fun LanguageScreen(
 ) {
     val handler = remember { Handler(Looper.getMainLooper()) }
     DisposableEffect(Unit) { onDispose { handler.removeCallbacksAndMessages(null) } }
-    Box(modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize()) {
         AndroidView(
-            factory = { context -> ScreenLanguageBinding.inflate(LayoutInflater.from(context)).root },
+            factory = { context -> ScreenLanguageBinding.inflate(LayoutInflater.from(context)).root.apply { applySystemBarPadding() } },
             update = { root ->
                 val binding = ScreenLanguageBinding.bind(root)
                 binding.doneButton.setOnClickListener { onDone() }
@@ -40,9 +41,9 @@ fun LanguageScreen(
                     LanguageUiState.Loading -> { binding.loading.visibility = View.VISIBLE; binding.languageScroll.visibility = View.GONE }
                     is LanguageUiState.Success -> bindLanguages(binding, uiState, handler, onLanguageSelected)
                 }
-            }, modifier = Modifier.fillMaxSize()
+            }, modifier = Modifier.fillMaxWidth().weight(1f)
         )
-        PlacementNativeAd(placement = AdPlacement.NATIVE_LANGUAGE, modifier = Modifier.align(Alignment.BottomCenter))
+        PlacementNativeAd(placement = AdPlacement.NATIVE_LANGUAGE)
     }
 }
 
@@ -55,7 +56,7 @@ private fun bindLanguages(binding: ScreenLanguageBinding, state: LanguageUiState
         val row = ItemLanguageBinding.inflate(LayoutInflater.from(binding.root.context), binding.languageList, false)
         val selected = language.code == state.selectedLanguageCode
         row.root.isSelected = selected
-        row.radio.isChecked = selected
+        row.radioInner.visibility = if (selected) View.VISIBLE else View.GONE
         row.flag.text = language.flagEmoji
         row.name.text = language.name
         row.root.contentDescription = "${language.name}${if (selected) ", selected" else ""}"

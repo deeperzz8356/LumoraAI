@@ -1,28 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="@color/lumora_app_background">
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="#FF121414">
     <ImageView android:layout_width="match_parent" android:layout_height="480dp"
-        android:scaleType="centerCrop" android:src="@drawable/group_48096841"
-        android:contentDescription="@null" />
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_gravity="bottom" android:gravity="center_horizontal"
-        android:orientation="vertical" android:paddingStart="24dp" android:paddingEnd="24dp"
-        android:paddingBottom="132dp">
+        android:scaleType="centerCrop" android:src="@drawable/group_48096841" android:contentDescription="@null" />
+    <View android:layout_width="match_parent" android:layout_height="480dp" android:background="@drawable/bg_splash_fade" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:gravity="bottom|center_horizontal" android:orientation="vertical"
+        android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingBottom="132dp">
         <ImageView android:layout_width="120dp" android:layout_height="120dp"
-            android:src="@drawable/logo" android:contentDescription="@string/ui_lumora_ai_logo" />
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="40dp" android:text="Lumora AI" android:textColor="@color/lumora_text_primary"
-            android:textSize="44sp" android:textStyle="bold" android:accessibilityHeading="true" />
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" android:text="Unleash Your Imagination."
-            android:textColor="@color/lumora_text_muted" android:textSize="16sp" android:letterSpacing="0.08" />
+            android:scaleType="fitCenter" android:src="@drawable/logo" android:contentDescription="@string/ui_lumora_ai_logo" />
+        <Space android:layout_width="1dp" android:layout_height="48dp" />
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Lumora " android:textColor="#FFE2E2E2" android:textSize="57sp" android:textStyle="bold"
+                android:includeFontPadding="false" android:letterSpacing="-0.02" android:accessibilityHeading="true" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="AI" android:textColor="#FFCFBDFF" android:textSize="57sp" android:textStyle="bold"
+                android:includeFontPadding="false" android:letterSpacing="-0.02" android:importantForAccessibility="no" />
+        </LinearLayout>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp"
+            android:text="Unleash Your Imagination." android:textColor="#B3CBC3D7" android:textSize="16sp"
+            android:textStyle="bold" android:letterSpacing="0.06" android:includeFontPadding="false" />
+        <Space android:layout_width="1dp" android:layout_height="64dp" />
         <ProgressBar android:id="@+id/progress" style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="260dp" android:layout_height="4dp" android:layout_marginTop="52dp"
-            android:indeterminate="true" android:indeterminateTint="@color/lumora_secondary" />
+            android:layout_width="260dp" android:layout_height="4dp" android:indeterminate="true"
+            android:indeterminateTint="#FFCFBDFF" />
         <TextView android:id="@+id/statusText" android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="16dp" android:text="INITIALIZING ENGINE..." android:textAllCaps="true"
-            android:textColor="@color/lumora_secondary" android:textSize="11sp" android:textStyle="bold"
-            android:letterSpacing="0.14" android:accessibilityLiveRegion="polite" />
+            android:textColor="#FFCFBDFF" android:textSize="11sp" android:textStyle="bold"
+            android:letterSpacing="0.14" android:includeFontPadding="false" android:accessibilityLiveRegion="polite" />
     </LinearLayout>
 </FrameLayout>
