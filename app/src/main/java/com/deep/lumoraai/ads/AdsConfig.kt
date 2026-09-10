@@ -15,7 +15,7 @@ enum class AdFormat { BANNER, NATIVE, INTERSTITIAL, REWARDED, APP_OPEN }
  */
 data class AdsConfig(
     // ---- Global + format toggles ----
-    val adsEnabled: Boolean = true,
+    val adsEnabled: Boolean = false,
     val bannerEnabled: Boolean = true,
     val nativeEnabled: Boolean = true,
     val interstitialEnabled: Boolean = true,
