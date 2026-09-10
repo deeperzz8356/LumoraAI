@@ -108,7 +108,7 @@
                     android:id="@+id/creditsChip"
                     android:layout_width="wrap_content"
                     android:layout_height="28dp"
-                    android:background="@drawable/bg_home_chip"
+                    android:background="@drawable/bg_common_chip"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
@@ -128,12 +128,12 @@
                     android:clickable="true"
                     android:focusable="true">
 
-                    <TextView
+                    <ImageView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="🔔"
-                        android:textSize="19sp" />
+                        android:padding="9dp"
+                        android:src="@drawable/ic_lumora_bell"
+                        android:tint="@color/white" />
 
                     <View
                         android:id="@+id/unreadDot"
@@ -200,7 +200,7 @@
                     android:id="@+id/heroPreview"
                     android:layout_width="106dp"
                     android:layout_height="98dp"
-                    android:background="@drawable/bg_home_preview"
+                    android:background="@drawable/bg_home_hero_preview"
                     android:clickable="true"
                     android:focusable="true">
 
@@ -211,14 +211,12 @@
                         android:scaleType="centerCrop"
                         android:src="@drawable/group_48096841" />
 
-                    <TextView
+                    <ImageView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="▶"
-                        android:textColor="@color/white"
-                        android:textSize="30sp"
-                        android:textStyle="bold" />
+                        android:padding="34dp"
+                        android:src="@drawable/ic_lumora_play"
+                        android:tint="@color/white" />
                 </FrameLayout>
             </LinearLayout>
 
@@ -349,14 +347,11 @@
             android:paddingEnd="14dp"
             android:paddingBottom="12dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:includeFontPadding="false"
-                android:text="↑"
-                android:textColor="@color/lumora_lime"
-                android:textSize="22sp"
-                android:textStyle="bold" />
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_lumora_back"
+                android:tint="@color/lumora_lime" />
 
             <TextView
                 android:layout_width="0dp"

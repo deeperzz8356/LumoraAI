@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="96dp"
+    android:layout_height="120dp"
+    android:background="@drawable/bg_generation_unselected"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/styleImage"
+        android:layout_width="match_parent"
+        android:layout_height="88dp"
+        android:scaleType="centerCrop" />
+
+    <ImageView
+        android:id="@+id/checkBadge"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:background="@drawable/bg_common_lime_circle"
+        android:padding="4dp"
+        android:src="@drawable/ic_lumora_check"
+        android:tint="@color/black"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/styleLabel"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:layout_gravity="bottom"
+        android:background="#DD101827"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+</FrameLayout>

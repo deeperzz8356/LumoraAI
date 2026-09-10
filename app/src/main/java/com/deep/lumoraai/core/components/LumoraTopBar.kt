@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -150,7 +151,12 @@ fun LumoraCreditsChip(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text("✦", color = Lime, fontSize = 14.sp, lineHeight = 14.sp)
+        Icon(
+            imageVector = Icons.Default.Star,
+            contentDescription = null,
+            tint = Lime,
+            modifier = Modifier.size(14.dp)
+        )
         Text(
             text = label,
             color = Lime,

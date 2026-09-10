@@ -1,90 +1,33 @@
 package com.deep.lumoraai.feature.profile
 
+import android.app.AlertDialog
 import android.content.Intent
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.GridLayout
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Icon
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
-import com.deep.lumoraai.core.components.AppEmptyScreen
-import com.deep.lumoraai.core.components.AppErrorScreen
-import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.core.components.LumoraNotificationBell
-import com.deep.lumoraai.core.components.MediaViewerDialog
-import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.data.model.HistoryModel
+import com.deep.lumoraai.databinding.ProfileItemCreationBinding
+import com.deep.lumoraai.databinding.ProfileItemPrefBinding
+import com.deep.lumoraai.databinding.ProfileMediaViewerBinding
+import com.deep.lumoraai.databinding.ProfileScreenBinding
 import com.google.firebase.auth.FirebaseAuth
 import java.io.File
-import androidx.compose.ui.res.stringResource
-
-private val ProfileBackground = Color(0xFF081020)
-private val ProfileCard = Color(0xFF10192D)
-private val ProfileStroke = Color(0xFF172238)
-private val Lime = Color(0xFFD6FF2F)
-private val Purple = Color(0xFF9C63FF)
-private val Pink = Color(0xFFFF3D9D)
-private val Cyan = Color(0xFF20E6F2)
-private val Muted = Color(0xFF94A0B8)
-private val CardShape = RoundedCornerShape(14.dp)
 
 @Composable
 fun ProfileScreen(
@@ -99,522 +42,288 @@ fun ProfileScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = ProfileBackground,
+        containerColor = Color(0xFF081020),
         bottomBar = { BottomNavigationBar(emptyList(), "profile", onNavigate) }
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(ProfileBackground)
+                .background(Color(0xFF081020))
                 .padding(padding)
         ) {
-            when (uiState) {
-                ProfileUiState.Loading -> AppLoadingScreen()
-                is ProfileUiState.Error -> AppErrorScreen(message = uiState.message)
-                ProfileUiState.Empty -> AppEmptyScreen(title = stringResource(com.deep.lumoraai.R.string.ui_profile_2), body = stringResource(com.deep.lumoraai.R.string.ui_no_content))
-                is ProfileUiState.Success -> ProfileContent(
-                    items = uiState.items,
-                    credits = uiState.credits,
-                    generations = uiState.generations,
-                    isGuest = uiState.isGuest,
-                    onSignOut = onSignOut,
-                    onDeleteAccount = onDeleteAccount,
-                    onNavigate = onNavigate,
-                    onBack = onBack,
-                    unreadCount = unreadCount
-                )
-            }
+            AndroidView(
+                factory = { ProfileScreenBinding.inflate(LayoutInflater.from(it)).root },
+                update = { root ->
+                    bindProfile(
+                        binding = ProfileScreenBinding.bind(root),
+                        uiState = uiState,
+                        onSignOut = onSignOut,
+                        onDeleteAccount = onDeleteAccount,
+                        onNavigate = onNavigate,
+                        onBack = onBack,
+                        unreadCount = unreadCount,
+                    )
+                },
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }
 
-@Composable
-private fun ProfileContent(
-    items: List<String>,
-    credits: Int,
-    generations: List<HistoryModel>,
-    isGuest: Boolean,
+private fun bindProfile(
+    binding: ProfileScreenBinding,
+    uiState: ProfileUiState,
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     onNavigate: (String) -> Unit,
     onBack: () -> Unit,
     unreadCount: Int,
 ) {
-    val context = LocalContext.current
-    val user = FirebaseAuth.getInstance().currentUser
-    val savedProfile = remember(user?.uid) { ProfilePreferences.load(context, user) }
-    val displayName = savedProfile.fullName.ifBlank { items.getOrNull(0).orEmpty() }
-    val displaySubtitle = "@${savedProfile.username.ifBlank { items.getOrNull(1).orEmpty().removePrefix("@") }}"
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            // NOTE: no statusBarsPadding() here — the Scaffold already applies the
-            // status-bar inset via its content padding. Adding it again pushed the
-            // Profile header noticeably lower than Home's.
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .padding(top = 18.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        ProfileTopBar(onNavigate = onNavigate, unreadCount = unreadCount, onBack = onBack)
-        ProfileHero(
-            name = displayName,
-            subtitle = displaySubtitle,
-            plan = items.getOrNull(2).orEmpty(),
-            avatarUri = savedProfile.avatarUri,
-            onNavigate = onNavigate
-        )
+    binding.backButton.setOnClickListener { onBack() }
+    binding.unreadDot.visibility = if (unreadCount > 0) View.VISIBLE else View.GONE
+    binding.notificationButton.setOnClickListener { onNavigate(Screen.Notifications.route) }
 
-        CreditsOverviewCard(credits = credits, onNavigate = onNavigate)
-
-        Row(horizontalArrangement = Arrangement.spacedBy(11.dp), modifier = Modifier.fillMaxWidth()) {
-            DashboardCard("${generations.size}", stringResource(com.deep.lumoraai.R.string.ui_my_creations), Icons.Default.GridView, Purple, { onNavigate(Screen.History.route) }, Modifier.weight(1f))
-            ShortcutCard(stringResource(com.deep.lumoraai.R.string.ui_subscription), stringResource(com.deep.lumoraai.R.string.ui_plan_elite_pro), Icons.AutoMirrored.Filled.ReceiptLong, Pink, { onNavigate(Screen.Subscription.route) }, Modifier.weight(1f))
-        }
-
-        CreationsSection(generations = generations, onNavigate = onNavigate)
-        PreferencesList(
-            isGuest = isGuest,
-            onSignOut = onSignOut,
-            onDeleteAccount = onDeleteAccount,
-            onNavigate = onNavigate
-        )
-        SupportCard()
-        Spacer(modifier = Modifier.height(2.dp))
+    when (uiState) {
+        ProfileUiState.Loading -> bindLoading(binding)
+        ProfileUiState.Empty -> bindEmpty(binding)
+        is ProfileUiState.Error -> bindError(binding, uiState.message)
+        is ProfileUiState.Success -> bindSuccess(binding, uiState, onSignOut, onDeleteAccount, onNavigate)
     }
 }
 
-@Composable
-private fun CreditsOverviewCard(credits: Int, onNavigate: (String) -> Unit) {
-    Surface(
-        onClick = { onNavigate(Screen.Credits.route) },
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = ProfileCard,
-        border = BorderStroke(1.dp, Lime.copy(alpha = 0.38f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            AccentIcon(Icons.Default.Star, Lime)
-            Column(modifier = Modifier.weight(1f).padding(end = 6.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_lum_credits), color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text("$credits", color = Color.White, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_top_up_and_manage_packs), color = Lime, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold)
-            }
-            MiniAction(stringResource(com.deep.lumoraai.R.string.ui_top_up), Icons.Default.Add, Cyan, onClick = { onNavigate(Screen.Credits.route) })
-        }
-    }
+private fun bindLoading(binding: ProfileScreenBinding) {
+    binding.name.text = binding.root.context.getString(R.string.loading)
+    binding.subtitle.text = ""
+    binding.plan.text = ""
+    binding.credits.text = "0"
+    binding.generationCount.text = "0"
+    binding.creationsGrid.removeAllViews()
+    binding.preferencesList.removeAllViews()
 }
 
-@Composable
-private fun ProfileTopBar(onNavigate: (String) -> Unit, unreadCount: Int, onBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            // Functional back arrow in place of the profile picture.
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.055f))
-                    .clickable(onClick = onBack),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
-                    tint = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_profile), color = Color.White, fontSize = 18.sp, lineHeight = 21.sp, fontWeight = FontWeight.Bold)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_account_settings), color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, lineHeight = 15.sp)
-            }
-        }
-        LumoraNotificationBell(
-            hasUnreadNotifications = unreadCount > 0,
-            onClick = { onNavigate(Screen.Notifications.route) }
-        )
-    }
+private fun bindEmpty(binding: ProfileScreenBinding) {
+    binding.name.text = binding.root.context.getString(R.string.ui_profile_2)
+    binding.subtitle.text = binding.root.context.getString(R.string.ui_no_content)
 }
 
-@Composable
-private fun ProfileHero(name: String, subtitle: String, plan: String, avatarUri: String?, onNavigate: (String) -> Unit) {
-    val context = LocalContext.current
-    val user = FirebaseAuth.getInstance().currentUser
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = ProfileCard,
-        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
-    ) {
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Avatar(size = 84.dp, avatarUri = avatarUri)
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(name.ifBlank { stringResource(com.deep.lumoraai.R.string.ui_lumora_creator) }, color = Color.White, fontSize = 23.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold)
-                    Text(subtitle.ifBlank { plan }, color = Muted, fontSize = 14.sp, lineHeight = 18.sp)
-                    if (plan.isNotBlank()) {
-                        Text(plan, color = Lime, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-            val shareChooserTitle = stringResource(com.deep.lumoraai.R.string.ui_share)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                MiniAction(stringResource(com.deep.lumoraai.R.string.ui_edit_profile), Icons.Default.Edit, Lime, onClick = {
-                    onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
-                }, modifier = Modifier.weight(1f))
-                MiniAction(stringResource(com.deep.lumoraai.R.string.ui_share), Icons.Default.Share, Purple, onClick = {
-                    val text = "${name.ifBlank { "Lumora Creator" }} on LumoraAI"
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, text)
-                    }
-                    context.startActivity(Intent.createChooser(intent, shareChooserTitle))
-                }, modifier = Modifier.weight(1f))
-            }
-        }
-    }
+private fun bindError(binding: ProfileScreenBinding, message: String) {
+    binding.name.text = binding.root.context.getString(R.string.ui_profile_2)
+    binding.subtitle.text = message
 }
 
-@Composable
-private fun Avatar(size: androidx.compose.ui.unit.Dp, avatarUri: String? = null) {
-    Box(modifier = Modifier.size(size).clip(CircleShape)) {
-        if (avatarUri != null) {
-            AsyncImage(
-                model = avatarUri,
-                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Image(
-                painter = painterResource(id = R.drawable.user_avatar),
-                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-    }
-}
-
-@Composable
-private fun MiniAction(label: String, icon: ImageVector, accent: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .heightIn(min = 42.dp)
-            .clip(RoundedCornerShape(50))
-            .background(accent.copy(alpha = 0.14f))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(7.dp)
-    ) {
-        Icon(icon, contentDescription = label, tint = accent, modifier = Modifier.size(18.dp))
-        Text(label, color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-    }
-}
-
-@Composable
-private fun DashboardCard(
-    value: String,
-    label: String,
-    icon: ImageVector,
-    accent: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun bindSuccess(
+    binding: ProfileScreenBinding,
+    state: ProfileUiState.Success,
+    onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
+    onNavigate: (String) -> Unit,
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.defaultMinSize(minHeight = 92.dp),
-        shape = CardShape,
-        color = ProfileCard,
-        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            AccentIcon(icon, accent)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(value, color = Color.White, fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(label, color = Muted, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            }
-        }
+    val context = binding.root.context
+    val user = FirebaseAuth.getInstance().currentUser
+    val savedProfile = ProfilePreferences.load(context, user)
+    val displayName = savedProfile.fullName.ifBlank { state.items.getOrNull(0).orEmpty() }
+    val displaySubtitle = "@${savedProfile.username.ifBlank { state.items.getOrNull(1).orEmpty().removePrefix("@") }}"
+    val plan = state.items.getOrNull(2).orEmpty()
+    binding.name.text = displayName.ifBlank { context.getString(R.string.ui_lumora_creator) }
+    binding.subtitle.text = displaySubtitle.ifBlank { plan }
+    binding.plan.text = plan
+    binding.plan.visibility = if (plan.isBlank()) View.GONE else View.VISIBLE
+    if (savedProfile.avatarUri.isNullOrBlank()) {
+        binding.avatar.setImageResource(R.drawable.user_avatar)
+    } else {
+        binding.avatar.setImageURI(Uri.parse(savedProfile.avatarUri))
     }
+    binding.credits.text = state.credits.toString()
+    binding.creditsCard.setOnClickListener { onNavigate(Screen.Credits.route) }
+    binding.generationCount.text = state.generations.size.toString()
+    binding.creationCountCard.setOnClickListener { onNavigate(Screen.History.route) }
+    binding.subscriptionCard.setOnClickListener { onNavigate(Screen.Subscription.route) }
+    binding.editProfileButton.setOnClickListener {
+        onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
+    }
+    binding.shareButton.setOnClickListener {
+        val text = "${displayName.ifBlank { "Lumora Creator" }} on LumoraAI"
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.ui_share)))
+    }
+    bindCreations(binding, state.generations, onNavigate)
+    bindPreferences(binding, state.isGuest, onSignOut, onDeleteAccount, onNavigate)
 }
 
-@Composable
-private fun ShortcutCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    accent: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun bindCreations(
+    binding: ProfileScreenBinding,
+    generations: List<HistoryModel>,
+    onNavigate: (String) -> Unit,
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.defaultMinSize(minHeight = 92.dp),
-        shape = CardShape,
-        color = ProfileCard,
-        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            AccentIcon(icon, accent)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, color = Color.White, fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, color = Muted, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
+    binding.viewAllCreations.setOnClickListener { onNavigate(Screen.History.route) }
+    binding.creationsGrid.removeAllViews()
+    if (generations.isEmpty()) {
+        val context = binding.root.context
+        val empty = android.widget.TextView(context).apply {
+            text = context.getString(R.string.ui_start_your_first_creation) + "\n" + context.getString(R.string.ui_generate_an_image_or_video_from_home)
+            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 14f
+            setPadding(dp(this, 14), dp(this, 14), dp(this, 14), dp(this, 14))
+            setBackgroundResource(R.drawable.bg_common_card)
+            setOnClickListener { onNavigate(Screen.TextToImage.route) }
         }
+        binding.creationsGrid.addView(empty, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(binding.root, 76)))
+        return
+    }
+    generations.take(4).forEachIndexed { index, item ->
+        val card = ProfileItemCreationBinding.inflate(LayoutInflater.from(binding.root.context), binding.creationsGrid, false)
+        val isVideo = item.type.equals("VIDEO", ignoreCase = true)
+        bindMediaThumb(card.mediaImage, item, if (isVideo) R.drawable.style_digital else R.drawable.style_fantasy)
+        card.playBadge.visibility = if (isVideo) View.VISIBLE else View.GONE
+        card.root.setOnClickListener {
+            if (!item.mediaUrl.isNullOrBlank() && File(item.mediaUrl.orEmpty()).exists()) {
+                showProfileMediaDialog(binding.root, item)
+            }
+        }
+        binding.creationsGrid.addView(card.root, gridParams(index, binding.root, 116, 10))
     }
 }
 
-@Composable
-private fun CreationsSection(generations: List<HistoryModel>, onNavigate: (String) -> Unit) {
-    val selected = remember { mutableStateOf<HistoryModel?>(null) }
-    val viewing = selected.value
-
-    if (viewing != null && !viewing.mediaUrl.isNullOrBlank()) {
-        MediaViewerDialog(
-            filePath = viewing.mediaUrl.orEmpty(),
-            mediaType = viewing.type,
-            title = viewing.title.ifBlank { if (viewing.type.equals("VIDEO", ignoreCase = true)) "Video" else "Image" },
-            onDismiss = { selected.value = null },
-        )
-    }
-
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(com.deep.lumoraai.R.string.ui_my_creations), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onNavigate(Screen.History.route) }) {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_view_all), color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Lime, modifier = Modifier.size(16.dp))
-            }
-        }
-
-        if (generations.isEmpty()) {
-            Surface(
-                onClick = { onNavigate(Screen.TextToImage.route) },
-                modifier = Modifier.fillMaxWidth().height(76.dp),
-                shape = CardShape,
-                color = ProfileCard,
-                border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
-            ) {
-                Row(modifier = Modifier.fillMaxSize().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    AccentIcon(Icons.Default.Add, Lime)
-                    Column {
-                        Text(stringResource(com.deep.lumoraai.R.string.ui_start_your_first_creation), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Text(stringResource(com.deep.lumoraai.R.string.ui_generate_an_image_or_video_from_home), color = Muted, fontSize = 11.sp)
-                    }
-                }
-            }
-        } else {
-            generations.take(4).chunked(2).forEach { rowItems ->
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    rowItems.forEach { item ->
-                        CreationCard(item = item, modifier = Modifier.weight(1f)) {
-                            val path = item.mediaUrl
-                            if (!path.isNullOrBlank() && File(path).exists()) selected.value = item
-                        }
-                    }
-                    if (rowItems.size == 1) Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CreationCard(item: HistoryModel, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun showProfileMediaDialog(anchor: View, item: HistoryModel) {
+    val context = anchor.context
+    val viewer = ProfileMediaViewerBinding.inflate(LayoutInflater.from(context))
     val isVideo = item.type.equals("VIDEO", ignoreCase = true)
-    val path = item.mediaUrl.orEmpty()
-    val file = remember(path) { File(path) }
-
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(116.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = ProfileCard,
-        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.58f))
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (isVideo && path.isNotBlank() && file.exists()) {
-                VideoFirstFrameThumbnail(filePath = path, contentDescription = item.title, fallbackImageRes = R.drawable.group_48096841, modifier = Modifier.fillMaxSize())
-            } else if (!isVideo && path.isNotBlank() && file.exists()) {
-                AsyncImage(model = file, contentDescription = item.title, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            } else {
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black))
-            }
-            if (isVideo) {
-                Box(modifier = Modifier.size(30.dp).background(Color.Black.copy(alpha = 0.45f), CircleShape), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                }
-            }
-        }
+    val file = File(item.mediaUrl.orEmpty())
+    viewer.mediaFrame.layoutParams = viewer.mediaFrame.layoutParams.apply {
+        height = (context.resources.displayMetrics.heightPixels * 0.62f).toInt().coerceAtMost(dp(anchor, 420))
     }
+    viewer.mediaTitle.text = item.title.ifBlank { if (isVideo) "Video" else "Image" }
+    viewer.missingText.visibility = if (file.exists()) View.GONE else View.VISIBLE
+    viewer.mediaImage.visibility = if (file.exists() && !isVideo) View.VISIBLE else View.GONE
+    viewer.mediaVideo.visibility = if (file.exists() && isVideo) View.VISIBLE else View.GONE
+    if (file.exists() && isVideo) {
+        viewer.mediaVideo.setVideoURI(Uri.fromFile(file))
+        viewer.mediaVideo.setOnPreparedListener { player ->
+            player.isLooping = true
+            viewer.mediaVideo.start()
+        }
+    } else if (file.exists()) {
+        viewer.mediaImage.setImageURI(Uri.fromFile(file))
+    }
+    val dialog = AlertDialog.Builder(context)
+        .setView(viewer.root)
+        .setNegativeButton(R.string.ui_cancel, null)
+        .show()
+    dialog.setOnDismissListener { viewer.mediaVideo.stopPlayback() }
 }
 
-@Composable
-private fun PreferencesList(
+private fun bindPreferences(
+    binding: ProfileScreenBinding,
     isGuest: Boolean,
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
 ) {
-    val pendingAction = remember { mutableStateOf<String?>(null) }
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = ProfileCard,
-        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            PrefRow(stringResource(com.deep.lumoraai.R.string.ui_account_settings), Icons.Default.Settings, Color.White, onClick = { onNavigate(Screen.Settings.route) })
-            PrefRow(stringResource(com.deep.lumoraai.R.string.ui_privacy_policy), Icons.Default.Info, Color.White)
-            PrefRow(stringResource(com.deep.lumoraai.R.string.ui_terms_of_service), Icons.Default.Info, Color.White)
-            PrefRow(stringResource(com.deep.lumoraai.R.string.ui_delete_account), Icons.Default.Delete, Color(0xFFFF7A7A), onClick = { pendingAction.value = "delete" })
-            PrefRow(
-                if (isGuest) stringResource(com.deep.lumoraai.R.string.ui_log_in) else stringResource(com.deep.lumoraai.R.string.ui_sign_out),
-                Icons.AutoMirrored.Filled.ExitToApp,
-                if (isGuest) Color.White else Color(0xFFFF7A7A),
-                onClick = { pendingAction.value = if (isGuest) "login" else "signout" }
-            )
-        }
+    binding.preferencesList.removeAllViews()
+    val context = binding.root.context
+    listOf(
+        PrefSpec(context.getString(R.string.ui_account_settings), R.drawable.ic_lumora_settings, 0xFFFFFFFF.toInt()) { onNavigate(Screen.Settings.route) },
+        PrefSpec(context.getString(R.string.ui_privacy_policy), R.drawable.ic_lumora_info, 0xFFFFFFFF.toInt()) {},
+        PrefSpec(context.getString(R.string.ui_terms_of_service), R.drawable.ic_lumora_info, 0xFFFFFFFF.toInt()) {},
+        PrefSpec(context.getString(R.string.ui_delete_account), R.drawable.ic_lumora_delete, 0xFFFF7A7A.toInt()) {
+            confirmAccountAction(binding.root, "delete", isGuest, onSignOut, onDeleteAccount, onNavigate)
+        },
+        PrefSpec(
+            if (isGuest) context.getString(R.string.ui_log_in) else context.getString(R.string.ui_sign_out),
+            R.drawable.ic_lumora_logout,
+            if (isGuest) 0xFFFFFFFF.toInt() else 0xFFFF7A7A.toInt()
+        ) {
+            confirmAccountAction(binding.root, if (isGuest) "login" else "signout", isGuest, onSignOut, onDeleteAccount, onNavigate)
+        },
+    ).forEach { spec ->
+        val row = ProfileItemPrefBinding.inflate(LayoutInflater.from(context), binding.preferencesList, false)
+        row.title.text = spec.title
+        row.title.setTextColor(spec.color)
+        row.iconGlyph.setImageResource(spec.iconRes)
+        row.iconGlyph.setColorFilter(spec.color)
+        row.root.setOnClickListener { spec.onClick() }
+        binding.preferencesList.addView(row.root)
     }
-    pendingAction.value?.let { action ->
-        val isDelete = action == "delete"
-        val isLogin = action == "login"
-        AlertDialog(
-            onDismissRequest = { pendingAction.value = null },
-            title = {
-                Text(
-                    if (isDelete) stringResource(com.deep.lumoraai.R.string.ui_delete_account_q)
-                    else if (isLogin) stringResource(com.deep.lumoraai.R.string.ui_login_to_save_q)
-                    else stringResource(com.deep.lumoraai.R.string.ui_sign_out_q)
-                )
-            },
-            text = {
-                Text(
-                    if (isDelete) {
-                        if (isGuest) stringResource(com.deep.lumoraai.R.string.ui_delete_guest_data_body)
-                        else stringResource(com.deep.lumoraai.R.string.ui_delete_account_body)
-                    } else if (isLogin) {
-                        stringResource(com.deep.lumoraai.R.string.ui_login_dialog_body)
-                    } else {
-                        stringResource(com.deep.lumoraai.R.string.ui_sign_out_body)
-                    }
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        pendingAction.value = null
-                        if (isDelete) onDeleteAccount() else if (isLogin) onNavigate(Screen.Auth.route) else onSignOut()
-                    }
-                ) {
-                    Text(
-                        if (isDelete) stringResource(com.deep.lumoraai.R.string.ui_delete_permanently)
-                        else if (isLogin) stringResource(com.deep.lumoraai.R.string.ui_log_in)
-                        else stringResource(com.deep.lumoraai.R.string.ui_sign_out),
-                        color = if (isDelete) Color(0xFFFF7A7A) else Color.White
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingAction.value = null }) {
-                    Text(stringResource(com.deep.lumoraai.R.string.ui_cancel))
-                }
+}
+
+private fun confirmAccountAction(
+    anchor: View,
+    action: String,
+    isGuest: Boolean,
+    onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
+    onNavigate: (String) -> Unit,
+) {
+    val context = anchor.context
+    val isDelete = action == "delete"
+    val isLogin = action == "login"
+    AlertDialog.Builder(context)
+        .setTitle(
+            if (isDelete) context.getString(R.string.ui_delete_account_q)
+            else if (isLogin) context.getString(R.string.ui_login_to_save_q)
+            else context.getString(R.string.ui_sign_out_q)
+        )
+        .setMessage(
+            if (isDelete) {
+                if (isGuest) context.getString(R.string.ui_delete_guest_data_body) else context.getString(R.string.ui_delete_account_body)
+            } else if (isLogin) {
+                context.getString(R.string.ui_login_dialog_body)
+            } else {
+                context.getString(R.string.ui_sign_out_body)
             }
         )
-    }
-}
-
-@Composable
-private fun PrefRow(title: String, icon: ImageVector, color: Color, onClick: () -> Unit = {}) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable(onClick = onClick).padding(vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
-            Text(title, color = color, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        .setPositiveButton(
+            if (isDelete) context.getString(R.string.ui_delete_permanently)
+            else if (isLogin) context.getString(R.string.ui_log_in)
+            else context.getString(R.string.ui_sign_out)
+        ) { _, _ ->
+            if (isDelete) onDeleteAccount() else if (isLogin) onNavigate(Screen.Auth.route) else onSignOut()
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Muted, modifier = Modifier.size(16.dp))
-    }
+        .setNegativeButton(R.string.ui_cancel, null)
+        .show()
 }
 
-@Composable
-private fun SupportCard() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = ProfileCard,
-        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_need_help), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_support_billing_and_account_questions), color = Muted, fontSize = 11.sp, lineHeight = 15.sp)
-            }
-            MiniAction(stringResource(com.deep.lumoraai.R.string.ui_support), Icons.Default.Info, Cyan, onClick = {})
-        }
+private fun bindMediaThumb(image: android.widget.ImageView, item: HistoryModel, fallbackRes: Int) {
+    val path = item.mediaUrl.orEmpty()
+    val file = File(path)
+    when {
+        path.isBlank() || !file.exists() -> image.setImageResource(fallbackRes)
+        item.type.equals("VIDEO", ignoreCase = true) -> videoFrame(file)?.let { image.setImageBitmap(it) } ?: image.setImageResource(fallbackRes)
+        else -> image.setImageURI(Uri.fromFile(file))
     }
+    image.contentDescription = item.title
 }
 
-@Composable
-private fun InfoCard(title: String, icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = ProfileCard,
-        border = BorderStroke(1.dp, ProfileStroke.copy(alpha = 0.72f))
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(icon, contentDescription = null, tint = Lime, modifier = Modifier.size(17.dp))
-                Text(title, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-            }
-            content()
-        }
+private fun gridParams(index: Int, view: View, heightDp: Int, gapDp: Int): GridLayout.LayoutParams =
+    GridLayout.LayoutParams(
+        GridLayout.spec(index / 2, 1),
+        GridLayout.spec(index % 2, 1f)
+    ).apply {
+        width = 0
+        height = dp(view, heightDp)
+        setMargins(
+            if (index % 2 == 0) 0 else dp(view, gapDp / 2),
+            if (index < 2) 0 else dp(view, gapDp),
+            if (index % 2 == 0) dp(view, gapDp / 2) else 0,
+            0
+        )
     }
-}
 
-@Composable
-private fun AccentIcon(icon: ImageVector, accent: Color) {
-    Box(
-        modifier = Modifier
-            .size(38.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(accent.copy(alpha = 0.14f)),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(22.dp))
+private fun dp(view: View, value: Int): Int = (value * view.resources.displayMetrics.density).toInt()
+
+private fun videoFrame(file: File): Bitmap? = runCatching {
+    MediaMetadataRetriever().use { retriever ->
+        retriever.setDataSource(file.absolutePath)
+        retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
     }
-}
+}.getOrNull()
+
+private data class PrefSpec(
+    val title: String,
+    val iconRes: Int,
+    val color: Int,
+    val onClick: () -> Unit,
+)

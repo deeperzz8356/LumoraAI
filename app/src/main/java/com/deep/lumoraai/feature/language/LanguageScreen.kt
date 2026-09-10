@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementNativeAd
-import com.deep.lumoraai.databinding.ItemLanguageBinding
-import com.deep.lumoraai.databinding.ScreenLanguageBinding
+import com.deep.lumoraai.databinding.LanguageItemBinding
+import com.deep.lumoraai.databinding.LanguageScreenBinding
 import com.deep.lumoraai.core.view.applySystemBarPadding
 
 private const val DONE_UNLOCK_DELAY_MS = 3_000L
@@ -33,9 +33,9 @@ fun LanguageScreen(
     DisposableEffect(Unit) { onDispose { handler.removeCallbacksAndMessages(null) } }
     Column(modifier.fillMaxSize()) {
         AndroidView(
-            factory = { context -> ScreenLanguageBinding.inflate(LayoutInflater.from(context)).root.apply { applySystemBarPadding() } },
+            factory = { context -> LanguageScreenBinding.inflate(LayoutInflater.from(context)).root.apply { applySystemBarPadding() } },
             update = { root ->
-                val binding = ScreenLanguageBinding.bind(root)
+                val binding = LanguageScreenBinding.bind(root)
                 binding.doneButton.setOnClickListener { onDone() }
                 when (uiState) {
                     LanguageUiState.Loading -> { binding.loading.visibility = View.VISIBLE; binding.languageScroll.visibility = View.GONE }
@@ -47,13 +47,13 @@ fun LanguageScreen(
     }
 }
 
-private fun bindLanguages(binding: ScreenLanguageBinding, state: LanguageUiState.Success, handler: Handler, onSelected: (String) -> Unit) {
+private fun bindLanguages(binding: LanguageScreenBinding, state: LanguageUiState.Success, handler: Handler, onSelected: (String) -> Unit) {
     binding.loading.visibility = View.GONE
     binding.languageScroll.visibility = View.VISIBLE
     binding.doneButton.isEnabled = false
     binding.languageList.removeAllViews()
     state.languages.forEach { language ->
-        val row = ItemLanguageBinding.inflate(LayoutInflater.from(binding.root.context), binding.languageList, false)
+        val row = LanguageItemBinding.inflate(LayoutInflater.from(binding.root.context), binding.languageList, false)
         val selected = language.code == state.selectedLanguageCode
         row.root.isSelected = selected
         row.radioInner.visibility = if (selected) View.VISIBLE else View.GONE

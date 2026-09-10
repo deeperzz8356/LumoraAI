@@ -3,42 +3,16 @@ package com.deep.lumoraai.feature.imagetovideo
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.deep.lumoraai.ads.AdPlacement
-import com.deep.lumoraai.ads.PlacementBanner
-import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.restrictions.GenerationGate
-import com.deep.lumoraai.feature.generation.GenerationBottomBar
-import com.deep.lumoraai.feature.generation.GenerationAspectRatio
-import com.deep.lumoraai.feature.generation.videoStyleItems
-import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
-import com.deep.lumoraai.feature.generation.GeneratedMediaResult
-import com.deep.lumoraai.feature.generation.GenerationControlsPanel
-import com.deep.lumoraai.feature.generation.GenerationErrorText
-import com.deep.lumoraai.feature.generation.CollapsiblePromptComposerCard
-import com.deep.lumoraai.feature.generation.GenerationScreenBg
-import com.deep.lumoraai.feature.generation.GenerationTopBar
-import com.deep.lumoraai.feature.generation.UploadImagePanel
-import com.deep.lumoraai.feature.imagetoimage.VideoStyle
-import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.feature.generation.GenerationAspectRatio
+import com.deep.lumoraai.feature.generation.NativeGenerationConfig
+import com.deep.lumoraai.feature.generation.NativeGenerationScreen
+import com.deep.lumoraai.feature.generation.videoStyleItems
+import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 
 @Composable
 fun ImageToVideoScreen(
@@ -59,110 +33,49 @@ fun ImageToVideoScreen(
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scrollState = rememberScrollState()
-    val showAdvancedSettings = remember { mutableStateOf(false) }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) onImageSelected(uri)
     }
-
-    LaunchedEffect(uiState.isGenerating, uiState.generatedPaths) {
-        if (uiState.isGenerating || uiState.generatedPaths.isNotEmpty()) {
-            delay(160)
-            scrollState.animateScrollTo(scrollState.maxValue)
-        }
-    }
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(GenerationScreenBg)
-            .systemBarsPadding()
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            GenerationTopBar(
-                title = stringResource(com.deep.lumoraai.R.string.ui_image_2_video),
-                onBack = onBack,
-                onNotifications = { onNavigate(Screen.Notifications.route) },
-                onCredits = { onNavigate(Screen.Credits.route) }
-            )
-
-            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .imePadding()
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 18.dp, bottom = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                UploadImagePanel(
-                    bitmap = uiState.sourceBitmap,
-                    isBusy = uiState.isGenerating,
-                    onUpload = { imagePicker.launch("image/*") }
-                )
-                // Prompt is optional (the uploaded image drives generation), so
-                // it's a collapsible dropdown, collapsed by default.
-                CollapsiblePromptComposerCard(
-                    prompt = uiState.prompt,
-                    promptHint = "Describe the video you want to generate...",
-                    negativePrompt = uiState.negativePrompt,
-                    isImproving = uiState.isImprovingPrompt,
-                    onPromptChanged = onPromptChanged,
-                    onImprovePrompt = onImprovePrompt,
-                    onNegativePromptChanged = onNegativePromptChanged,
-                    isSettingsOpen = showAdvancedSettings.value,
-                    onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value },
-                    showSettingsAction = false
-                )
-                if (showAdvancedSettings.value) {
-                    GenerationControlsPanel(
-                        mediaType = "Video",
-                        selectedAspectRatio = uiState.aspectRatio,
-                        onAspectRatioSelected = onAspectRatioChanged,
-                        negativePrompt = uiState.negativePrompt,
-                        onNegativePromptChanged = onNegativePromptChanged,
-                        similarity = uiState.similarity,
-                        onSimilarityChanged = onSimilarityChanged,
-                        duration = uiState.duration,
-                        onDurationChanged = onDurationChanged,
-                        generations = 1,
-                        onGenerationsChanged = onGenerationsChanged
-                    )
-                }
-                GeneratedMediaLoading(
-                    isVisible = uiState.isGenerating,
-                    mediaType = "VIDEO",
-                    progress = uiState.generationProgress,
-                    statusText = uiState.generationStatusText
-                )
-                GeneratedMediaResult(
-                    filePath = uiState.generatedPath,
-                    filePaths = uiState.generatedPaths,
-                    mediaType = "VIDEO",
-                    mimeType = uiState.generatedMimeType,
-                    onEdit = onEditResult
-                )
-                GenerationErrorText(error = uiState.error, onDismissError = onDismissError)
-            }
-            }
-
-            // Fixed bottom generate bar with collapsible Style / Ratio / Count.
-            GenerationBottomBar(
-                styleItems = videoStyleItems(uiState.selectedStyle, onStyleSelected),
-                selectedAspectRatio = uiState.aspectRatio,
-                onAspectRatioSelected = onAspectRatioChanged,
-                aspectRatioOptions = GenerationAspectRatio.videoRatios,
-                generations = 1,
-                onGenerationsChanged = onGenerationsChanged,
-                isGenerating = uiState.isGenerating,
-                // Prompt is optional: only require an uploaded image.
-                generateEnabled = uiState.sourceBitmap != null,
-                creditCost = GenerationGate.CREDITS_PER_VIDEO,
-                onGenerate = onGenerate,
-            )
-
-            PlacementBanner(placement = AdPlacement.BANNER_IMG2VIDEO, applyNavBarPadding = false)
-        }
-    }
+    NativeGenerationScreen(
+        config = NativeGenerationConfig(
+            title = stringResource(com.deep.lumoraai.R.string.ui_image_2_video),
+            promptHint = "Describe the video you want to generate...",
+            promptOptional = true,
+            showSingleUpload = true,
+            singleUploadBitmap = uiState.sourceBitmap,
+            onSingleUpload = { imagePicker.launch("image/*") },
+            prompt = uiState.prompt,
+            negativePrompt = uiState.negativePrompt,
+            isImprovingPrompt = uiState.isImprovingPrompt,
+            selectedAspectRatio = uiState.aspectRatio,
+            aspectRatioOptions = GenerationAspectRatio.videoRatios,
+            sliderLabel = stringResource(com.deep.lumoraai.R.string.ui_image_similarity),
+            sliderValue = uiState.similarity,
+            onSliderChanged = onSimilarityChanged,
+            duration = uiState.duration,
+            onDurationChanged = onDurationChanged,
+            styleItems = videoStyleItems(uiState.selectedStyle, onStyleSelected),
+            isGenerating = uiState.isGenerating,
+            generationProgress = uiState.generationProgress,
+            generationStatusText = uiState.generationStatusText,
+            generatedPath = uiState.generatedPath,
+            generatedPaths = uiState.generatedPaths,
+            generatedMimeType = uiState.generatedMimeType,
+            mediaType = "VIDEO",
+            generateEnabled = uiState.sourceBitmap != null,
+            creditCost = GenerationGate.CREDITS_PER_VIDEO,
+            bannerPlacement = AdPlacement.BANNER_IMG2VIDEO,
+        ),
+        onBack = onBack,
+        onNavigate = onNavigate,
+        onPromptChanged = onPromptChanged,
+        onNegativePromptChanged = onNegativePromptChanged,
+        onAspectRatioChanged = onAspectRatioChanged,
+        onImprovePrompt = onImprovePrompt,
+        onGenerate = onGenerate,
+        onEditResult = onEditResult,
+        onDismissError = onDismissError,
+        error = uiState.error,
+        modifier = modifier,
+    )
 }

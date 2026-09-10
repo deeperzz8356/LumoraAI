@@ -44,10 +44,10 @@ import com.deep.lumoraai.core.navigation.bgStudioRoute
 import com.deep.lumoraai.core.navigation.logoRoute
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.utils.OnboardingPreferences
-import com.deep.lumoraai.databinding.ItemHomeActionBinding
-import com.deep.lumoraai.databinding.ItemHomeRecentBinding
-import com.deep.lumoraai.databinding.ItemHomeToolBinding
-import com.deep.lumoraai.databinding.ScreenHomeBinding
+import com.deep.lumoraai.databinding.HomeItemActionBinding
+import com.deep.lumoraai.databinding.HomeItemRecentBinding
+import com.deep.lumoraai.databinding.HomeItemToolBinding
+import com.deep.lumoraai.databinding.HomeScreenBinding
 import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
@@ -121,10 +121,10 @@ fun HomeScreen(
                 .padding(padding)
         ) {
             AndroidView(
-                factory = { ScreenHomeBinding.inflate(LayoutInflater.from(it)).root },
+                factory = { HomeScreenBinding.inflate(LayoutInflater.from(it)).root },
                 update = { root ->
                     bindHome(
-                        binding = ScreenHomeBinding.bind(root),
+                        binding = HomeScreenBinding.bind(root),
                         uiState = uiState,
                         unreadCount = unreadCount,
                         showProfileHint = showProfileHint,
@@ -148,7 +148,7 @@ fun HomeScreen(
 }
 
 private fun bindHome(
-    binding: ScreenHomeBinding,
+    binding: HomeScreenBinding,
     uiState: HomeUiState,
     unreadCount: Int,
     showProfileHint: Boolean,
@@ -184,7 +184,7 @@ private fun bindHome(
     }
 }
 
-private fun showMessage(binding: ScreenHomeBinding, title: String, body: String) {
+private fun showMessage(binding: HomeScreenBinding, title: String, body: String) {
     binding.messageState.visibility = View.VISIBLE
     binding.messageTitle.text = title
     binding.messageBody.text = body
@@ -192,7 +192,7 @@ private fun showMessage(binding: ScreenHomeBinding, title: String, body: String)
 }
 
 private fun bindSuccess(
-    binding: ScreenHomeBinding,
+    binding: HomeScreenBinding,
     state: HomeUiState.Success,
     unreadCount: Int,
     showProfileHint: Boolean,
@@ -216,9 +216,9 @@ private fun bindSuccess(
     binding.greeting.text = context.getString(R.string.ui_hi_name, displayName)
     binding.avatar.setOnClickListener { onNavigate(Screen.Profile.route) }
     binding.creditsChip.text = if (state.credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
-        "✦ Unlimited"
+        "Unlimited"
     } else {
-        "✦ ${state.credits}"
+        state.credits.toString()
     }
     binding.creditsChip.setOnClickListener { onNavigate(Screen.Credits.route) }
     binding.unreadDot.visibility = if (unreadCount > 0) View.VISIBLE else View.GONE
@@ -238,17 +238,17 @@ private fun bindCreateGrid(grid: GridLayout, onNavigate: (String) -> Unit) {
     grid.removeAllViews()
     val context = grid.context
     listOf(
-        HomeCardSpec(context.getString(R.string.ui_create_text_to_image), context.getString(R.string.ui_create_dream_it), "*", Lime, Screen.TextToImage.route),
-        HomeCardSpec(context.getString(R.string.ui_create_img_to_img), context.getString(R.string.ui_create_refine_it), "#", Purple, Screen.ImageToImage.route),
-        HomeCardSpec(context.getString(R.string.ui_create_img_to_video), context.getString(R.string.ui_create_animate_it), "◆", Pink, Screen.ImageToVideo.route),
-        HomeCardSpec(context.getString(R.string.ui_create_text_to_video), context.getString(R.string.ui_create_direct_it), "▶", Cyan, Screen.TextToVideo.route),
+        HomeCardSpec(context.getString(R.string.ui_create_text_to_image), context.getString(R.string.ui_create_dream_it), R.drawable.ic_lumora_magic, Lime, Screen.TextToImage.route),
+        HomeCardSpec(context.getString(R.string.ui_create_img_to_img), context.getString(R.string.ui_create_refine_it), R.drawable.ic_lumora_image, Purple, Screen.ImageToImage.route),
+        HomeCardSpec(context.getString(R.string.ui_create_img_to_video), context.getString(R.string.ui_create_animate_it), R.drawable.ic_lumora_video, Pink, Screen.ImageToVideo.route),
+        HomeCardSpec(context.getString(R.string.ui_create_text_to_video), context.getString(R.string.ui_create_direct_it), R.drawable.ic_lumora_play, Cyan, Screen.TextToVideo.route),
     ).forEachIndexed { index, spec ->
-        val card = ItemHomeActionBinding.inflate(LayoutInflater.from(context), grid, false)
+        val card = HomeItemActionBinding.inflate(LayoutInflater.from(context), grid, false)
         card.title.text = spec.title
         card.subtitle.text = spec.subtitle
-        card.iconGlyph.text = spec.glyph
-        card.iconGlyph.setTextColor(spec.accent)
-        card.arrow.setTextColor(spec.accent)
+        card.iconGlyph.setImageResource(spec.iconRes)
+        card.iconGlyph.setColorFilter(spec.accent)
+        card.arrow.setColorFilter(spec.accent)
         card.root.setOnClickListener { onNavigate(spec.route) }
         grid.addView(card.root, gridParams(index, 118, grid))
     }
@@ -259,17 +259,17 @@ private fun bindToolsGrid(grid: GridLayout, onNavigate: (String) -> Unit) {
     grid.removeAllViews()
     val context = grid.context
     listOf(
-        HomeCardSpec(context.getString(R.string.ui_tool_logo), "", "✎", Cyan, logoRoute()),
-        HomeCardSpec(context.getString(R.string.ui_tool_ai_avatar), "", "☺", Purple, avatarRoute()),
-        HomeCardSpec(context.getString(R.string.ui_tool_photo_enhancer), "", "≋", Purple, Screen.PhotoEnhance.route),
-        HomeCardSpec(context.getString(R.string.ui_tool_remove_background), "", "◉", Indigo, bgStudioRoute("remove")),
-        HomeCardSpec(context.getString(R.string.ui_tool_promo_videos), "", "▶", Pink, Screen.PromoVideo.route),
-        HomeCardSpec(context.getString(R.string.ui_tool_compress), "", "⇲", Lime, Screen.Compress.route),
+        HomeCardSpec(context.getString(R.string.ui_tool_logo), "", R.drawable.ic_lumora_logo_tool, Cyan, logoRoute()),
+        HomeCardSpec(context.getString(R.string.ui_tool_ai_avatar), "", R.drawable.ic_lumora_avatar, Purple, avatarRoute()),
+        HomeCardSpec(context.getString(R.string.ui_tool_photo_enhancer), "", R.drawable.ic_lumora_enhance, Purple, Screen.PhotoEnhance.route),
+        HomeCardSpec(context.getString(R.string.ui_tool_remove_background), "", R.drawable.ic_lumora_cutout, Indigo, bgStudioRoute("remove")),
+        HomeCardSpec(context.getString(R.string.ui_tool_promo_videos), "", R.drawable.ic_lumora_video, Pink, Screen.PromoVideo.route),
+        HomeCardSpec(context.getString(R.string.ui_tool_compress), "", R.drawable.ic_lumora_compress, Lime, Screen.Compress.route),
     ).forEachIndexed { index, spec ->
-        val card = ItemHomeToolBinding.inflate(LayoutInflater.from(context), grid, false)
+        val card = HomeItemToolBinding.inflate(LayoutInflater.from(context), grid, false)
         card.title.text = spec.title
-        card.iconGlyph.text = spec.glyph
-        card.iconGlyph.setTextColor(spec.accent)
+        card.iconGlyph.setImageResource(spec.iconRes)
+        card.iconGlyph.setColorFilter(spec.accent)
         card.iconGlyph.background = roundedFill(accentWithAlpha(spec.accent, 0x24), 12f, grid)
         card.root.setOnClickListener { onNavigate(spec.route) }
         grid.addView(card.root, gridParams(index, 140, grid))
@@ -277,7 +277,7 @@ private fun bindToolsGrid(grid: GridLayout, onNavigate: (String) -> Unit) {
 }
 
 private fun bindRecent(
-    binding: ScreenHomeBinding,
+    binding: HomeScreenBinding,
     items: List<HomeRecentItem>,
     onNavigate: (String) -> Unit,
 ) {
@@ -285,7 +285,7 @@ private fun bindRecent(
     binding.viewAllRecent.setOnClickListener { onNavigate(Screen.History.route) }
     binding.recentList.removeAllViews()
     items.forEachIndexed { index, item ->
-        val row = ItemHomeRecentBinding.inflate(LayoutInflater.from(binding.root.context), binding.recentList, false)
+        val row = HomeItemRecentBinding.inflate(LayoutInflater.from(binding.root.context), binding.recentList, false)
         row.title.text = item.title
         row.time.text = item.timeLabel
         row.playBadge.visibility = if (item.mediaType.equals("VIDEO", ignoreCase = true)) View.VISIBLE else View.GONE
@@ -413,7 +413,7 @@ private fun videoFrame(file: File): Bitmap? = runCatching {
 private data class HomeCardSpec(
     val title: String,
     val subtitle: String,
-    val glyph: String,
+    val iconRes: Int,
     val accent: Int,
     val route: String,
 )

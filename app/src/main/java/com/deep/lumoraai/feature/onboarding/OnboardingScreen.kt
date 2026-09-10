@@ -26,7 +26,7 @@ import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.LocalAdsManager
 import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.ads.rememberCurrentActivity
-import com.deep.lumoraai.databinding.ScreenOnboardingBinding
+import com.deep.lumoraai.databinding.OnboardingScreenBinding
 import com.deep.lumoraai.core.view.applySystemBarPadding
 
 private data class OnboardingPage(
@@ -59,9 +59,9 @@ fun OnboardingScreen(uiState: OnboardingUiState, onNext: () -> Unit, modifier: M
     }
     Column(modifier.fillMaxSize()) {
         AndroidView(
-            factory = { context -> ScreenOnboardingBinding.inflate(LayoutInflater.from(context)).apply { content.applySystemBarPadding() }.root },
+            factory = { context -> OnboardingScreenBinding.inflate(LayoutInflater.from(context)).apply { content.applySystemBarPadding() }.root },
             update = { root ->
-                val binding = ScreenOnboardingBinding.bind(root)
+                val binding = OnboardingScreenBinding.bind(root)
                 val page = pages[pageIndex]
                 binding.title.text = styledTitle(root.context, page)
                 binding.description.setText(page.description)
@@ -84,7 +84,7 @@ fun OnboardingScreen(uiState: OnboardingUiState, onNext: () -> Unit, modifier: M
                 binding.nextButton.setOnClickListener {
                     if (pageIndex == pages.lastIndex) complete() else pageIndex++
                 }
-            }, modifier = Modifier.fillMaxWidth().weight(1f)
+            }, modifier = Modifier.fillMaxSize().weight(1f)
         )
         val placement = when (pageIndex) {
             0 -> AdPlacement.OB_NATIVE_1

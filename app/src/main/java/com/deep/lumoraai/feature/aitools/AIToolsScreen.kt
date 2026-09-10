@@ -1,70 +1,36 @@
 package com.deep.lumoraai.feature.aitools
 
-import androidx.compose.foundation.BorderStroke
+import android.graphics.drawable.GradientDrawable
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.GridLayout
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Brush
-import androidx.compose.material.icons.filled.Compress
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.avatarRoute
 import com.deep.lumoraai.core.navigation.bgStudioRoute
 import com.deep.lumoraai.core.navigation.logoRoute
-import androidx.compose.ui.res.stringResource
+import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.databinding.AiToolsItemToolBinding
+import com.deep.lumoraai.databinding.AiToolsScreenBinding
 
-private val AIToolsBackground = Color(0xFF081020)
-private val AIToolsCard = Color(0xFF10192D)
-private val AIToolsStroke = Color(0xFF172238)
-private val Lime = Color(0xFFD6FF2F)
-private val Purple = Color(0xFF9C63FF)
-private val Pink = Color(0xFFFF3D9D)
-private val Cyan = Color(0xFF20E6F2)
-private val Muted = Color(0xFF94A0B8)
-private val CardShape = RoundedCornerShape(14.dp)
-private val BlueAccent = Color(0xFF7D86FF)
+private const val Lime = 0xFFD6FF2F.toInt()
+private const val Purple = 0xFF9C63FF.toInt()
+private const val Pink = 0xFFFF3D9D.toInt()
+private const val Cyan = 0xFF20E6F2.toInt()
+private const val BlueAccent = 0xFF7D86FF.toInt()
 
 @Composable
 fun AIToolsScreen(
@@ -75,304 +41,106 @@ fun AIToolsScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AIToolsBackground,
+        containerColor = Color(0xFF081020),
         bottomBar = { BottomNavigationBar(emptyList(), "aitools", onNavigate) }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AIToolsBackground)
+                .background(Color(0xFF081020))
                 .padding(padding)
         ) {
-            AIToolsContent(credits = credits, onNavigate = onNavigate, unreadCount = unreadCount)
-        }
-    }
-}
-
-@Composable
-private fun AIToolsContent(
-    credits: Int,
-    onNavigate: (String) -> Unit,
-    unreadCount: Int,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .padding(top = 18.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        LumoraTopBar(
-            credits = credits,
-            title = stringResource(com.deep.lumoraai.R.string.ui_ai_tools),
-            onProfileClick = { onNavigate(Screen.Profile.route) },
-            onCreditsClick = { onNavigate(Screen.Credits.route) },
-            onNotificationsClick = { onNavigate(Screen.Notifications.route) },
-            hasUnreadNotifications = unreadCount > 0,
-        )
-        AIToolsHero()
-
-        Text(
-            stringResource(com.deep.lumoraai.R.string.ui_quick_tools),
-            color = Color.White,
-            fontSize = 21.sp,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // AI Background Replace card hidden per UI change request — replaced
-            // by the Logo card below. Kept commented out (not removed).
-            // ToolBentoCard(
-            //     title = stringResource(com.deep.lumoraai.R.string.ui_ai_background_replace),
-            //     subtitle = stringResource(com.deep.lumoraai.R.string.ui_generate_a_new_scene),
-            //     icon = Icons.Default.AutoAwesome,
-            //     accent = Cyan,
-            //     onClick = { onNavigate(bgStudioRoute("replace")) },
-            //     modifier = Modifier
-            //         .weight(1f)
-            //         .defaultMinSize(minHeight = 116.dp),
-            //     prominent = true
-            // )
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_logo),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_generate_a_logo),
-                icon = Icons.Default.Brush,
-                accent = Cyan,
-                onClick = { onNavigate(logoRoute()) },
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 116.dp),
-                prominent = true
-            )
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_tool_ai_avatar),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_create_your_avatar),
-                icon = Icons.Default.Face,
-                accent = Purple,
-                onClick = { onNavigate(avatarRoute()) },
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 116.dp),
-                prominent = true
-            )
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_photo_enhancer),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_improve_quality),
-                icon = Icons.Default.Tune,
-                accent = Purple,
-                onClick = { onNavigate(Screen.PhotoEnhance.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 116.dp),
-                prominent = true
-            )
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_remove_background),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_cut_subject),
-                icon = Icons.Default.PhotoCamera,
-                accent = BlueAccent,
-                onClick = { onNavigate(bgStudioRoute("remove")) },
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 116.dp),
-                prominent = true
-            )
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_promo_videos),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_ad_ready_clips),
-                icon = Icons.Default.VideoLibrary,
-                accent = Pink,
-                onClick = { onNavigate(Screen.PromoVideo.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 116.dp),
-                prominent = true
-            )
-            ToolBentoCard(
-                title = stringResource(com.deep.lumoraai.R.string.ui_compress),
-                subtitle = stringResource(com.deep.lumoraai.R.string.ui_smaller_files_without_the_mess),
-                icon = Icons.Default.Compress,
-                accent = Lime,
-                onClick = { onNavigate(Screen.Compress.route) },
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 116.dp),
-                prominent = true
-            )
-        }
-
-        PlacementNativeAd(placement = AdPlacement.NATIVE_TOOLS)
-
-        Spacer(modifier = Modifier.height(2.dp))
-    }
-}
-
-@Composable
-private fun AIToolsHero() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = AIToolsCard,
-        border = BorderStroke(1.dp, Cyan.copy(alpha = 0.36f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(AIToolsCard, Color(0xFF122C3A), Color(0xFF251A3E))
+            AndroidView(
+                factory = { AiToolsScreenBinding.inflate(LayoutInflater.from(it)).root },
+                update = { root ->
+                    bindAiTools(
+                        binding = AiToolsScreenBinding.bind(root),
+                        credits = credits,
+                        unreadCount = unreadCount,
+                        onNavigate = onNavigate,
                     )
-                )
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_studio_tools), color = Lime, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.ExtraBold)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_edit_faster_with_focused_ai_actions), color = Color.White, fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_replace_backgrounds_improve_photos_make_promo_clips_and_compress_files), color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
-            }
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Pink.copy(alpha = 0.18f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Pink, modifier = Modifier.size(31.dp))
-            }
+                },
+                modifier = Modifier.weight(1f)
+            )
+            PlacementNativeAd(
+                placement = AdPlacement.NATIVE_TOOLS,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
         }
     }
 }
 
-@Composable
-private fun AIToolCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    accent: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun bindAiTools(
+    binding: AiToolsScreenBinding,
+    credits: Int,
+    unreadCount: Int,
+    onNavigate: (String) -> Unit,
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier,
-        shape = CardShape,
-        color = AIToolsCard,
-        border = BorderStroke(1.dp, AIToolsStroke.copy(alpha = 0.72f))
-    ) {
-        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF18243C)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(21.dp))
-            }
-            Column(modifier = Modifier.align(Alignment.BottomStart)) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = subtitle,
-                    color = Color.White.copy(alpha = 0.58f),
-                    fontSize = 12.sp,
-                    lineHeight = 15.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .size(22.dp)
-                    .align(Alignment.BottomEnd)
-                    .clip(RoundedCornerShape(50))
-                    .background(accent.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = accent, modifier = Modifier.size(15.dp))
-            }
-        }
+    binding.avatar.setOnClickListener { onNavigate(Screen.Profile.route) }
+    binding.creditsChip.text = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
+        "Unlimited"
+    } else {
+        credits.toString()
+    }
+    binding.creditsChip.setOnClickListener { onNavigate(Screen.Credits.route) }
+    binding.unreadDot.visibility = if (unreadCount > 0) View.VISIBLE else View.GONE
+    binding.notificationButton.setOnClickListener { onNavigate(Screen.Notifications.route) }
+    bindToolsGrid(binding.toolsGrid, onNavigate)
+}
+
+private fun bindToolsGrid(grid: GridLayout, onNavigate: (String) -> Unit) {
+    if (grid.childCount == 6) return
+    grid.removeAllViews()
+    val context = grid.context
+    listOf(
+        ToolSpec(context.getString(R.string.ui_tool_logo), context.getString(R.string.ui_generate_a_logo), R.drawable.ic_lumora_logo_tool, Cyan, logoRoute()),
+        ToolSpec(context.getString(R.string.ui_tool_ai_avatar), context.getString(R.string.ui_create_your_avatar), R.drawable.ic_lumora_avatar, Purple, avatarRoute()),
+        ToolSpec(context.getString(R.string.ui_photo_enhancer), context.getString(R.string.ui_improve_quality), R.drawable.ic_lumora_enhance, Purple, Screen.PhotoEnhance.route),
+        ToolSpec(context.getString(R.string.ui_remove_background), context.getString(R.string.ui_cut_subject), R.drawable.ic_lumora_cutout, BlueAccent, bgStudioRoute("remove")),
+        ToolSpec(context.getString(R.string.ui_promo_videos), context.getString(R.string.ui_ad_ready_clips), R.drawable.ic_lumora_video, Pink, Screen.PromoVideo.route),
+        ToolSpec(context.getString(R.string.ui_compress), context.getString(R.string.ui_smaller_files_without_the_mess), R.drawable.ic_lumora_compress, Lime, Screen.Compress.route),
+    ).forEachIndexed { index, spec ->
+        val item = AiToolsItemToolBinding.inflate(LayoutInflater.from(context), grid, false)
+        item.title.text = spec.title
+        item.subtitle.text = spec.subtitle
+        item.iconGlyph.setImageResource(spec.iconRes)
+        item.iconGlyph.setColorFilter(spec.accent)
+        item.iconGlyph.background = roundedFill(accentWithAlpha(spec.accent, 0x24), 10f, grid)
+        item.root.setOnClickListener { onNavigate(spec.route) }
+        grid.addView(item.root, gridParams(index, grid))
     }
 }
 
-@Composable
-private fun ToolBentoCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    accent: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    prominent: Boolean = false,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier,
-        shape = CardShape,
-        color = AIToolsCard,
-        border = BorderStroke(1.dp, AIToolsStroke.copy(alpha = 0.58f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(if (prominent) 14.dp else 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(11.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(if (prominent) 38.dp else 32.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(accent.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(if (prominent) 23.dp else 19.dp))
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = title,
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontSize = if (prominent) 15.sp else 14.sp,
-                    lineHeight = if (prominent) 18.sp else 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Start,
-                    maxLines = if (prominent) 2 else 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = subtitle,
-                    color = Muted,
-                    fontSize = if (prominent) 11.sp else 11.sp,
-                    lineHeight = if (prominent) 13.sp else 13.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
+private fun gridParams(index: Int, view: View): GridLayout.LayoutParams =
+    GridLayout.LayoutParams(
+        GridLayout.spec(index / 2, 1),
+        GridLayout.spec(index % 2, 1f)
+    ).apply {
+        width = 0
+        height = dp(view, 116)
+        setMargins(
+            if (index % 2 == 0) 0 else dp(view, 5),
+            if (index < 2) 0 else dp(view, 10),
+            if (index % 2 == 0) dp(view, 5) else 0,
+            0
+        )
     }
-}
+
+private fun roundedFill(color: Int, radiusDp: Float, view: View): GradientDrawable =
+    GradientDrawable().apply {
+        setColor(color)
+        cornerRadius = radiusDp * view.resources.displayMetrics.density
+    }
+
+private fun accentWithAlpha(color: Int, alpha: Int): Int =
+    (alpha.coerceIn(0, 255) shl 24) or (color and 0x00FFFFFF)
+
+private fun dp(view: View, value: Int): Int = (value * view.resources.displayMetrics.density).toInt()
+
+private data class ToolSpec(
+    val title: String,
+    val subtitle: String,
+    val iconRes: Int,
+    val accent: Int,
+    val route: String,
+)

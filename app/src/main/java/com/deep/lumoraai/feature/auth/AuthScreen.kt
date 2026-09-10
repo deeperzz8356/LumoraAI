@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
-import com.deep.lumoraai.databinding.ScreenAuthBinding
+import com.deep.lumoraai.databinding.AuthScreenBinding
 import com.deep.lumoraai.core.view.applySystemBarPadding
 
 @Composable
@@ -22,10 +22,10 @@ fun AuthScreen(
     modifier: Modifier = Modifier
 ) {
     AndroidView(
-        factory = { context -> ScreenAuthBinding.inflate(LayoutInflater.from(context)).apply { content.applySystemBarPadding() }.root },
+        factory = { context -> AuthScreenBinding.inflate(LayoutInflater.from(context)).apply { content.applySystemBarPadding() }.root },
         update = { root ->
             bindAuth(
-                ScreenAuthBinding.bind(root), uiState, allowGuestSignIn,
+                AuthScreenBinding.bind(root), uiState, allowGuestSignIn,
                 onGoogleSignIn, onEmailSignIn, onGuestSignIn, onEmailOptionClick, onBack
             )
         },
@@ -34,7 +34,7 @@ fun AuthScreen(
 }
 
 private fun bindAuth(
-    binding: ScreenAuthBinding,
+    binding: AuthScreenBinding,
     state: AuthUiState,
     allowGuest: Boolean,
     onGoogle: () -> Unit,

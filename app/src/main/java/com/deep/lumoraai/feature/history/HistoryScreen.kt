@@ -1,103 +1,50 @@
 package com.deep.lumoraai.feature.history
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
+import android.app.AlertDialog
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.GridLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import android.widget.Toast
-import coil.compose.AsyncImage
+import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
-import com.deep.lumoraai.ads.AdPlacement
-import com.deep.lumoraai.ads.LocalAdsConfigStore
-import com.deep.lumoraai.ads.PlacementNativeAd
-import com.deep.lumoraai.core.components.AppEmptyScreen
-import com.deep.lumoraai.core.components.AppErrorScreen
-import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.core.components.LumoraTopBar
-import com.deep.lumoraai.core.components.VideoFirstFrameThumbnail
-import com.deep.lumoraai.core.components.ZoomableImageViewer
-import com.deep.lumoraai.core.components.ZoomableVideoPlayer
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.utils.HistoryFeedbackReporter
 import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.core.utils.MediaShareUtils
 import com.deep.lumoraai.data.model.HistoryModel
+import com.deep.lumoraai.databinding.HistoryItemTileBinding
+import com.deep.lumoraai.databinding.HistoryScreenBinding
+import com.deep.lumoraai.databinding.HistoryViewerBinding
 import kotlinx.coroutines.launch
 import java.io.File
-import kotlin.OptIn
-import androidx.compose.ui.res.stringResource
 
-private val HistoryBackground = Color(0xFF081020)
-private val HistoryPanel = Color(0xFF0E172A)
-private val HistoryStroke = Color(0xFF1B2A44)
-private val Lime = Color(0xFFD6FF2F)
-private val Muted = Color(0xFF94A0B8)
-private val FilterIdle = Color(0xFF111A2D)
-
-private enum class HistoryFilter(@androidx.annotation.StringRes val labelRes: Int) {
-    All(com.deep.lumoraai.R.string.ui_filter_all),
-    Images(com.deep.lumoraai.R.string.ui_filter_image),
-    Videos(com.deep.lumoraai.R.string.ui_filter_video),
-    Enhancer(com.deep.lumoraai.R.string.ui_filter_enhancer),
-    Compress(com.deep.lumoraai.R.string.ui_filter_compress),
+private enum class HistoryFilter {
+    All,
+    Images,
+    Videos,
+    Enhancer,
+    Compress,
 }
 
 @Composable
@@ -110,10 +57,13 @@ fun HistoryScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedItem by remember { mutableStateOf<HistoryModel?>(null) }
+    var selectedFilter by remember { mutableStateOf(HistoryFilter.All) }
+    var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = HistoryBackground,
+        containerColor = Color(0xFF081020),
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
@@ -125,630 +75,323 @@ fun HistoryScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(HistoryBackground)
+                .background(Color(0xFF081020))
                 .padding(padding)
         ) {
             val viewing = selectedItem
-            val credits = (uiState as? HistoryUiState.Success)?.credits ?: 0
             if (viewing != null) {
-                HistoryMediaViewer(
-                    item = viewing,
-                    credits = credits,
-                    onBack = { selectedItem = null },
-                    onNavigate = onNavigate,
-                    unreadCount = unreadCount,
-                    onDelete = {
-                        onDeleteItems(listOf(viewing))
-                        selectedItem = null
-                    }
+                AndroidView(
+                    factory = { HistoryViewerBinding.inflate(LayoutInflater.from(it)).root },
+                    update = { root ->
+                        bindHistoryViewer(
+                            binding = HistoryViewerBinding.bind(root),
+                            item = viewing,
+                            scope = scope,
+                            onBack = { selectedItem = null },
+                            onDelete = {
+                                onDeleteItems(listOf(viewing))
+                                selectedItem = null
+                            },
+                        )
+                    },
+                    modifier = Modifier.fillMaxSize()
                 )
             } else {
-                when (uiState) {
-                    HistoryUiState.Loading -> AppLoadingScreen()
-                    is HistoryUiState.Empty -> HistoryEmpty(credits = uiState.credits, onNavigate = onNavigate, unreadCount = unreadCount)
-                    is HistoryUiState.Error -> AppErrorScreen(message = uiState.message)
-                    is HistoryUiState.Success -> HistoryGallery(
-                        items = uiState.items,
-                        credits = uiState.credits,
-                        onNavigate = onNavigate,
-                        onDeleteItems = onDeleteItems,
-                        unreadCount = unreadCount,
-                        onSelected = { item ->
-                            selectedItem = item
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HistoryGallery(
-    items: List<HistoryModel>,
-    credits: Int,
-    onNavigate: (String) -> Unit,
-    onDeleteItems: (List<HistoryModel>) -> Unit,
-    unreadCount: Int,
-    onSelected: (HistoryModel) -> Unit,
-) {
-    var selectedFilter by remember { mutableStateOf(HistoryFilter.All) }
-    var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
-    val filteredItems = remember(items, selectedFilter) {
-        items.filter { item ->
-            when (selectedFilter) {
-                HistoryFilter.All -> true
-                HistoryFilter.Images -> !item.type.equals("VIDEO", ignoreCase = true)
-                HistoryFilter.Videos -> item.type.equals("VIDEO", ignoreCase = true)
-                HistoryFilter.Enhancer -> item.title.contains("enhance", ignoreCase = true)
-                HistoryFilter.Compress -> item.title.contains("compress", ignoreCase = true)
-            }
-        }
-    }
-    val selectedItems = remember(filteredItems, selectedIds) {
-        filteredItems.filter { it.id in selectedIds }
-    }
-    val selectionMode = selectedIds.isNotEmpty()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .padding(top = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        HistoryTopBar(credits = credits, onNavigate = onNavigate, unreadCount = unreadCount)
-        FilterRow(selectedFilter = selectedFilter, onSelected = { selectedFilter = it })
-        if (selectionMode) {
-            SelectionBar(
-                selectedCount = selectedIds.size,
-                allSelected = filteredItems.isNotEmpty() && selectedIds.containsAll(filteredItems.map { it.id }),
-                onSelectAll = {
-                    selectedIds = if (filteredItems.isNotEmpty() && selectedIds.containsAll(filteredItems.map { it.id })) {
-                        emptySet()
-                    } else {
-                        filteredItems.map { it.id }.toSet()
-                    }
-                },
-                onDelete = {
-                    onDeleteItems(selectedItems)
-                    selectedIds = emptySet()
-                },
-                onCancel = { selectedIds = emptySet() }
-            )
-        }
-        val historyRowInterval = LocalAdsConfigStore.current?.current?.nativeHistoryInterval ?: 3
-        val historyItemInterval = historyRowInterval * 2
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(9.dp),
-            verticalArrangement = Arrangement.spacedBy(9.dp),
-        ) {
-            filteredItems.forEachIndexed { index, item ->
-                item(key = item.id) {
-                    val selected = item.id in selectedIds
-                    HistoryTile(
-                        item = item,
-                        selected = selected,
-                        selectionMode = selectionMode,
-                        onClick = {
-                            if (selectionMode) {
-                                selectedIds = selectedIds.toggle(item.id)
-                            } else {
-                                onSelected(item)
-                            }
-                        },
-                        onLongPress = { selectedIds = selectedIds + item.id },
-                    )
-                }
-                // Full-width native ad after every N rows. History is a
-                // two-column grid, so 3 rows means after every 6 history cards.
-                if ((index + 1) % historyItemInterval == 0) {
-                    item(
-                        key = "native_history_${index + 1}",
-                        span = { GridItemSpan(maxLineSpan) },
-                    ) {
-                        PlacementNativeAd(
-                            placement = AdPlacement.NATIVE_HISTORY,
-                            slotKey = "native_history_${index + 1}",
+                AndroidView(
+                    factory = { HistoryScreenBinding.inflate(LayoutInflater.from(it)).root },
+                    update = { root ->
+                        val binding = HistoryScreenBinding.bind(root)
+                        bindHistoryScreen(
+                            binding = binding,
+                            uiState = uiState,
+                            selectedFilter = selectedFilter,
+                            selectedIds = selectedIds,
+                            unreadCount = unreadCount,
+                            onNavigate = onNavigate,
+                            onFilterChanged = {
+                                selectedFilter = it
+                                selectedIds = emptySet()
+                            },
+                            onSelectedIdsChanged = { selectedIds = it },
+                            onOpenItem = { selectedItem = it },
+                            onDeleteItems = onDeleteItems,
                         )
-                    }
-                }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
 }
 
-@Composable
-private fun HistoryTopBar(credits: Int, onNavigate: (String) -> Unit, unreadCount: Int = 0) {
-    LumoraTopBar(
-        credits = credits,
-        title = stringResource(com.deep.lumoraai.R.string.ui_history_2),
-        onProfileClick = { onNavigate(Screen.Profile.route) },
-        onCreditsClick = { onNavigate(Screen.Credits.route) },
-        onNotificationsClick = { onNavigate(Screen.Notifications.route) },
-        hasUnreadNotifications = unreadCount > 0,
-    )
+private fun bindHistoryScreen(
+    binding: HistoryScreenBinding,
+    uiState: HistoryUiState,
+    selectedFilter: HistoryFilter,
+    selectedIds: Set<String>,
+    unreadCount: Int,
+    onNavigate: (String) -> Unit,
+    onFilterChanged: (HistoryFilter) -> Unit,
+    onSelectedIdsChanged: (Set<String>) -> Unit,
+    onOpenItem: (HistoryModel) -> Unit,
+    onDeleteItems: (List<HistoryModel>) -> Unit,
+) {
+    val credits = when (uiState) {
+        is HistoryUiState.Empty -> uiState.credits
+        is HistoryUiState.Success -> uiState.credits
+        else -> 0
+    }
+    bindTopBar(binding, credits, unreadCount, onNavigate)
+    bindFilters(binding, selectedFilter, onFilterChanged)
+
+    when (uiState) {
+        HistoryUiState.Loading -> showMessage(binding, binding.root.context.getString(R.string.loading))
+        is HistoryUiState.Error -> showMessage(binding, uiState.message)
+        is HistoryUiState.Empty -> showMessage(binding, binding.root.context.getString(R.string.ui_history_empty_body))
+        is HistoryUiState.Success -> {
+            val filtered = filterItems(uiState.items, selectedFilter)
+            if (filtered.isEmpty()) {
+                showMessage(binding, "No items for this filter.")
+            } else {
+                binding.messageText.visibility = View.GONE
+                binding.gridScroll.visibility = View.VISIBLE
+                bindSelectionBar(binding, filtered, selectedIds, onSelectedIdsChanged, onDeleteItems)
+                bindGrid(binding.historyGrid, filtered, selectedIds, onSelectedIdsChanged, onOpenItem)
+            }
+        }
+    }
 }
 
-@Composable
-private fun FilterRow(
-    selectedFilter: HistoryFilter,
+private fun bindTopBar(
+    binding: HistoryScreenBinding,
+    credits: Int,
+    unreadCount: Int,
+    onNavigate: (String) -> Unit,
+) {
+    binding.avatar.setOnClickListener { onNavigate(Screen.Profile.route) }
+    binding.creditsChip.text = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else credits.toString()
+    binding.creditsChip.setOnClickListener { onNavigate(Screen.Credits.route) }
+    binding.unreadDot.visibility = if (unreadCount > 0) View.VISIBLE else View.GONE
+    binding.notificationButton.setOnClickListener { onNavigate(Screen.Notifications.route) }
+}
+
+private fun bindFilters(
+    binding: HistoryScreenBinding,
+    selected: HistoryFilter,
     onSelected: (HistoryFilter) -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    if (binding.filterRow.childCount != HistoryFilter.entries.size) {
+        binding.filterRow.removeAllViews()
         HistoryFilter.entries.forEach { filter ->
-            val selected = selectedFilter == filter
-            Box(
-                modifier = Modifier
-                    .heightIn(min = 40.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(if (selected) Lime.copy(alpha = 0.16f) else FilterIdle)
-                    .border(
-                        1.dp,
-                        if (selected) Lime.copy(alpha = 0.8f) else HistoryStroke,
-                        RoundedCornerShape(24.dp)
-                    )
-                    .clickable { onSelected(filter) }
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(filter.labelRes).uppercase(),
-                    color = if (selected) Lime else Muted,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    maxLines = 2
-                )
+            val button = Button(binding.root.context).apply {
+                minWidth = 0
+                minHeight = 0
+                textSize = 12f
+                setPadding(dp(this, 16), 0, dp(this, 16), 0)
+                setOnClickListener { onSelected(filter) }
             }
+            binding.filterRow.addView(button, ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(button, 40)).apply {
+                setMargins(0, 0, dp(button, 12), 0)
+            })
+        }
+    }
+    HistoryFilter.entries.forEachIndexed { index, filter ->
+        (binding.filterRow.getChildAt(index) as? Button)?.apply {
+            text = filter.label(binding.root)
+            setTextColor(if (filter == selected) 0xFFD6FF2F.toInt() else 0xFF94A0B8.toInt())
+            setBackgroundResource(if (filter == selected) R.drawable.bg_common_action_lime else R.drawable.bg_common_card)
         }
     }
 }
 
-@Composable
-private fun SelectionBar(
-    selectedCount: Int,
-    allSelected: Boolean,
-    onSelectAll: () -> Unit,
-    onDelete: () -> Unit,
-    onCancel: () -> Unit,
+private fun bindSelectionBar(
+    binding: HistoryScreenBinding,
+    items: List<HistoryModel>,
+    selectedIds: Set<String>,
+    onSelectedIdsChanged: (Set<String>) -> Unit,
+    onDeleteItems: (List<HistoryModel>) -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(HistoryPanel)
-            .border(1.dp, Lime.copy(alpha = 0.24f), RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "$selectedCount selected",
-            color = Color.White,
-            fontSize = 13.sp,
-            lineHeight = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onSelectAll) {
-                Text(if (allSelected) "Clear" else "Select all", color = Lime, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-            TextButton(onClick = onDelete, enabled = selectedCount > 0) {
-                Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF7A7A), modifier = Modifier.size(17.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(com.deep.lumoraai.R.string.ui_delete), color = Color(0xFFFF7A7A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-            TextButton(onClick = onCancel) {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_done), color = Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-        }
+    val selectionMode = selectedIds.isNotEmpty()
+    binding.selectionBar.visibility = if (selectionMode) View.VISIBLE else View.GONE
+    binding.selectionCount.text = "${selectedIds.size} selected"
+    val allSelected = items.isNotEmpty() && selectedIds.containsAll(items.map { it.id })
+    binding.selectAllButton.text = if (allSelected) "Clear" else "Select all"
+    binding.selectAllButton.setOnClickListener {
+        onSelectedIdsChanged(if (allSelected) emptySet() else items.map { it.id }.toSet())
     }
+    binding.deleteButton.setOnClickListener {
+        onDeleteItems(items.filter { it.id in selectedIds })
+        onSelectedIdsChanged(emptySet())
+    }
+    binding.cancelSelectionButton.setOnClickListener { onSelectedIdsChanged(emptySet()) }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun HistoryTile(
-    item: HistoryModel,
-    selected: Boolean,
-    selectionMode: Boolean,
-    onClick: () -> Unit,
-    onLongPress: () -> Unit,
+private fun bindGrid(
+    grid: GridLayout,
+    items: List<HistoryModel>,
+    selectedIds: Set<String>,
+    onSelectedIdsChanged: (Set<String>) -> Unit,
+    onOpenItem: (HistoryModel) -> Unit,
 ) {
-    val isVideo = item.type.equals("VIDEO", ignoreCase = true)
-    val mediaPath = item.mediaUrl.orEmpty()
-    val file = remember(mediaPath) { File(mediaPath) }
-    val fallbackRes = if (isVideo) R.drawable.style_digital else R.drawable.style_fantasy
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(2f / 3f)
-            .clip(RoundedCornerShape(6.dp))
-            .background(HistoryPanel)
-            .border(
-                1.dp,
-                if (selected) Lime.copy(alpha = 0.9f) else HistoryStroke,
-                RoundedCornerShape(6.dp)
-            )
-            .combinedClickable(
-                enabled = mediaPath.isNotBlank(),
-                onClick = onClick,
-                onLongClick = onLongPress,
-            )
-    ) {
-        if (isVideo && mediaPath.isNotBlank() && file.exists()) {
-            VideoFirstFrameThumbnail(
-                filePath = mediaPath,
-                contentDescription = item.title,
-                fallbackImageRes = fallbackRes,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (!isVideo && mediaPath.isNotBlank() && file.exists()) {
-            AsyncImage(
-                model = file,
-                contentDescription = item.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Image(
-                painter = painterResource(id = fallbackRes),
-                contentDescription = item.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+    grid.removeAllViews()
+    val selectionMode = selectedIds.isNotEmpty()
+    items.forEachIndexed { index, item ->
+        val tile = HistoryItemTileBinding.inflate(LayoutInflater.from(grid.context), grid, false)
+        val isVideo = item.type.equals("VIDEO", ignoreCase = true)
+        bindMediaThumb(tile.mediaImage, item, if (isVideo) R.drawable.style_digital else R.drawable.style_fantasy)
+        tile.playBadge.visibility = if (isVideo) View.VISIBLE else View.GONE
+        tile.duration.visibility = if (isVideo) View.VISIBLE else View.GONE
+        tile.selectionBadge.visibility = if (selectionMode && item.id in selectedIds) View.VISIBLE else View.GONE
+        tile.root.clipToOutline = true
+        tile.mediaImage.clipToOutline = true
+        tile.root.setOnClickListener {
+            if (selectionMode) onSelectedIdsChanged(selectedIds.toggle(item.id)) else onOpenItem(item)
         }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.28f))
-                    )
-                )
-        )
-
-        if (isVideo) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(34.dp)
-                    .background(Color.Black.copy(alpha = 0.36f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_play_video),
-                    tint = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            Text(
-                text = "0:24",
-                color = Color.White,
-                fontSize = 8.sp,
-                lineHeight = 10.sp,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(6.dp)
-                    .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 5.dp, vertical = 2.dp)
-            )
+        tile.root.setOnLongClickListener {
+            onSelectedIdsChanged(selectedIds + item.id)
+            true
         }
-
-        if (selectionMode) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(7.dp)
-                    .size(26.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.58f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (selected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                    contentDescription = if (selected) "Selected" else "Not selected",
-                    tint = if (selected) Lime else Color.White.copy(alpha = 0.8f),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
+        grid.addView(tile.root, gridParams(index, grid, 9))
     }
 }
 
-@Composable
-private fun HistoryMediaViewer(
+private fun bindHistoryViewer(
+    binding: HistoryViewerBinding,
     item: HistoryModel,
-    credits: Int,
+    scope: kotlinx.coroutines.CoroutineScope,
     onBack: () -> Unit,
-    onNavigate: (String) -> Unit,
-    unreadCount: Int,
     onDelete: () -> Unit,
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val context = binding.root.context
     val isVideo = item.type.equals("VIDEO", ignoreCase = true)
     val mediaPath = item.mediaUrl.orEmpty()
-    val file = remember(mediaPath) { File(mediaPath) }
-    var showFeedbackDialog by remember(item.id) { mutableStateOf(false) }
-
-    if (showFeedbackDialog) {
-        FeedbackDialog(
-            item = item,
-            onDismiss = { showFeedbackDialog = false },
-            onSubmit = { reason ->
-                HistoryFeedbackReporter.submit(context, item, reason)
-                Toast.makeText(context, "Thanks, feedback saved.", Toast.LENGTH_SHORT).show()
-                showFeedbackDialog = false
-            }
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .padding(top = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        HistoryTopBar(credits = credits, onNavigate = onNavigate, unreadCount = unreadCount)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ViewerActionButton(
-                label = "History",
-                icon = Icons.AutoMirrored.Filled.ArrowBack,
-                tint = Color.White,
-                onClick = onBack
-            )
-            if (file.exists()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ViewerIconButton(
-                        icon = Icons.Default.Download,
-                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_download),
-                        tint = Lime,
-                        onClick = {
-                            // Immediate feedback: confirm the download has started
-                            // the moment the user taps, then report the result.
-                            Toast.makeText(
-                                context,
-                                context.getString(com.deep.lumoraai.R.string.ui_downloading),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            scope.launch {
-                                val result = MediaGallerySaver.saveToGallery(
-                                    context = context,
-                                    filePath = mediaPath,
-                                    mimeType = mimeTypeFor(item),
-                                    mediaType = item.type,
-                                )
-                                Toast.makeText(
-                                    context,
-                                    result.fold(
-                                        onSuccess = {
-                                            if (isVideo) "Video saved to gallery" else "Image saved to gallery"
-                                        },
-                                        onFailure = {
-                                            it.message ?: if (isVideo) {
-                                                "Could not save video to gallery."
-                                            } else {
-                                                "Could not save image to gallery."
-                                            }
-                                        }
-                                    ),
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
-                    )
-                    ViewerIconButton(
-                        icon = Icons.Default.Share,
-                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_share),
-                        tint = Lime,
-                        onClick = {
-                            MediaShareUtils.shareMedia(
-                                context = context,
-                                filePath = mediaPath,
-                                mimeType = mimeTypeFor(item)
-                            )
-                        }
-                    )
-                    ViewerIconButton(
-                        icon = Icons.Default.Feedback,
-                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_feedback),
-                        tint = Color(0xFFCFBDFF),
-                        onClick = { showFeedbackDialog = true }
-                    )
-                    ViewerIconButton(
-                        icon = Icons.Default.Delete,
-                        contentDescription = stringResource(com.deep.lumoraai.R.string.ui_delete),
-                        tint = Color(0xFFFF7A7A),
-                        onClick = onDelete
-                    )
-                }
-            }
+    val file = File(mediaPath)
+    binding.backButton.setOnClickListener { onBack() }
+    binding.mediaTitle.text = item.title.ifBlank { if (isVideo) "Video" else "Image" }
+    binding.createdAt.text = item.createdAt
+    binding.missingText.visibility = if (file.exists()) View.GONE else View.VISIBLE
+    binding.mediaImage.visibility = if (file.exists() && !isVideo) View.VISIBLE else View.GONE
+    binding.mediaVideo.visibility = if (file.exists() && isVideo) View.VISIBLE else View.GONE
+    if (file.exists() && isVideo) {
+        binding.mediaVideo.setVideoURI(Uri.fromFile(file))
+        binding.mediaVideo.setOnPreparedListener { player ->
+            player.isLooping = true
+            binding.mediaVideo.start()
         }
-        Text(
-            text = item.title.ifBlank { if (isVideo) "Video" else "Image" },
-            color = Color.White,
-            fontSize = 18.sp,
-            lineHeight = 22.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Black)
-                .border(1.dp, HistoryStroke, RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            if (!file.exists()) {
-                Text(
-                    text = "Saved media file is missing.",
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(16.dp)
-                )
-            } else if (isVideo) {
-                ZoomableVideoPlayer(
-                    filePath = mediaPath,
-                    modifier = Modifier.fillMaxSize(),
-                    showControls = true,
-                    enableGestureDetection = true
-                )
-            } else {
-                ZoomableImageViewer(
-                    filePath = mediaPath,
-                    modifier = Modifier.fillMaxSize(),
-                    showControls = true,
-                    enableGestureDetection = true
-                )
-            }
-        }
-        
-        Text(
-            text = item.createdAt,
-            color = Muted,
-            fontSize = 11.sp,
-            lineHeight = 14.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+    } else if (file.exists()) {
+        binding.mediaImage.setImageURI(Uri.fromFile(file))
     }
+    binding.downloadButton.visibility = if (file.exists()) View.VISIBLE else View.GONE
+    binding.shareButton.visibility = if (file.exists()) View.VISIBLE else View.GONE
+    binding.downloadButton.setOnClickListener {
+        Toast.makeText(context, context.getString(R.string.ui_downloading), Toast.LENGTH_SHORT).show()
+        scope.launch {
+            val result = MediaGallerySaver.saveToGallery(context, mediaPath, mimeTypeFor(item), item.type)
+            Toast.makeText(
+                context,
+                result.fold(
+                    onSuccess = { if (isVideo) "Video saved to gallery" else "Image saved to gallery" },
+                    onFailure = { it.message ?: "Could not save media to gallery." },
+                ),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+    binding.shareButton.setOnClickListener {
+        MediaShareUtils.shareMedia(context, mediaPath, mimeTypeFor(item))
+    }
+    binding.feedbackButton.setOnClickListener { showFeedbackDialog(binding.root, item) }
+    binding.deleteButton.setOnClickListener { onDelete() }
 }
 
-@Composable
-private fun FeedbackDialog(
-    item: HistoryModel,
-    onDismiss: () -> Unit,
-    onSubmit: (String) -> Unit,
-) {
-    val options = listOf(
+private fun showFeedbackDialog(anchor: View, item: HistoryModel) {
+    val context = anchor.context
+    val options = arrayOf(
         "Poor quality result",
         "Wrong image or video",
         "Download or share issue",
         "Preview or zoom issue",
         "Other issue",
     )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = HistoryPanel,
-        title = {
-            Text(
-                text = "Send Feedback",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = item.title.ifBlank { if (item.type.equals("VIDEO", ignoreCase = true)) "Video" else "Image" },
-                    color = Muted,
-                    fontSize = 12.sp,
-                    lineHeight = 15.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                options.forEach { option ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color.White.copy(alpha = 0.05f))
-                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
-                            .clickable { onSubmit(option) }
-                            .padding(horizontal = 12.dp, vertical = 11.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Feedback,
-                            contentDescription = null,
-                            tint = Lime,
-                            modifier = Modifier.size(17.dp)
-                        )
-                        Spacer(modifier = Modifier.width(9.dp))
-                        Text(
-                            text = option,
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_cancel), color = Muted, fontWeight = FontWeight.Bold)
-            }
+    AlertDialog.Builder(context)
+        .setTitle("Send Feedback")
+        .setItems(options) { dialog, which ->
+            HistoryFeedbackReporter.submit(context, item, options[which])
+            Toast.makeText(context, "Thanks, feedback saved.", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
         }
-    )
+        .setNegativeButton(R.string.ui_cancel, null)
+        .show()
 }
 
-@Composable
-private fun ViewerActionButton(
-    label: String,
-    icon: ImageVector,
-    tint: Color,
-    onClick: () -> Unit,
-) {
-    TextButton(onClick = onClick) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(label, color = tint, fontWeight = FontWeight.Bold)
+private fun showMessage(binding: HistoryScreenBinding, message: String) {
+    binding.selectionBar.visibility = View.GONE
+    binding.gridScroll.visibility = View.GONE
+    binding.messageText.visibility = View.VISIBLE
+    binding.messageText.text = message
+}
+
+private fun filterItems(items: List<HistoryModel>, filter: HistoryFilter): List<HistoryModel> =
+    items.filter { item ->
+        when (filter) {
+            HistoryFilter.All -> true
+            HistoryFilter.Images -> !item.type.equals("VIDEO", ignoreCase = true)
+            HistoryFilter.Videos -> item.type.equals("VIDEO", ignoreCase = true)
+            HistoryFilter.Enhancer -> item.title.contains("enhance", ignoreCase = true)
+            HistoryFilter.Compress -> item.title.contains("compress", ignoreCase = true)
+        }
     }
+
+private fun HistoryFilter.label(view: View): String =
+    when (this) {
+        HistoryFilter.All -> view.context.getString(R.string.ui_filter_all)
+        HistoryFilter.Images -> view.context.getString(R.string.ui_filter_image)
+        HistoryFilter.Videos -> view.context.getString(R.string.ui_filter_video)
+        HistoryFilter.Enhancer -> view.context.getString(R.string.ui_filter_enhancer)
+        HistoryFilter.Compress -> view.context.getString(R.string.ui_filter_compress)
+    }.uppercase()
+
+private fun bindMediaThumb(image: android.widget.ImageView, item: HistoryModel, fallbackRes: Int) {
+    val path = item.mediaUrl.orEmpty()
+    val file = File(path)
+    when {
+        path.isBlank() || !file.exists() -> image.setImageResource(fallbackRes)
+        item.type.equals("VIDEO", ignoreCase = true) -> videoFrame(file)?.let { image.setImageBitmap(it) } ?: image.setImageResource(fallbackRes)
+        else -> image.setImageURI(Uri.fromFile(file))
+    }
+    image.contentDescription = item.title
 }
 
-@Composable
-private fun ViewerIconButton(
-    icon: ImageVector,
-    contentDescription: String,
-    tint: Color,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(38.dp)
-            .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.06f))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = tint,
-            modifier = Modifier.size(19.dp)
+private fun gridParams(index: Int, view: View, gapDp: Int): GridLayout.LayoutParams {
+    val gapPx = dp(view, gapDp)
+    val availableWidth = (view.width.takeIf { it > 0 } ?: view.resources.displayMetrics.widthPixels) - gapPx
+    val columnWidth = (availableWidth / 2).coerceAtLeast(dp(view, 120))
+    val tileHeight = (columnWidth * 4f / 3f).toInt()
+    return GridLayout.LayoutParams(
+        GridLayout.spec(index / 2, 1),
+        GridLayout.spec(index % 2, 1)
+    ).apply {
+        width = columnWidth
+        height = tileHeight
+        setMargins(
+            if (index % 2 == 0) 0 else dp(view, gapDp / 2),
+            if (index < 2) 0 else dp(view, gapDp),
+            if (index % 2 == 0) dp(view, gapDp / 2) else 0,
+            0
         )
     }
 }
 
-private fun Set<String>.toggle(id: String): Set<String> =
-    if (id in this) this - id else this + id
+private fun Set<String>.toggle(id: String): Set<String> = if (id in this) this - id else this + id
+
+private fun dp(view: View, value: Int): Int = (value * view.resources.displayMetrics.density).toInt()
+
+private fun videoFrame(file: File): Bitmap? = runCatching {
+    MediaMetadataRetriever().use { retriever ->
+        retriever.setDataSource(file.absolutePath)
+        retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+    }
+}.getOrNull()
 
 private fun mimeTypeFor(item: HistoryModel): String {
     if (item.type.equals("VIDEO", ignoreCase = true)) return "video/mp4"
@@ -759,22 +402,3 @@ private fun mimeTypeFor(item: HistoryModel): String {
         else -> "image/png"
     }
 }
-
-@Composable
-private fun HistoryEmpty(credits: Int, onNavigate: (String) -> Unit, unreadCount: Int) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .padding(top = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        HistoryTopBar(credits = credits, onNavigate = onNavigate, unreadCount = unreadCount)
-        FilterRow(selectedFilter = HistoryFilter.All, onSelected = {})
-        AppEmptyScreen(
-            title = stringResource(com.deep.lumoraai.R.string.ui_no_creations_yet),
-            body = stringResource(com.deep.lumoraai.R.string.ui_history_empty_body),
-        )
-    }
-}
-

@@ -2,20 +2,17 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="0dp"
     android:layout_height="118dp"
-    android:background="@drawable/bg_home_card"
+    android:background="@drawable/bg_common_card"
     android:clickable="true"
     android:focusable="true"
     android:padding="12dp">
 
-    <TextView
+    <ImageView
         android:id="@+id/iconGlyph"
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:background="@drawable/bg_home_icon_box"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:padding="8dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -46,14 +43,11 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <TextView
+    <ImageView
         android:id="@+id/arrow"
         android:layout_width="22dp"
         android:layout_height="22dp"
         android:layout_gravity="bottom|end"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:text="›"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:src="@drawable/ic_lumora_arrow_right"
+        android:tint="@color/white" />
 </FrameLayout>

@@ -17,7 +17,7 @@ import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.LocalAdsManager
 import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.ads.rememberCurrentActivity
-import com.deep.lumoraai.databinding.ScreenSplashBinding
+import com.deep.lumoraai.databinding.SplashScreenBinding
 import kotlinx.coroutines.delay
 
 @Composable
@@ -39,7 +39,7 @@ fun SplashScreen(isReady: Boolean, onNext: () -> Unit, modifier: Modifier = Modi
     Box(modifier.fillMaxSize()) {
         AndroidView(
             factory = { context ->
-                val binding = ScreenSplashBinding.inflate(LayoutInflater.from(context))
+                val binding = SplashScreenBinding.inflate(LayoutInflater.from(context))
                 var index = 0
                 val ticker = object : Runnable {
                     override fun run() {

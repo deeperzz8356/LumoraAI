@@ -28,6 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
@@ -382,7 +383,12 @@ private fun RemoveBackgroundPanel(uiState: BgStudioUiState, onUpload: () -> Unit
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text("✦", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = Lime,
+                    modifier = Modifier.size(15.dp)
+                )
                 Text(
                     text = stringResource(
                         if (bitmap == null) com.deep.lumoraai.R.string.ui_tap_to_select_subject

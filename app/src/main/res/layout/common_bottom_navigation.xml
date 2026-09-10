@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="88dp"
+    android:layout_height="76dp"
     android:background="@android:color/transparent">
 
     <LinearLayout
         android:id="@+id/navRow"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="64dp"
         android:layout_gravity="bottom"
         android:background="#FF11192B"
         android:baselineAligned="false"
@@ -24,15 +24,11 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <TextView
+            <ImageView
                 android:id="@+id/homeIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:text="⌂"
-                android:textSize="26sp"
-                android:textStyle="bold" />
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_lumora_home" />
 
             <TextView
                 android:id="@+id/homeLabel"
@@ -55,15 +51,11 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <TextView
+            <ImageView
                 android:id="@+id/templatesIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:text="⌕"
-                android:textSize="26sp"
-                android:textStyle="bold" />
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_lumora_templates" />
 
             <TextView
                 android:id="@+id/templatesLabel"
@@ -86,15 +78,11 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <TextView
+            <ImageView
                 android:id="@+id/historyIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:text="↺"
-                android:textSize="26sp"
-                android:textStyle="bold" />
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_lumora_history" />
 
             <TextView
                 android:id="@+id/historyLabel"

@@ -3,13 +3,16 @@ package com.deep.lumoraai.core.components
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.viewinterop.AndroidView
-import com.deep.lumoraai.databinding.LayoutBottomNavigationBinding
+import com.deep.lumoraai.databinding.CommonBottomNavigationBinding
 
 @Composable
 fun BottomNavigationBar(
@@ -22,20 +25,22 @@ fun BottomNavigationBar(
     if (screenWidth >= 600) return
 
     AndroidView(
-        factory = { LayoutBottomNavigationBinding.inflate(LayoutInflater.from(it)).root },
+        factory = { CommonBottomNavigationBinding.inflate(LayoutInflater.from(it)).root },
         update = { root ->
             bindBottomNavigation(
-                binding = LayoutBottomNavigationBinding.bind(root),
+                binding = CommonBottomNavigationBinding.bind(root),
                 selected = selected,
                 onSelected = onSelected,
             )
         },
         modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
     )
 }
 
 private fun bindBottomNavigation(
-    binding: LayoutBottomNavigationBinding,
+    binding: CommonBottomNavigationBinding,
     selected: String,
     onSelected: (String) -> Unit,
 ) {
@@ -68,7 +73,7 @@ private fun bindBottomNavigation(
 
 private fun bindNavItem(
     container: LinearLayout,
-    icon: TextView,
+    icon: ImageView,
     label: TextView,
     route: String,
     selected: String,
@@ -77,10 +82,9 @@ private fun bindNavItem(
 ) {
     val isSelected = selected == route
     val color = if (isSelected) Color.rgb(214, 255, 47) else Color.rgb(138, 148, 169)
-    icon.setTextColor(color)
+    icon.setColorFilter(color)
     label.setTextColor(color)
     label.alpha = if (isSelected) 1f else 0.74f
-    icon.textSize = if (isSelected) 26f else 24f
     container.isEnabled = !(disableWhenSelected && isSelected)
     container.setOnClickListener(
         if (container.isEnabled) View.OnClickListener { onSelected(route) } else null
