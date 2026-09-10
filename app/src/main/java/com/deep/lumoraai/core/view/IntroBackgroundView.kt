@@ -8,7 +8,7 @@ import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
-import kotlin.random.Random
+import java.util.Random
 
 class IntroBackgroundView @JvmOverloads constructor(
     context: Context,
