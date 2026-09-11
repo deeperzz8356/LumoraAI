@@ -61,6 +61,7 @@ fun SettingsScreen(
             onClick = { onNavigate("${Screen.Language.route}?source=settings") }
         )
         binding.content.addToggleRow("Notifications", "Receive generation and account alerts", uiState.notificationsEnabled, onToggleNotifications)
+        /* Hidden from the XML-backed Account Settings screen by product request.
         binding.content.addToggleRow("High Quality Mode", "Prefer quality over speed where supported", uiState.highQualityMode, onToggleHighQualityMode)
         binding.content.addToggleRow("Dark Mode", "Lumora uses the dark studio theme", uiState.isDarkMode, onToggleDarkMode)
 
@@ -77,5 +78,6 @@ fun SettingsScreen(
         binding.content.addTextCard("Version ${BuildConfig.VERSION_NAME}", unlockHint) {
             onVersionTapped()
         }
+        */
     }
 }
