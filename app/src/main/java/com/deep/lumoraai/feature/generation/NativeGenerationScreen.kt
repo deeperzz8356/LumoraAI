@@ -60,6 +60,7 @@ data class NativeGenerationConfig(
     val title: String,
     val promptHint: String,
     val promptOptional: Boolean,
+    val showPromptSection: Boolean = true,
     val showSingleUpload: Boolean,
     val singleUploadBitmap: Bitmap?,
     val onSingleUpload: (() -> Unit)?,
@@ -90,6 +91,7 @@ data class NativeGenerationConfig(
     val creditCost: Int,
     val bannerPlacement: AdPlacement,
     val showRatio: Boolean = true,
+    val generateButtonText: String? = null,
 )
 
 @Composable
@@ -289,6 +291,8 @@ private fun bindPrompt(
     onImprovePrompt: () -> Unit,
     onShowPromptChanged: (Boolean) -> Unit,
 ) {
+    binding.promptWrapper.visibility = if (config.showPromptSection) View.VISIBLE else View.GONE
+    if (!config.showPromptSection) return
     binding.promptTitle.text = if (config.promptOptional && !showPrompt) {
         binding.root.context.getString(R.string.ui_prompt_optional)
     } else {
@@ -391,7 +395,11 @@ private fun bindBottomBar(
     bindRatios(binding, config, onAspectRatioChanged)
     binding.generateButton.isEnabled = config.generateEnabled && !config.isGenerating
     binding.generateButton.alpha = if (binding.generateButton.isEnabled) 1f else 0.45f
-    binding.generateButton.text = if (config.isGenerating) binding.root.context.getString(R.string.loading) else binding.root.context.getString(R.string.ui_generate_now)
+    binding.generateButton.text = if (config.isGenerating) {
+        binding.root.context.getString(R.string.loading)
+    } else {
+        config.generateButtonText ?: binding.root.context.getString(R.string.ui_generate_now)
+    }
     binding.generateButton.setOnClickListener { if (config.generateEnabled && !config.isGenerating) onGenerate() }
     binding.creditNote.text = binding.root.context.getString(R.string.ui_credits_consumed_note, config.creditCost)
 }

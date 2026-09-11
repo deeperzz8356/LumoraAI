@@ -3,79 +3,13 @@ package com.deep.lumoraai.feature.bgstudio
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
-import com.deep.lumoraai.ads.PlacementBanner
-import com.deep.lumoraai.core.components.LumoraCreditsChip
-import com.deep.lumoraai.core.components.LumoraNotificationBell
-import com.deep.lumoraai.core.navigation.Screen
-import com.deep.lumoraai.core.utils.CreditBalanceStore
-import androidx.compose.ui.res.stringResource
-import com.deep.lumoraai.feature.generation.GeneratedMediaLoading
-import com.deep.lumoraai.feature.generation.GeneratedMediaResult
+import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.feature.generation.GenerationAspectRatio
-import com.deep.lumoraai.feature.generation.GenerationBottomBar
-import com.deep.lumoraai.feature.generation.GenerationControlsPanel
-import kotlinx.coroutines.delay
-import androidx.compose.runtime.collectAsState
-
-private val StudioBackground = Color(0xFF081020)
-private val StudioPanel = Color(0xFF121A2E)
-private val StudioField = Color(0xFF151D31)
-private val StudioStroke = Color(0xFF25344C)
-private val Lime = Color(0xFFD6FF2F)
-private val Muted = Color(0xFF9AA5B8)
+import com.deep.lumoraai.feature.generation.NativeGenerationConfig
+import com.deep.lumoraai.feature.generation.NativeGenerationScreen
 
 @Composable
 fun BgStudioScreen(
@@ -93,425 +27,63 @@ fun BgStudioScreen(
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scrollState = rememberScrollState()
-    val showAdvancedSettings = remember { mutableStateOf(false) }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) onImageSelected(uri)
     }
+    val error = (uiState.status as? BgStudioStatus.Error)?.message
     val isBusy = uiState.status == BgStudioStatus.LoadingImage || uiState.status == BgStudioStatus.Generating
-
-    LaunchedEffect(isBusy, uiState.generatedPaths) {
-        if (isBusy || uiState.generatedPaths.isNotEmpty()) {
-            delay(160)
-            scrollState.animateScrollTo(scrollState.maxValue)
-        }
+    val statusText = when (uiState.status) {
+        BgStudioStatus.LoadingImage -> "Loading image..."
+        BgStudioStatus.Generating -> uiState.generationStatusText ?: "Background Studio is working..."
+        else -> uiState.generationStatusText
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(StudioBackground)
-            .systemBarsPadding()
-    ) {
-      Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .imePadding()
-        ) {
-            StudioTopBar(
-                onBack = onBack,
-                onNotifications = { onNavigate(Screen.Notifications.route) },
-                onCredits = { onNavigate(Screen.Credits.route) }
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 28.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                // AI Replace mode hidden per UI change request — only Remove Background
-                // is available now, so the Remove/Replace toggle is hidden entirely.
-                // ModeSwitch(selectedMode = uiState.mode, onModeSelected = onModeSelected)
-
-                if (uiState.mode == BgStudioMode.Replace) {
-                    SourceImagePanel(uiState = uiState, onUpload = { imagePicker.launch("image/*") })
-                    PromptPanel(
-                        prompt = uiState.prompt,
-                        onPromptChanged = onPromptChanged,
-                        onUpload = { imagePicker.launch("image/*") },
-                        isSettingsOpen = showAdvancedSettings.value,
-                        onSettingsClick = { showAdvancedSettings.value = !showAdvancedSettings.value }
-                    )
-                    if (showAdvancedSettings.value) {
-                        GenerationControlsPanel(
-                            mediaType = stringResource(com.deep.lumoraai.R.string.ui_image),
-                            selectedAspectRatio = uiState.aspectRatio,
-                            onAspectRatioSelected = onAspectRatioChanged,
-                            negativePrompt = uiState.negativePrompt,
-                            onNegativePromptChanged = onNegativePromptChanged,
-                            similarity = uiState.similarity,
-                            similarityLabel = stringResource(com.deep.lumoraai.R.string.ui_subject_preservation),
-                            onSimilarityChanged = onSimilarityChanged,
-                            generations = 1,
-                            onGenerationsChanged = {}
-                        )
-                    }
-                } else {
-                    RemoveBackgroundPanel(uiState = uiState, onUpload = { imagePicker.launch("image/*") })
-                }
-
-                GeneratedMediaLoading(
-                    isVisible = isBusy,
-                    mediaType = stringResource(com.deep.lumoraai.R.string.ui_image_upper),
-                    progress = uiState.generationProgress,
-                    statusText = uiState.generationStatusText
-                )
-                GeneratedMediaResult(
-                    filePath = uiState.generatedPath,
-                    filePaths = uiState.generatedPaths,
-                    mediaType = stringResource(com.deep.lumoraai.R.string.ui_image_upper),
-                    mimeType = uiState.generatedMimeType,
-                    onEdit = onEditResult
-                )
-                StatusMessage(status = uiState.status, onDismissError = onDismissError)
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-        }
-
-        // Fixed bottom generate bar. Replace mode exposes the ratio selector;
-        // Remove Background mode only needs the action button.
-        val isReplace = uiState.mode == BgStudioMode.Replace
-        GenerationBottomBar(
+    NativeGenerationScreen(
+        config = NativeGenerationConfig(
+            title = "BG Studio",
+            promptHint = "",
+            promptOptional = uiState.mode == BgStudioMode.Remove,
+            showPromptSection = false,
+            showSingleUpload = true,
+            singleUploadBitmap = uiState.sourceBitmap,
+            onSingleUpload = { imagePicker.launch("image/*") },
+            prompt = uiState.prompt,
+            negativePrompt = uiState.negativePrompt,
+            isImprovingPrompt = false,
             selectedAspectRatio = uiState.aspectRatio,
-            onAspectRatioSelected = onAspectRatioChanged,
             aspectRatioOptions = GenerationAspectRatio.entries,
-            generations = 1,
-            onGenerationsChanged = {},
+            sliderLabel = null,
+            sliderValue = null,
+            onSliderChanged = null,
+            duration = null,
+            onDurationChanged = null,
+            styleItems = emptyList(),
             isGenerating = isBusy,
-            generateEnabled = if (isReplace) {
-                !isBusy && uiState.sourceBitmap != null && uiState.prompt.isNotBlank()
-            } else {
-                !isBusy && uiState.sourceBitmap != null
-            },
-            creditCost = 1,
-            onGenerate = onCreate,
-            showCount = false,
-            showRatio = isReplace,
-            generateLabel = if (isReplace) {
-                stringResource(com.deep.lumoraai.R.string.ui_create_credit_cost)
-            } else {
-                stringResource(com.deep.lumoraai.R.string.ui_remove_background_credit_cost)
-            },
-        )
-
-        PlacementBanner(placement = AdPlacement.BANNER_BG, applyNavBarPadding = false)
-      }
-    }
-}
-
-@Composable
-private fun StudioTopBar(
-    onBack: () -> Unit,
-    onNotifications: () -> Unit,
-    hasUnreadNotifications: Boolean = false,
-    onCredits: () -> Unit = {},
-) {
-    val credits by CreditBalanceStore.balance.collectAsState()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp)
-            .background(Color(0xFF0B1426))
-            .border(1.dp, Color.White.copy(alpha = 0.06f))
-            .padding(horizontal = 19.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
-                tint = Color.White,
-                modifier = Modifier
-                    .size(23.dp)
-                    .clickable(onClick = onBack)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(com.deep.lumoraai.R.string.ui_bg_studio),
-                color = Color.White,
-                fontSize = 21.sp,
-                lineHeight = 25.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            LumoraCreditsChip(credits = credits ?: 0, onClick = onCredits)
-            LumoraNotificationBell(
-                hasUnreadNotifications = hasUnreadNotifications,
-                onClick = onNotifications
-            )
-        }
-    }
-}
-
-@Composable
-private fun ModeSwitch(selectedMode: BgStudioMode, onModeSelected: (BgStudioMode) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(36.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(StudioPanel)
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        BgStudioMode.entries.forEach { mode ->
-            val selected = mode == selectedMode
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(if (selected) Lime else Color.Transparent)
-                    .clickable { onModeSelected(mode) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = mode.label,
-                    color = if (selected) Color.Black else Muted,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SourceImagePanel(uiState: BgStudioUiState, onUpload: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(293.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(StudioPanel)
-            .border(BorderStroke(1.dp, StudioStroke), RoundedCornerShape(8.dp))
-            .clickable(onClick = onUpload),
-        contentAlignment = Alignment.Center
-    ) {
-        val bitmap = uiState.sourceBitmap
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_source_image),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Image(
-                painter = androidx.compose.ui.res.painterResource(id = R.drawable.style_digital),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.26f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.CloudUpload, contentDescription = null, tint = Lime, modifier = Modifier.size(32.dp))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(stringResource(com.deep.lumoraai.R.string.ui_upload_source_image), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RemoveBackgroundPanel(uiState: BgStudioUiState, onUpload: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(335.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(StudioPanel)
-            .border(BorderStroke(1.dp, StudioStroke), RoundedCornerShape(8.dp))
-            .clickable(onClick = onUpload),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(188.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
-        ) {
-            val bitmap = uiState.sourceBitmap
-            if (bitmap != null) {
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = stringResource(com.deep.lumoraai.R.string.ui_source_subject),
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Image(
-                    painter = androidx.compose.ui.res.painterResource(id = R.drawable.style_fantasy),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Color.Black.copy(alpha = 0.62f))
-                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(50))
-                    .padding(horizontal = 12.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = null,
-                    tint = Lime,
-                    modifier = Modifier.size(15.dp)
-                )
-                Text(
-                    text = stringResource(
-                        if (bitmap == null) com.deep.lumoraai.R.string.ui_tap_to_select_subject
-                        else com.deep.lumoraai.R.string.ui_subject_detected
-                    ),
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PromptPanel(
-    prompt: String,
-    onPromptChanged: (String) -> Unit,
-    onUpload: () -> Unit,
-    isSettingsOpen: Boolean,
-    onSettingsClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(140.dp)
-            .clip(RoundedCornerShape(9.dp))
-            .background(StudioField)
-            .border(1.dp, Color.White.copy(alpha = 0.04f), RoundedCornerShape(9.dp))
-    ) {
-        OutlinedTextField(
-            value = prompt,
-            onValueChange = onPromptChanged,
-            placeholder = {
-                Text(
-                    text = stringResource(com.deep.lumoraai.R.string.ui_describe_image_to_generate),
-                    color = Muted,
-                    fontSize = 16.sp,
-                    lineHeight = 22.sp
-                )
-            },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 32.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedBorderColor = Color.Transparent,
-                unfocusedBorderColor = Color.Transparent,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                cursorColor = Lime
-            )
-        )
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 14.dp, bottom = 13.dp),
-            horizontalArrangement = Arrangement.spacedBy(9.dp)
-        ) {
-            SquareToolButton(icon = Icons.Default.Upload, onClick = onUpload)
-            SquareToolButton(
-                icon = Icons.Default.Tune,
-                selected = isSettingsOpen,
-                onClick = onSettingsClick
-            )
-        }
-        Text(
-            text = "${prompt.length}/1000",
-            color = Color.White.copy(alpha = 0.74f),
-            fontSize = 12.sp,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 14.dp, bottom = 14.dp)
-        )
-    }
-}
-
-@Composable
-private fun SquareToolButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    selected: Boolean = false,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(28.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(if (selected) Lime.copy(alpha = 0.22f) else Color(0xFF202A3F))
-            .border(
-                1.dp,
-                if (selected) Lime.copy(alpha = 0.75f) else Color.Transparent,
-                RoundedCornerShape(4.dp)
-            )
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(icon, contentDescription = null, tint = Lime, modifier = Modifier.size(17.dp))
-    }
-}
-
-@Composable
-private fun StatusMessage(status: BgStudioStatus, onDismissError: () -> Unit) {
-    when (status) {
-        is BgStudioStatus.Error -> Text(
-            text = status.message,
-            color = Color(0xFFFF7A7A),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable(onClick = onDismissError)
-        )
-        BgStudioStatus.Completed -> Text(
-            text = stringResource(com.deep.lumoraai.R.string.ui_saved_to_history_and_gallery),
-            color = Lime,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold
-        )
-        BgStudioStatus.TrialExpired -> Text(
-            text = stringResource(com.deep.lumoraai.R.string.ui_insufficient_credits),
-            color = Color(0xFFFFC46B),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold
-        )
-        else -> Unit
-    }
+            generationProgress = uiState.generationProgress,
+            generationStatusText = statusText,
+            generatedPath = uiState.generatedPath,
+            generatedPaths = uiState.generatedPaths,
+            generatedMimeType = uiState.generatedMimeType,
+            mediaType = "IMAGE",
+            generateEnabled = uiState.sourceBitmap != null && !isBusy,
+            creditCost = GenerationGate.CREDITS_PER_IMAGE,
+            bannerPlacement = AdPlacement.BANNER_BG,
+            showRatio = false,
+            generateButtonText = "REMOVE BACKGROUND",
+        ),
+        onBack = onBack,
+        onNavigate = onNavigate,
+        onPromptChanged = onPromptChanged,
+        onNegativePromptChanged = onNegativePromptChanged,
+        onAspectRatioChanged = onAspectRatioChanged,
+        onImprovePrompt = {},
+        onGenerate = {
+            onModeSelected(BgStudioMode.Remove)
+            onCreate()
+        },
+        onEditResult = onEditResult,
+        onDismissError = onDismissError,
+        error = error,
+        modifier = modifier,
+    )
 }

@@ -1,6 +1,7 @@
 package com.deep.lumoraai.feature.home
 
 import android.graphics.Bitmap
+import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaMetadataRetriever
 import android.net.Uri
@@ -17,6 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -27,6 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
@@ -48,9 +52,23 @@ import com.deep.lumoraai.databinding.HomeItemActionBinding
 import com.deep.lumoraai.databinding.HomeItemRecentBinding
 import com.deep.lumoraai.databinding.HomeItemToolBinding
 import com.deep.lumoraai.databinding.HomeScreenBinding
+import com.deep.lumoraai.feature.profile.ProfilePreferences
 import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Adjustments
+import compose.icons.tablericons.ArrowNarrowRight
+import compose.icons.tablericons.ArrowsMinimize
+import compose.icons.tablericons.Bell
+import compose.icons.tablericons.Brush
+import compose.icons.tablericons.Camera
+import compose.icons.tablericons.MoodSmile
+import compose.icons.tablericons.Movie
+import compose.icons.tablericons.Photo
+import compose.icons.tablericons.PlayerPlay
+import compose.icons.tablericons.Stars
+import compose.icons.tablericons.Video
 import kotlinx.coroutines.delay
 import java.io.File
 
@@ -214,6 +232,7 @@ private fun bindSuccess(
     val rawName = state.userName.ifBlank { context.getString(R.string.ui_guest) }
     val displayName = if (rawName.length > 8) "${rawName.take(8)}..." else rawName
     binding.greeting.text = context.getString(R.string.ui_hi_name, displayName)
+    bindHomeAvatar(binding.avatar)
     binding.avatar.setOnClickListener { onNavigate(Screen.Profile.route) }
     binding.creditsChip.text = if (state.credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
         "Unlimited"
@@ -221,6 +240,8 @@ private fun bindSuccess(
         state.credits.toString()
     }
     binding.creditsChip.setOnClickListener { onNavigate(Screen.Credits.route) }
+    binding.creditsChip.compoundDrawableTintList = ColorStateList.valueOf(context.getColor(R.color.lumora_lime))
+    bindTablerIcon(binding.notificationIconHost, TablerIcons.Bell, ComposeColor.White)
     binding.unreadDot.visibility = if (unreadCount > 0) View.VISIBLE else View.GONE
     binding.notificationButton.setOnClickListener {
         onNotificationClick?.invoke() ?: onNavigate(Screen.Notifications.route)
@@ -238,17 +259,16 @@ private fun bindCreateGrid(grid: GridLayout, onNavigate: (String) -> Unit) {
     grid.removeAllViews()
     val context = grid.context
     listOf(
-        HomeCardSpec(context.getString(R.string.ui_create_text_to_image), context.getString(R.string.ui_create_dream_it), R.drawable.ic_lumora_magic, Lime, Screen.TextToImage.route),
-        HomeCardSpec(context.getString(R.string.ui_create_img_to_img), context.getString(R.string.ui_create_refine_it), R.drawable.ic_lumora_image, Purple, Screen.ImageToImage.route),
-        HomeCardSpec(context.getString(R.string.ui_create_img_to_video), context.getString(R.string.ui_create_animate_it), R.drawable.ic_lumora_video, Pink, Screen.ImageToVideo.route),
-        HomeCardSpec(context.getString(R.string.ui_create_text_to_video), context.getString(R.string.ui_create_direct_it), R.drawable.ic_lumora_play, Cyan, Screen.TextToVideo.route),
+        HomeCardSpec(context.getString(R.string.ui_create_text_to_image), context.getString(R.string.ui_create_dream_it), TablerIcons.Stars, Lime, Screen.TextToImage.route),
+        HomeCardSpec(context.getString(R.string.ui_create_img_to_img), context.getString(R.string.ui_create_refine_it), TablerIcons.Photo, Purple, Screen.ImageToImage.route),
+        HomeCardSpec(context.getString(R.string.ui_create_img_to_video), context.getString(R.string.ui_create_animate_it), TablerIcons.Movie, Pink, Screen.ImageToVideo.route),
+        HomeCardSpec(context.getString(R.string.ui_create_text_to_video), context.getString(R.string.ui_create_direct_it), TablerIcons.PlayerPlay, Cyan, Screen.TextToVideo.route),
     ).forEachIndexed { index, spec ->
         val card = HomeItemActionBinding.inflate(LayoutInflater.from(context), grid, false)
         card.title.text = spec.title
         card.subtitle.text = spec.subtitle
-        card.iconGlyph.setImageResource(spec.iconRes)
-        card.iconGlyph.setColorFilter(spec.accent)
-        card.arrow.setColorFilter(spec.accent)
+        bindTablerIcon(card.iconGlyph, spec.icon, ComposeColor(spec.accent))
+        bindTablerIcon(card.arrow, TablerIcons.ArrowNarrowRight, ComposeColor(spec.accent))
         card.root.setOnClickListener { onNavigate(spec.route) }
         grid.addView(card.root, gridParams(index, 118, grid))
     }
@@ -259,18 +279,17 @@ private fun bindToolsGrid(grid: GridLayout, onNavigate: (String) -> Unit) {
     grid.removeAllViews()
     val context = grid.context
     listOf(
-        HomeCardSpec(context.getString(R.string.ui_tool_logo), "", R.drawable.ic_lumora_logo_tool, Cyan, logoRoute()),
-        HomeCardSpec(context.getString(R.string.ui_tool_ai_avatar), "", R.drawable.ic_lumora_avatar, Purple, avatarRoute()),
-        HomeCardSpec(context.getString(R.string.ui_tool_photo_enhancer), "", R.drawable.ic_lumora_enhance, Purple, Screen.PhotoEnhance.route),
-        HomeCardSpec(context.getString(R.string.ui_tool_remove_background), "", R.drawable.ic_lumora_cutout, Indigo, bgStudioRoute("remove")),
-        HomeCardSpec(context.getString(R.string.ui_tool_promo_videos), "", R.drawable.ic_lumora_video, Pink, Screen.PromoVideo.route),
-        HomeCardSpec(context.getString(R.string.ui_tool_compress), "", R.drawable.ic_lumora_compress, Lime, Screen.Compress.route),
+        HomeCardSpec(context.getString(R.string.ui_tool_logo), "", TablerIcons.Brush, Cyan, logoRoute()),
+        HomeCardSpec(context.getString(R.string.ui_tool_ai_avatar), "", TablerIcons.MoodSmile, Purple, avatarRoute()),
+        HomeCardSpec(context.getString(R.string.ui_tool_photo_enhancer), "", TablerIcons.Adjustments, Purple, Screen.PhotoEnhance.route),
+        HomeCardSpec(context.getString(R.string.ui_tool_remove_background), "", TablerIcons.Camera, Indigo, bgStudioRoute("remove")),
+        HomeCardSpec(context.getString(R.string.ui_tool_promo_videos), "", TablerIcons.Video, Pink, Screen.PromoVideo.route),
+        HomeCardSpec(context.getString(R.string.ui_tool_compress), "", TablerIcons.ArrowsMinimize, Lime, Screen.Compress.route),
     ).forEachIndexed { index, spec ->
         val card = HomeItemToolBinding.inflate(LayoutInflater.from(context), grid, false)
         card.title.text = spec.title
-        card.iconGlyph.setImageResource(spec.iconRes)
-        card.iconGlyph.setColorFilter(spec.accent)
         card.iconGlyph.background = roundedFill(accentWithAlpha(spec.accent, 0x24), 12f, grid)
+        bindTablerIcon(card.iconGlyph, spec.icon, ComposeColor(spec.accent))
         card.root.setOnClickListener { onNavigate(spec.route) }
         grid.addView(card.root, gridParams(index, 140, grid))
     }
@@ -295,6 +314,16 @@ private fun bindRecent(
         binding.recentList.addView(row.root, ViewGroup.MarginLayoutParams(dp(row.root, 190), dp(row.root, 78)).apply {
             setMargins(0, 0, marginEnd, 0)
         })
+    }
+}
+
+private fun bindHomeAvatar(avatar: ImageView) {
+    avatar.clipToOutline = true
+    val profile = ProfilePreferences.load(avatar.context, com.google.firebase.auth.FirebaseAuth.getInstance().currentUser)
+    if (profile.avatarUri.isNullOrBlank()) {
+        avatar.setImageResource(R.drawable.user_avatar)
+    } else {
+        avatar.setImageURI(Uri.parse(profile.avatarUri))
     }
 }
 
@@ -410,10 +439,25 @@ private fun videoFrame(file: File): Bitmap? = runCatching {
     }
 }.getOrNull()
 
+private fun bindTablerIcon(
+    host: ComposeView,
+    imageVector: ImageVector,
+    tint: ComposeColor,
+) {
+    host.setContent {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
 private data class HomeCardSpec(
     val title: String,
     val subtitle: String,
-    val iconRes: Int,
+    val icon: ImageVector,
     val accent: Int,
     val route: String,
 )

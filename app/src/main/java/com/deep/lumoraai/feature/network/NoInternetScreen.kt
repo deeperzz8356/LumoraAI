@@ -1,44 +1,18 @@
 package com.deep.lumoraai.feature.network
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.SignalWifiOff
-import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import android.graphics.Color
+import android.view.Gravity
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.deep.lumoraai.core.components.LumoraIntroBackground
-import com.deep.lumoraai.core.components.LumoraIntroPrimaryButton
-import com.deep.lumoraai.core.components.LumoraIntroSecondaryButton
-import com.deep.lumoraai.core.theme.IntroPalette
-import androidx.compose.ui.res.stringResource
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.nativeui.LumoraXmlScreen
+import com.deep.lumoraai.core.nativeui.addPrimaryButton
+import com.deep.lumoraai.core.nativeui.dp
+import com.deep.lumoraai.core.nativeui.resetContent
+import com.deep.lumoraai.core.nativeui.setupTopBar
 
 @Composable
 fun NoInternetScreen(
@@ -46,86 +20,38 @@ fun NoInternetScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(IntroPalette.BackgroundBase)
-    ) {
-        LumoraIntroBackground()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            WifiStatusArt()
-            Spacer(modifier = Modifier.height(34.dp))
-            Text(
-                text = stringResource(R.string.no_internet_connection),
-                color = IntroPalette.TextPrimary,
-                fontSize = 26.sp,
-                lineHeight = 32.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = stringResource(R.string.no_internet_message),
-                color = IntroPalette.TextMuted,
-                style = MaterialTheme.typography.bodyMedium,
-                lineHeight = 21.sp,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(34.dp))
-            LumoraIntroPrimaryButton(
-                text = stringResource(R.string.turn_on_network),
-                onClick = onTurnOnNetwork,
-                leadingIcon = Icons.Default.Wifi,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            LumoraIntroSecondaryButton(
-                text = stringResource(R.string.retry),
-                onClick = onRetry,
-                leadingIcon = Icons.Default.Refresh,
-                height = 52.dp,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-private fun WifiStatusArt() {
-    Box(
-        modifier = Modifier
-            .size(142.dp)
-            .shadow(28.dp, CircleShape, clip = false)
-            .background(IntroPalette.SurfaceRaised, CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawCircle(
-                color = IntroPalette.PrimaryButton.copy(alpha = 0.24f),
-                radius = size.minDimension * 0.45f
-            )
-            drawCircle(
-                color = IntroPalette.AccentLime.copy(alpha = 0.18f),
-                radius = size.minDimension * 0.32f,
-                center = Offset(size.width * 0.68f, size.height * 0.32f)
-            )
-            drawCircle(
-                color = IntroPalette.BorderSubtle,
-                radius = size.minDimension * 0.48f,
-                style = Stroke(width = 1.dp.toPx())
-            )
-        }
-        Icon(
-            imageVector = Icons.Default.SignalWifiOff,
-            contentDescription = null,
-            tint = IntroPalette.TextPrimary,
-            modifier = Modifier.size(58.dp)
+    LumoraXmlScreen(modifier = modifier) { binding ->
+        val context = binding.root.context
+        fun px(value: Int) = binding.root.dp(value)
+        binding.setupTopBar(
+            titleText = context.getString(R.string.no_internet_connection),
+            subtitleText = null,
+            onBack = null,
         )
+        binding.resetContent()
+        binding.content.gravity = Gravity.CENTER_HORIZONTAL
+        binding.content.addView(ImageView(context).apply {
+            setImageResource(R.drawable.ic_lumora_wifi_off)
+            setBackgroundResource(R.drawable.bg_common_card)
+            setPadding(px(32), px(32), px(32), px(32))
+        }, LinearLayout.LayoutParams(px(122), px(122)).apply {
+            setMargins(0, px(30), 0, px(24))
+        })
+        binding.content.addView(TextView(context).apply {
+            text = context.getString(R.string.no_internet_connection)
+            setTextColor(Color.WHITE)
+            textSize = 26f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        binding.content.addView(TextView(context).apply {
+            text = context.getString(R.string.no_internet_message)
+            setTextColor(Color.rgb(148, 160, 184))
+            textSize = 15f
+            gravity = Gravity.CENTER
+            setPadding(px(8), px(12), px(8), px(18))
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        binding.content.addPrimaryButton(context.getString(R.string.turn_on_network), onClick = onTurnOnNetwork)
+        binding.content.addPrimaryButton(context.getString(R.string.retry), onClick = onRetry)
     }
 }

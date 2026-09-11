@@ -1,57 +1,51 @@
 package com.deep.lumoraai.feature.result
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.deep.lumoraai.core.components.AppToolbar
-import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.core.components.EmptyState
-import com.deep.lumoraai.core.components.ErrorState
-import com.deep.lumoraai.core.components.GradientButton
-import com.deep.lumoraai.core.components.Loading
-import com.deep.lumoraai.feature.result.components.ResultFeatureCard
-import androidx.compose.ui.res.stringResource
+import com.deep.lumoraai.R
+import com.deep.lumoraai.core.nativeui.LumoraXmlScreen
+import com.deep.lumoraai.core.nativeui.addActionRow
+import com.deep.lumoraai.core.nativeui.addPrimaryButton
+import com.deep.lumoraai.core.nativeui.addSectionTitle
+import com.deep.lumoraai.core.nativeui.addTextCard
+import com.deep.lumoraai.core.nativeui.resetContent
+import com.deep.lumoraai.core.nativeui.setupTopBar
 
 @Composable
 fun ResultScreen(
     uiState: ResultUiState,
     onNext: () -> Unit,
+    onNavigate: (String) -> Unit = {},
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = { AppToolbar(title = stringResource(com.deep.lumoraai.R.string.ui_result_2)) },
-        bottomBar = {
-            BottomNavigationBar(
-                items = listOf("home", "createhub", "queue", "profile"),
-                selected = "result",
-                onSelected = { onNext() }
-            )
-        }
-    ) { padding ->
+    LumoraXmlScreen(
+        selectedTab = "result",
+        onNavigate = onNavigate,
+        modifier = modifier
+    ) { binding ->
+        val context = binding.root.context
+        binding.setupTopBar(
+            titleText = context.getString(R.string.ui_result_2),
+            subtitleText = context.getString(R.string.ui_result),
+            onBack = onBack,
+        )
+        binding.resetContent()
         when (uiState) {
-            ResultUiState.Loading -> Loading(modifier = Modifier.padding(padding))
-            ResultUiState.Empty -> EmptyState(title = stringResource(com.deep.lumoraai.R.string.ui_result_2), message = "No fake data yet.", modifier = Modifier.padding(padding))
-            is ResultUiState.Error -> ErrorState(title = stringResource(com.deep.lumoraai.R.string.ui_result_2), message = uiState.message, modifier = Modifier.padding(padding))
-            is ResultUiState.Success -> ResultContent(items = uiState.items, onNext = onNext, modifier = Modifier.padding(padding))
+            ResultUiState.Loading -> binding.content.addTextCard(context.getString(R.string.loading), "Please wait.")
+            ResultUiState.Empty -> binding.content.addTextCard(context.getString(R.string.ui_result), "No fake data yet.")
+            is ResultUiState.Error -> binding.content.addTextCard("Error", uiState.message)
+            is ResultUiState.Success -> {
+                binding.content.addSectionTitle(context.getString(R.string.ui_result))
+                uiState.items.forEach { item ->
+                    binding.content.addActionRow(
+                        title = item,
+                        subtitle = "This card shows compile-time placeholder data.",
+                        icon = R.drawable.ic_lumora_image
+                    )
+                }
+                binding.content.addPrimaryButton("Continue", onClick = onNext)
+            }
         }
-    }
-}
-
-@Composable
-private fun ResultContent(items: List<String>, onNext: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(com.deep.lumoraai.R.string.ui_result), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        items.forEach { item -> ResultFeatureCard(title = item, subtitle = stringResource(com.deep.lumoraai.R.string.ui_this_card_shows_the_results_of_your_completed_generation_jobs)) }
-        GradientButton(text = "Continue", onClick = onNext, modifier = Modifier.fillMaxWidth())
     }
 }

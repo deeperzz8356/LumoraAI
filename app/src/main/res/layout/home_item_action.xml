@@ -7,7 +7,7 @@
     android:focusable="true"
     android:padding="12dp">
 
-    <ImageView
+    <androidx.compose.ui.platform.ComposeView
         android:id="@+id/iconGlyph"
         android:layout_width="36dp"
         android:layout_height="36dp"
@@ -43,11 +43,9 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <ImageView
+    <androidx.compose.ui.platform.ComposeView
         android:id="@+id/arrow"
         android:layout_width="22dp"
         android:layout_height="22dp"
-        android:layout_gravity="bottom|end"
-        android:src="@drawable/ic_lumora_arrow_right"
-        android:tint="@color/white" />
+        android:layout_gravity="bottom|end" />
 </FrameLayout>

@@ -1,85 +1,33 @@
 package com.deep.lumoraai.feature.profile
 
 import android.net.Uri
+import android.text.InputType
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.deep.lumoraai.R
-import com.deep.lumoraai.core.components.AppToolbar
+import com.deep.lumoraai.core.nativeui.LumoraXmlScreen
+import com.deep.lumoraai.core.nativeui.addPrimaryButton
+import com.deep.lumoraai.core.nativeui.addSectionTitle
+import com.deep.lumoraai.core.nativeui.dp
+import com.deep.lumoraai.core.nativeui.resetContent
+import com.deep.lumoraai.core.nativeui.setupTopBar
 import com.deep.lumoraai.data.repository.ProfileRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
-import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-
-// Theme colors matching Home/Profile pages
-private val EditBackground = Color(0xFF081020)
-private val EditCard = Color(0xFF10192D)
-private val EditStroke = Color(0xFF172238)
-private val Lime = Color(0xFFD6FF2F)
-private val Purple = Color(0xFF9C63FF)
-private val Muted = Color(0xFF94A0B8)
-private val CardShape = RoundedCornerShape(14.dp)
 
 @Composable
 fun EditProfileScreen(
@@ -90,379 +38,120 @@ fun EditProfileScreen(
     val scope = rememberCoroutineScope()
     val user = FirebaseAuth.getInstance().currentUser
     val profileRepository = remember { ProfileRepository() }
-    val savedProfile = remember(user?.uid) { ProfilePreferences.load(context, user) }
-    var fullName by remember(savedProfile) { mutableStateOf(savedProfile.fullName) }
-    var username by remember(savedProfile) { mutableStateOf(savedProfile.username) }
-    var email by remember(savedProfile) { mutableStateOf(savedProfile.email) }
-    var bio by remember(savedProfile) { mutableStateOf(savedProfile.bio) }
-    var location by remember(savedProfile) { mutableStateOf(savedProfile.location) }
-    var avatarUri by remember(savedProfile) { mutableStateOf(savedProfile.avatarUri) }
-    var pendingAvatarUri by remember { mutableStateOf<Uri?>(null) }
+    var savedProfile by remember(user?.uid) { mutableStateOf(ProfilePreferences.load(context, user)) }
+    var avatarUri by remember(savedProfile.avatarUri) { mutableStateOf(savedProfile.avatarUri) }
     var isSaving by remember { mutableStateOf(false) }
-    val draftProfile = EditableProfile(
-        fullName = fullName.trim(),
-        username = username.trim().removePrefix("@"),
-        email = email.trim(),
-        bio = bio.trim(),
-        location = location.trim(),
-        avatarUri = avatarUri,
-    )
-    val originalProfile = savedProfile.copy(
-        fullName = savedProfile.fullName.trim(),
-        username = savedProfile.username.trim().removePrefix("@"),
-        email = savedProfile.email.trim(),
-        bio = savedProfile.bio.trim(),
-        location = savedProfile.location.trim(),
-    )
-    val hasChanges = draftProfile != originalProfile
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        pendingAvatarUri = uri
-    }
-    fun saveProfile() {
-        val cleanName = fullName.trim()
-        if (!hasChanges || isSaving) return
-        if (cleanName.isBlank()) {
-            Toast.makeText(context, context.getString(R.string.full_name_required), Toast.LENGTH_LONG).show()
-            return
-        }
-        if (!ProfilePreferences.isValidUsername(username)) {
-            Toast.makeText(context, context.getString(R.string.username_invalid), Toast.LENGTH_LONG).show()
-            return
-        }
-        isSaving = true
-        scope.launch {
-            try {
-                // Validate the username against the backend BEFORE persisting so
-                // a duplicate can never be saved locally. A CONFLICT surfaces as
-                // an IllegalArgumentException ("Username is already taken.").
-                val backendResult = profileRepository.updateCurrentUserProfile(draftProfile)
-                val conflict = backendResult.exceptionOrNull() as? IllegalArgumentException
-                if (conflict != null) {
-                    Toast.makeText(context, context.getString(R.string.username_taken), Toast.LENGTH_LONG).show()
-                    isSaving = false
-                    return@launch
-                }
-                backendResult.onFailure { error ->
-                    // Non-conflict failures (offline, timeout) shouldn't block the
-                    // local save — the profile still works offline.
-                    android.util.Log.w("ProfileUpdate", "Backend update failed but continuing with local save", error)
-                }
-
-                // Backend accepted (or was unreachable) — persist locally.
-                ProfilePreferences.save(context, user, draftProfile)
-
-                // Update Firebase user profile if possible
-                if (user != null && !user.isAnonymous) {
-                    runCatching {
-                        val request = UserProfileChangeRequest.Builder()
-                            .setDisplayName(draftProfile.fullName)
-                            .setPhotoUri(draftProfile.avatarUri?.let(Uri::parse))
-                            .build()
-                        user.updateProfile(request).await()
-                    }
-                }
-                
-                Toast.makeText(context, context.getString(R.string.profile_saved), Toast.LENGTH_SHORT).show()
-                onBack()
-            } catch (error: Exception) {
-                Toast.makeText(context, context.getString(R.string.profile_save_failed), Toast.LENGTH_LONG).show()
-                android.util.Log.e("ProfileSave", "Failed to save profile", error)
-            } finally {
-                isSaving = false
-            }
+        if (uri != null) {
+            avatarUri = ProfilePreferences.copyAvatarToPrivateStorage(context, uri) ?: uri.toString()
         }
     }
 
-    pendingAvatarUri?.let { cropUri ->
-        var cropZoom by remember(cropUri) { mutableStateOf(1f) }
-        var cropOffset by remember(cropUri) { mutableStateOf(Offset.Zero) }
-        var cropViewport by remember(cropUri) { mutableStateOf(IntSize.Zero) }
-        AlertDialog(
-            onDismissRequest = { pendingAvatarUri = null },
-            containerColor = EditCard,
-            title = {
-                Text(stringResource(R.string.crop_profile_image), color = Color.White, fontWeight = FontWeight.Bold)
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color.Black)
-                            .onSizeChanged { cropViewport = it }
-                            .pointerInput(cropUri) {
-                                detectTransformGestures { _, pan, zoom, _ ->
-                                    cropZoom = (cropZoom * zoom).coerceIn(1f, 5f)
-                                    cropOffset += pan
-                                    val limit = cropViewport.width * 0.45f * cropZoom
-                                    cropOffset = Offset(
-                                        x = cropOffset.x.coerceIn(-limit, limit),
-                                        y = cropOffset.y.coerceIn(-limit, limit)
-                                    )
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AsyncImage(
-                            model = cropUri,
-                            contentDescription = stringResource(R.string.profile_crop_preview),
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .graphicsLayer {
-                                    scaleX = cropZoom
-                                    scaleY = cropZoom
-                                    translationX = cropOffset.x
-                                    translationY = cropOffset.y
-                                }
-                        )
-                    }
-                    Slider(
-                        value = cropZoom,
-                        onValueChange = { cropZoom = it.coerceIn(1f, 5f) },
-                        valueRange = 1f..5f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = Lime,
-                            activeTrackColor = Lime,
-                            inactiveTrackColor = Muted.copy(alpha = 0.35f)
-                        )
-                    )
-                    Text(stringResource(R.string.profile_crop_instruction), color = Muted, fontSize = 13.sp)
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val copied = ProfilePreferences.copyAvatarToPrivateStorage(
-                            context = context,
-                            sourceUri = cropUri,
-                            viewportSize = cropViewport.width,
-                            zoom = cropZoom,
-                            offsetX = cropOffset.x,
-                            offsetY = cropOffset.y,
-                        )
-                        if (copied != null) {
-                            avatarUri = copied
-                        } else {
-                            Toast.makeText(context, context.getString(R.string.could_not_load_selected_image), Toast.LENGTH_LONG).show()
-                        }
-                        pendingAvatarUri = null
-                    }
-                ) {
-                    Text(stringResource(R.string.use_crop), color = Lime, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingAvatarUri = null }) {
-                    Text(stringResource(R.string.ui_cancel), color = Muted)
-                }
-            }
+    LumoraXmlScreen(modifier = modifier) { binding ->
+        binding.setupTopBar(
+            titleText = "Edit Profile",
+            subtitleText = "Update your creator details",
+            onBack = onBack,
+            actionIconRes = R.drawable.ic_lumora_check,
+            onAction = {}
         )
-    }
+        binding.resetContent()
+        fun px(value: Int) = binding.root.dp(value)
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = EditBackground,
-        topBar = {
-            AppToolbar(
-                title = stringResource(com.deep.lumoraai.R.string.ui_edit_profile),
-                onBackClick = onBack,
-                action = {
-                    IconButton(onClick = { saveProfile() }, enabled = hasChanges && !isSaving) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = stringResource(R.string.save_profile),
-                            tint = if (hasChanges && !isSaving) Lime else Color.White.copy(alpha = 0.35f)
-                        )
-                    }
-                }
-            )
+        val avatar = ImageView(context).apply {
+            setBackgroundResource(R.drawable.bg_profile_avatar)
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            if (avatarUri.isNullOrBlank()) setImageResource(R.drawable.user_avatar) else setImageURI(Uri.parse(avatarUri))
+            setOnClickListener { imagePicker.launch("image/*") }
+            isClickable = true
+            isFocusable = true
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(EditBackground)
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            // Profile Picture Section
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .size(100.dp)
-                    .clickable { imagePicker.launch("image/*") }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, Lime, CircleShape)
-                        .background(Color.Black)
-                ) {
-                    if (avatarUri != null) {
-                        AsyncImage(
-                            model = avatarUri,
-                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        androidx.compose.foundation.Image(
-                            painter = painterResource(id = R.drawable.user_avatar),
-                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_profile),
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
+        binding.content.addView(avatar, LinearLayout.LayoutParams(px(104), px(104)).apply {
+            setMargins(0, px(8), 0, px(18))
+            gravity = android.view.Gravity.CENTER_HORIZONTAL
+        })
+
+        binding.content.addSectionTitle("Profile")
+        val fullName = binding.content.addField("Full name", savedProfile.fullName)
+        val username = binding.content.addField("Username", savedProfile.username)
+        val email = binding.content.addField("Email", savedProfile.email, InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+        val bio = binding.content.addField("Bio", savedProfile.bio, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
+        val location = binding.content.addField("Location", savedProfile.location)
+
+        fun currentDraft() = EditableProfile(
+            fullName = fullName.text.toString().trim(),
+            username = username.text.toString().trim().removePrefix("@"),
+            email = email.text.toString().trim(),
+            bio = bio.text.toString().trim(),
+            location = location.text.toString().trim(),
+            avatarUri = avatarUri,
+        )
+
+        fun saveProfile() {
+            if (isSaving) return
+            val draft = currentDraft()
+            if (draft.fullName.isBlank()) {
+                Toast.makeText(context, context.getString(R.string.full_name_required), Toast.LENGTH_LONG).show()
+                return
+            }
+            if (!ProfilePreferences.isValidUsername(draft.username)) {
+                Toast.makeText(context, context.getString(R.string.username_invalid), Toast.LENGTH_LONG).show()
+                return
+            }
+            isSaving = true
+            scope.launch {
+                try {
+                    val backendResult = profileRepository.updateCurrentUserProfile(draft)
+                    val conflict = backendResult.exceptionOrNull() as? IllegalArgumentException
+                    if (conflict != null) {
+                        Toast.makeText(context, context.getString(R.string.username_taken), Toast.LENGTH_LONG).show()
+                        isSaving = false
+                        return@launch
                     }
-                }
-                Surface(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .align(Alignment.BottomEnd),
-                    shape = CircleShape,
-                    color = Purple,
-                    border = BorderStroke(2.dp, EditBackground)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_change_photo),
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    backendResult.onFailure { error ->
+                        android.util.Log.w("ProfileUpdate", "Backend update failed but continuing with local save", error)
                     }
+                    ProfilePreferences.save(context, user, draft)
+                    savedProfile = draft
+                    if (user != null && !user.isAnonymous) {
+                        runCatching {
+                            val request = UserProfileChangeRequest.Builder()
+                                .setDisplayName(draft.fullName)
+                                .setPhotoUri(draft.avatarUri?.let(Uri::parse))
+                                .build()
+                            user.updateProfile(request).await()
+                        }
+                    }
+                    Toast.makeText(context, context.getString(R.string.profile_saved), Toast.LENGTH_SHORT).show()
+                    onBack()
+                } catch (error: Exception) {
+                    Toast.makeText(context, context.getString(R.string.profile_save_failed), Toast.LENGTH_LONG).show()
+                    android.util.Log.e("ProfileSave", "Failed to save profile", error)
+                } finally {
+                    isSaving = false
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Full Name
-            Text(stringResource(com.deep.lumoraai.R.string.ui_full_name), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            EditProfileTextField(
-                value = fullName,
-                onValueChange = { fullName = it },
-                placeholder = stringResource(com.deep.lumoraai.R.string.ui_your_full_name)
-            )
-
-            // Username
-            Text(stringResource(com.deep.lumoraai.R.string.ui_username), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            EditProfileTextField(
-                value = username,
-                onValueChange = { username = it },
-                placeholder = stringResource(com.deep.lumoraai.R.string.ui_username_2)
-            )
-
-            // Email
-            Text(stringResource(com.deep.lumoraai.R.string.ui_email_address), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            EditProfileTextField(
-                value = email,
-                onValueChange = { email = it },
-                placeholder = stringResource(com.deep.lumoraai.R.string.ui_email_example_com),
-                keyboardType = KeyboardType.Email
-            )
-
-            // Bio
-            Text(stringResource(com.deep.lumoraai.R.string.ui_bio), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            EditProfileTextField(
-                value = bio,
-                onValueChange = { bio = it },
-                placeholder = stringResource(com.deep.lumoraai.R.string.ui_tell_us_about_yourself),
-                maxLines = 3
-            )
-
-            // Location
-            Text(stringResource(com.deep.lumoraai.R.string.ui_location), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            EditProfileTextField(
-                value = location,
-                onValueChange = { location = it },
-                placeholder = stringResource(com.deep.lumoraai.R.string.ui_city_country)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Save Button
-            Surface(
-                onClick = { saveProfile() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = CardShape,
-                color = if (hasChanges && !isSaving) Lime else Lime.copy(alpha = 0.35f),
-                enabled = hasChanges && !isSaving
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        if (isSaving) stringResource(R.string.saving) else stringResource(R.string.ui_save_changes),
-                        color = EditBackground,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-            }
-
-            // Cancel Button
-            Surface(
-                onClick = onBack,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = CardShape,
-                color = EditCard,
-                border = BorderStroke(1.dp, EditStroke.copy(alpha = 0.72f))
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.ui_cancel),
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
         }
+
+        binding.content.addPrimaryButton(if (isSaving) "SAVING..." else "SAVE PROFILE", enabled = !isSaving, onClick = ::saveProfile)
+        binding.actionButton.setOnClickListener { saveProfile() }
     }
 }
 
-@Composable
-private fun EditProfileTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    maxLines: Int = 1
-) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(if (maxLines > 1) 100.dp else 56.dp),
-        placeholder = {
-            Text(placeholder, color = Muted.copy(alpha = 0.6f), fontSize = 14.sp)
-        },
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = EditCard,
-            unfocusedContainerColor = EditCard,
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedIndicatorColor = Lime,
-            unfocusedIndicatorColor = EditStroke,
-            cursorColor = Lime
-        ),
-        shape = CardShape,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        maxLines = maxLines,
-        singleLine = maxLines == 1,
-        textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
-            fontSize = 14.sp,
-            color = Color.White
-        )
-    )
+private fun LinearLayout.addField(label: String, value: String, inputType: Int = InputType.TYPE_CLASS_TEXT): EditText {
+    val field = EditText(context).apply {
+        hint = label
+        setText(value)
+        this.inputType = inputType
+        setTextColor(context.getColor(R.color.white))
+        setHintTextColor(0xFF94A0B8.toInt())
+        textSize = 15f
+        setSingleLine(inputType and InputType.TYPE_TEXT_FLAG_MULTI_LINE == 0)
+        setBackgroundResource(R.drawable.bg_generation_panel)
+        setPadding(dp(14), dp(10), dp(14), dp(10))
+    }
+    addView(field, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(if (label == "Bio") 96 else 52)).apply {
+        setMargins(0, dp(10), 0, 0)
+    })
+    return field
 }

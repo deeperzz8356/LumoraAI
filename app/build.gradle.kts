@@ -116,6 +116,7 @@ dependencies {
     implementation(libs.purchases)
     implementation(libs.android.billing)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation("br.com.devsrsouza.compose.icons:tabler-icons:1.1.1")
 
     // OneSignal Push Notifications
     implementation("com.onesignal:OneSignal:5.6.1")

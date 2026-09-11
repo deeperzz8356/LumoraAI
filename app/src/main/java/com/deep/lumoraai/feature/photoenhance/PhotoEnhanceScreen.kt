@@ -1,80 +1,68 @@
 package com.deep.lumoraai.feature.photoenhance
 
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.Rect
 import android.net.Uri
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.widget.SeekBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementBanner
-import com.deep.lumoraai.core.components.LumoraCreditsChip
-import com.deep.lumoraai.core.components.LumoraNotificationBell
+import com.deep.lumoraai.core.components.ZoomableImageViewer
 import com.deep.lumoraai.core.navigation.Screen
-import androidx.compose.ui.res.stringResource
-
-private val EnhanceBackground = Color(0xFF081020)
-private val EnhancePanel = Color(0xFF121A2E)
-private val EnhanceStroke = Color(0xFF26364F)
-private val Lime = Color(0xFFD6FF2F)
-private val Muted = Color(0xFF9BA6BA)
+import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.core.utils.MediaGallerySaver
+import com.deep.lumoraai.core.utils.MediaShareUtils
+import com.deep.lumoraai.databinding.PhotoEnhanceScreenBinding
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Adjustments
+import compose.icons.tablericons.Bell
+import compose.icons.tablericons.Download
+import compose.icons.tablericons.Share
+import compose.icons.tablericons.Upload
+import compose.icons.tablericons.Wand
+import compose.icons.tablericons.X
+import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @Composable
 fun PhotoEnhanceScreen(
@@ -91,526 +79,303 @@ fun PhotoEnhanceScreen(
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) onImageSelected(uri)
     }
+    var viewerPath by remember { mutableStateOf<String?>(null) }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(EnhanceBackground)
-            .systemBarsPadding()
-    ) {
-      Column(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = ComposeColor(0xFF081020),
+        contentWindowInsets = WindowInsets(0.dp)
+    ) { padding ->
         Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(top = 14.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
-        ) {
-            EnhanceTopBar(
-                credits = uiState.credits,
-                onBack = onBack,
-                onCredits = { onNavigate(Screen.Credits.route) },
-                onNotifications = { onNavigate(Screen.Notifications.route) }
-            )
-
-            UploadPanel(
-                uiState = uiState,
-                onUploadClick = { imagePicker.launch("image/*") }
-            )
-
-            EnhancementControls(
-                resolution = uiState.resolution,
-                sharpness = uiState.sharpness,
-                lighting = uiState.lighting,
-                onResolutionSelected = onResolutionSelected,
-                onSharpnessChanged = onSharpnessChanged,
-                onLightingSelected = onLightingSelected
-            )
-
-            Button(
-                onClick = onEnhance,
-                enabled = uiState.originalBitmap != null && !uiState.isEnhancing,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(49.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Lime,
-                    disabledContainerColor = Lime.copy(alpha = 0.35f)
-                )
-            ) {
-                if (uiState.isEnhancing) {
-                    CircularProgressIndicator(
-                        color = Color.Black,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(20.dp)
-                    )
-                } else {
-                    Text(
-                        text = "Enhance Now",
-                        color = Color.Black,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            ResultPanel(uiState = uiState)
-
-            if (uiState.enhancedBitmap != null) {
-                Button(
-                    onClick = { imagePicker.launch("image/*") },
-                    enabled = !uiState.isEnhancing,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(46.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.06f),
-                        disabledContainerColor = Color.White.copy(alpha = 0.03f)
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Upload,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Enhance Another Image",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-
-        PlacementBanner(placement = AdPlacement.BANNER_ENHANCER, applyNavBarPadding = false)
-      }
-    }
-}
-
-@Composable
-private fun EnhanceTopBar(
-    credits: Int,
-    onBack: () -> Unit,
-    onCredits: () -> Unit,
-    onNotifications: () -> Unit,
-    hasUnreadNotifications: Boolean = false,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
-                tint = Color.White,
-                modifier = Modifier
-                    .size(22.dp)
-                    .clickable(onClick = onBack)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Photo Enhancer",
-                color = Color.White,
-                fontSize = 20.sp,
-                lineHeight = 24.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            LumoraCreditsChip(credits = credits, onClick = onCredits)
-            LumoraNotificationBell(
-                hasUnreadNotifications = hasUnreadNotifications,
-                onClick = onNotifications
-            )
-        }
-    }
-}
-
-@Composable
-private fun UploadPanel(
-    uiState: PhotoEnhanceUiState,
-    onUploadClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(254.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(EnhancePanel.copy(alpha = 0.55f))
-            .border(BorderStroke(1.dp, EnhanceStroke.copy(alpha = 0.78f)), RoundedCornerShape(14.dp))
-            .clickable(enabled = !uiState.isEnhancing, onClick = onUploadClick),
-        contentAlignment = Alignment.Center
-    ) {
-        val preview = uiState.enhancedBitmap ?: uiState.originalBitmap
-        if (uiState.originalBitmap != null && uiState.enhancedBitmap != null) {
-            BeforeAfterPreview(
-                original = uiState.originalBitmap,
-                enhanced = uiState.enhancedBitmap,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (preview != null) {
-            Image(
-                bitmap = preview.asImageBitmap(),
-                contentDescription = stringResource(com.deep.lumoraai.R.string.ui_selected_image),
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize()
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(12.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(Color.Black.copy(alpha = 0.52f))
-                    .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(50))
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = if (uiState.enhancedBitmap != null) "Enhanced" else "Original",
-                    color = if (uiState.enhancedBitmap != null) Lime else Color.White,
-                    fontSize = 11.sp,
-                    lineHeight = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f))))
-                    .padding(12.dp)
-            ) {
-                Text(
-                    text = if (uiState.enhancedBitmap != null) "Enhanced preview" else "Tap to choose another image",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        } else {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .size(58.dp)
-                        .background(Color(0xFF10192D), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CloudUpload,
-                        contentDescription = null,
-                        tint = Lime,
-                        modifier = Modifier.size(25.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Upload Image",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Drag and drop or tap to select a file",
-                    color = Muted,
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun BeforeAfterPreview(
-    original: android.graphics.Bitmap,
-    enhanced: android.graphics.Bitmap,
-    modifier: Modifier = Modifier,
-) {
-    var reveal by remember { mutableFloatStateOf(0.5f) }
-
-    BoxWithConstraints(
-        modifier = modifier
-            .pointerInput(Unit) {
-                detectTapGestures { offset ->
-                    reveal = (offset.x / size.width).coerceIn(0.05f, 0.95f)
-                }
-            }
-            .pointerInput(Unit) {
-                detectDragGestures { change, _ ->
-                    reveal = (change.position.x / size.width).coerceIn(0.05f, 0.95f)
-                }
-            }
-    ) {
-        Image(
-            bitmap = original.asImageBitmap(),
-            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_original_image),
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize()
-        )
-        Image(
-            bitmap = enhanced.asImageBitmap(),
-            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_enhanced_image),
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
                 .fillMaxSize()
-                .drawWithContent {
-                    clipRect(right = size.width * reveal) {
-                        this@drawWithContent.drawContent()
-                    }
-                }
-        )
-
-        ComparisonPill(
-            text = "Enhanced",
-            selected = true,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(12.dp)
-        )
-        ComparisonPill(
-            text = "Original",
-            selected = false,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(12.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(x = maxWidth * reveal)
-                .width(2.dp)
-                .fillMaxHeight()
-                .background(Lime)
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(x = maxWidth * reveal - 18.dp)
-                .size(width = 36.dp, height = 52.dp)
-                .clip(RoundedCornerShape(50))
-                .background(Color.Black.copy(alpha = 0.62f))
-                .border(1.dp, Lime.copy(alpha = 0.85f), RoundedCornerShape(50)),
-            contentAlignment = Alignment.Center
+                .background(ComposeColor(0xFF081020))
+                .systemBarsPadding()
+                .padding(padding)
         ) {
-            Text(
-                text = "↔",
-                color = Lime,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+            AndroidView(
+                factory = { PhotoEnhanceScreenBinding.inflate(LayoutInflater.from(it)).root },
+                update = { root ->
+                    bindPhotoEnhance(
+                        binding = PhotoEnhanceScreenBinding.bind(root),
+                        uiState = uiState,
+                        onBack = onBack,
+                        onNavigate = onNavigate,
+                        onUpload = { imagePicker.launch("image/*") },
+                        onResolutionSelected = onResolutionSelected,
+                        onSharpnessChanged = onSharpnessChanged,
+                        onLightingSelected = onLightingSelected,
+                        onEnhance = onEnhance,
+                        onOpenViewer = { path -> viewerPath = path },
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
             )
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f))))
-                .padding(12.dp)
-        ) {
-            Text(
-                text = "Slide to compare",
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+            PlacementBanner(
+                placement = AdPlacement.BANNER_ENHANCER,
+                modifier = Modifier.padding(horizontal = 0.dp),
+                applyNavBarPadding = false,
             )
         }
     }
-}
 
-@Composable
-private fun ComparisonPill(
-    text: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(Color.Black.copy(alpha = 0.52f))
-            .border(1.dp, if (selected) Lime.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.12f), RoundedCornerShape(50))
-            .padding(horizontal = 10.dp, vertical = 6.dp)
-    ) {
-        Text(
-            text = text,
-            color = if (selected) Lime else Color.White,
-            fontSize = 11.sp,
-            lineHeight = 13.sp,
-            fontWeight = FontWeight.Bold
+    viewerPath?.let { path ->
+        EnhancedResultViewerDialog(
+            filePath = path,
+            onDismiss = { viewerPath = null }
         )
     }
 }
 
-@Composable
-private fun EnhancementControls(
-    resolution: EnhanceOption,
-    sharpness: Float,
-    lighting: EnhanceOption,
+private fun bindPhotoEnhance(
+    binding: PhotoEnhanceScreenBinding,
+    uiState: PhotoEnhanceUiState,
+    onBack: () -> Unit,
+    onNavigate: (String) -> Unit,
+    onUpload: () -> Unit,
     onResolutionSelected: (EnhanceOption) -> Unit,
     onSharpnessChanged: (Float) -> Unit,
     onLightingSelected: (EnhanceOption) -> Unit,
+    onEnhance: () -> Unit,
+    onOpenViewer: (String) -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(EnhancePanel.copy(alpha = 0.82f))
-            .border(1.dp, EnhanceStroke.copy(alpha = 0.64f), RoundedCornerShape(14.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Lime.copy(alpha = 0.13f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Tune, contentDescription = null, tint = Lime, modifier = Modifier.size(20.dp))
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column {
-                Text(stringResource(com.deep.lumoraai.R.string.ui_enhancement), color = Color.White, fontSize = 17.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold)
-                Text(stringResource(com.deep.lumoraai.R.string.ui_sharper_detail_cleaner_tone_richer_color), color = Muted, fontSize = 11.sp, lineHeight = 14.sp)
-            }
+    val context = binding.root.context
+    binding.backButton.setOnClickListener { onBack() }
+    binding.notificationButton.setOnClickListener { onNavigate(Screen.Notifications.route) }
+    binding.creditsChip.text = if (uiState.credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
+        "Unlimited"
+    } else {
+        uiState.credits.toString()
+    }
+    binding.creditsChip.setOnClickListener { onNavigate(Screen.Credits.route) }
+    binding.creditsChip.compoundDrawableTintList = ColorStateList.valueOf(context.getColor(R.color.lumora_lime))
+    bindTablerIcon(binding.bellIconHost, TablerIcons.Bell, ComposeColor.White)
+    bindTablerIcon(binding.uploadIconHost, TablerIcons.Upload, ComposeColor(0xFFD4FF3B))
+    bindTablerIcon(binding.enhancementIconHost, TablerIcons.Adjustments, ComposeColor(0xFFD4FF3B))
+    bindTablerIcon(binding.enhanceButtonIconHost, TablerIcons.Wand, ComposeColor.Black)
+
+    binding.uploadPanel.clipToOutline = true
+    binding.previewImage.clipToOutline = true
+    binding.uploadPanel.setOnClickListener { onUpload() }
+    val preview = if (uiState.enhancedBitmap == null) uiState.originalBitmap else null
+    binding.previewImage.visibility = if (preview == null) View.GONE else View.VISIBLE
+    binding.uploadEmpty.visibility = if (preview == null) View.VISIBLE else View.GONE
+    preview?.let { binding.previewImage.setImageBitmap(it) }
+    bindComparisonResult(binding, uiState, onOpenViewer)
+
+    bindOptionRow(
+        selected = uiState.resolution,
+        options = listOf(binding.resLow, binding.resMed, binding.resHigh, binding.resUltra),
+        onSelected = onResolutionSelected
+    )
+    bindOptionRow(
+        selected = uiState.lighting,
+        options = listOf(binding.lightLow, binding.lightMed, binding.lightHigh, binding.lightUltra),
+        onSelected = onLightingSelected
+    )
+
+    val percent = (uiState.sharpness.coerceIn(0f, 1f) * 100).toInt()
+    binding.detailPercent.text = "$percent%"
+    binding.sharpnessSlider.setOnSeekBarChangeListener(null)
+    binding.sharpnessSlider.progress = percent
+    binding.sharpnessSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            if (fromUser) onSharpnessChanged(progress / 100f)
         }
-        OptionSection(
-            title = stringResource(com.deep.lumoraai.R.string.ui_resolution),
-            selected = resolution,
-            onSelected = onResolutionSelected
-        )
-        SharpnessSection(
-            sharpness = sharpness,
-            onSharpnessChanged = onSharpnessChanged
-        )
-        OptionSection(
-            title = stringResource(com.deep.lumoraai.R.string.ui_lighting),
-            selected = lighting,
-            onSelected = onLightingSelected
-        )
+
+        override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+        override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+    })
+
+    val status = when {
+        uiState.error != null -> uiState.error
+        uiState.savedPath != null -> "Enhanced image saved to History"
+        uiState.isEnhancing -> "Enhancing image..."
+        uiState.enhancedBitmap != null -> "Enhanced preview ready"
+        uiState.originalBitmap != null -> "Image ready for enhancement"
+        else -> null
+    }
+    binding.statusText.text = status.orEmpty()
+    binding.statusText.setTextColor(if (uiState.error != null) 0xFFFF6B6B.toInt() else context.getColor(R.color.lumora_lime))
+    binding.statusText.visibility = if (status == null) View.GONE else View.VISIBLE
+
+    binding.enhanceButton.isEnabled = uiState.originalBitmap != null && !uiState.isEnhancing
+    binding.enhanceButton.alpha = if (binding.enhanceButton.isEnabled) 1f else 0.42f
+    binding.enhanceButtonText.text = if (uiState.isEnhancing) "Enhancing..." else "Enhance Now"
+    binding.enhanceProgress.visibility = if (uiState.isEnhancing) View.VISIBLE else View.GONE
+    binding.enhanceButtonIconHost.visibility = if (uiState.isEnhancing) View.GONE else View.VISIBLE
+    binding.enhanceButton.setOnClickListener {
+        if (binding.enhanceButton.isEnabled) onEnhance()
     }
 }
 
-@Composable
-private fun OptionSection(
-    title: String,
-    selected: EnhanceOption,
-    onSelected: (EnhanceOption) -> Unit,
+private fun bindComparisonResult(
+    binding: PhotoEnhanceScreenBinding,
+    uiState: PhotoEnhanceUiState,
+    onOpenViewer: (String) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(title, color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFF171F33))
-                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(10.dp))
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            EnhanceOption.entries.forEach { option ->
-                val isSelected = option == selected
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) Lime else Color.Transparent)
-                        .clickable { onSelected(option) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = option.label,
-                        color = if (isSelected) Color.Black else Color.White.copy(alpha = 0.8f),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+    val original = uiState.originalBitmap
+    val enhanced = uiState.enhancedBitmap
+    val hasResult = original != null && enhanced != null
+    binding.resultComparisonPanel.visibility = if (hasResult) View.VISIBLE else View.GONE
+    if (!hasResult) return
+
+    binding.originalResultImage.setImageBitmap(original)
+    binding.enhancedResultImage.setImageBitmap(enhanced)
+    binding.comparisonImageFrame.setOnClickListener {
+        uiState.savedPath?.let(onOpenViewer)
+    }
+
+    fun updateComparison(progress: Int) {
+        val frameWidth = binding.comparisonImageFrame.width
+        val frameHeight = binding.comparisonImageFrame.height
+        if (frameWidth <= 0 || frameHeight <= 0) return
+        val revealWidth = (frameWidth * (progress / 100f)).toInt().coerceIn(0, frameWidth)
+        binding.originalResultImage.clipBounds = Rect(0, 0, revealWidth, frameHeight)
+        binding.comparisonDivider.translationX = revealWidth.toFloat()
+        binding.comparisonImageFrame.tag = progress
+        updateComparisonLabels(binding, progress)
+    }
+
+    binding.comparisonImageFrame.post {
+        updateComparison((binding.comparisonImageFrame.tag as? Int) ?: 50)
+    }
+    var downX = 0f
+    var dragged = false
+    binding.comparisonImageFrame.setOnTouchListener { view, event ->
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                downX = event.x
+                dragged = false
+                true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val width = view.width.takeIf { it > 0 } ?: return@setOnTouchListener true
+                dragged = dragged || abs(event.x - downX) > 8f
+                val progress = ((event.x.coerceIn(0f, width.toFloat()) / width) * 100f).toInt()
+                updateComparison(progress)
+                true
+            }
+            MotionEvent.ACTION_UP -> {
+                if (dragged) {
+                    val width = view.width.takeIf { it > 0 } ?: return@setOnTouchListener true
+                    val progress = ((event.x.coerceIn(0f, width.toFloat()) / width) * 100f).toInt()
+                    updateComparison(progress)
+                } else {
+                    view.performClick()
                 }
+                true
             }
+            else -> false
         }
     }
 }
 
-@Composable
-private fun SharpnessSection(
-    sharpness: Float,
-    onSharpnessChanged: (Float) -> Unit,
+private fun updateComparisonLabels(
+    binding: PhotoEnhanceScreenBinding,
+    progress: Int,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(stringResource(com.deep.lumoraai.R.string.ui_detail_recovery), color = Color.White, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold)
-            Text("${(sharpness * 100).toInt()}%", color = Lime, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-        }
-        Slider(
-            value = sharpness,
-            onValueChange = onSharpnessChanged,
-            colors = SliderDefaults.colors(
-                thumbColor = Lime,
-                activeTrackColor = Lime,
-                inactiveTrackColor = Color(0xFF172033)
-            )
-        )
-    }
+    val lime = binding.root.context.getColor(R.color.lumora_lime)
+    binding.originalLabel.setTextColor(if (progress > 50) lime else Color.WHITE)
+    binding.enhancedLabel.setTextColor(if (progress < 50) lime else Color.WHITE)
 }
 
 @Composable
-private fun ResultPanel(uiState: PhotoEnhanceUiState) {
-    when {
-        uiState.error != null -> {
-            Text(
-                text = uiState.error,
-                color = Color(0xFFFF7A7A),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-        uiState.savedPath != null -> {
+private fun EnhancedResultViewerDialog(
+    filePath: String,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .clip(RoundedCornerShape(16.dp))
+                .background(ComposeColor(0xFF111827))
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF111A2D))
-                    .border(1.dp, Lime.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
-                Icon(Icons.Default.Save, contentDescription = null, tint = Lime, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = "Enhanced image saved to History",
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(
+                    onClick = {
+                        scope.launch {
+                            val result = MediaGallerySaver.saveToGallery(
+                                context = context,
+                                filePath = filePath,
+                                mimeType = "image/jpeg",
+                                mediaType = "IMAGE"
+                            )
+                            val message = result.getOrElse { "Download failed" }
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(TablerIcons.Download, contentDescription = stringResource(R.string.ui_download), tint = ComposeColor(0xFFD4FF3B))
+                }
+                IconButton(
+                    onClick = { MediaShareUtils.shareImage(context, filePath) },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(TablerIcons.Share, contentDescription = stringResource(R.string.ui_share), tint = ComposeColor(0xFFD4FF3B))
+                }
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(TablerIcons.X, contentDescription = stringResource(R.string.ui_close), tint = ComposeColor.White)
+                }
             }
+
+            ZoomableImageViewer(
+                filePath = filePath,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(520.dp),
+                showControls = true,
+                controlsBackgroundColor = ComposeColor.Black.copy(alpha = 0.68f),
+                enableGestureDetection = true,
+            )
         }
+    }
+}
+
+private fun bindTablerIcon(
+    host: ComposeView,
+    imageVector: ImageVector,
+    tint: ComposeColor,
+) {
+    host.setContent {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+private fun bindOptionRow(
+    selected: EnhanceOption,
+    options: List<TextView>,
+    onSelected: (EnhanceOption) -> Unit,
+) {
+    val values = EnhanceOption.entries
+    options.forEachIndexed { index, view ->
+        val option = values[index]
+        val isSelected = option == selected
+        view.setBackgroundResource(if (isSelected) R.drawable.bg_photo_segment_selected else android.R.color.transparent)
+        view.setTextColor(if (isSelected) Color.BLACK else Color.WHITE)
+        view.setOnClickListener { onSelected(option) }
     }
 }

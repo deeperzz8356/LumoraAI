@@ -1,241 +1,68 @@
 package com.deep.lumoraai.feature.settings
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.deep.lumoraai.core.components.AppToolbar
-import com.deep.lumoraai.core.components.BottomNavigationBar
-import androidx.compose.ui.res.stringResource
-
-private val SettingsBackground = Color(0xFF081020)
-private val SettingsCard = Color(0xFF10192D)
-private val SettingsStroke = Color(0xFF172238)
-private val Lime = Color(0xFFD6FF2F)
-private val Muted = Color(0xFF94A0B8)
-private val CardShape = RoundedCornerShape(14.dp)
+import com.deep.lumoraai.R
+import com.deep.lumoraai.core.nativeui.LumoraXmlScreen
+import com.deep.lumoraai.core.nativeui.addActionRow
+import com.deep.lumoraai.core.nativeui.addSectionTitle
+import com.deep.lumoraai.core.nativeui.addToggleRow
+import com.deep.lumoraai.core.nativeui.resetContent
+import com.deep.lumoraai.core.nativeui.setupTopBar
+import com.deep.lumoraai.core.nativeui.toast
 
 @Composable
 fun PrivacySecurityScreen(
-    onBack: () -> Unit,
+    onBack: () -> Unit = {},
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var dataCollection by remember { mutableStateOf(true) }
-    var thirdPartySharing by remember { mutableStateOf(false) }
-    var twoFactorAuth by remember { mutableStateOf(true) }
-    var sessionTimeout by remember { mutableStateOf(true) }
+    val dataCollection = remember { mutableStateOf(true) }
+    val thirdPartySharing = remember { mutableStateOf(false) }
+    val twoFactorAuth = remember { mutableStateOf(true) }
+    val sessionTimeout = remember { mutableStateOf(true) }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = SettingsBackground,
-        topBar = {
-            AppToolbar(
-                title = stringResource(com.deep.lumoraai.R.string.ui_privacy_security),
-                action = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
-                            tint = Color.White
-                        )
-                    }
-                }
-            )
-        },
-        bottomBar = {
-            BottomNavigationBar(
-                items = emptyList(),
-                selected = "settings",
-                onSelected = onNavigate
-            )
+    LumoraXmlScreen(
+        selectedTab = "settings",
+        onNavigate = onNavigate,
+        modifier = modifier
+    ) { binding ->
+        val context = binding.root.context
+        binding.setupTopBar("Privacy & Security", "Control account safety and data choices", onBack = onBack)
+        binding.resetContent()
+
+        binding.content.addSectionTitle("Privacy Settings")
+        binding.content.addToggleRow(
+            title = "Data Collection",
+            subtitle = "Allow Lumora to collect diagnostics and usage analytics",
+            checked = dataCollection.value,
+        ) { dataCollection.value = it }
+        binding.content.addToggleRow(
+            title = "Third Party Sharing",
+            subtitle = "Share limited analytics with trusted service providers",
+            checked = thirdPartySharing.value,
+        ) { thirdPartySharing.value = it }
+
+        binding.content.addSectionTitle("Security Settings")
+        binding.content.addToggleRow(
+            title = "Two Factor Authentication",
+            subtitle = "Add another layer of protection to your account",
+            checked = twoFactorAuth.value,
+        ) { twoFactorAuth.value = it }
+        binding.content.addToggleRow(
+            title = "Session Timeout",
+            subtitle = "Automatically sign out inactive sessions",
+            checked = sessionTimeout.value,
+        ) { sessionTimeout.value = it }
+
+        binding.content.addSectionTitle("Data Management")
+        binding.content.addActionRow("Download Your Data", "Export your account data", R.drawable.ic_lumora_download) {
+            context.toast("Data export request received.")
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(SettingsBackground)
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    stringResource(com.deep.lumoraai.R.string.ui_privacy_settings),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                PrivacyToggleRow(
-                    title = stringResource(com.deep.lumoraai.R.string.ui_data_collection),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_allow_us_to_collect_usage_data_to_improve_your_experience),
-                    checked = dataCollection,
-                    onCheckedChange = { dataCollection = it }
-                )
-
-                PrivacyToggleRow(
-                    title = stringResource(com.deep.lumoraai.R.string.ui_third_party_sharing),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_share_your_data_with_partner_services),
-                    checked = thirdPartySharing,
-                    onCheckedChange = { thirdPartySharing = it }
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    stringResource(com.deep.lumoraai.R.string.ui_security_settings),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                PrivacyToggleRow(
-                    title = stringResource(com.deep.lumoraai.R.string.ui_two_factor_authentication),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_add_an_extra_layer_of_security_to_your_account),
-                    checked = twoFactorAuth,
-                    onCheckedChange = { twoFactorAuth = it }
-                )
-
-                PrivacyToggleRow(
-                    title = stringResource(com.deep.lumoraai.R.string.ui_session_timeout),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_automatically_log_out_after_30_minutes_of_inactivity),
-                    checked = sessionTimeout,
-                    onCheckedChange = { sessionTimeout = it }
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    stringResource(com.deep.lumoraai.R.string.ui_data_management),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                PrivacyActionRow(
-                    title = stringResource(com.deep.lumoraai.R.string.ui_download_your_data),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_export_all_your_personal_data),
-                    onClick = { }
-                )
-
-                PrivacyActionRow(
-                    title = stringResource(com.deep.lumoraai.R.string.ui_view_privacy_policy),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_read_our_complete_privacy_policy),
-                    onClick = { }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PrivacyToggleRow(
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = SettingsCard,
-        border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
-            }
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Lime,
-                    checkedTrackColor = Lime.copy(alpha = 0.3f),
-                    uncheckedThumbColor = Muted,
-                    uncheckedTrackColor = SettingsStroke
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun PrivacyActionRow(
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = SettingsCard,
-        border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
-            }
-            Text(">", style = MaterialTheme.typography.titleLarge, color = Lime, fontWeight = FontWeight.Bold)
+        binding.content.addActionRow("View Privacy Policy", "Read how Lumora handles data", R.drawable.ic_lumora_info) {
+            context.toast("Privacy policy will open here.")
         }
     }
 }

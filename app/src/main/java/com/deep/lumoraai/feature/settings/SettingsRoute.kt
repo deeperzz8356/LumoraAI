@@ -29,5 +29,14 @@ fun SettingsRoute(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    SettingsScreen(uiState = viewModel.uiState, viewModel = viewModel, onNext = onNext, onNavigate = onNavigate, onBack = onBack)
+    SettingsScreen(
+        uiState = viewModel.uiState,
+        onNavigate = onNavigate,
+        onBack = onBack,
+        onToggleDarkMode = viewModel::toggleDarkMode,
+        onToggleNotifications = viewModel::toggleNotifications,
+        onToggleHighQualityMode = viewModel::toggleHighQualityMode,
+        onToggleDeveloperMode = viewModel::toggleDeveloperMode,
+        onVersionTapped = viewModel::onVersionTapped,
+    )
 }

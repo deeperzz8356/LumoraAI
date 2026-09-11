@@ -1,330 +1,58 @@
 package com.deep.lumoraai.feature.settings
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Help
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.deep.lumoraai.core.components.AppToolbar
-import com.deep.lumoraai.core.components.BottomNavigationBar
-import androidx.compose.ui.res.stringResource
-
-private val SettingsBackground = Color(0xFF081020)
-private val SettingsCard = Color(0xFF10192D)
-private val SettingsStroke = Color(0xFF172238)
-private val Lime = Color(0xFFD6FF2F)
-private val Purple = Color(0xFF9C63FF)
-private val Cyan = Color(0xFF20E6F2)
-private val Muted = Color(0xFF94A0B8)
-private val CardShape = RoundedCornerShape(14.dp)
+import com.deep.lumoraai.R
+import com.deep.lumoraai.core.nativeui.LumoraXmlScreen
+import com.deep.lumoraai.core.nativeui.addActionRow
+import com.deep.lumoraai.core.nativeui.addSectionTitle
+import com.deep.lumoraai.core.nativeui.addTextCard
+import com.deep.lumoraai.core.nativeui.resetContent
+import com.deep.lumoraai.core.nativeui.setupTopBar
+import com.deep.lumoraai.core.nativeui.toast
 
 @Composable
 fun HelpSupportScreen(
-    onBack: () -> Unit,
+    onBack: () -> Unit = {},
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = SettingsBackground,
-        topBar = {
-            AppToolbar(
-                title = stringResource(com.deep.lumoraai.R.string.ui_help_support),
-                action = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
-                            tint = Color.White
-                        )
-                    }
-                }
-            )
-        },
-        bottomBar = {
-            BottomNavigationBar(
-                items = emptyList(),
-                selected = "settings",
-                onSelected = onNavigate
-            )
+    LumoraXmlScreen(
+        selectedTab = "settings",
+        onNavigate = onNavigate,
+        modifier = modifier
+    ) { binding ->
+        val context = binding.root.context
+        binding.setupTopBar("Help & Support", "Support, guides and service status", onBack = onBack)
+        binding.resetContent()
+
+        binding.content.addSectionTitle("Get in touch")
+        binding.content.addActionRow("Email Support", "support@lumora.ai", R.drawable.ic_lumora_info) {
+            context.toast("Email support selected.")
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(SettingsBackground)
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    stringResource(com.deep.lumoraai.R.string.ui_get_in_touch),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                SupportContactCard(
-                    icon = Icons.Default.Email,
-                    title = stringResource(com.deep.lumoraai.R.string.ui_email_support),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_support_lumora_ai),
-                    description = "Send us an email and we'll respond within 24 hours",
-                    iconTint = Lime,
-                    onClick = { }
-                )
-
-                SupportContactCard(
-                    icon = Icons.Default.Phone,
-                    title = stringResource(com.deep.lumoraai.R.string.ui_live_chat),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_available_24_7),
-                    description = "Chat with our support team in real-time",
-                    iconTint = Cyan,
-                    onClick = { }
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    stringResource(com.deep.lumoraai.R.string.ui_resources),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                SupportResourceCard(
-                    icon = Icons.Default.Help,
-                    title = stringResource(com.deep.lumoraai.R.string.ui_faq_knowledge_base),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_find_answers_to_common_questions),
-                    iconTint = Purple,
-                    onClick = { }
-                )
-
-                SupportResourceCard(
-                    icon = Icons.Default.Help,
-                    title = stringResource(com.deep.lumoraai.R.string.ui_video_tutorials),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_learn_how_to_use_lumora_ai_features),
-                    iconTint = Lime,
-                    onClick = { }
-                )
-
-                SupportResourceCard(
-                    icon = Icons.Default.Help,
-                    title = stringResource(com.deep.lumoraai.R.string.ui_status_page),
-                    subtitle = stringResource(com.deep.lumoraai.R.string.ui_check_service_status_and_updates),
-                    iconTint = Cyan,
-                    onClick = { }
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    stringResource(com.deep.lumoraai.R.string.ui_report_an_issue),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                Surface(
-                    onClick = { },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = CardShape,
-                    color = SettingsCard,
-                    border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            stringResource(com.deep.lumoraai.R.string.ui_report_a_bug),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            stringResource(com.deep.lumoraai.R.string.ui_tell_us_about_any_issues_you_ve_encountered_so_we_can_fix_them_quickly),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Muted
-                        )
-                        Text(
-                            "→",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = Lime,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    stringResource(com.deep.lumoraai.R.string.ui_contact_info),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                ContactInfoRow(label = "Email:", value = "support@lumora.ai")
-                ContactInfoRow(label = "Phone:", value = "+1 (555) 123-4567")
-                ContactInfoRow(label = "Hours:", value = "24/7 Support Available")
-            }
+        binding.content.addActionRow("Live Chat", "Available 24/7", R.drawable.ic_lumora_bell) {
+            context.toast("Live chat selected.")
         }
-    }
-}
 
-@Composable
-private fun SupportContactCard(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    description: String,
-    iconTint: Color,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = SettingsCard,
-        border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = iconTint
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = iconTint, fontWeight = FontWeight.SemiBold)
-                Text(
-                    description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Muted
-                )
-            }
+        binding.content.addSectionTitle("Resources")
+        binding.content.addActionRow("FAQ Knowledge Base", "Answers to common Lumora questions", R.drawable.ic_lumora_info) {
+            context.toast("FAQ selected.")
         }
-    }
-}
+        binding.content.addActionRow("Video Tutorials", "Learn creative workflows", R.drawable.ic_lumora_video) {
+            context.toast("Tutorials selected.")
+        }
+        binding.content.addActionRow("Status Page", "Check service availability", R.drawable.ic_lumora_settings) {
+            context.toast("Status page selected.")
+        }
 
-@Composable
-private fun SupportResourceCard(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    iconTint: Color,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = SettingsCard,
-        border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = iconTint
-                )
-                Column {
-                    Text(
-                        title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
-                }
-            }
-            Text(">", style = MaterialTheme.typography.titleLarge, color = Lime, fontWeight = FontWeight.Bold)
+        binding.content.addSectionTitle("Report an Issue")
+        binding.content.addActionRow("Report a Bug", "Send logs and details to the Lumora team", R.drawable.ic_lumora_info) {
+            context.toast("Issue report selected.")
         }
-    }
-}
 
-@Composable
-private fun ContactInfoRow(label: String, value: String) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        color = SettingsCard,
-        border = BorderStroke(1.dp, SettingsStroke.copy(alpha = 0.72f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                label,
-                style = MaterialTheme.typography.titleMedium,
-                color = Muted,
-                fontWeight = FontWeight.Bold
-            )
-            Text(value, style = MaterialTheme.typography.titleMedium, color = Lime, fontWeight = FontWeight.Bold)
-        }
+        binding.content.addSectionTitle("Contact Info")
+        binding.content.addTextCard("Email", "support@lumora.ai")
+        binding.content.addTextCard("Phone", "+1 (555) 123-4567")
+        binding.content.addTextCard("Hours", "24/7 support")
     }
 }

@@ -39,6 +39,11 @@ import kotlin.math.roundToInt
 
 class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(application) {
 
+    private companion object {
+        const val MAX_SOURCE_SIDE = 1280
+        const val MAX_ENHANCE_SIDE = 1280
+    }
+
     private val historyRepository = HistoryRepository(
         LumoraDatabase.getInstance(application).historyDao
     )
@@ -158,7 +163,11 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
                     uiState.copy(enhancedBitmap = bitmap, savedPath = path, isEnhancing = false)
                 },
                 onFailure = { error ->
-                    val errorMsg = error.message ?: "Could not enhance this image."
+                    val errorMsg = if (error is OutOfMemoryError) {
+                        "Image is too large to enhance on this device. Try a smaller image."
+                    } else {
+                        error.message ?: "Could not enhance this image."
+                    }
                     // Send task failure notification
                     launch {
                         notificationManager.sendTaskFailureNotification(
@@ -180,16 +189,32 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
     private fun decodeBitmap(uri: Uri): Bitmap {
         val resolver = getApplication<Application>().contentResolver
         val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            ImageDecoder.decodeBitmap(ImageDecoder.createSource(resolver, uri)) { decoder, _, _ ->
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(resolver, uri)) { decoder, info, _ ->
                 decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
                 decoder.isMutableRequired = false
+                val (targetWidth, targetHeight) = scaledSize(
+                    width = info.size.width,
+                    height = info.size.height,
+                    maxSide = MAX_SOURCE_SIDE
+                )
+                decoder.setTargetSize(targetWidth, targetHeight)
             }
         } else {
-            resolver.openInputStream(uri).use { input ->
-                BitmapFactory.decodeStream(input) ?: error("Unsupported image file.")
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
             }
+            resolver.openInputStream(uri).use { input ->
+                BitmapFactory.decodeStream(input, null, options)
+            }
+            val decodeOptions = BitmapFactory.Options().apply {
+                inSampleSize = calculateInSampleSize(options.outWidth, options.outHeight, MAX_SOURCE_SIDE)
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+            resolver.openInputStream(uri).use { input ->
+                BitmapFactory.decodeStream(input, null, decodeOptions) ?: error("Unsupported image file.")
+            }.scaleToMaxSide(MAX_SOURCE_SIDE)
         }
-        return bitmap.copy(Bitmap.Config.ARGB_8888, false)
+        return bitmap.toArgb8888().scaleToMaxSide(MAX_SOURCE_SIDE)
     }
 
     private fun enhanceBitmap(
@@ -198,13 +223,13 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
         sharpness: Float,
         lighting: EnhanceOption,
     ): Bitmap {
-        val scaled = upscale(source, resolution)
-        val denoised = applyEdgePreservingDenoise(scaled, sharpness)
-        val lit = applyLighting(denoised, lighting)
-        val balanced = applyAutoToneAndVibrance(lit, lighting)
-        val deblurred = applyDeblur(balanced, sharpness)
-        val detailed = applyLocalContrast(deblurred, sharpness)
-        return applyEdgeAwareSharpen(detailed, sharpness)
+        var current = upscale(source, resolution)
+        current = replaceStage(current, source) { applyEdgePreservingDenoise(it, sharpness) }
+        current = replaceStage(current, source) { applyLighting(it, lighting) }
+        current = replaceStage(current, source) { applyAutoToneAndVibrance(it, lighting) }
+        current = replaceStage(current, source) { applyDeblur(it, sharpness) }
+        current = replaceStage(current, source) { applyLocalContrast(it, sharpness) }
+        return replaceStage(current, source) { applyEdgeAwareSharpen(it, sharpness) }
     }
 
     private fun upscale(source: Bitmap, resolution: EnhanceOption): Bitmap {
@@ -214,9 +239,9 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
             EnhanceOption.High -> 1.5f
             EnhanceOption.Ultra -> 2f
         }
-        val maxSide = 4096
-        val targetWidth = (source.width * factor).roundToInt().coerceAtMost(maxSide)
-        val targetHeight = (source.height * factor).roundToInt().coerceAtMost(maxSide)
+        val desiredWidth = (source.width * factor).roundToInt().coerceAtLeast(1)
+        val desiredHeight = (source.height * factor).roundToInt().coerceAtLeast(1)
+        val (targetWidth, targetHeight) = scaledSize(desiredWidth, desiredHeight, MAX_ENHANCE_SIDE)
         if (targetWidth == source.width && targetHeight == source.height) return source
         return Bitmap.createScaledBitmap(source, targetWidth, targetHeight, true)
     }
@@ -529,6 +554,54 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
             bitmap.compress(Bitmap.CompressFormat.JPEG, 94, out)
         }
         return file.absolutePath
+    }
+
+    private fun replaceStage(
+        current: Bitmap,
+        original: Bitmap,
+        transform: (Bitmap) -> Bitmap,
+    ): Bitmap {
+        val next = transform(current)
+        if (next !== current && current !== original && !current.isRecycled) {
+            current.recycle()
+        }
+        return next
+    }
+
+    private fun Bitmap.toArgb8888(): Bitmap {
+        if (config == Bitmap.Config.ARGB_8888) return this
+        val converted = copy(Bitmap.Config.ARGB_8888, false)
+        if (converted !== this && !isRecycled) recycle()
+        return converted
+    }
+
+    private fun Bitmap.scaleToMaxSide(maxSide: Int): Bitmap {
+        val (targetWidth, targetHeight) = scaledSize(width, height, maxSide)
+        if (targetWidth == width && targetHeight == height) return this
+        val scaled = Bitmap.createScaledBitmap(this, targetWidth, targetHeight, true)
+        if (!isRecycled) recycle()
+        return scaled
+    }
+
+    private fun scaledSize(width: Int, height: Int, maxSide: Int): Pair<Int, Int> {
+        if (width <= 0 || height <= 0) return maxSide to maxSide
+        val longest = max(width, height)
+        if (longest <= maxSide) return width to height
+        val scale = maxSide.toFloat() / longest
+        return (width * scale).roundToInt().coerceAtLeast(1) to
+            (height * scale).roundToInt().coerceAtLeast(1)
+    }
+
+    private fun calculateInSampleSize(width: Int, height: Int, maxSide: Int): Int {
+        var sampleSize = 1
+        var sampledWidth = width
+        var sampledHeight = height
+        while (sampledWidth / 2 >= maxSide || sampledHeight / 2 >= maxSide) {
+            sampledWidth /= 2
+            sampledHeight /= 2
+            sampleSize *= 2
+        }
+        return sampleSize.coerceAtLeast(1)
     }
 
     private fun currentTimestamp(): String =

@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:layout_gravity="bottom"
-        android:background="#FF11192B"
+        android:background="@drawable/bg_bottom_navigation"
         android:baselineAligned="false"
         android:gravity="center"
         android:orientation="horizontal">
@@ -24,11 +24,10 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <ImageView
+            <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/homeIcon"
                 android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_lumora_home" />
+                android:layout_height="24dp" />
 
             <TextView
                 android:id="@+id/homeLabel"
@@ -51,11 +50,10 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <ImageView
+            <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/templatesIcon"
                 android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_lumora_templates" />
+                android:layout_height="24dp" />
 
             <TextView
                 android:id="@+id/templatesLabel"
@@ -78,11 +76,10 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <ImageView
+            <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/historyIcon"
                 android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_lumora_history" />
+                android:layout_height="24dp" />
 
             <TextView
                 android:id="@+id/historyLabel"
