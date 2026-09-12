@@ -1,33 +1,84 @@
 package com.deep.lumoraai.feature.profile
 
-import android.app.AlertDialog
 import android.content.Intent
-import android.graphics.Bitmap
-import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.GridLayout
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.deep.lumoraai.R
+import com.deep.lumoraai.core.components.AppErrorScreen
+import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
+import com.deep.lumoraai.core.components.PremiumActionRow
+import com.deep.lumoraai.core.components.PremiumBackground
+import com.deep.lumoraai.core.components.PremiumDanger
+import com.deep.lumoraai.core.components.PremiumLime
+import com.deep.lumoraai.core.components.PremiumMuted
+import com.deep.lumoraai.core.components.PremiumPage
+import com.deep.lumoraai.core.components.PremiumSection
+import com.deep.lumoraai.core.components.PremiumStroke
+import com.deep.lumoraai.core.components.PremiumSurface
+import com.deep.lumoraai.core.components.PremiumText
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.data.model.HistoryModel
-import com.deep.lumoraai.databinding.ProfileItemCreationBinding
-import com.deep.lumoraai.databinding.ProfileItemPrefBinding
-import com.deep.lumoraai.databinding.ProfileMediaViewerBinding
-import com.deep.lumoraai.databinding.ProfileScreenBinding
 import com.google.firebase.auth.FirebaseAuth
 import java.io.File
+
+private enum class ProfileAction { Delete, SignOut, Login }
 
 @Composable
 fun ProfileScreen(
@@ -38,292 +89,246 @@ fun ProfileScreen(
     onNavigate: (String) -> Unit = {},
     onBack: () -> Unit = {},
     unreadCount: Int = 0,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFF081020),
-        bottomBar = { BottomNavigationBar(emptyList(), "profile", onNavigate) }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFF081020))
-                .padding(padding)
-        ) {
-            AndroidView(
-                factory = { ProfileScreenBinding.inflate(LayoutInflater.from(it)).root },
-                update = { root ->
-                    bindProfile(
-                        binding = ProfileScreenBinding.bind(root),
-                        uiState = uiState,
-                        onSignOut = onSignOut,
-                        onDeleteAccount = onDeleteAccount,
-                        onNavigate = onNavigate,
-                        onBack = onBack,
-                        unreadCount = unreadCount,
-                    )
+        containerColor = PremiumBackground,
+        bottomBar = { BottomNavigationBar(emptyList(), "profile", onNavigate) },
+    ) { innerPadding ->
+        Box(Modifier.fillMaxSize().padding(innerPadding)) {
+            when (uiState) {
+                ProfileUiState.Loading -> AppLoadingScreen()
+                ProfileUiState.Empty -> AppErrorScreen("Your creator profile is not available yet.")
+                is ProfileUiState.Error -> AppErrorScreen(uiState.message)
+                is ProfileUiState.Success -> ProfileContent(
+                    state = uiState,
+                    unreadCount = unreadCount,
+                    onNavigate = onNavigate,
+                    onBack = onBack,
+                    onSignOut = onSignOut,
+                    onDeleteAccount = onDeleteAccount,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileContent(
+    state: ProfileUiState.Success,
+    unreadCount: Int,
+    onNavigate: (String) -> Unit,
+    onBack: () -> Unit,
+    onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
+) {
+    val context = LocalContext.current
+    val user = FirebaseAuth.getInstance().currentUser
+    val saved = remember(user?.uid) { ProfilePreferences.load(context, user) }
+    val name = saved.fullName.ifBlank { state.items.getOrNull(0).orEmpty() }.ifBlank { "Lumora Creator" }
+    val username = saved.username.ifBlank { state.items.getOrNull(1).orEmpty().removePrefix("@") }
+    val plan = state.items.getOrNull(2).orEmpty().ifBlank { if (state.isGuest) "Guest creator" else "Lumora creator" }
+    var pendingAction by remember { mutableStateOf<ProfileAction?>(null) }
+
+    pendingAction?.let { action ->
+        ProfileActionDialog(
+            action = action,
+            onDismiss = { pendingAction = null },
+            onConfirm = {
+                pendingAction = null
+                when (action) {
+                    ProfileAction.Delete -> onDeleteAccount()
+                    ProfileAction.SignOut -> onSignOut()
+                    ProfileAction.Login -> onNavigate(Screen.Auth.route)
+                }
+            },
+        )
+    }
+
+    PremiumPage(
+        title = "Profile",
+        eyebrow = "Creator space",
+        subtitle = "Your work, credits and account",
+        onBack = onBack,
+        action = {
+            Box {
+                IconButton(onClick = { onNavigate(Screen.Notifications.route) }, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Default.Notifications, "Open notifications", tint = PremiumText)
+                }
+                if (unreadCount > 0) Box(Modifier.align(Alignment.TopEnd).size(9.dp).clip(CircleShape).background(PremiumLime))
+            }
+        },
+    ) {
+        ProfileHero(name, username, plan, saved.avatarUri) {
+            onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ProfileStat("Credits", state.credits.toString(), Icons.Default.CreditCard, Modifier.weight(1f)) { onNavigate(Screen.Credits.route) }
+            ProfileStat("Creations", state.generations.size.toString(), Icons.Default.GridView, Modifier.weight(1f)) { onNavigate(Screen.History.route) }
+        }
+        PremiumSection("Recent work", "Your latest Lumora creations") {
+            if (state.generations.isEmpty()) {
+                PremiumActionRow("Start your first creation", "Generate an image or video from Home", Icons.Default.AutoAwesome, { onNavigate(Screen.TextToImage.route) })
+            } else {
+                state.generations.take(4).chunked(2).forEach { rowItems ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        rowItems.forEach { item -> CreationCard(item, Modifier.weight(1f)) { onNavigate(Screen.History.route) } }
+                        if (rowItems.size == 1) Box(Modifier.weight(1f))
+                    }
+                }
+                TextButton(onClick = { onNavigate(Screen.History.route) }, modifier = Modifier.align(Alignment.End)) {
+                    Text("View all creations", color = PremiumLime, fontWeight = FontWeight.Bold)
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = PremiumLime, modifier = Modifier.padding(start = 6.dp).size(17.dp))
+                }
+            }
+        }
+        PremiumSection("Account", "Shortcuts and preferences") {
+            PremiumActionRow("Account settings", "Preferences, language and billing", Icons.Default.Settings, { onNavigate(Screen.Settings.route) })
+            PremiumActionRow("Privacy & security", "Data choices and account protection", Icons.Default.Security, { onNavigate(Screen.PrivacySecurity.route) })
+            PremiumActionRow("Help & support", "Guides and direct support", Icons.AutoMirrored.Filled.HelpOutline, { onNavigate(Screen.HelpSupport.route) })
+            PremiumActionRow(
+                "Share profile",
+                "Invite others to see your Lumora identity",
+                Icons.Default.Share,
+                {
+                    val share = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, "$name on LumoraAI")
+                    }
+                    context.startActivity(Intent.createChooser(share, context.getString(R.string.ui_share)))
                 },
-                modifier = Modifier.fillMaxSize()
+            )
+            PremiumActionRow("Delete account", "Permanently remove your Lumora account", Icons.Default.DeleteOutline, { pendingAction = ProfileAction.Delete }, danger = true)
+            PremiumActionRow(
+                if (state.isGuest) "Log in" else "Sign out",
+                if (state.isGuest) "Save your work across devices" else "End this session on this device",
+                if (state.isGuest) Icons.AutoMirrored.Filled.Login else Icons.AutoMirrored.Filled.Logout,
+                { pendingAction = if (state.isGuest) ProfileAction.Login else ProfileAction.SignOut },
+                danger = !state.isGuest,
             )
         }
     }
 }
 
-private fun bindProfile(
-    binding: ProfileScreenBinding,
-    uiState: ProfileUiState,
-    onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit,
-    onNavigate: (String) -> Unit,
-    onBack: () -> Unit,
-    unreadCount: Int,
+@Composable
+private fun ProfileHero(
+    name: String,
+    username: String,
+    plan: String,
+    avatarUri: String?,
+    onEdit: () -> Unit,
 ) {
-    binding.backButton.setOnClickListener { onBack() }
-    binding.unreadDot.visibility = if (unreadCount > 0) View.VISIBLE else View.GONE
-    binding.notificationButton.setOnClickListener { onNavigate(Screen.Notifications.route) }
-
-    when (uiState) {
-        ProfileUiState.Loading -> bindLoading(binding)
-        ProfileUiState.Empty -> bindEmpty(binding)
-        is ProfileUiState.Error -> bindError(binding, uiState.message)
-        is ProfileUiState.Success -> bindSuccess(binding, uiState, onSignOut, onDeleteAccount, onNavigate)
-    }
-}
-
-private fun bindLoading(binding: ProfileScreenBinding) {
-    binding.name.text = binding.root.context.getString(R.string.loading)
-    binding.subtitle.text = ""
-    binding.plan.text = ""
-    binding.credits.text = "0"
-    binding.generationCount.text = "0"
-    binding.creationsGrid.removeAllViews()
-    binding.preferencesList.removeAllViews()
-}
-
-private fun bindEmpty(binding: ProfileScreenBinding) {
-    binding.name.text = binding.root.context.getString(R.string.ui_profile_2)
-    binding.subtitle.text = binding.root.context.getString(R.string.ui_no_content)
-}
-
-private fun bindError(binding: ProfileScreenBinding, message: String) {
-    binding.name.text = binding.root.context.getString(R.string.ui_profile_2)
-    binding.subtitle.text = message
-}
-
-private fun bindSuccess(
-    binding: ProfileScreenBinding,
-    state: ProfileUiState.Success,
-    onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit,
-    onNavigate: (String) -> Unit,
-) {
-    val context = binding.root.context
-    val user = FirebaseAuth.getInstance().currentUser
-    val savedProfile = ProfilePreferences.load(context, user)
-    val displayName = savedProfile.fullName.ifBlank { state.items.getOrNull(0).orEmpty() }
-    val displaySubtitle = "@${savedProfile.username.ifBlank { state.items.getOrNull(1).orEmpty().removePrefix("@") }}"
-    val plan = state.items.getOrNull(2).orEmpty()
-    binding.name.text = displayName.ifBlank { context.getString(R.string.ui_lumora_creator) }
-    binding.subtitle.text = displaySubtitle.ifBlank { plan }
-    binding.plan.text = plan
-    binding.plan.visibility = if (plan.isBlank()) View.GONE else View.VISIBLE
-    if (savedProfile.avatarUri.isNullOrBlank()) {
-        binding.avatar.setImageResource(R.drawable.user_avatar)
-    } else {
-        binding.avatar.setImageURI(Uri.parse(savedProfile.avatarUri))
-    }
-    binding.credits.text = state.credits.toString()
-    binding.creditsCard.setOnClickListener { onNavigate(Screen.Credits.route) }
-    binding.generationCount.text = state.generations.size.toString()
-    binding.creationCountCard.setOnClickListener { onNavigate(Screen.History.route) }
-    binding.subscriptionCard.setOnClickListener { onNavigate(Screen.Subscription.route) }
-    binding.editProfileButton.setOnClickListener {
-        onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
-    }
-    binding.shareButton.setOnClickListener {
-        val text = "${displayName.ifBlank { "Lumora Creator" }} on LumoraAI"
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, text)
-        }
-        context.startActivity(Intent.createChooser(intent, context.getString(R.string.ui_share)))
-    }
-    bindCreations(binding, state.generations, onNavigate)
-    bindPreferences(binding, state.isGuest, onSignOut, onDeleteAccount, onNavigate)
-}
-
-private fun bindCreations(
-    binding: ProfileScreenBinding,
-    generations: List<HistoryModel>,
-    onNavigate: (String) -> Unit,
-) {
-    binding.viewAllCreations.setOnClickListener { onNavigate(Screen.History.route) }
-    binding.creationsGrid.removeAllViews()
-    if (generations.isEmpty()) {
-        val context = binding.root.context
-        val empty = android.widget.TextView(context).apply {
-            text = context.getString(R.string.ui_start_your_first_creation) + "\n" + context.getString(R.string.ui_generate_an_image_or_video_from_home)
-            setTextColor(0xFFFFFFFF.toInt())
-            textSize = 14f
-            setPadding(dp(this, 14), dp(this, 14), dp(this, 14), dp(this, 14))
-            setBackgroundResource(R.drawable.bg_common_card)
-            setOnClickListener { onNavigate(Screen.TextToImage.route) }
-        }
-        binding.creationsGrid.addView(empty, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(binding.root, 76)))
-        return
-    }
-    generations.take(4).forEachIndexed { index, item ->
-        val card = ProfileItemCreationBinding.inflate(LayoutInflater.from(binding.root.context), binding.creationsGrid, false)
-        val isVideo = item.type.equals("VIDEO", ignoreCase = true)
-        bindMediaThumb(card.mediaImage, item, if (isVideo) R.drawable.style_digital else R.drawable.style_fantasy)
-        card.playBadge.visibility = if (isVideo) View.VISIBLE else View.GONE
-        card.root.setOnClickListener {
-            if (!item.mediaUrl.isNullOrBlank() && File(item.mediaUrl.orEmpty()).exists()) {
-                showProfileMediaDialog(binding.root, item)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        color = PremiumSurface,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)),
+        shadowElevation = 12.dp,
+    ) {
+        Box(Modifier.background(Brush.linearGradient(listOf(Color(0xFF23274C), Color(0xFF151B2D), Color(0xFF0F1726))))) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(9.dp),
+            ) {
+                Box {
+                    AsyncImage(
+                        model = avatarUri,
+                        contentDescription = "$name profile picture",
+                        placeholder = painterResource(R.drawable.user_avatar),
+                        error = painterResource(R.drawable.user_avatar),
+                        modifier = Modifier.size(96.dp).clip(CircleShape).background(PremiumStroke),
+                    )
+                    Box(Modifier.align(Alignment.BottomEnd).size(25.dp).clip(CircleShape).background(PremiumLime).border(4.dp, PremiumSurface, CircleShape))
+                }
+                Text(name, color = PremiumText, fontSize = 25.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (username.isNotBlank()) Text("@${username.removePrefix("@")}", color = PremiumMuted, fontSize = 13.sp)
+                Text(
+                    plan.uppercase(),
+                    color = PremiumLime,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.1.sp,
+                    modifier = Modifier.background(PremiumLime.copy(alpha = 0.10f), RoundedCornerShape(8.dp)).padding(horizontal = 9.dp, vertical = 5.dp),
+                )
+                Button(
+                    onClick = onEdit,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PremiumLime, contentColor = PremiumBackground),
+                ) {
+                    Icon(Icons.Default.Edit, null, modifier = Modifier.size(17.dp))
+                    Text("Edit profile", fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 7.dp))
+                }
             }
         }
-        binding.creationsGrid.addView(card.root, gridParams(index, binding.root, 116, 10))
     }
 }
 
-private fun showProfileMediaDialog(anchor: View, item: HistoryModel) {
-    val context = anchor.context
-    val viewer = ProfileMediaViewerBinding.inflate(LayoutInflater.from(context))
-    val isVideo = item.type.equals("VIDEO", ignoreCase = true)
-    val file = File(item.mediaUrl.orEmpty())
-    viewer.mediaFrame.layoutParams = viewer.mediaFrame.layoutParams.apply {
-        height = (context.resources.displayMetrics.heightPixels * 0.62f).toInt().coerceAtMost(dp(anchor, 420))
-    }
-    viewer.mediaTitle.text = item.title.ifBlank { if (isVideo) "Video" else "Image" }
-    viewer.missingText.visibility = if (file.exists()) View.GONE else View.VISIBLE
-    viewer.mediaImage.visibility = if (file.exists() && !isVideo) View.VISIBLE else View.GONE
-    viewer.mediaVideo.visibility = if (file.exists() && isVideo) View.VISIBLE else View.GONE
-    if (file.exists() && isVideo) {
-        viewer.mediaVideo.setVideoURI(Uri.fromFile(file))
-        viewer.mediaVideo.setOnPreparedListener { player ->
-            player.isLooping = true
-            viewer.mediaVideo.start()
+@Composable
+private fun ProfileStat(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) {
+    Surface(onClick = onClick, modifier = modifier, shape = RoundedCornerShape(18.dp), color = PremiumSurface, border = BorderStroke(1.dp, PremiumStroke.copy(alpha = 0.7f))) {
+        Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(icon, null, tint = PremiumLime, modifier = Modifier.size(22.dp))
+            Text(value, color = PremiumText, fontSize = 25.sp, fontWeight = FontWeight.Black)
+            Text(label.uppercase(), color = PremiumMuted, fontFamily = FontFamily.Monospace, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         }
-    } else if (file.exists()) {
-        viewer.mediaImage.setImageURI(Uri.fromFile(file))
-    }
-    val dialog = AlertDialog.Builder(context)
-        .setView(viewer.root)
-        .setNegativeButton(R.string.ui_cancel, null)
-        .show()
-    dialog.setOnDismissListener { viewer.mediaVideo.stopPlayback() }
-}
-
-private fun bindPreferences(
-    binding: ProfileScreenBinding,
-    isGuest: Boolean,
-    onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit,
-    onNavigate: (String) -> Unit,
-) {
-    binding.preferencesList.removeAllViews()
-    val context = binding.root.context
-    listOf(
-        PrefSpec(context.getString(R.string.ui_account_settings), R.drawable.ic_lumora_settings, 0xFFFFFFFF.toInt()) { onNavigate(Screen.Settings.route) },
-        PrefSpec(context.getString(R.string.ui_privacy_policy), R.drawable.ic_lumora_info, 0xFFFFFFFF.toInt()) {},
-        PrefSpec(context.getString(R.string.ui_terms_of_service), R.drawable.ic_lumora_info, 0xFFFFFFFF.toInt()) {},
-        PrefSpec(context.getString(R.string.ui_delete_account), R.drawable.ic_lumora_delete, 0xFFFF7A7A.toInt()) {
-            confirmAccountAction(binding.root, "delete", isGuest, onSignOut, onDeleteAccount, onNavigate)
-        },
-        PrefSpec(
-            if (isGuest) context.getString(R.string.ui_log_in) else context.getString(R.string.ui_sign_out),
-            R.drawable.ic_lumora_logout,
-            if (isGuest) 0xFFFFFFFF.toInt() else 0xFFFF7A7A.toInt()
-        ) {
-            confirmAccountAction(binding.root, if (isGuest) "login" else "signout", isGuest, onSignOut, onDeleteAccount, onNavigate)
-        },
-    ).forEach { spec ->
-        val row = ProfileItemPrefBinding.inflate(LayoutInflater.from(context), binding.preferencesList, false)
-        row.title.text = spec.title
-        row.title.setTextColor(spec.color)
-        row.iconGlyph.setImageResource(spec.iconRes)
-        row.iconGlyph.setColorFilter(spec.color)
-        row.root.setOnClickListener { spec.onClick() }
-        binding.preferencesList.addView(row.root)
     }
 }
 
-private fun confirmAccountAction(
-    anchor: View,
-    action: String,
-    isGuest: Boolean,
-    onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit,
-    onNavigate: (String) -> Unit,
-) {
-    val context = anchor.context
-    val isDelete = action == "delete"
-    val isLogin = action == "login"
-    AlertDialog.Builder(context)
-        .setTitle(
-            if (isDelete) context.getString(R.string.ui_delete_account_q)
-            else if (isLogin) context.getString(R.string.ui_login_to_save_q)
-            else context.getString(R.string.ui_sign_out_q)
-        )
-        .setMessage(
-            if (isDelete) {
-                if (isGuest) context.getString(R.string.ui_delete_guest_data_body) else context.getString(R.string.ui_delete_account_body)
-            } else if (isLogin) {
-                context.getString(R.string.ui_login_dialog_body)
-            } else {
-                context.getString(R.string.ui_sign_out_body)
+@Composable
+private fun CreationCard(item: HistoryModel, modifier: Modifier, onClick: () -> Unit) {
+    val file = item.mediaUrl?.let(::File)
+    val isVideo = item.type.equals("VIDEO", true)
+    Surface(onClick = onClick, modifier = modifier, shape = RoundedCornerShape(17.dp), color = PremiumSurface, border = BorderStroke(1.dp, PremiumStroke.copy(alpha = 0.7f))) {
+        Box(Modifier.fillMaxWidth().aspectRatio(1.18f).background(PremiumStroke)) {
+            AsyncImage(
+                model = if (file?.exists() == true && !isVideo) Uri.fromFile(file) else null,
+                contentDescription = item.title,
+                placeholder = painterResource(if (isVideo) R.drawable.style_digital else R.drawable.style_fantasy),
+                error = painterResource(if (isVideo) R.drawable.style_digital else R.drawable.style_fantasy),
+                modifier = Modifier.fillMaxSize(),
+            )
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC080D18)))))
+            if (isVideo) {
+                Box(Modifier.align(Alignment.Center).size(38.dp).clip(CircleShape).background(PremiumLime), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.PlayArrow, null, tint = PremiumBackground)
+                }
             }
-        )
-        .setPositiveButton(
-            if (isDelete) context.getString(R.string.ui_delete_permanently)
-            else if (isLogin) context.getString(R.string.ui_log_in)
-            else context.getString(R.string.ui_sign_out)
-        ) { _, _ ->
-            if (isDelete) onDeleteAccount() else if (isLogin) onNavigate(Screen.Auth.route) else onSignOut()
+            Text(
+                item.title.ifBlank { if (isVideo) "Video" else "Image" },
+                color = PremiumText,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.align(Alignment.BottomStart).padding(10.dp),
+            )
         }
-        .setNegativeButton(R.string.ui_cancel, null)
-        .show()
+    }
 }
 
-private fun bindMediaThumb(image: android.widget.ImageView, item: HistoryModel, fallbackRes: Int) {
-    val path = item.mediaUrl.orEmpty()
-    val file = File(path)
-    when {
-        path.isBlank() || !file.exists() -> image.setImageResource(fallbackRes)
-        item.type.equals("VIDEO", ignoreCase = true) -> videoFrame(file)?.let { image.setImageBitmap(it) } ?: image.setImageResource(fallbackRes)
-        else -> image.setImageURI(Uri.fromFile(file))
+@Composable
+private fun ProfileActionDialog(action: ProfileAction, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    val title = when (action) {
+        ProfileAction.Delete -> "Delete account?"
+        ProfileAction.SignOut -> "Sign out?"
+        ProfileAction.Login -> "Log in to save your work?"
     }
-    image.contentDescription = item.title
+    val body = when (action) {
+        ProfileAction.Delete -> "This permanently removes your account and cannot be undone."
+        ProfileAction.SignOut -> "Your saved work remains available when you sign in again."
+        ProfileAction.Login -> "Connect an account to keep creations and credits across devices."
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = PremiumSurface,
+        titleContentColor = PremiumText,
+        textContentColor = PremiumMuted,
+        title = { Text(title, fontWeight = FontWeight.ExtraBold) },
+        text = { Text(body) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(if (action == ProfileAction.Delete) "Delete permanently" else if (action == ProfileAction.Login) "Log in" else "Sign out", color = if (action == ProfileAction.Login) PremiumLime else PremiumDanger) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = PremiumMuted) } },
+    )
 }
-
-private fun gridParams(index: Int, view: View, heightDp: Int, gapDp: Int): GridLayout.LayoutParams =
-    GridLayout.LayoutParams(
-        GridLayout.spec(index / 2, 1),
-        GridLayout.spec(index % 2, 1f)
-    ).apply {
-        width = 0
-        height = dp(view, heightDp)
-        setMargins(
-            if (index % 2 == 0) 0 else dp(view, gapDp / 2),
-            if (index < 2) 0 else dp(view, gapDp),
-            if (index % 2 == 0) dp(view, gapDp / 2) else 0,
-            0
-        )
-    }
-
-private fun dp(view: View, value: Int): Int = (value * view.resources.displayMetrics.density).toInt()
-
-private fun videoFrame(file: File): Bitmap? = runCatching {
-    MediaMetadataRetriever().use { retriever ->
-        retriever.setDataSource(file.absolutePath)
-        retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-    }
-}.getOrNull()
-
-private data class PrefSpec(
-    val title: String,
-    val iconRes: Int,
-    val color: Int,
-    val onClick: () -> Unit,
-)
