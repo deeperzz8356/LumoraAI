@@ -1,13 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/ratioLabel"
-    android:layout_width="74dp"
-    android:layout_height="36dp"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ratioRoot"
+    android:layout_width="84dp"
+    android:layout_height="40dp"
     android:background="@drawable/bg_generation_unselected"
     android:clickable="true"
     android:focusable="true"
     android:gravity="center"
-    android:textColor="@color/white"
-    android:includeFontPadding="false"
-    android:textSize="14sp"
-    android:textStyle="bold" />
+    android:orientation="horizontal"
+    android:paddingStart="10dp"
+    android:paddingEnd="10dp">
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/ratioIconHost"
+        android:layout_width="18dp"
+        android:layout_height="18dp" />
+
+    <TextView
+        android:id="@+id/ratioLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="7dp"
+        android:includeFontPadding="false"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+</LinearLayout>

@@ -1,18 +1,21 @@
 package com.deep.lumoraai.feature.generation
 
 import android.app.AlertDialog
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -21,8 +24,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +36,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
@@ -47,6 +54,15 @@ import com.deep.lumoraai.databinding.GenerationScreenBinding
 import com.deep.lumoraai.databinding.GenerationSourceItemBinding
 import com.deep.lumoraai.databinding.GenerationStyleItemBinding
 import com.deep.lumoraai.databinding.ProfileMediaViewerBinding
+import compose.icons.TablerIcons
+import compose.icons.tablericons.AspectRatio
+import compose.icons.tablericons.Bell
+import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.ChevronUp
+import compose.icons.tablericons.Palette
+import compose.icons.tablericons.Pencil
+import compose.icons.tablericons.SquarePlus
+import compose.icons.tablericons.Stars
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -113,6 +129,9 @@ fun NativeGenerationScreen(
     var selectorsOpen by remember { mutableStateOf(false) }
     val credits by CreditBalanceStore.balance.collectAsState()
     val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        CreditBalanceStore.refresh()
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -132,7 +151,7 @@ fun NativeGenerationScreen(
                     bindGeneration(
                         binding = GenerationScreenBinding.bind(root),
                         config = config,
-                        credits = credits ?: 0,
+                        credits = credits,
                         showPrompt = showPrompt,
                         selectorsOpen = selectorsOpen,
                         scope = scope,
@@ -166,7 +185,7 @@ fun NativeGenerationScreen(
 private fun bindGeneration(
     binding: GenerationScreenBinding,
     config: NativeGenerationConfig,
-    credits: Int,
+    credits: Int?,
     showPrompt: Boolean,
     selectorsOpen: Boolean,
     scope: CoroutineScope,
@@ -187,8 +206,14 @@ private fun bindGeneration(
     binding.title.text = config.title
     binding.backButton.setOnClickListener { onBack() }
     binding.notificationButton.setOnClickListener { onNavigate(Screen.Notifications.route) }
-    binding.creditsChip.text = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else credits.toString()
+    binding.creditsChip.text = when {
+        credits == null -> ""
+        credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY -> "Unlimited"
+        else -> credits.toString()
+    }
     binding.creditsChip.setOnClickListener { onNavigate(Screen.Credits.route) }
+    binding.creditsChip.compoundDrawableTintList = ColorStateList.valueOf(binding.root.context.getColor(R.color.lumora_lime))
+    bindTablerIcon(binding.notificationIconHost, TablerIcons.Bell, Color.White)
 
     bindSingleUpload(binding, config)
     bindMultiSources(binding, config)
@@ -236,13 +261,9 @@ private fun bindMultiSources(binding: GenerationScreenBinding, config: NativeGen
     if (!show) return
     binding.sourceCount.text = "${config.multiSources.size} / ${config.maxSources}"
     binding.sourceHint.visibility = if (config.multiSources.isEmpty()) View.VISIBLE else View.GONE
-    binding.sourceHint.gravity = if (config.multiSources.isEmpty()) android.view.Gravity.CENTER else android.view.Gravity.START
+    binding.sourceHint.gravity = android.view.Gravity.START
     binding.sourceRow.removeAllViews()
-    binding.sourceRow.gravity = if (config.multiSources.isEmpty()) {
-        android.view.Gravity.CENTER_HORIZONTAL
-    } else {
-        android.view.Gravity.NO_GRAVITY
-    }
+    binding.sourceRow.gravity = android.view.Gravity.NO_GRAVITY
     config.multiSources.forEach { source ->
         val item = GenerationSourceItemBinding.inflate(LayoutInflater.from(binding.root.context), binding.sourceRow, false)
         item.root.clipToOutline = true
@@ -254,20 +275,24 @@ private fun bindMultiSources(binding: GenerationScreenBinding, config: NativeGen
     }
     if (config.multiSources.size < config.maxSources) {
         val context = binding.root.context
-        val addSize = if (config.multiSources.isEmpty()) 250 else 112
+        val addSize = if (config.multiSources.isEmpty()) 106 else 112
+        val addSourceClick = View.OnClickListener {
+            if (!config.isSourceBusy) config.onAddSources?.invoke()
+        }
         val add = FrameLayout(context).apply {
             clipToOutline = true
             setBackgroundResource(R.drawable.bg_generation_upload)
-            setOnClickListener { if (!config.isSourceBusy) config.onAddSources?.invoke() }
+            isClickable = true
+            isFocusable = true
+            setOnClickListener(addSourceClick)
             addView(LinearLayout(context).apply {
                 gravity = android.view.Gravity.CENTER
                 orientation = LinearLayout.VERTICAL
-                addView(ImageView(context).apply {
-                    setImageResource(R.drawable.ic_lumora_upload)
-                    setColorFilter(0xFFD6FF2F.toInt())
-                    setBackgroundResource(R.drawable.bg_common_icon_circle)
-                    setPadding(dp(this, 14), dp(this, 14), dp(this, 14), dp(this, 14))
-                }, LinearLayout.LayoutParams(dp(this, 54), dp(this, 54)))
+                isClickable = false
+                addView(ComposeView(context).apply {
+                    bindTablerIcon(this, TablerIcons.SquarePlus, Color(0xFFD6FF2F))
+                    isClickable = false
+                }, LinearLayout.LayoutParams(dp(this, 32), dp(this, 32)))
                 addView(TextView(context).apply {
                     text = context.getString(R.string.ui_upload_image)
                     gravity = android.view.Gravity.CENTER
@@ -275,7 +300,8 @@ private fun bindMultiSources(binding: GenerationScreenBinding, config: NativeGen
                     textSize = if (config.multiSources.isEmpty()) 16f else 12f
                     typeface = android.graphics.Typeface.DEFAULT_BOLD
                     includeFontPadding = false
-                    setPadding(dp(this, 6), dp(this, 12), dp(this, 6), 0)
+                    setPadding(dp(this, 4), dp(this, 14), dp(this, 4), 0)
+                    isClickable = false
                 }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
             }, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         }
@@ -293,14 +319,48 @@ private fun bindPrompt(
 ) {
     binding.promptWrapper.visibility = if (config.showPromptSection) View.VISIBLE else View.GONE
     if (!config.showPromptSection) return
-    binding.promptTitle.text = if (config.promptOptional && !showPrompt) {
-        binding.root.context.getString(R.string.ui_prompt_optional)
+    val headerParams = binding.promptHeader.layoutParams
+    if (config.promptOptional) {
+        headerParams.height = dp(binding.root, 50)
+        binding.promptHeader.layoutParams = headerParams
+        binding.promptHeader.setBackgroundResource(R.drawable.bg_generation_panel)
+        binding.promptHeader.setPadding(dp(binding.root, 18), 0, dp(binding.root, 18), 0)
+        binding.promptToggleIconHost.visibility = View.VISIBLE
+        binding.promptChevronIconHost.visibility = View.VISIBLE
+        binding.improveIconHost.visibility = View.GONE
+        bindTablerIcon(binding.promptToggleIconHost, TablerIcons.Pencil, Color(0xFFD6FF2F))
+        bindTablerIcon(binding.promptChevronIconHost, if (showPrompt) TablerIcons.ChevronUp else TablerIcons.ChevronDown, Color.White.copy(alpha = 0.75f))
+        binding.promptTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+        binding.promptTitle.text = if (!showPrompt) "Add a prompt (optional)" else binding.root.context.getString(R.string.ui_prompt)
     } else {
-        binding.root.context.getString(R.string.ui_prompt)
+        headerParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+        binding.promptHeader.layoutParams = headerParams
+        binding.promptHeader.background = null
+        binding.promptHeader.setPadding(0, 0, 0, 0)
+        binding.promptToggleIconHost.visibility = View.GONE
+        binding.promptChevronIconHost.visibility = View.GONE
+        binding.improveIconHost.visibility = View.VISIBLE
+        bindTablerIcon(binding.improveIconHost, TablerIcons.Stars, Color(0xFF7E57C2))
+        binding.promptTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
+        binding.promptTitle.text = binding.root.context.getString(R.string.ui_prompt)
     }
-    binding.promptHeader.setOnClickListener { if (config.promptOptional) onShowPromptChanged(!showPrompt) }
+    val togglePrompt = {
+        if (config.promptOptional) onShowPromptChanged(!showPrompt)
+    }
+    val togglePromptClick = View.OnClickListener { togglePrompt() }
+    binding.promptHeader.isClickable = config.promptOptional
+    binding.promptHeader.isFocusable = config.promptOptional
+    binding.promptHeader.setOnClickListener(togglePromptClick)
+    binding.promptToggleIconHost.isClickable = true
+    binding.promptToggleIconHost.setOnClickListener(togglePromptClick)
+    binding.promptTitle.isClickable = config.promptOptional
+    binding.promptTitle.setOnClickListener(togglePromptClick)
+    binding.promptChevronIconHost.isClickable = true
+    binding.promptChevronIconHost.setOnClickListener(togglePromptClick)
     binding.promptCard.visibility = if (showPrompt) View.VISIBLE else View.GONE
     binding.improveButton.visibility = if (showPrompt) View.VISIBLE else View.GONE
+    binding.improveIconHost.visibility = if (!config.promptOptional && showPrompt) View.VISIBLE else binding.improveIconHost.visibility
+    binding.promptInput.minHeight = if (config.promptOptional) dp(binding.root, 96) else dp(binding.root, 190)
     binding.promptInput.hint = config.promptHint
     val oldWatcher = binding.promptInput.getTag(R.id.promptInput) as? TextWatcher
     if (oldWatcher != null) binding.promptInput.removeTextChangedListener(oldWatcher)
@@ -318,7 +378,10 @@ private fun bindPrompt(
     binding.promptInput.setTag(R.id.promptInput, watcher)
     binding.improveButton.alpha = if (config.prompt.isNotBlank() && !config.isImprovingPrompt) 1f else 0.45f
     binding.improveButton.text = if (config.isImprovingPrompt) binding.root.context.getString(R.string.loading) else binding.root.context.getString(R.string.ui_ai_prompt_enhancer)
-    binding.improveButton.setOnClickListener { if (config.prompt.isNotBlank() && !config.isImprovingPrompt) onImprovePrompt() }
+    val improveEnabled = config.prompt.isNotBlank() && !config.isImprovingPrompt
+    binding.improveButton.setOnClickListener { if (improveEnabled) onImprovePrompt() }
+    binding.improveIconHost.alpha = binding.improveButton.alpha
+    binding.improveIconHost.setOnClickListener { if (improveEnabled) onImprovePrompt() }
 }
 
 private fun bindLoading(binding: GenerationScreenBinding, config: NativeGenerationConfig) {
@@ -378,21 +441,41 @@ private fun bindBottomBar(
     onSelectorsOpenChanged: (Boolean) -> Unit,
 ) {
     val hasStyles = config.styleItems.isNotEmpty()
-    val hasSelectors = hasStyles || config.showRatio
+    val hasSlider = config.sliderLabel != null && config.sliderValue != null && config.onSliderChanged != null
+    val hasDuration = config.duration != null && config.onDurationChanged != null
+    val hasSelectors = hasStyles || config.showRatio || hasSlider || hasDuration
     binding.summaryRow.visibility = if (hasSelectors) View.VISIBLE else View.GONE
     binding.selectorPanel.visibility = if (selectorsOpen && hasSelectors) View.VISIBLE else View.GONE
     val selectedStyle = config.styleItems.firstOrNull { it.selected } ?: config.styleItems.firstOrNull()
-    binding.summaryRow.text = buildString {
-        if (selectedStyle != null) append(binding.root.context.getString(selectedStyle.labelRes))
-        if (config.showRatio) {
-            if (isNotEmpty()) append("  |  ")
-            append(config.selectedAspectRatio.label)
-        }
-        append(if (selectorsOpen) "  Close" else "  Options")
+    val currentSliderValue = config.sliderValue
+    val sliderSummary = if (selectedStyle == null && !config.showRatio && hasSlider) {
+        "${config.sliderLabel} ${(currentSliderValue.coerceIn(0f, 1f) * 100).toInt()}%"
+    } else {
+        selectedStyle?.let { binding.root.context.getString(it.labelRes) }.orEmpty()
     }
-    binding.summaryRow.setOnClickListener { onSelectorsOpenChanged(!selectorsOpen) }
+    binding.summaryStyleText.text = sliderSummary
+    binding.summaryRatioText.text = if (config.showRatio) config.selectedAspectRatio.label else ""
+    binding.summaryStyleText.visibility = if (sliderSummary.isNotBlank()) View.VISIBLE else View.GONE
+    binding.summaryStyleIconHost.visibility = if (sliderSummary.isNotBlank()) View.VISIBLE else View.GONE
+    binding.summaryRatioText.visibility = if (config.showRatio) View.VISIBLE else View.GONE
+    binding.summaryRatioIconHost.visibility = if (config.showRatio) View.VISIBLE else View.GONE
+    binding.summaryRatioDivider.visibility = if (sliderSummary.isNotBlank() && config.showRatio) View.VISIBLE else View.GONE
+    bindTablerIcon(binding.summaryStyleIconHost, TablerIcons.Palette, Color.White)
+    bindTablerIcon(binding.summaryRatioIconHost, TablerIcons.AspectRatio, Color.White)
+    bindTablerIcon(binding.summaryChevronIconHost, if (selectorsOpen) TablerIcons.ChevronUp else TablerIcons.ChevronDown, Color.White)
+    val toggleSelectorsClick = View.OnClickListener { onSelectorsOpenChanged(!selectorsOpen) }
+    binding.summaryRow.isClickable = hasSelectors
+    binding.summaryRow.isFocusable = hasSelectors
+    binding.summaryRow.setOnClickListener(toggleSelectorsClick)
+    binding.summaryStyleIconHost.isClickable = false
+    binding.summaryStyleText.isClickable = false
+    binding.summaryRatioIconHost.isClickable = false
+    binding.summaryRatioText.isClickable = false
+    binding.summaryChevronIconHost.isClickable = false
     bindStyles(binding, config)
     bindRatios(binding, config, onAspectRatioChanged)
+    bindSlider(binding, config)
+    bindDuration(binding, config)
     binding.generateButton.isEnabled = config.generateEnabled && !config.isGenerating
     binding.generateButton.alpha = if (binding.generateButton.isEnabled) 1f else 0.45f
     binding.generateButton.text = if (config.isGenerating) {
@@ -402,6 +485,58 @@ private fun bindBottomBar(
     }
     binding.generateButton.setOnClickListener { if (config.generateEnabled && !config.isGenerating) onGenerate() }
     binding.creditNote.text = binding.root.context.getString(R.string.ui_credits_consumed_note, config.creditCost)
+}
+
+private fun bindSlider(binding: GenerationScreenBinding, config: NativeGenerationConfig) {
+    val label = config.sliderLabel
+    val value = config.sliderValue
+    val onChanged = config.onSliderChanged
+    val show = label != null && value != null && onChanged != null
+    binding.sliderSection.visibility = if (show) View.VISIBLE else View.GONE
+    if (!show) return
+    val currentValue = value.coerceIn(0f, 1f)
+    val changeListener = onChanged
+    val progress = (currentValue * 100).toInt()
+    binding.sliderTitle.text = label
+    binding.sliderValue.text = "$progress%"
+    binding.valueSlider.setOnSeekBarChangeListener(null)
+    if (binding.valueSlider.progress != progress) binding.valueSlider.progress = progress
+    binding.valueSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            if (!fromUser) return
+            binding.sliderValue.text = "$progress%"
+            changeListener(progress / 100f)
+        }
+
+        override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+        override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+    })
+}
+
+private fun bindDuration(binding: GenerationScreenBinding, config: NativeGenerationConfig) {
+    val duration = config.duration
+    val onChanged = config.onDurationChanged
+    val show = duration != null && onChanged != null
+    binding.durationSection.visibility = if (show) View.VISIBLE else View.GONE
+    if (!show) return
+    val currentDuration = duration.coerceIn(5, 15)
+    val changeListener = onChanged
+    val seconds = currentDuration
+    val progress = seconds - 5
+    binding.durationValue.text = binding.root.context.getString(R.string.ui_seconds_format, seconds)
+    binding.durationSlider.setOnSeekBarChangeListener(null)
+    if (binding.durationSlider.progress != progress) binding.durationSlider.progress = progress
+    binding.durationSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            if (!fromUser) return
+            val next = (5 + progress).coerceIn(5, 15)
+            binding.durationValue.text = binding.root.context.getString(R.string.ui_seconds_format, next)
+            changeListener(next)
+        }
+
+        override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+        override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+    })
 }
 
 private fun bindStyles(binding: GenerationScreenBinding, config: NativeGenerationConfig) {
@@ -415,7 +550,11 @@ private fun bindStyles(binding: GenerationScreenBinding, config: NativeGeneratio
         item.styleLabel.setTextColor(if (style.selected) 0xFFD6FF2F.toInt() else 0xFFFFFFFF.toInt())
         item.checkBadge.visibility = if (style.selected) View.VISIBLE else View.GONE
         item.styleImage.setImageDrawable(assetDrawable(binding.root, style.assetFileName))
+        item.root.isClickable = true
         item.root.setOnClickListener { style.onClick() }
+        item.styleImage.isClickable = false
+        item.styleLabel.isClickable = false
+        item.checkBadge.isClickable = false
         binding.styleRow.addView(item.root, rowParams(binding.root, 96, 10))
     }
 }
@@ -431,11 +570,16 @@ private fun bindRatios(
     if (!config.showRatio) return
     config.aspectRatioOptions.forEach { ratio ->
         val item = GenerationRatioItemBinding.inflate(LayoutInflater.from(binding.root.context), binding.ratioRow, false)
-        item.root.text = ratio.label
-        item.root.setTextColor(if (ratio == config.selectedAspectRatio) 0xFFD6FF2F.toInt() else 0xFFFFFFFF.toInt())
+        val selected = ratio == config.selectedAspectRatio
+        item.ratioLabel.text = ratio.label
+        item.ratioLabel.setTextColor(if (selected) 0xFFD6FF2F.toInt() else 0xFFFFFFFF.toInt())
         item.root.setBackgroundResource(if (ratio == config.selectedAspectRatio) R.drawable.bg_generation_selected else R.drawable.bg_generation_unselected)
+        bindTablerIcon(item.ratioIconHost, TablerIcons.AspectRatio, if (selected) Color(0xFFD6FF2F) else Color.White.copy(alpha = 0.75f))
+        item.root.isClickable = true
         item.root.setOnClickListener { onAspectRatioChanged(ratio) }
-        binding.ratioRow.addView(item.root, rowParams(binding.root, 74, 8))
+        item.ratioIconHost.isClickable = false
+        item.ratioLabel.isClickable = false
+        binding.ratioRow.addView(item.root, rowParams(binding.root, 84, 8))
     }
 }
 
@@ -502,3 +646,18 @@ private fun assetDrawable(view: View, fileName: String): Drawable? =
     runCatching {
         view.context.assets.open(fileName).use { Drawable.createFromStream(it, fileName) }
     }.getOrNull()
+
+private fun bindTablerIcon(
+    host: ComposeView,
+    imageVector: ImageVector,
+    tint: Color,
+) {
+    host.setContent {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
