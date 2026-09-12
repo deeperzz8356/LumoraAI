@@ -1,75 +1,45 @@
 package com.deep.lumoraai.feature.templates
 
-import android.widget.Toast
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.view.LayoutInflater
+import android.view.View
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.ViewCompat
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
-import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.ads.PlacementNativeAd
-import com.deep.lumoraai.core.components.AppEmptyScreen
-import com.deep.lumoraai.core.components.AppErrorScreen
-import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
-import com.deep.lumoraai.core.components.LumoraTopBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.avatarRoute
 import com.deep.lumoraai.core.navigation.logoRoute
 import com.deep.lumoraai.core.navigation.promoVideoRoute
+import com.deep.lumoraai.core.navigation.templateSectionRoute
 import com.deep.lumoraai.core.navigation.textToImageRoute
 import com.deep.lumoraai.core.navigation.textToVideoRoute
-import com.deep.lumoraai.feature.templates.components.FeatureCard
+import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.databinding.TemplateSectionScreenBinding
+import com.deep.lumoraai.databinding.TemplatesScreenBinding
 import com.deep.lumoraai.feature.templates.model.TemplateAction
 import com.deep.lumoraai.feature.templates.model.TemplateCategory
 import com.deep.lumoraai.feature.templates.model.TemplateListItem
 
-private val TemplateBackground = Color(0xFF081020)
-
-private val TemplatePanel = Color(0xFF111A2D)
-
-// Match the History filter selection accent (lime).
-private val TemplateStroke = Color(0xFF1B2A44)
-private val Lime = Color(0xFFD6FF2F)
-
-private val Muted = Color(0xFF9BA6BA)
+private const val Background = 0xFF081020
 
 @Composable
 fun TemplatesScreen(
@@ -77,275 +47,256 @@ fun TemplatesScreen(
     onNext: () -> Unit,
     onNavigate: (String) -> Unit = {},
     unreadCount: Int = 0,
+    selectedCategoryId: String = TemplateCategory.IMAGE.id,
+    onCategorySelected: (String) -> Unit = {},
+    scrollMemory: TemplateScrollMemory = TemplateScrollMemory(),
     modifier: Modifier = Modifier,
 ) {
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = TemplateBackground,
+        containerColor = ComposeColor(Background),
         bottomBar = {
             BottomNavigationBar(
                 items = emptyList(),
-                selected = "templates",
+                selected = Screen.Templates.route,
                 onSelected = onNavigate,
             )
         },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().background(TemplateBackground).padding(padding)) {
-            when (uiState) {
-                is TemplatesUiState.Loading -> AppLoadingScreen()
-
-                is TemplatesUiState.Error -> AppErrorScreen(message = uiState.message)
-
-                is TemplatesUiState.Empty ->
-                    AppEmptyScreen(
-                        title = stringResource(com.deep.lumoraai.R.string.ui_no_templates),
-                        body =
-                            stringResource(com.deep.lumoraai.R.string.ui_templates_will_appear_here),
-                    )
-
-                is TemplatesUiState.Success -> {
-
-                    TemplatesContent(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(ComposeColor(Background))
+                .padding(padding)
+        ) {
+            AndroidView(
+                factory = { TemplatesScreenBinding.inflate(LayoutInflater.from(it)).root },
+                update = { root ->
+                    bindTemplates(
+                        binding = TemplatesScreenBinding.bind(root),
                         uiState = uiState,
-                        onNavigate = onNavigate,
+                        selectedCategoryId = selectedCategoryId,
                         unreadCount = unreadCount,
+                        scrollMemory = scrollMemory,
+                        onCategorySelected = onCategorySelected,
+                        onNavigate = onNavigate,
+                        onViewAll = { categoryId, sectionId ->
+                            onNavigate(templateSectionRoute(categoryId, sectionId))
+                        }
                     )
-                }
-            }
+                },
+                modifier = Modifier.weight(1f)
+            )
+            PlacementNativeAd(
+                placement = AdPlacement.NATIVE_TEMPLATE,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
         }
     }
 }
 
-@Composable
-private fun TemplatesContent(
-    uiState: TemplatesUiState.Success,
-    onNavigate: (String) -> Unit,
+private fun bindTemplates(
+    binding: TemplatesScreenBinding,
+    uiState: TemplatesUiState,
+    selectedCategoryId: String,
     unreadCount: Int,
+    scrollMemory: TemplateScrollMemory,
+    onCategorySelected: (String) -> Unit,
+    onNavigate: (String) -> Unit,
+    onViewAll: (String, String) -> Unit,
 ) {
+    binding.loading.visibility = View.GONE
+    binding.messageState.visibility = View.GONE
+    binding.content.visibility = View.GONE
 
-    var selectedCategory by remember { mutableStateOf(TemplateCategory.IMAGE) }
+    when (uiState) {
+        TemplatesUiState.Loading -> binding.loading.visibility = View.VISIBLE
+        TemplatesUiState.Empty -> showMessage(binding, binding.root.context.getString(R.string.ui_template_empty))
+        is TemplatesUiState.Error -> showMessage(binding, uiState.message)
+        is TemplatesUiState.Success -> {
+            val category = uiState.category(selectedCategoryId)
+                ?: uiState.categories.firstOrNull()
+            if (category == null) {
+                showMessage(binding, binding.root.context.getString(R.string.ui_template_empty))
+                return
+            }
+            binding.content.visibility = View.VISIBLE
+            bindHeader(binding, uiState.credits, unreadCount, onNavigate)
 
-    val clipboard = LocalClipboardManager.current
-
-    val context = LocalContext.current
-
-    /*
-     * Select list based on segment.
-     */
-    val templates =
-        when (selectedCategory) {
-            TemplateCategory.IMAGE -> uiState.imageTemplates
-
-            TemplateCategory.VIDEO -> uiState.videoTemplates
-
-            TemplateCategory.PROMO_VIDEO -> uiState.promoVideoTemplates
-
-            TemplateCategory.LOGO_CREATION -> uiState.logoCreationTemplates
-
-            TemplateCategory.AVATAR -> uiState.avatarTemplates
-        }
-
-    Column(
-        modifier =
-            Modifier.fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-
-        /*
-         * Top bar
-         */
-        LumoraTopBar(
-            credits = uiState.credits,
-            title = stringResource(com.deep.lumoraai.R.string.ui_templates),
-            onProfileClick = { onNavigate(Screen.Profile.route) },
-            onCreditsClick = { onNavigate(Screen.Credits.route) },
-            onNotificationsClick = { onNavigate(Screen.Notifications.route) },
-            hasUnreadNotifications = unreadCount > 0,
-        )
-
-        /*
-         * Category segments
-         */
-        TemplateCategoryTabs(
-            selectedCategory = selectedCategory,
-            onSelected = { selectedCategory = it },
-        )
-
-        /*
-         * Cards
-         */
-        if (templates.isEmpty()) {
-
-            EmptyCategory(category = selectedCategory)
-        } else {
-
-            // Insert a native ad after every Nth template card (default 3),
-            // never after the last item (no ad at the very bottom).
-            val templateInterval =
-                (LocalAdsConfigStore.current?.current?.nativeTemplateInterval ?: 3).coerceAtLeast(1)
-            val lastIndex = templates.lastIndex
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                templates.forEachIndexed { index, item ->
-                    FeatureCard(
-                        item = item,
-                        onCopy = {
-                            clipboard.setText(AnnotatedString(item.prompt))
-
-                            Toast.makeText(context, "Prompt copied", Toast.LENGTH_SHORT).show()
-                        },
-                        onClick = { navigateTemplate(item = item, onNavigate = onNavigate) },
+            val tabs = mapOf(
+                TemplateCategory.IMAGE.id to binding.imagesTab,
+                TemplateCategory.VIDEO.id to binding.videoTab,
+                TemplateCategory.PROMO_VIDEO.id to binding.promoVideoTab,
+                TemplateCategory.AVATAR.id to binding.avatarTab,
+            )
+            tabs.forEach { (categoryId, tab) ->
+                val selected = categoryId == category.id
+                tab.isSelected = selected
+                tab.setBackgroundResource(
+                    if (selected) R.drawable.bg_template_tab_selected else R.drawable.bg_template_tab
+                )
+                tab.setTextColor(
+                    binding.root.context.getColor(
+                        if (selected) R.color.lumora_lime else R.color.lumora_text_muted
                     )
-                    // After every Nth card, but not after the final card.
-                    if ((index + 1) % templateInterval == 0 && index != lastIndex) {
-                        PlacementNativeAd(placement = AdPlacement.NATIVE_TEMPLATE)
-                    }
+                )
+                ViewCompat.setStateDescription(tab, if (selected) "Selected" else "Not selected")
+                tab.setOnClickListener {
+                    saveMainScroll(binding.sectionsList, scrollMemory)
+                    onCategorySelected(categoryId)
                 }
             }
+
+            val manager = (binding.sectionsList.layoutManager as? LinearLayoutManager)
+                ?: LinearLayoutManager(binding.root.context).also {
+                    binding.sectionsList.layoutManager = it
+                }
+            val currentAdapter = binding.sectionsList.adapter as? TemplateSectionsAdapter
+            if (currentAdapter?.categoryId != category.id) {
+                if (currentAdapter != null) {
+                    scrollMemory.saveCategoryPosition(
+                        currentAdapter.categoryId,
+                        manager.findFirstVisibleItemPosition().coerceAtLeast(0)
+                    )
+                }
+                binding.sectionsList.adapter = TemplateSectionsAdapter(
+                    categoryId = category.id,
+                    sections = category.sections,
+                    scrollMemory = scrollMemory,
+                    onTemplateClick = { navigateTemplate(it, onNavigate) },
+                    onViewAll = { onViewAll(category.id, it.id) },
+                )
+                manager.scrollToPositionWithOffset(scrollMemory.categoryPosition(category.id), 0)
+            }
+            binding.sectionsList.clearOnScrollListeners()
+            binding.sectionsList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    scrollMemory.saveCategoryPosition(
+                        category.id,
+                        manager.findFirstVisibleItemPosition().coerceAtLeast(0)
+                    )
+                }
+            })
         }
     }
 }
 
-/*
- * Five segment controls.
- */
-@Composable
-private fun TemplateCategoryTabs(
-    selectedCategory: TemplateCategory,
-    onSelected: (TemplateCategory) -> Unit,
+private fun bindHeader(
+    binding: TemplatesScreenBinding,
+    credits: Int,
+    unreadCount: Int,
+    onNavigate: (String) -> Unit,
 ) {
-
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        CategoryTab(
-            label = "Images",
-            icon = Icons.Default.Image,
-            selected = selectedCategory == TemplateCategory.IMAGE,
-        ) {
-            onSelected(TemplateCategory.IMAGE)
-        }
-
-        CategoryTab(
-            label = "Video",
-            icon = Icons.Default.VideoLibrary,
-            selected = selectedCategory == TemplateCategory.VIDEO,
-        ) {
-            onSelected(TemplateCategory.VIDEO)
-        }
-
-        CategoryTab(
-            label = "Logo",
-            icon = Icons.Default.Star,
-            selected = selectedCategory == TemplateCategory.LOGO_CREATION,
-        ) {
-            onSelected(TemplateCategory.LOGO_CREATION)
-        }
-
-        CategoryTab(
-            label = "Promo Video",
-            icon = Icons.Default.Campaign,
-            selected = selectedCategory == TemplateCategory.PROMO_VIDEO,
-        ) {
-            onSelected(TemplateCategory.PROMO_VIDEO)
-        }
-
-        CategoryTab(
-            label = "Avatar",
-            icon = Icons.Default.Person,
-            selected = selectedCategory == TemplateCategory.AVATAR,
-        ) {
-            onSelected(TemplateCategory.AVATAR)
-        }
+    val context = binding.root.context
+    binding.creditsChip.text = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
+        "Unlimited"
+    } else {
+        credits.toString()
     }
+    binding.creditsChip.contentDescription = context.getString(R.string.ui_credits_count_format, credits)
+    binding.creditsChip.compoundDrawableTintList = ColorStateList.valueOf(context.getColor(R.color.lumora_lime))
+    binding.creditsChip.setOnClickListener { onNavigate(Screen.Credits.route) }
+    binding.unreadDot.visibility = if (unreadCount > 0) View.VISIBLE else View.GONE
+    binding.notificationButton.setOnClickListener { onNavigate(Screen.Notifications.route) }
+}
+
+private fun saveMainScroll(list: RecyclerView, memory: TemplateScrollMemory) {
+    val adapter = list.adapter as? TemplateSectionsAdapter ?: return
+    val manager = list.layoutManager as? LinearLayoutManager ?: return
+    memory.saveCategoryPosition(
+        adapter.categoryId,
+        manager.findFirstVisibleItemPosition().coerceAtLeast(0)
+    )
+}
+
+private fun showMessage(binding: TemplatesScreenBinding, message: String) {
+    binding.messageState.text = message
+    binding.messageState.visibility = View.VISIBLE
 }
 
 @Composable
-private fun CategoryTab(label: String, icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
-
-    // Selection styling mirrors the History filter chips: lime fill, lime
-    // border, and lime text/icon when active.
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(10.dp),
-        color = if (selected) Lime.copy(alpha = 0.16f) else TemplatePanel,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (selected) Lime.copy(alpha = 0.8f) else TemplateStroke,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (selected) Lime else Color.White.copy(alpha = 0.65f),
-                modifier = Modifier.size(15.dp),
-            )
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            Text(
-                text = label,
-                color = if (selected) Lime else Color.White.copy(alpha = 0.78f),
-                fontSize = 11.sp,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            )
-        }
+fun TemplateSectionScreen(
+    uiState: TemplatesUiState,
+    categoryId: String,
+    sectionId: String,
+    onBack: () -> Unit,
+    onNavigate: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val widthDp = LocalConfiguration.current.screenWidthDp
+    val spanCount = when {
+        widthDp >= 840 -> 4
+        widthDp >= 600 -> 3
+        else -> 2
     }
+    AndroidView(
+        factory = { TemplateSectionScreenBinding.inflate(LayoutInflater.from(it)).root },
+        update = { root ->
+            bindTemplateSection(
+                binding = TemplateSectionScreenBinding.bind(root),
+                uiState = uiState,
+                categoryId = categoryId,
+                sectionId = sectionId,
+                spanCount = spanCount,
+                onBack = onBack,
+                onNavigate = onNavigate,
+            )
+        },
+        modifier = modifier
+            .fillMaxSize()
+            .background(ComposeColor(Background))
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    )
+}
+
+private fun bindTemplateSection(
+    binding: TemplateSectionScreenBinding,
+    uiState: TemplatesUiState,
+    categoryId: String,
+    sectionId: String,
+    spanCount: Int,
+    onBack: () -> Unit,
+    onNavigate: (String) -> Unit,
+) {
+    binding.backButton.setOnClickListener { onBack() }
+    val section = (uiState as? TemplatesUiState.Success)?.section(categoryId, sectionId)
+    if (section == null) {
+        binding.title.text = binding.root.context.getString(R.string.ui_templates)
+        binding.grid.visibility = View.GONE
+        binding.messageState.visibility = View.VISIBLE
+        return
+    }
+    binding.title.text = section.title
+    binding.messageState.visibility = View.GONE
+    binding.grid.visibility = View.VISIBLE
+    val currentManager = binding.grid.layoutManager as? GridLayoutManager
+    if (currentManager?.spanCount != spanCount) {
+        binding.grid.layoutManager = GridLayoutManager(binding.root.context, spanCount)
+        while (binding.grid.itemDecorationCount > 0) {
+            binding.grid.removeItemDecorationAt(0)
+        }
+        binding.grid.addItemDecoration(
+            GridSpacingDecoration(
+                spanCount = spanCount,
+                spacing = (12 * binding.root.resources.displayMetrics.density).toInt()
+            )
+        )
+    }
+    binding.grid.adapter = TemplateCardAdapter(
+        templates = section.templates,
+        horizontal = false,
+        onTemplateClick = { navigateTemplate(it, onNavigate) }
+    )
 }
 
 private fun navigateTemplate(item: TemplateListItem, onNavigate: (String) -> Unit) {
-    when (item.action) {
-        TemplateAction.TEXT_TO_IMAGE -> {
-            onNavigate(textToImageRoute(item.prompt))
-        }
-
-        TemplateAction.TEXT_TO_VIDEO -> {
-            onNavigate(textToVideoRoute(item.prompt))
-        }
-
-        TemplateAction.PROMO_VIDEO -> {
-            onNavigate(promoVideoRoute(item.prompt))
-        }
-
-        TemplateAction.LOGO_CREATION -> {
-            onNavigate(logoRoute(item.prompt))
-        }
-
-        TemplateAction.CREATE_AVATAR -> {
-            onNavigate(avatarRoute(item.prompt))
-        }
+    val route = when (item.action) {
+        TemplateAction.TEXT_TO_IMAGE -> textToImageRoute(item.prompt)
+        TemplateAction.TEXT_TO_VIDEO -> textToVideoRoute(item.prompt)
+        TemplateAction.PROMO_VIDEO -> promoVideoRoute(item.prompt)
+        TemplateAction.LOGO_CREATION -> logoRoute(item.prompt)
+        TemplateAction.CREATE_AVATAR -> avatarRoute(item.prompt)
     }
-}
-
-@Composable
-private fun EmptyCategory(category: TemplateCategory) {
-
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 60.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text =
-                when (category) {
-                    TemplateCategory.IMAGE -> "No image templates yet"
-
-                    TemplateCategory.VIDEO -> "No video templates yet"
-
-                    TemplateCategory.PROMO_VIDEO -> "No promo video templates yet"
-
-                    TemplateCategory.LOGO_CREATION -> "No logo templates yet"
-
-                    TemplateCategory.AVATAR -> "No avatar templates yet"
-                },
-            color = Muted,
-            fontSize = 13.sp,
-        )
-    }
+    onNavigate(route)
 }

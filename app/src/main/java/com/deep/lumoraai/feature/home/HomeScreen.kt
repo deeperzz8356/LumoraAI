@@ -23,10 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,12 +44,10 @@ import com.deep.lumoraai.core.navigation.avatarRoute
 import com.deep.lumoraai.core.navigation.bgStudioRoute
 import com.deep.lumoraai.core.navigation.logoRoute
 import com.deep.lumoraai.core.restrictions.GenerationGate
-import com.deep.lumoraai.core.utils.OnboardingPreferences
 import com.deep.lumoraai.databinding.HomeItemActionBinding
 import com.deep.lumoraai.databinding.HomeItemRecentBinding
 import com.deep.lumoraai.databinding.HomeItemToolBinding
 import com.deep.lumoraai.databinding.HomeScreenBinding
-import com.deep.lumoraai.feature.profile.ProfilePreferences
 import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
@@ -69,7 +64,6 @@ import compose.icons.tablericons.Photo
 import compose.icons.tablericons.PlayerPlay
 import compose.icons.tablericons.Stars
 import compose.icons.tablericons.Video
-import kotlinx.coroutines.delay
 import java.io.File
 
 private const val HOME_XML_NATIVE_TAG = "home_xml_native_loaded"
@@ -94,22 +88,8 @@ fun HomeScreen(
     val adStore = LocalAdsConfigStore.current
     val activity = rememberCurrentActivity()
     val handler = remember { Handler(Looper.getMainLooper()) }
-    var showProfileHint by remember { mutableStateOf(!OnboardingPreferences.isProfileHintSeen(context)) }
-
     LaunchedEffect(Unit) {
         ads?.preloadInterstitial(context, AdPlacement.INTER_ALL)
-    }
-
-    fun dismissProfileHint() {
-        OnboardingPreferences.markProfileHintSeen(context)
-        showProfileHint = false
-    }
-
-    LaunchedEffect(showProfileHint) {
-        if (showProfileHint) {
-            delay(2_000)
-            dismissProfileHint()
-        }
     }
 
     DisposableEffect(Unit) {
@@ -145,11 +125,9 @@ fun HomeScreen(
                         binding = HomeScreenBinding.bind(root),
                         uiState = uiState,
                         unreadCount = unreadCount,
-                        showProfileHint = showProfileHint,
                         onNavigate = onNavigate,
                         onFeatureSelect = featureSelect,
                         onNotificationClick = onNotificationClick,
-                        onDismissProfileHint = { dismissProfileHint() },
                         bindNativeAd = {
                             if (ads != null && adStore != null) {
                                 bindNativeAdSlot(root.context, it, ads.nativeManager, adStore)
@@ -169,11 +147,9 @@ private fun bindHome(
     binding: HomeScreenBinding,
     uiState: HomeUiState,
     unreadCount: Int,
-    showProfileHint: Boolean,
     onNavigate: (String) -> Unit,
     onFeatureSelect: (String) -> Unit,
     onNotificationClick: (() -> Unit)?,
-    onDismissProfileHint: () -> Unit,
     bindNativeAd: (ViewGroup) -> Unit,
 ) {
     binding.loading.visibility = if (uiState is HomeUiState.Loading) View.VISIBLE else View.GONE
@@ -192,11 +168,9 @@ private fun bindHome(
             binding = binding,
             state = uiState,
             unreadCount = unreadCount,
-            showProfileHint = showProfileHint,
             onNavigate = onNavigate,
             onFeatureSelect = onFeatureSelect,
             onNotificationClick = onNotificationClick,
-            onDismissProfileHint = onDismissProfileHint,
             bindNativeAd = bindNativeAd,
         )
     }
@@ -213,27 +187,16 @@ private fun bindSuccess(
     binding: HomeScreenBinding,
     state: HomeUiState.Success,
     unreadCount: Int,
-    showProfileHint: Boolean,
     onNavigate: (String) -> Unit,
     onFeatureSelect: (String) -> Unit,
     onNotificationClick: (() -> Unit)?,
-    onDismissProfileHint: () -> Unit,
     bindNativeAd: (ViewGroup) -> Unit,
 ) {
     val context = binding.root.context
     binding.contentScroll.visibility = View.VISIBLE
-    binding.profileHintOverlay.visibility = if (showProfileHint) View.VISIBLE else View.GONE
-    binding.profileHintOverlay.setOnClickListener { onDismissProfileHint() }
-    binding.profileHintAvatarHit.setOnClickListener {
-        onDismissProfileHint()
-        onNavigate(Screen.Profile.route)
-    }
-
     val rawName = state.userName.ifBlank { context.getString(R.string.ui_guest) }
     val displayName = if (rawName.length > 8) "${rawName.take(8)}..." else rawName
     binding.greeting.text = context.getString(R.string.ui_hi_name, displayName)
-    bindHomeAvatar(binding.avatar)
-    binding.avatar.setOnClickListener { onNavigate(Screen.Profile.route) }
     binding.creditsChip.text = if (state.credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
         "Unlimited"
     } else {
@@ -314,16 +277,6 @@ private fun bindRecent(
         binding.recentList.addView(row.root, ViewGroup.MarginLayoutParams(dp(row.root, 190), dp(row.root, 78)).apply {
             setMargins(0, 0, marginEnd, 0)
         })
-    }
-}
-
-private fun bindHomeAvatar(avatar: ImageView) {
-    avatar.clipToOutline = true
-    val profile = ProfilePreferences.load(avatar.context, com.google.firebase.auth.FirebaseAuth.getInstance().currentUser)
-    if (profile.avatarUri.isNullOrBlank()) {
-        avatar.setImageResource(R.drawable.user_avatar)
-    } else {
-        avatar.setImageURI(Uri.parse(profile.avatarUri))
     }
 }
 

@@ -7,16 +7,13 @@ data class TemplateCatalog(
 data class TemplateCategoryData(
     val id: String,
     val title: String,
-    val templates: List<TemplateData>
+    val sections: List<TemplateSection>
 )
 
-data class TemplateData(
+data class TemplateSection(
     val id: String,
     val title: String,
-    val subtitle: String,
-    val prompt: String,
-    val assetFileName: String,
-    val action: TemplateAction
+    val templates: List<TemplateListItem>
 )
 
 data class TemplateListItem(
@@ -25,6 +22,7 @@ data class TemplateListItem(
     val subtitle: String,
     val prompt: String,
     val assetFileName: String,
+    val previewAssetFileName: String?,
     val action: TemplateAction
 )
 
@@ -36,10 +34,14 @@ enum class TemplateAction {
     CREATE_AVATAR
 }
 
-enum class TemplateCategory {
-    IMAGE,
-    VIDEO,
-    PROMO_VIDEO,
-    LOGO_CREATION,
-    AVATAR
+enum class TemplateCategory(val id: String, val label: String) {
+    IMAGE("image", "Images"),
+    VIDEO("video", "Video"),
+    PROMO_VIDEO("promo_video", "Promo Video"),
+    AVATAR("avatar", "Avatar");
+
+    companion object {
+        fun fromId(id: String?): TemplateCategory =
+            entries.firstOrNull { it.id == id } ?: IMAGE
+    }
 }

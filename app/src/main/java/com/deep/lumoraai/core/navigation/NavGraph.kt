@@ -48,6 +48,7 @@ import com.deep.lumoraai.feature.settings.SettingsRoute
 import com.deep.lumoraai.feature.splash.SplashRoute
 import com.deep.lumoraai.feature.subscription.SubscriptionRoute
 import com.deep.lumoraai.feature.templates.TemplatesRoute
+import com.deep.lumoraai.feature.templates.TemplateSectionRoute
 import com.deep.lumoraai.feature.texttoimage.TextToImageMode
 import com.deep.lumoraai.feature.texttoimage.TextToImageRoute
 import com.deep.lumoraai.feature.texttovideo.TextToVideoRoute
@@ -304,6 +305,20 @@ fun NavGraph(
             )
         }
         composable(Screen.Templates.route) { TemplatesRoute(onNext = next(Screen.Templates), onNavigate = { navController.goTo(it) }) }
+        composable(
+            route = Screen.TemplateSection.route + "/{categoryId}/{sectionId}",
+            arguments = listOf(
+                navArgument("categoryId") { type = NavType.StringType },
+                navArgument("sectionId") { type = NavType.StringType },
+            )
+        ) { backStackEntry ->
+            TemplateSectionRoute(
+                categoryId = backStackEntry.arguments?.getString("categoryId").orEmpty(),
+                sectionId = backStackEntry.arguments?.getString("sectionId").orEmpty(),
+                onBack = { navController.popBackStack() },
+                onNavigate = { navController.goTo(it) },
+            )
+        }
         composable(Screen.AITools.route) { AIToolsRoute(onNavigate = { navController.goTo(it) }) }
         composable(Screen.Queue.route) { QueueRoute(onNext = next(Screen.Queue), onNavigate = { navController.goTo(it) }) }
         composable(Screen.Result.route) { ResultRoute(onNext = next(Screen.Result)) }

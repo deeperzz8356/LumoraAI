@@ -18,6 +18,7 @@ sealed class Screen(val route: String, val title: String) {
     data object TextToVideo : Screen("texttovideo", "Text To Video")
     data object PromoVideo : Screen("promovideo", "Promo Video")
     data object Templates : Screen("templates", "Templates")
+    data object TemplateSection : Screen("templates/section", "Template Section")
     data object AITools : Screen("aitools", "AI Tools")
     data object Queue : Screen("queue", "Queue")
     data object Result : Screen("result", "Result")

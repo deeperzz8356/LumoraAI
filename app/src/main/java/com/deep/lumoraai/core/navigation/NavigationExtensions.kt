@@ -64,6 +64,9 @@ fun promoVideoRoute(prompt: String? = null): String =
         }
     }
 
+fun templateSectionRoute(categoryId: String, sectionId: String): String =
+    "${Screen.TemplateSection.route}/${Uri.encode(categoryId)}/${Uri.encode(sectionId)}"
+
 fun Screen.nextScreen(): Screen {
     val index = navigationSequence.indexOfFirst { it.route == route }
     return navigationSequence[(index + 1).coerceAtMost(navigationSequence.lastIndex)]

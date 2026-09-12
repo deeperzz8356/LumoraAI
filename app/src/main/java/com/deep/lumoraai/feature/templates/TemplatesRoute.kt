@@ -20,6 +20,26 @@ fun TemplatesRoute(
         uiState = viewModel.uiState,
         onNext = onNext,
         onNavigate = onNavigate,
-        unreadCount = unreadCount
+        unreadCount = unreadCount,
+        selectedCategoryId = viewModel.selectedCategoryId,
+        onCategorySelected = viewModel::selectCategory,
+        scrollMemory = viewModel.scrollMemory,
+    )
+}
+
+@Composable
+fun TemplateSectionRoute(
+    categoryId: String,
+    sectionId: String,
+    onBack: () -> Unit,
+    onNavigate: (String) -> Unit,
+    viewModel: TemplatesViewModel = viewModel(),
+) {
+    TemplateSectionScreen(
+        uiState = viewModel.uiState,
+        categoryId = categoryId,
+        sectionId = sectionId,
+        onBack = onBack,
+        onNavigate = onNavigate,
     )
 }

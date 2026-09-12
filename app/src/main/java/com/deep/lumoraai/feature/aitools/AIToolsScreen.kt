@@ -76,7 +76,6 @@ private fun bindAiTools(
     unreadCount: Int,
     onNavigate: (String) -> Unit,
 ) {
-    binding.avatar.setOnClickListener { onNavigate(Screen.Profile.route) }
     binding.creditsChip.text = if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
         "Unlimited"
     } else {

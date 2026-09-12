@@ -100,6 +100,8 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("io.coil-kt:coil:2.6.0")
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
     
     implementation(libs.androidx.media3.exoplayer)
     implementation("androidx.media3:media3-transformer:1.5.0")

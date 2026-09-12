@@ -5,5 +5,5 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun LumoraAIBottomNavigation(currentRoute: String, onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
-    BottomNavigationBar(items = listOf("home", "templates", "history"), selected = currentRoute, onSelected = onNavigate, modifier = modifier)
+    BottomNavigationBar(items = listOf("home", "templates", "history", "profile"), selected = currentRoute, onSelected = onNavigate, modifier = modifier)
 }

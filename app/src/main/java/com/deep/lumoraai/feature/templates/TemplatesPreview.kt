@@ -7,11 +7,7 @@ import com.deep.lumoraai.core.theme.LumoraTheme
 
 private val previewState =
     TemplatesUiState.Success(
-        imageTemplates = emptyList(),
-        videoTemplates = emptyList(),
-        promoVideoTemplates = emptyList(),
-        logoCreationTemplates = emptyList(),
-        avatarTemplates = emptyList()
+        categories = emptyList()
     )
 
 @Preview(

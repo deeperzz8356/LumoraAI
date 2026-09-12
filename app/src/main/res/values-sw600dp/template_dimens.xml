@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="template_horizontal_padding">32dp</dimen>
+    <dimen name="template_card_width">150dp</dimen>
+    <dimen name="template_card_height">214dp</dimen>
+    <dimen name="template_section_row_height">226dp</dimen>
+    <dimen name="template_grid_card_height">246dp</dimen>
+</resources>

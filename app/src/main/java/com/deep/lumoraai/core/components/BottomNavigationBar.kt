@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
@@ -77,6 +79,14 @@ private fun bindBottomNavigation(
         selected = selected,
         onSelected = onSelected,
     )
+    bindNavItem(
+        container = binding.profileItem,
+        icon = binding.profileIcon,
+        label = binding.profileLabel,
+        route = "profile",
+        selected = selected,
+        onSelected = onSelected,
+    )
 }
 
 private fun bindNavItem(
@@ -93,11 +103,14 @@ private fun bindNavItem(
     val imageVector = when (route) {
         "home" -> TablerIcons.Home
         "templates" -> TablerIcons.Search
-        else -> TablerIcons.History
+        "history" -> TablerIcons.History
+        else -> Icons.Default.Person
     }
     bindTablerIcon(icon, imageVector, ComposeColor(color))
     label.setTextColor(color)
     label.alpha = if (isSelected) 1f else 0.74f
+    container.contentDescription = label.text
+    container.isSelected = isSelected
     container.isEnabled = !(disableWhenSelected && isSelected)
     container.setOnClickListener(
         if (container.isEnabled) View.OnClickListener { onSelected(route) } else null
