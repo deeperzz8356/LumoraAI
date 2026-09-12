@@ -38,6 +38,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import kotlin.math.roundToInt
 
 class ImageToImageViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -355,16 +356,43 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
     private fun decodeBitmap(uri: Uri): Bitmap {
         val resolver = getApplication<Application>().contentResolver
         val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            ImageDecoder.decodeBitmap(ImageDecoder.createSource(resolver, uri)) { decoder, _, _ ->
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(resolver, uri)) { decoder, info, _ ->
                 decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
                 decoder.isMutableRequired = false
+                decoder.setTargetSampleSize(1)
+                val size = info.size
+                val scale = (MAX_SOURCE_DIMENSION.toFloat() / maxOf(size.width, size.height)).coerceAtMost(1f)
+                if (scale < 1f) {
+                    decoder.setTargetSize(
+                        (size.width * scale).roundToInt().coerceAtLeast(1),
+                        (size.height * scale).roundToInt().coerceAtLeast(1)
+                    )
+                }
             }
         } else {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            resolver.openInputStream(uri).use { BitmapFactory.decodeStream(it, null, bounds) }
+            val sampleSize = calculateSampleSize(bounds.outWidth, bounds.outHeight)
             resolver.openInputStream(uri).use { input ->
-                BitmapFactory.decodeStream(input) ?: error("Unsupported image file.")
+                BitmapFactory.decodeStream(input, null, BitmapFactory.Options().apply {
+                    inSampleSize = sampleSize
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                }) ?: error("Unsupported image file.")
             }
         }
         return bitmap.copy(Bitmap.Config.ARGB_8888, false)
+    }
+
+    private fun calculateSampleSize(width: Int, height: Int): Int {
+        var sample = 1
+        var scaledWidth = width
+        var scaledHeight = height
+        while (scaledWidth / 2 >= MAX_SOURCE_DIMENSION || scaledHeight / 2 >= MAX_SOURCE_DIMENSION) {
+            sample *= 2
+            scaledWidth /= 2
+            scaledHeight /= 2
+        }
+        return sample.coerceAtLeast(1)
     }
 
     private fun Bitmap.toJpegBase64(): String {
@@ -378,6 +406,10 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
 
     private fun shortTimestamp(): String =
         SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+
+    private companion object {
+        const val MAX_SOURCE_DIMENSION = 1600
+    }
 }
 
 

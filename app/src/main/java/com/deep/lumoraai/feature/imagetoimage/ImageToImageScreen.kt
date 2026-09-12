@@ -2,7 +2,6 @@ package com.deep.lumoraai.feature.imagetoimage
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -35,9 +34,9 @@ fun ImageToImageScreen(
     modifier: Modifier = Modifier,
 ) {
     val imagePicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickMultipleVisualMedia(ImageToImageBatch.MAX_SOURCE_IMAGES)
+        ActivityResultContracts.GetMultipleContents()
     ) { uris ->
-        if (uris.isNotEmpty()) onImagesSelected(uris)
+        if (uris.isNotEmpty()) onImagesSelected(uris.take(ImageToImageBatch.MAX_SOURCE_IMAGES))
     }
     NativeGenerationScreen(
         config = NativeGenerationConfig(
@@ -50,7 +49,7 @@ fun ImageToImageScreen(
             multiSources = uiState.sourceImages.map { NativeGenerationSource(it.id, it.bitmap) },
             maxSources = ImageToImageBatch.MAX_SOURCE_IMAGES,
             isSourceBusy = uiState.isGenerating || uiState.isLoadingSources,
-            onAddSources = { imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onAddSources = { imagePicker.launch("image/*") },
             onRemoveSource = onSourceRemoved,
             prompt = uiState.prompt,
             negativePrompt = uiState.negativePrompt,

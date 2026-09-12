@@ -57,10 +57,12 @@
                 <EditText android:id="@+id/emailInput" android:layout_width="match_parent" android:layout_height="56dp"
                     android:hint="@string/ui_email_address" android:inputType="textEmailAddress" android:singleLine="true"
                     android:textColor="@color/lumora_text_primary" android:textColorHint="@color/lumora_text_subtle"
+                    android:textCursorDrawable="@drawable/bg_text_cursor_white"
                     android:textSize="14sp" android:background="@drawable/bg_lumora_field" />
                 <EditText android:id="@+id/passwordInput" android:layout_width="match_parent" android:layout_height="56dp"
                     android:layout_marginTop="12dp" android:hint="@string/ui_password" android:inputType="textPassword" android:singleLine="true"
                     android:textColor="@color/lumora_text_primary" android:textColorHint="@color/lumora_text_subtle"
+                    android:textCursorDrawable="@drawable/bg_text_cursor_white"
                     android:textSize="14sp" android:background="@drawable/bg_lumora_field" />
                 <Button android:id="@+id/submitButton" android:layout_width="match_parent" android:layout_height="56dp"
                     android:layout_marginTop="12dp" android:textColor="@color/white" android:textSize="14sp" android:textStyle="bold"

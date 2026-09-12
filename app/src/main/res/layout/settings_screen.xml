@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/lumora_app_background"
+    android:orientation="vertical"
+    android:paddingStart="38dp"
+    android:paddingEnd="38dp"
+    android:paddingBottom="44dp">
+
+    <FrameLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_marginStart="-38dp"
+        android:layout_marginEnd="-38dp"
+        android:background="#0C1424">
+
+        <ImageView
+            android:id="@+id/backButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="start|center_vertical"
+            android:layout_marginStart="38dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="6dp"
+            android:src="@drawable/ic_lumora_back"
+            android:tint="@color/white" />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="Settings"
+            android:textColor="@color/white"
+            android:textSize="27sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="42dp"
+        android:includeFontPadding="false"
+        android:text="Account"
+        android:textColor="@color/white"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/manageProfileRow"
+        style="@style/LumoraSettingsRow">
+
+        <LinearLayout style="@style/LumoraSettingsTextColumn">
+            <TextView
+                style="@style/LumoraSettingsRowTitle"
+                android:text="Manage Profile" />
+            <TextView
+                style="@style/LumoraSettingsRowSubtitle"
+                android:text="Update your personal information" />
+        </LinearLayout>
+
+        <FrameLayout style="@style/LumoraSettingsArrowButton">
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="15dp"
+                android:src="@drawable/ic_lumora_arrow_right"
+                android:tint="@color/lumora_lime" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/subscriptionRow"
+        style="@style/LumoraSettingsRow">
+
+        <LinearLayout style="@style/LumoraSettingsTextColumn">
+            <TextView
+                style="@style/LumoraSettingsRowTitle"
+                android:text="Subscription &amp; Billing" />
+            <TextView
+                style="@style/LumoraSettingsRowSubtitle"
+                android:text="Manage your Pro plan" />
+        </LinearLayout>
+
+        <FrameLayout style="@style/LumoraSettingsArrowButton">
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="15dp"
+                android:src="@drawable/ic_lumora_arrow_right"
+                android:tint="@color/lumora_lime" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <TextView
+        style="@style/LumoraSettingsSection"
+        android:text="Preferences" />
+
+    <LinearLayout
+        android:id="@+id/languageRow"
+        style="@style/LumoraSettingsRow">
+
+        <LinearLayout style="@style/LumoraSettingsTextColumn">
+            <TextView
+                style="@style/LumoraSettingsRowTitle"
+                android:text="Language" />
+            <TextView
+                android:id="@+id/languageSubtitle"
+                style="@style/LumoraSettingsRowSubtitle"
+                android:text="English" />
+        </LinearLayout>
+
+        <FrameLayout style="@style/LumoraSettingsArrowButton">
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="15dp"
+                android:src="@drawable/ic_lumora_arrow_right"
+                android:tint="@color/lumora_lime" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <TextView
+        style="@style/LumoraSettingsSection"
+        android:text="Developer" />
+
+    <LinearLayout
+        android:id="@+id/developerRow"
+        style="@style/LumoraSettingsRow"
+        android:layout_height="150dp">
+
+        <LinearLayout style="@style/LumoraSettingsTextColumn">
+            <TextView
+                style="@style/LumoraSettingsRowTitle"
+                android:text="Developer Mode" />
+            <TextView
+                style="@style/LumoraSettingsRowSubtitle"
+                android:text="Unlimited trial - no restrictions" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/developerSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/versionText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="78dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:textColor="#97A1B7"
+        android:textSize="15sp" />
+</LinearLayout>

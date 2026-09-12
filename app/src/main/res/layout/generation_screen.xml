@@ -117,12 +117,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:fillViewport="true"
+                    android:fillViewport="false"
+                    android:overScrollMode="never"
                     android:scrollbars="none">
 
                     <LinearLayout
                         android:id="@+id/sourceRow"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal" />
                 </HorizontalScrollView>
@@ -235,6 +236,27 @@
                         android:layout_marginStart="12dp"
                         android:layout_marginEnd="6dp" />
 
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/promptSubHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/promptLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/ui_prompt"
+                        android:textColor="@color/white"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
                     <TextView
                         android:id="@+id/improveButton"
                         android:layout_width="wrap_content"
@@ -267,6 +289,7 @@
                         android:inputType="textMultiLine|textCapSentences"
                         android:minHeight="96dp"
                         android:textColor="@color/white"
+                        android:textCursorDrawable="@drawable/bg_text_cursor_white"
                         android:textColorHint="#AD9AA5B8"
                         android:textSize="14sp" />
 
@@ -361,10 +384,10 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bg_generation_selector_sheet"
             android:orientation="vertical"
-            android:paddingStart="20dp"
-            android:paddingTop="18dp"
-            android:paddingEnd="20dp"
-            android:paddingBottom="18dp"
+            android:paddingStart="18dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="16dp"
             android:visibility="gone">
 
             <TextView
@@ -376,7 +399,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <HorizontalScrollView android:id="@+id/styleScroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:scrollbars="none">
+            <HorizontalScrollView android:id="@+id/styleScroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:overScrollMode="never" android:scrollbars="none">
                 <LinearLayout android:id="@+id/styleRow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
             </HorizontalScrollView>
 
@@ -390,7 +413,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <HorizontalScrollView android:id="@+id/ratioScroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:scrollbars="none">
+            <HorizontalScrollView android:id="@+id/ratioScroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:overScrollMode="never" android:scrollbars="none">
                 <LinearLayout android:id="@+id/ratioRow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
             </HorizontalScrollView>
 

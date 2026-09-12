@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="generation_style_signature" type="id" />
+    <item name="generation_ratio_signature" type="id" />
+    <item name="generation_icon_signature" type="id" />
+    <item name="generation_prompt_text_watcher" type="id" />
+    <item name="generation_prompt_change_callback" type="id" />
+    <item name="generation_prompt_model_text" type="id" />
+</resources>

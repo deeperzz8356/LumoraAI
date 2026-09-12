@@ -62,7 +62,6 @@ import compose.icons.tablericons.ChevronUp
 import compose.icons.tablericons.Palette
 import compose.icons.tablericons.Pencil
 import compose.icons.tablericons.SquarePlus
-import compose.icons.tablericons.Stars
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -288,7 +287,8 @@ private fun bindMultiSources(binding: GenerationScreenBinding, config: NativeGen
             addView(LinearLayout(context).apply {
                 gravity = android.view.Gravity.CENTER
                 orientation = LinearLayout.VERTICAL
-                isClickable = false
+                isClickable = true
+                setOnClickListener(addSourceClick)
                 addView(ComposeView(context).apply {
                     bindTablerIcon(this, TablerIcons.SquarePlus, Color(0xFFD6FF2F))
                     isClickable = false
@@ -321,6 +321,7 @@ private fun bindPrompt(
     if (!config.showPromptSection) return
     val headerParams = binding.promptHeader.layoutParams
     if (config.promptOptional) {
+        binding.promptHeader.visibility = View.VISIBLE
         headerParams.height = dp(binding.root, 50)
         binding.promptHeader.layoutParams = headerParams
         binding.promptHeader.setBackgroundResource(R.drawable.bg_generation_panel)
@@ -331,16 +332,16 @@ private fun bindPrompt(
         bindTablerIcon(binding.promptToggleIconHost, TablerIcons.Pencil, Color(0xFFD6FF2F))
         bindTablerIcon(binding.promptChevronIconHost, if (showPrompt) TablerIcons.ChevronUp else TablerIcons.ChevronDown, Color.White.copy(alpha = 0.75f))
         binding.promptTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-        binding.promptTitle.text = if (!showPrompt) "Add a prompt (optional)" else binding.root.context.getString(R.string.ui_prompt)
+        binding.promptTitle.text = binding.root.context.getString(R.string.ui_prompt_optional)
     } else {
+        binding.promptHeader.visibility = View.GONE
         headerParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
         binding.promptHeader.layoutParams = headerParams
         binding.promptHeader.background = null
         binding.promptHeader.setPadding(0, 0, 0, 0)
         binding.promptToggleIconHost.visibility = View.GONE
         binding.promptChevronIconHost.visibility = View.GONE
-        binding.improveIconHost.visibility = View.VISIBLE
-        bindTablerIcon(binding.improveIconHost, TablerIcons.Stars, Color(0xFF7E57C2))
+        binding.improveIconHost.visibility = View.GONE
         binding.promptTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
         binding.promptTitle.text = binding.root.context.getString(R.string.ui_prompt)
     }
@@ -357,31 +358,50 @@ private fun bindPrompt(
     binding.promptTitle.setOnClickListener(togglePromptClick)
     binding.promptChevronIconHost.isClickable = true
     binding.promptChevronIconHost.setOnClickListener(togglePromptClick)
+    binding.promptSubHeader.visibility = if (showPrompt) View.VISIBLE else View.GONE
     binding.promptCard.visibility = if (showPrompt) View.VISIBLE else View.GONE
     binding.improveButton.visibility = if (showPrompt) View.VISIBLE else View.GONE
-    binding.improveIconHost.visibility = if (!config.promptOptional && showPrompt) View.VISIBLE else binding.improveIconHost.visibility
+    binding.improveIconHost.visibility = View.GONE
     binding.promptInput.minHeight = if (config.promptOptional) dp(binding.root, 96) else dp(binding.root, 190)
     binding.promptInput.hint = config.promptHint
-    val oldWatcher = binding.promptInput.getTag(R.id.promptInput) as? TextWatcher
-    if (oldWatcher != null) binding.promptInput.removeTextChangedListener(oldWatcher)
-    if (binding.promptInput.text.toString() != config.prompt) binding.promptInput.setText(config.prompt)
-    binding.promptCount.text = "${config.prompt.length}/1000"
-    val watcher = object : TextWatcher {
-        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-            val next = s?.toString().orEmpty().take(1000)
-            if (next != config.prompt) onPromptChanged(next)
-        }
-        override fun afterTextChanged(s: Editable?) = Unit
+    binding.promptInput.setTag(R.id.generation_prompt_change_callback, onPromptChanged)
+    val currentPromptText = binding.promptInput.text.toString()
+    val lastModelText = binding.promptInput.getTag(R.id.generation_prompt_model_text) as? String
+    val shouldApplyModelText = currentPromptText != config.prompt &&
+        (!binding.promptInput.hasFocus() || lastModelText != config.prompt)
+    if (shouldApplyModelText) {
+        binding.promptInput.setText(config.prompt)
+        binding.promptInput.setSelection(binding.promptInput.text?.length ?: 0)
     }
-    binding.promptInput.addTextChangedListener(watcher)
-    binding.promptInput.setTag(R.id.promptInput, watcher)
+    binding.promptInput.setTag(R.id.generation_prompt_model_text, config.prompt)
+    binding.promptCount.text = "${config.prompt.length}/1000"
+    val existingWatcher = binding.promptInput.getTag(R.id.generation_prompt_text_watcher) as? TextWatcher
+    if (existingWatcher == null) {
+        val watcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val next = s?.toString().orEmpty().take(1000)
+                val modelText = binding.promptInput.getTag(R.id.generation_prompt_model_text) as? String
+                if (next != modelText) {
+                    @Suppress("UNCHECKED_CAST")
+                    val callback = binding.promptInput.getTag(R.id.generation_prompt_change_callback) as? ((String) -> Unit)
+                    callback?.invoke(next)
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {
+                if ((s?.length ?: 0) > 1000) {
+                    s?.delete(1000, s.length)
+                }
+            }
+        }
+        binding.promptInput.addTextChangedListener(watcher)
+        binding.promptInput.setTag(R.id.generation_prompt_text_watcher, watcher)
+    }
     binding.improveButton.alpha = if (config.prompt.isNotBlank() && !config.isImprovingPrompt) 1f else 0.45f
     binding.improveButton.text = if (config.isImprovingPrompt) binding.root.context.getString(R.string.loading) else binding.root.context.getString(R.string.ui_ai_prompt_enhancer)
     val improveEnabled = config.prompt.isNotBlank() && !config.isImprovingPrompt
     binding.improveButton.setOnClickListener { if (improveEnabled) onImprovePrompt() }
-    binding.improveIconHost.alpha = binding.improveButton.alpha
-    binding.improveIconHost.setOnClickListener { if (improveEnabled) onImprovePrompt() }
+    binding.improveIconHost.setOnClickListener(null)
 }
 
 private fun bindLoading(binding: GenerationScreenBinding, config: NativeGenerationConfig) {
@@ -441,14 +461,14 @@ private fun bindBottomBar(
     onSelectorsOpenChanged: (Boolean) -> Unit,
 ) {
     val hasStyles = config.styleItems.isNotEmpty()
-    val hasSlider = config.sliderLabel != null && config.sliderValue != null && config.onSliderChanged != null
+    val hasSlider = config.hasVisibleSlider()
     val hasDuration = config.duration != null && config.onDurationChanged != null
     val hasSelectors = hasStyles || config.showRatio || hasSlider || hasDuration
     binding.summaryRow.visibility = if (hasSelectors) View.VISIBLE else View.GONE
     binding.selectorPanel.visibility = if (selectorsOpen && hasSelectors) View.VISIBLE else View.GONE
     val selectedStyle = config.styleItems.firstOrNull { it.selected } ?: config.styleItems.firstOrNull()
     val currentSliderValue = config.sliderValue
-    val sliderSummary = if (selectedStyle == null && !config.showRatio && hasSlider) {
+    val sliderSummary = if (selectedStyle == null && !config.showRatio && hasSlider && currentSliderValue != null) {
         "${config.sliderLabel} ${(currentSliderValue.coerceIn(0f, 1f) * 100).toInt()}%"
     } else {
         selectedStyle?.let { binding.root.context.getString(it.labelRes) }.orEmpty()
@@ -491,7 +511,7 @@ private fun bindSlider(binding: GenerationScreenBinding, config: NativeGeneratio
     val label = config.sliderLabel
     val value = config.sliderValue
     val onChanged = config.onSliderChanged
-    val show = label != null && value != null && onChanged != null
+    val show = config.hasVisibleSlider() && label != null && value != null && onChanged != null
     binding.sliderSection.visibility = if (show) View.VISIBLE else View.GONE
     if (!show) return
     val currentValue = value.coerceIn(0f, 1f)
@@ -542,6 +562,9 @@ private fun bindDuration(binding: GenerationScreenBinding, config: NativeGenerat
 private fun bindStyles(binding: GenerationScreenBinding, config: NativeGenerationConfig) {
     binding.styleTitle.visibility = if (config.styleItems.isEmpty()) View.GONE else View.VISIBLE
     binding.styleScroll.visibility = if (config.styleItems.isEmpty()) View.GONE else View.VISIBLE
+    val signature = config.styleItems.joinToString("|") { "${it.labelRes}:${it.assetFileName}:${it.selected}" }
+    if (binding.styleRow.getTag(R.id.generation_style_signature) == signature) return
+    binding.styleRow.setTag(R.id.generation_style_signature, signature)
     binding.styleRow.removeAllViews()
     config.styleItems.forEach { style ->
         val item = GenerationStyleItemBinding.inflate(LayoutInflater.from(binding.root.context), binding.styleRow, false)
@@ -566,6 +589,13 @@ private fun bindRatios(
 ) {
     binding.ratioTitle.visibility = if (config.showRatio) View.VISIBLE else View.GONE
     binding.ratioScroll.visibility = if (config.showRatio) View.VISIBLE else View.GONE
+    val signature = if (config.showRatio) {
+        config.aspectRatioOptions.joinToString("|") { "${it.name}:${it == config.selectedAspectRatio}" }
+    } else {
+        "hidden"
+    }
+    if (binding.ratioRow.getTag(R.id.generation_ratio_signature) == signature) return
+    binding.ratioRow.setTag(R.id.generation_ratio_signature, signature)
     binding.ratioRow.removeAllViews()
     if (!config.showRatio) return
     config.aspectRatioOptions.forEach { ratio ->
@@ -652,6 +682,9 @@ private fun bindTablerIcon(
     imageVector: ImageVector,
     tint: Color,
 ) {
+    val signature = "${imageVector.name}:${tint.value}"
+    if (host.getTag(R.id.generation_icon_signature) == signature) return
+    host.setTag(R.id.generation_icon_signature, signature)
     host.setContent {
         Icon(
             imageVector = imageVector,
@@ -661,3 +694,9 @@ private fun bindTablerIcon(
         )
     }
 }
+
+private fun NativeGenerationConfig.hasVisibleSlider(): Boolean =
+    sliderLabel != null &&
+        sliderValue != null &&
+        onSliderChanged != null &&
+        !sliderLabel.equals("Creativity", ignoreCase = true)
