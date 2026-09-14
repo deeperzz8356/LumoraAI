@@ -61,6 +61,9 @@ object AdsLogger {
     fun reward(placement: AdPlacement, amount: Int, type: String) =
         d("REWARD     | ${placement.key} | $amount $type")
 
+    fun adImpression(placement: AdPlacement, revenue: Double, currency: String, unitId: String?) =
+        d("IMPRESSION | ${placement.key} | ${placement.format} | value=$revenue $currency${unitId?.let { " | unit=$it" } ?: ""}")
+
     fun rejected(placement: AdPlacement, reason: AdRejectionReason, detail: String? = null) {
         d("REJECT     | ${placement.key} | ${placement.format} | $reason${detail?.let { " | $it" } ?: ""}")
     }

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import com.deep.lumoraai.ads.AdFormat
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.AdRevenueTracker
 import com.deep.lumoraai.ads.AdsConfigStore
 import com.deep.lumoraai.ads.AdsLogger
 import com.google.android.gms.ads.AdError
@@ -42,6 +43,9 @@ class AppOpenAdManager @Inject constructor(
             AdRequest.Builder().build(),
             object : AppOpenAd.AppOpenAdLoadCallback() {
                 override fun onAdLoaded(ad: AppOpenAd) {
+                    ad.setOnPaidEventListener { adValue ->
+                        AdRevenueTracker.trackPaidAd(context, AdPlacement.APP_OPEN, unitId, adValue)
+                    }
                     AdsLogger.loadSucceeded(AdPlacement.APP_OPEN, ad.responseInfo?.mediationAdapterClassName)
                     appOpenAd = ad
                     loadedAt = System.currentTimeMillis()

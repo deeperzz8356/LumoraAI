@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import com.deep.lumoraai.ads.AdFormat
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.AdRevenueTracker
 import com.deep.lumoraai.ads.AdsConfigStore
 import com.deep.lumoraai.ads.AdsLogger
 import com.google.android.gms.ads.AdError
@@ -44,6 +45,9 @@ class RewardedAdManager @Inject constructor(
             AdRequest.Builder().build(),
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
+                    ad.setOnPaidEventListener { adValue ->
+                        AdRevenueTracker.trackPaidAd(context, placement, unitId, adValue)
+                    }
                     AdsLogger.loadSucceeded(placement, ad.responseInfo?.mediationAdapterClassName)
                     rewarded = ad
                     isLoading = false

@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import com.deep.lumoraai.ads.AdFormat
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.AdRevenueTracker
 import com.deep.lumoraai.ads.AdsConfigStore
 import com.deep.lumoraai.ads.AdsLogger
 import com.google.android.gms.ads.AdListener
@@ -71,6 +72,9 @@ class PersistentBannerAd(
                     AdsLogger.loadFailed(AdPlacement.BANNER_ALL, error.code, error.message)
                     updateState(false)
                 }
+            }
+            setOnPaidEventListener { adValue ->
+                AdRevenueTracker.trackPaidAd(activityContext, AdPlacement.BANNER_ALL, adUnitId, adValue)
             }
         }
         adView = view

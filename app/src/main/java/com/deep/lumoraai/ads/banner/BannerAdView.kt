@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.ads.AdFormat
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.AdRevenueTracker
 import com.deep.lumoraai.ads.AdsConfigStore
 import com.deep.lumoraai.ads.AdsLogger
 import com.deep.lumoraai.ads.shimmer.AdShimmerBox
@@ -94,6 +95,9 @@ fun BannerAdView(
                         AdsLogger.loadFailed(placement, error.code, error.message)
                         loaded = false // collapse
                     }
+                }
+                setOnPaidEventListener { adValue ->
+                    AdRevenueTracker.trackPaidAd(context, placement, unitId, adValue)
                 }
                 loadAd(AdRequest.Builder().build())
             }
