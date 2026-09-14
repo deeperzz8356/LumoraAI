@@ -114,12 +114,11 @@
             android:layout_marginStart="14dp"
             android:background="@drawable/bg_common_card">
 
-            <ImageView
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/heroIconHost"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="21dp"
-                android:src="@drawable/ic_lumora_star"
-                android:tint="#FF4AA2" />
+                android:padding="21dp" />
         </FrameLayout>
     </LinearLayout>
 

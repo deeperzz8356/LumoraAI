@@ -8,12 +8,41 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.LocalAdsConfigStore
@@ -26,6 +55,17 @@ import com.deep.lumoraai.core.nativeui.resetContent
 import com.deep.lumoraai.core.nativeui.setupTopBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Check
+import compose.icons.tablericons.Coin
+import compose.icons.tablericons.Gift
+import compose.icons.tablericons.Mail
+import compose.icons.tablericons.Refresh
+import compose.icons.tablericons.RotateClockwise
+import compose.icons.tablericons.Share
+import compose.icons.tablericons.Stars
+
+private const val REWARD_SPIN = "spin"
 
 @Composable
 fun CreditsScreen(
@@ -39,6 +79,7 @@ fun CreditsScreen(
     val ads = LocalAdsManager.current
     val adActivity = rememberCurrentActivity()
     val rewardAmount = LocalAdsConfigStore.current?.current?.rewardCreditsAmount ?: 2
+    var showSpinWheel by remember { mutableStateOf(false) }
     val onWatchAdForCredits: () -> Unit = {
         ads?.showRewarded(
             activity = adActivity,
@@ -58,20 +99,131 @@ fun CreditsScreen(
         when (uiState) {
             CreditsUiState.Loading -> binding.content.addTextCard("Loading", "Reading your credit balance.")
             is CreditsUiState.Error -> binding.content.addTextCard("Error", uiState.message)
-            is CreditsUiState.Success -> binding.content.renderRewardCenter(
-                state = uiState,
-                rewardAdEnabled = ads != null && !uiState.isDeveloperMode,
-                rewardAdAmount = rewardAmount,
-                onSubscribe = { onNavigate(Screen.Subscription.route) },
-                onGenerate = { onNavigate(Screen.Home.route) },
-                onReward = { viewModel.claimReward(it) },
-                onMessageDismiss = {
-                    viewModel.clearRewardMessage()
-                    viewModel.clearSpinResult()
-                },
-                onWatchAd = onWatchAdForCredits,
+            is CreditsUiState.Success -> {
+                binding.content.renderRewardCenter(
+                    state = uiState,
+                    rewardAdEnabled = ads != null && !uiState.isDeveloperMode,
+                    rewardAdAmount = rewardAmount,
+                    onSubscribe = { onNavigate(Screen.Subscription.route) },
+                    onGenerate = { onNavigate(Screen.Home.route) },
+                    onReward = {
+                        if (it == REWARD_SPIN) showSpinWheel = true else viewModel.claimReward(it)
+                    },
+                    onMessageDismiss = {
+                        viewModel.clearRewardMessage()
+                        viewModel.clearSpinResult()
+                    },
+                    onWatchAd = onWatchAdForCredits,
+                )
+            }
+        }
+    }
+
+    if (uiState is CreditsUiState.Success && showSpinWheel) {
+        SpinWheelDialog(
+            state = uiState,
+            onSpin = { viewModel.claimReward(REWARD_SPIN) },
+            onDismiss = {
+                showSpinWheel = false
+                viewModel.clearSpinResult()
+            },
+        )
+    }
+}
+
+@Composable
+private fun SpinWheelDialog(
+    state: CreditsUiState.Success,
+    onSpin: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val result = state.spinResult
+    val targetRotation = when {
+        state.isRewardBusy -> 360f
+        result == null -> 0f
+        result.creditsAwarded >= 50 -> 720f + 18f
+        result.creditsAwarded >= 25 -> 720f + 78f
+        result.creditsAwarded >= 10 -> 720f + 138f
+        result.creditsAwarded > 0 -> 720f + 258f
+        else -> 720f + 318f
+    }
+    val rotation by animateFloatAsState(
+        targetValue = targetRotation,
+        animationSpec = tween(durationMillis = if (result == null && !state.isRewardBusy) 0 else 1200),
+        label = "spinWheelRotation",
+    )
+    val resultText = result?.let {
+        if (it.creditsAwarded > 0) "You won +${it.creditsAwarded} credits!" else "Better luck next time!"
+    } ?: if (state.isRewardBusy) "Spinning..." else "1 free spin resets every week"
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = ComposeColor(0xFF101827),
+            tonalElevation = 12.dp,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Text("Spin Weekly Wheel", color = ComposeColor.White, fontWeight = FontWeight.Black)
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(230.dp)) {
+                    SpinWheel(rotation)
+                    Box(
+                        modifier = Modifier
+                            .size(58.dp)
+                            .background(ComposeColor(0xFFD6FF2F), CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(TablerIcons.RotateClockwise, contentDescription = null, tint = ComposeColor(0xFF081020), modifier = Modifier.size(30.dp))
+                    }
+                }
+                Text(resultText, color = if (result?.creditsAwarded == 0) ComposeColor(0xFF9AA5B8) else ComposeColor(0xFFD6FF2F), fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = {
+                        if (result == null) onSpin() else onDismiss()
+                    },
+                    enabled = !state.isRewardBusy,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ComposeColor(0xFFD6FF2F),
+                        contentColor = ComposeColor(0xFF081020),
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (result == null) "Spin" else "Done", fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpinWheel(rotation: Float) {
+    val colors = listOf(
+        ComposeColor(0xFFD6FF2F),
+        ComposeColor(0xFF9C63FF),
+        ComposeColor(0xFF30D8DE),
+        ComposeColor(0xFFFF3D9D),
+        ComposeColor(0xFF273249),
+        ComposeColor(0xFF5DD96B),
+    )
+    Canvas(modifier = Modifier.size(214.dp).rotate(rotation)) {
+        val sweep = 360f / colors.size
+        colors.forEachIndexed { index, color ->
+            drawArc(
+                color = color,
+                startAngle = -90f + index * sweep,
+                sweepAngle = sweep,
+                useCenter = true,
             )
         }
+        drawCircle(
+            color = ComposeColor.White.copy(alpha = 0.22f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5f, cap = StrokeCap.Round),
+        )
     }
 }
 
@@ -94,10 +246,6 @@ private fun LinearLayout.renderRewardCenter(
     addHeroCard(balance, state.isDeveloperMode, onSubscribe, onGenerate)
     state.purchaseMessage?.let { addNotice("Purchase", it, onMessageDismiss) }
     state.rewardMessage?.let { addNotice("Reward", it, onMessageDismiss) }
-    state.spinResult?.let {
-        val result = if (it.creditsAwarded > 0) "+${it.creditsAwarded} credits awarded" else "Better luck next time"
-        addNotice("Spin Result", result, onMessageDismiss)
-    }
 
     val checkIn = state.rewards.firstOrNull { it.id == "check_in" }
     addCheckInSection(state, checkIn, onReward)
@@ -161,10 +309,7 @@ private fun LinearLayout.addHeroCard(
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
     }
-    balanceRow.addView(ImageView(context).apply {
-        setImageResource(R.drawable.ic_lumora_star)
-        setColorFilter(Color.rgb(214, 255, 47))
-    }, LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(8) })
+    balanceRow.addView(tablerIcon(TablerIcons.Coin, ComposeColor(0xFFD6FF2F)), LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(8) })
     balanceRow.addView(TextView(context).apply {
         text = balance
         setTextColor(Color.WHITE)
@@ -257,9 +402,7 @@ private fun LinearLayout.addRewardRow(
     }
     row.addView(FrameLayout(context).apply {
         background = taskIconBackground(reward.id)
-        addView(ImageView(context).apply {
-            setImageResource(rewardIcon(reward.id))
-            setColorFilter(Color.WHITE)
+        addView(tablerIcon(rewardIcon(reward.id), ComposeColor.White).apply {
             setPadding(dp(13), dp(13), dp(13), dp(13))
         }, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     }, LinearLayout.LayoutParams(dp(56), dp(56)).apply { marginEnd = dp(12) })
@@ -397,9 +540,7 @@ private fun LinearLayout.dayTile(index: Int, amount: Int, selected: Boolean): Li
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
         })
-        addView(ImageView(context).apply {
-            setImageResource(R.drawable.ic_lumora_star)
-            setColorFilter(if (selected) Color.rgb(214, 255, 47) else Color.rgb(170, 178, 198))
+        addView(tablerIcon(TablerIcons.Stars, if (selected) ComposeColor(0xFFD6FF2F) else ComposeColor(0xFFAAB2C6)).apply {
             background = rounded(Color.rgb(43, 54, 73), dp(20), Color.rgb(68, 80, 101), dp(1))
             setPadding(dp(9), dp(9), dp(9), dp(9))
         }, LinearLayout.LayoutParams(dp(40), dp(40)).apply { topMargin = dp(6) })
@@ -413,15 +554,21 @@ private fun LinearLayout.dayTile(index: Int, amount: Int, selected: Boolean): Li
         })
     }
 
-@DrawableRes
-private fun rewardIcon(id: String): Int = when (id) {
-    "spin" -> R.drawable.ic_lumora_star
-    "daily_reset" -> R.drawable.ic_lumora_refresh
-    "signup" -> R.drawable.ic_lumora_magic
-    "email_login" -> R.drawable.ic_lumora_check
-    "referral", "social_share" -> R.drawable.ic_lumora_share
-    else -> R.drawable.ic_lumora_star
+private fun rewardIcon(id: String): ImageVector = when (id) {
+    REWARD_SPIN -> TablerIcons.RotateClockwise
+    "daily_reset" -> TablerIcons.Refresh
+    "signup" -> TablerIcons.Gift
+    "email_login" -> TablerIcons.Mail
+    "referral", "social_share" -> TablerIcons.Share
+    else -> TablerIcons.Stars
 }
+
+private fun View.tablerIcon(imageVector: ImageVector, tint: ComposeColor): ComposeView =
+    ComposeView(context).apply {
+        setContent {
+            Icon(imageVector = imageVector, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
+        }
+    }
 
 private fun View.taskIconBackground(id: String): GradientDrawable {
     val colors = when (id) {
