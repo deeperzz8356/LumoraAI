@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.generation
 
+import android.animation.LayoutTransition
 import android.app.AlertDialog
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
@@ -465,7 +466,7 @@ private fun bindBottomBar(
     val hasDuration = config.duration != null && config.onDurationChanged != null
     val hasSelectors = hasStyles || config.showRatio || hasSlider || hasDuration
     binding.summaryRow.visibility = if (hasSelectors) View.VISIBLE else View.GONE
-    binding.selectorPanel.visibility = if (selectorsOpen && hasSelectors) View.VISIBLE else View.GONE
+    animateSelectorPanel(binding, selectorsOpen && hasSelectors)
     val selectedStyle = config.styleItems.firstOrNull { it.selected } ?: config.styleItems.firstOrNull()
     val currentSliderValue = config.sliderValue
     val sliderSummary = if (selectedStyle == null && !config.showRatio && hasSlider && currentSliderValue != null) {
@@ -568,7 +569,8 @@ private fun bindStyles(binding: GenerationScreenBinding, config: NativeGeneratio
     binding.styleRow.removeAllViews()
     config.styleItems.forEach { style ->
         val item = GenerationStyleItemBinding.inflate(LayoutInflater.from(binding.root.context), binding.styleRow, false)
-        item.root.setBackgroundResource(if (style.selected) R.drawable.bg_generation_selected else R.drawable.bg_generation_unselected)
+        item.root.clipToOutline = true
+        item.root.setBackgroundResource(if (style.selected) R.drawable.bg_generation_style_selected else R.drawable.bg_generation_style_unselected)
         item.styleLabel.text = binding.root.context.getString(style.labelRes)
         item.styleLabel.setTextColor(if (style.selected) 0xFFD6FF2F.toInt() else 0xFFFFFFFF.toInt())
         item.checkBadge.visibility = if (style.selected) View.VISIBLE else View.GONE
@@ -578,7 +580,7 @@ private fun bindStyles(binding: GenerationScreenBinding, config: NativeGeneratio
         item.styleImage.isClickable = false
         item.styleLabel.isClickable = false
         item.checkBadge.isClickable = false
-        binding.styleRow.addView(item.root, rowParams(binding.root, 96, 10))
+        binding.styleRow.addView(item.root, rowParams(binding.root, 110, 10))
     }
 }
 
@@ -603,7 +605,7 @@ private fun bindRatios(
         val selected = ratio == config.selectedAspectRatio
         item.ratioLabel.text = ratio.label
         item.ratioLabel.setTextColor(if (selected) 0xFFD6FF2F.toInt() else 0xFFFFFFFF.toInt())
-        item.root.setBackgroundResource(if (ratio == config.selectedAspectRatio) R.drawable.bg_generation_selected else R.drawable.bg_generation_unselected)
+        item.root.setBackgroundResource(if (ratio == config.selectedAspectRatio) R.drawable.bg_generation_ratio_selected else R.drawable.bg_generation_ratio_unselected)
         bindTablerIcon(item.ratioIconHost, TablerIcons.AspectRatio, if (selected) Color(0xFFD6FF2F) else Color.White.copy(alpha = 0.75f))
         item.root.isClickable = true
         item.root.setOnClickListener { onAspectRatioChanged(ratio) }
@@ -692,6 +694,45 @@ private fun bindTablerIcon(
             tint = tint,
             modifier = Modifier.fillMaxSize()
         )
+    }
+}
+
+private fun animateSelectorPanel(binding: GenerationScreenBinding, show: Boolean) {
+    val currentState = binding.selectorPanel.getTag(R.id.generation_selector_open_state) as? Boolean
+    if (currentState == show) return
+    binding.selectorPanel.setTag(R.id.generation_selector_open_state, show)
+    val parent = binding.bottomBar
+    if (parent.layoutTransition == null) {
+        parent.layoutTransition = LayoutTransition().apply {
+            setDuration(180L)
+            enableTransitionType(LayoutTransition.CHANGING)
+        }
+    }
+    binding.selectorPanel.animate().cancel()
+    if (show) {
+        binding.selectorPanel.visibility = View.VISIBLE
+        binding.selectorPanel.alpha = 0f
+        binding.selectorPanel.translationY = dp(binding.root, 10).toFloat()
+        binding.selectorPanel.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(180L)
+            .setInterpolator(android.view.animation.DecelerateInterpolator())
+            .start()
+    } else {
+        binding.selectorPanel.animate()
+            .alpha(0f)
+            .translationY(dp(binding.root, 10).toFloat())
+            .setDuration(160L)
+            .setInterpolator(android.view.animation.DecelerateInterpolator())
+            .withEndAction {
+                if (binding.selectorPanel.getTag(R.id.generation_selector_open_state) == false) {
+                    binding.selectorPanel.visibility = View.GONE
+                    binding.selectorPanel.alpha = 1f
+                    binding.selectorPanel.translationY = 0f
+                }
+            }
+            .start()
     }
 }
 

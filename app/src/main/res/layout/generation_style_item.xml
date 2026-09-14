@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="102dp"
-    android:layout_height="118dp"
-    android:background="@drawable/bg_generation_unselected"
+    android:layout_height="108dp"
+    android:background="@drawable/bg_generation_style_unselected"
     android:clickable="true"
     android:focusable="true">
 
     <ImageView
         android:id="@+id/styleImage"
         android:layout_width="match_parent"
-        android:layout_height="84dp"
+        android:layout_height="76dp"
         android:scaleType="centerCrop" />
 
     <ImageView
         android:id="@+id/checkBadge"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
         android:layout_gravity="top|end"
         android:layout_margin="6dp"
         android:background="@drawable/bg_common_lime_circle"
@@ -27,15 +27,15 @@
     <TextView
         android:id="@+id/styleLabel"
         android:layout_width="match_parent"
-        android:layout_height="34dp"
+        android:layout_height="32dp"
         android:layout_gravity="bottom"
-        android:background="#DD101827"
+        android:background="#F011192A"
         android:ellipsize="end"
-        android:gravity="center_vertical"
+        android:gravity="center"
         android:maxLines="1"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
         android:textColor="@color/white"
-        android:textSize="11sp"
+        android:textSize="12sp"
         android:textStyle="bold" />
 </FrameLayout>

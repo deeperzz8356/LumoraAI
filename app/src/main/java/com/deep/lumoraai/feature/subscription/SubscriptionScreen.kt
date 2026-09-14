@@ -131,10 +131,10 @@ private fun SubscriptionScreenBinding.createPlanCard(plan: SubscriptionPlan, sel
 private fun addFeatureTiles(container: LinearLayout) {
     container.addView(container.featureTile("Faster", "priority runs", R.drawable.ic_lumora_magic, 0xFF223B1F.toInt(), SubscriptionLime), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
     container.addView(container.featureTile("Storage", "history sync", R.drawable.ic_lumora_check, 0xFF10404D.toInt(), 0xFF30D8DE.toInt()), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
-        marginStart = container.dp(18)
+        marginStart = container.dp(10)
     })
     container.addView(container.featureTile("Tools", "Pro access", R.drawable.ic_lumora_settings, 0xFF30245F.toInt(), 0xFFA360FF.toInt()), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
-        marginStart = container.dp(18)
+        marginStart = container.dp(10)
     })
 }
 
@@ -142,22 +142,22 @@ private fun View.featureTile(title: String, subtitle: String, @DrawableRes icon:
     LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         gravity = android.view.Gravity.BOTTOM or android.view.Gravity.START
-        setPadding(dp(18), dp(18), dp(18), dp(26))
+        setPadding(dp(12), dp(12), dp(12), dp(14))
         background = rounded(SubscriptionCard, dp(16), SubscriptionStroke, dp(1))
-        addView(iconBlock(icon, iconBg, tint), LinearLayout.LayoutParams(dp(64), dp(64)))
+        addView(iconBlock(icon, iconBg, tint), LinearLayout.LayoutParams(dp(42), dp(42)))
         addView(TextView(context).apply {
             text = title
             setTextColor(Color.WHITE)
-            textSize = 16f
+            textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
             includeFontPadding = false
-        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(18) })
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(10) })
         addView(TextView(context).apply {
             text = subtitle
             setTextColor(SubscriptionMuted)
-            textSize = 13f
+            textSize = 11f
             includeFontPadding = false
-        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(5) })
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(3) })
     }
 
 private fun featureLine(parent: View, text: String, selected: Boolean): LinearLayout =
@@ -167,15 +167,15 @@ private fun featureLine(parent: View, text: String, selected: Boolean): LinearLa
         addView(ImageView(context).apply {
             setImageResource(R.drawable.ic_lumora_check)
             setColorFilter(if (selected) SubscriptionLime else SubscriptionMuted)
-        }, LinearLayout.LayoutParams(parent.dp(26), parent.dp(26)).apply { marginEnd = parent.dp(20) })
+        }, LinearLayout.LayoutParams(parent.dp(18), parent.dp(18)).apply { marginEnd = parent.dp(10) })
         addView(TextView(context).apply {
             this.text = text
             setTextColor(if (selected) 0xFFE6EAF2.toInt() else 0xFFD2D6DF.toInt())
-            textSize = 16f
+            textSize = 13f
             includeFontPadding = false
         }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            topMargin = parent.dp(24)
+            topMargin = parent.dp(10)
         }
     }
 
@@ -185,7 +185,7 @@ private fun View.iconBlock(@DrawableRes icon: Int, background: Int, tint: Int): 
         addView(ImageView(context).apply {
             setImageResource(icon)
             setColorFilter(tint)
-            setPadding(dp(16), dp(16), dp(16), dp(16))
+            setPadding(dp(11), dp(11), dp(11), dp(11))
         }, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     }
 

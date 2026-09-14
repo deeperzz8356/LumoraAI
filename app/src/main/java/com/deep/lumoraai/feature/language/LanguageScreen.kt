@@ -8,6 +8,7 @@ import android.view.View
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -17,7 +18,6 @@ import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.databinding.LanguageItemBinding
 import com.deep.lumoraai.databinding.LanguageScreenBinding
-import com.deep.lumoraai.core.view.applySystemBarPadding
 
 private const val DONE_UNLOCK_DELAY_MS = 3_000L
 
@@ -31,9 +31,9 @@ fun LanguageScreen(
 ) {
     val handler = remember { Handler(Looper.getMainLooper()) }
     DisposableEffect(Unit) { onDispose { handler.removeCallbacksAndMessages(null) } }
-    Column(modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize().systemBarsPadding()) {
         AndroidView(
-            factory = { context -> LanguageScreenBinding.inflate(LayoutInflater.from(context)).root.apply { applySystemBarPadding() } },
+            factory = { context -> LanguageScreenBinding.inflate(LayoutInflater.from(context)).root },
             update = { root ->
                 val binding = LanguageScreenBinding.bind(root)
                 binding.doneButton.setOnClickListener { onDone() }
