@@ -1,6 +1,5 @@
 package com.deep.lumoraai.feature.generation
 
-import android.animation.LayoutTransition
 import android.app.AlertDialog
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
@@ -701,39 +700,11 @@ private fun animateSelectorPanel(binding: GenerationScreenBinding, show: Boolean
     val currentState = binding.selectorPanel.getTag(R.id.generation_selector_open_state) as? Boolean
     if (currentState == show) return
     binding.selectorPanel.setTag(R.id.generation_selector_open_state, show)
-    val parent = binding.bottomBar
-    if (parent.layoutTransition == null) {
-        parent.layoutTransition = LayoutTransition().apply {
-            setDuration(180L)
-            enableTransitionType(LayoutTransition.CHANGING)
-        }
-    }
     binding.selectorPanel.animate().cancel()
-    if (show) {
-        binding.selectorPanel.visibility = View.VISIBLE
-        binding.selectorPanel.alpha = 0f
-        binding.selectorPanel.translationY = dp(binding.root, 10).toFloat()
-        binding.selectorPanel.animate()
-            .alpha(1f)
-            .translationY(0f)
-            .setDuration(180L)
-            .setInterpolator(android.view.animation.DecelerateInterpolator())
-            .start()
-    } else {
-        binding.selectorPanel.animate()
-            .alpha(0f)
-            .translationY(dp(binding.root, 10).toFloat())
-            .setDuration(160L)
-            .setInterpolator(android.view.animation.DecelerateInterpolator())
-            .withEndAction {
-                if (binding.selectorPanel.getTag(R.id.generation_selector_open_state) == false) {
-                    binding.selectorPanel.visibility = View.GONE
-                    binding.selectorPanel.alpha = 1f
-                    binding.selectorPanel.translationY = 0f
-                }
-            }
-            .start()
-    }
+    binding.selectorPanel.clearAnimation()
+    binding.selectorPanel.alpha = 1f
+    binding.selectorPanel.translationY = 0f
+    binding.selectorPanel.visibility = if (show) View.VISIBLE else View.GONE
 }
 
 private fun NativeGenerationConfig.hasVisibleSlider(): Boolean =
