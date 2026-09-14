@@ -85,7 +85,7 @@ private fun LinearLayout.renderRewardCenter(
     onMessageDismiss: () -> Unit,
     onWatchAd: () -> Unit,
 ) {
-    setPadding(paddingLeft, dp(18), paddingRight, dp(28))
+    setPadding(paddingLeft, dp(14), paddingRight, dp(22))
     val balance = if (state.isDeveloperMode || state.credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
         "Unlimited"
     } else {
@@ -115,7 +115,7 @@ private fun LinearLayout.addHeroCard(
 ) {
     val card = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(22), dp(22), dp(22), dp(22))
+        setPadding(dp(18), dp(18), dp(18), dp(18))
         background = roundedGradient(
             intArrayOf(Color.rgb(29, 24, 51), Color.rgb(42, 31, 92), Color.rgb(17, 26, 45)),
             radius = dp(24),
@@ -130,7 +130,7 @@ private fun LinearLayout.addHeroCard(
     top.addView(TextView(context).apply {
         text = "Monthly refills and\nPro tools"
         setTextColor(Color.WHITE)
-        textSize = 20f
+        textSize = 17f
         typeface = Typeface.DEFAULT_BOLD
         includeFontPadding = false
     }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
@@ -138,23 +138,23 @@ private fun LinearLayout.addHeroCard(
         text = "Subscribe Now"
         gravity = Gravity.CENTER
         setTextColor(Color.WHITE)
-        textSize = 15f
+        textSize = 13f
         typeface = Typeface.DEFAULT_BOLD
         letterSpacing = 0.08f
         background = roundedGradient(intArrayOf(Color.rgb(154, 92, 245), Color.rgb(174, 88, 255)), dp(28))
         setOnClickListener { onSubscribe() }
         isClickable = true
-    }, LinearLayout.LayoutParams(dp(178), dp(56)))
+    }, LinearLayout.LayoutParams(dp(138), dp(44)))
     card.addView(top)
 
     card.addView(TextView(context).apply {
         text = "Current Balance"
         setTextColor(Color.rgb(205, 212, 228))
-        textSize = 19f
+        textSize = 15f
         typeface = Typeface.DEFAULT_BOLD
         includeFontPadding = false
     }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-        topMargin = dp(34)
+        topMargin = dp(18)
     })
 
     val balanceRow = LinearLayout(context).apply {
@@ -164,11 +164,11 @@ private fun LinearLayout.addHeroCard(
     balanceRow.addView(ImageView(context).apply {
         setImageResource(R.drawable.ic_lumora_star)
         setColorFilter(Color.rgb(214, 255, 47))
-    }, LinearLayout.LayoutParams(dp(60), dp(60)).apply { marginEnd = dp(10) })
+    }, LinearLayout.LayoutParams(dp(42), dp(42)).apply { marginEnd = dp(10) })
     balanceRow.addView(TextView(context).apply {
         text = balance
         setTextColor(Color.WHITE)
-        textSize = if (balance.length > 8) 34f else 44f
+        textSize = if (balance.length > 8) 26f else 34f
         typeface = Typeface.DEFAULT_BOLD
         includeFontPadding = false
         maxLines = 1
@@ -177,14 +177,14 @@ private fun LinearLayout.addHeroCard(
         text = "Generate Now"
         gravity = Gravity.CENTER
         setTextColor(Color.rgb(8, 16, 32))
-        textSize = 15f
+        textSize = 13f
         typeface = Typeface.DEFAULT_BOLD
         background = pill(Color.rgb(214, 255, 47), dp(28))
         setOnClickListener { onGenerate() }
         isClickable = true
-    }, LinearLayout.LayoutParams(dp(148), dp(58)))
+    }, LinearLayout.LayoutParams(dp(124), dp(46)))
     card.addView(balanceRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-        topMargin = dp(26)
+        topMargin = dp(16)
     })
     card.addView(TextView(context).apply {
         text = if (developerMode) "Developer mode active" else "Available credits"
@@ -192,7 +192,7 @@ private fun LinearLayout.addHeroCard(
         textSize = 13f
         typeface = Typeface.DEFAULT_BOLD
     }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-        topMargin = dp(18)
+        topMargin = dp(10)
     })
     addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
 }
@@ -210,19 +210,19 @@ private fun LinearLayout.addCheckInSection(
     }
     val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
     rewards.forEachIndexed { index, amount ->
-        row.addView(dayTile(index, amount, state.checkInDayIndex == index), LinearLayout.LayoutParams(dp(80), dp(94)).apply {
-            marginEnd = dp(10)
+        row.addView(dayTile(index, amount, state.checkInDayIndex == index), LinearLayout.LayoutParams(dp(68), dp(78)).apply {
+            marginEnd = dp(8)
         })
     }
     scroll.addView(row)
     addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-        topMargin = dp(16)
+        topMargin = dp(10)
     })
     val button = TextView(context).apply {
         text = checkIn?.actionLabel ?: "Claim"
         gravity = Gravity.CENTER
         setTextColor(if (checkIn?.isAvailable == true) Color.rgb(8, 16, 32) else Color.rgb(156, 165, 186))
-        textSize = 22f
+        textSize = 16f
         typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
         background = pill(if (checkIn?.isAvailable == true) Color.rgb(214, 255, 47) else Color.rgb(21, 31, 51), dp(42))
         alpha = if (state.isRewardBusy) 0.55f else 1f
@@ -230,8 +230,8 @@ private fun LinearLayout.addCheckInSection(
         isClickable = isEnabled
         setOnClickListener { if (isEnabled) onReward("check_in") }
     }
-    addView(button, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(74)).apply {
-        topMargin = dp(20)
+    addView(button, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)).apply {
+        topMargin = dp(14)
     })
 }
 
@@ -253,16 +253,16 @@ private fun LinearLayout.addRewardRow(
     val row = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        setPadding(0, dp(10), 0, dp(10))
+        setPadding(0, dp(6), 0, dp(6))
     }
     row.addView(FrameLayout(context).apply {
         background = taskIconBackground(reward.id)
         addView(ImageView(context).apply {
             setImageResource(rewardIcon(reward.id))
             setColorFilter(Color.WHITE)
-            setPadding(dp(16), dp(16), dp(16), dp(16))
+            setPadding(dp(12), dp(12), dp(12), dp(12))
         }, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-    }, LinearLayout.LayoutParams(dp(76), dp(76)).apply { marginEnd = dp(18) })
+    }, LinearLayout.LayoutParams(dp(54), dp(54)).apply { marginEnd = dp(12) })
 
     val textCol = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
     val titleLine = LinearLayout(context).apply {
@@ -272,7 +272,7 @@ private fun LinearLayout.addRewardRow(
     titleLine.addView(TextView(context).apply {
         text = reward.title
         setTextColor(Color.WHITE)
-        textSize = 19f
+        textSize = 15f
         typeface = Typeface.DEFAULT_BOLD
         maxLines = 2
         includeFontPadding = false
@@ -294,23 +294,23 @@ private fun LinearLayout.addRewardRow(
         maxLines = 1
         ellipsize = android.text.TextUtils.TruncateAt.END
     }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-        topMargin = dp(7)
+        topMargin = dp(3)
     })
     row.addView(textCol, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
     row.addView(TextView(context).apply {
         text = reward.actionLabel
         gravity = Gravity.CENTER
         setTextColor(if (reward.isAvailable) Color.rgb(214, 255, 47) else Color.rgb(139, 148, 168))
-        textSize = 16f
+        textSize = 13f
         typeface = Typeface.DEFAULT_BOLD
         background = pill(Color.rgb(19, 28, 46), dp(28), Color.rgb(45, 55, 76), dp(1))
         isEnabled = reward.isAvailable && !busy
         isClickable = isEnabled
         alpha = if (busy && reward.isAvailable) 0.55f else 1f
         setOnClickListener { if (isEnabled) onReward(reward.id) }
-    }, LinearLayout.LayoutParams(dp(132), dp(58)).apply { marginStart = dp(14) })
+    }, LinearLayout.LayoutParams(dp(104), dp(42)).apply { marginStart = dp(10) })
     addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-        topMargin = dp(12)
+        topMargin = dp(8)
     })
 }
 
@@ -326,8 +326,8 @@ private fun LinearLayout.addRewardAdButton(amount: Int, busy: Boolean, onWatchAd
         alpha = if (busy) 0.5f else 1f
         setOnClickListener { if (isEnabled) onWatchAd() }
     }
-    addView(button, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(58)).apply {
-        topMargin = dp(20)
+    addView(button, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)).apply {
+        topMargin = dp(14)
     })
 }
 
@@ -344,7 +344,7 @@ private fun LinearLayout.addTitle(title: String, subtitle: String, tag: String) 
     copy.addView(TextView(context).apply {
         text = title
         setTextColor(Color.WHITE)
-        textSize = 25f
+        textSize = 20f
         typeface = Typeface.DEFAULT_BOLD
         includeFontPadding = false
     })
@@ -353,7 +353,7 @@ private fun LinearLayout.addTitle(title: String, subtitle: String, tag: String) 
         setTextColor(Color.rgb(148, 158, 180))
         textSize = 14f
     }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-        topMargin = dp(6)
+        topMargin = dp(4)
     })
     row.addView(copy, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
     row.addView(TextView(context).apply {
@@ -363,7 +363,7 @@ private fun LinearLayout.addTitle(title: String, subtitle: String, tag: String) 
         typeface = Typeface.DEFAULT_BOLD
     })
     addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-        topMargin = dp(34)
+        topMargin = dp(24)
     })
 }
 
@@ -371,11 +371,11 @@ private fun LinearLayout.addSectionHeader(title: String) {
     addView(TextView(context).apply {
         text = title
         setTextColor(Color.WHITE)
-        textSize = 25f
+        textSize = 20f
         typeface = Typeface.DEFAULT_BOLD
         includeFontPadding = false
     }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-        topMargin = dp(34)
+        topMargin = dp(24)
     })
 }
 
@@ -401,15 +401,15 @@ private fun LinearLayout.dayTile(index: Int, amount: Int, selected: Boolean): Li
             setImageResource(R.drawable.ic_lumora_star)
             setColorFilter(if (selected) Color.rgb(214, 255, 47) else Color.rgb(170, 178, 198))
             background = rounded(Color.rgb(43, 54, 73), dp(26), Color.rgb(68, 80, 101), dp(1))
-            setPadding(dp(12), dp(12), dp(12), dp(12))
-        }, LinearLayout.LayoutParams(dp(52), dp(52)).apply { topMargin = dp(8) })
+            setPadding(dp(9), dp(9), dp(9), dp(9))
+        }, LinearLayout.LayoutParams(dp(40), dp(40)).apply { topMargin = dp(5) })
         addView(TextView(context).apply {
             text = "+$amount"
             setTextColor(Color.WHITE)
             textSize = 14f
             typeface = Typeface.DEFAULT_BOLD
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            topMargin = dp(7)
+            topMargin = dp(4)
         })
     }
 

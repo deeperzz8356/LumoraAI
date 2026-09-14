@@ -13,6 +13,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -27,7 +28,6 @@ import com.deep.lumoraai.ads.LocalAdsManager
 import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.databinding.OnboardingScreenBinding
-import com.deep.lumoraai.core.view.applySystemBarPadding
 
 private data class OnboardingPage(
     val titleLines: List<List<TitlePart>>,
@@ -57,9 +57,9 @@ fun OnboardingScreen(uiState: OnboardingUiState, onNext: () -> Unit, modifier: M
             if (ads == null) onNext() else ads.showInterstitial(activity, AdPlacement.OB_INTER, onContinue = onNext)
         }
     }
-    Column(modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize().systemBarsPadding()) {
         AndroidView(
-            factory = { context -> OnboardingScreenBinding.inflate(LayoutInflater.from(context)).apply { content.applySystemBarPadding() }.root },
+            factory = { context -> OnboardingScreenBinding.inflate(LayoutInflater.from(context)).root },
             update = { root ->
                 val binding = OnboardingScreenBinding.bind(root)
                 val page = pages[pageIndex]

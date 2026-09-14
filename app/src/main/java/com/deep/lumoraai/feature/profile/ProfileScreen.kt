@@ -28,8 +28,8 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
@@ -79,6 +79,9 @@ import com.google.firebase.auth.FirebaseAuth
 import java.io.File
 
 private enum class ProfileAction { Delete, SignOut, Login }
+
+private const val SupportEmail = "lumoraaisupport@gmail.com"
+private const val PrivacyPolicyUrl = "https://lumoraai.example/privacy-policy"
 
 @Composable
 fun ProfileScreen(
@@ -185,8 +188,24 @@ private fun ProfileContent(
         }
         PremiumSection("Account", "Shortcuts and preferences") {
             PremiumActionRow("Account settings", "Preferences, language and billing", Icons.Default.Settings, { onNavigate(Screen.Settings.route) })
-            PremiumActionRow("Privacy & security", "Data choices and account protection", Icons.Default.Security, { onNavigate(Screen.PrivacySecurity.route) })
-            PremiumActionRow("Help & support", "Guides and direct support", Icons.AutoMirrored.Filled.HelpOutline, { onNavigate(Screen.HelpSupport.route) })
+            PremiumActionRow(
+                "Privacy Policy",
+                "Open Lumora privacy details in your browser",
+                Icons.Default.Policy,
+                { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PrivacyPolicyUrl))) },
+            )
+            PremiumActionRow(
+                "Help & support",
+                SupportEmail,
+                Icons.AutoMirrored.Filled.HelpOutline,
+                {
+                    val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = Uri.parse("mailto:$SupportEmail")
+                        putExtra(Intent.EXTRA_SUBJECT, "Lumora AI support")
+                    }
+                    context.startActivity(Intent.createChooser(emailIntent, "Email support"))
+                },
+            )
             PremiumActionRow(
                 "Share profile",
                 "Invite others to see your Lumora identity",
