@@ -55,7 +55,6 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Adjustments
 import compose.icons.tablericons.ArrowNarrowRight
 import compose.icons.tablericons.ArrowsMinimize
-import compose.icons.tablericons.Bell
 import compose.icons.tablericons.Brush
 import compose.icons.tablericons.Camera
 import compose.icons.tablericons.MoodSmile
@@ -101,7 +100,7 @@ fun HomeScreen(
             onNavigate(route)
         } else {
             ads.recordFeatureTrigger()
-            ads.showInterstitial(activity, AdPlacement.INTER_ALL, requireTrigger = true) {
+            ads.showInterstitial(activity, AdPlacement.INTER_ALL, requireTrigger = true, continueOnShown = true) {
                 onNavigate(route)
             }
         }
@@ -204,7 +203,6 @@ private fun bindSuccess(
     }
     binding.creditsChip.setOnClickListener { onNavigate(Screen.Credits.route) }
     binding.creditsChip.compoundDrawableTintList = ColorStateList.valueOf(context.getColor(R.color.lumora_lime))
-    bindTablerIcon(binding.notificationIconHost, TablerIcons.Bell, ComposeColor.White)
     binding.unreadDot.visibility = if (unreadCount > 0) View.VISIBLE else View.GONE
     binding.notificationButton.setOnClickListener {
         onNotificationClick?.invoke() ?: onNavigate(Screen.Notifications.route)

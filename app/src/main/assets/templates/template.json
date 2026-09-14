@@ -15,7 +15,7 @@
               "prompt": "A neon-drenched cyberpunk portrait of a confident futuristic creator, dramatic high-contrast lighting, wet city reflections, intricate face detail, premium cinematic color grading.",
               "assetFileName": "cyberpunk.png",
               "previewAssetFileName": "cyberpunk.png",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             },
             {
               "id": "luxury_product",
@@ -24,7 +24,7 @@
               "prompt": "A luxury product hero shot on a glossy black surface, softbox reflections, rim lighting, shallow depth of field, clean premium commercial photography.",
               "assetFileName": "luxuryproduct.png",
               "previewAssetFileName": "luxuryproduct.png",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             },
             {
               "id": "fantasy_forest",
@@ -33,7 +33,7 @@
               "prompt": "An enchanted fantasy forest with glowing blue mist, ancient trees, tiny luminous flowers, cinematic moonlight, highly detailed environment concept art.",
               "assetFileName": "fanstayforest.png",
               "previewAssetFileName": "fanstayforest.png",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             }
           ]
         },
@@ -48,7 +48,7 @@
               "prompt": "A dynamic anime hero poster, wind-swept hair, intense expression, glowing energy effects, dramatic background, crisp linework and vibrant color.",
               "assetFileName": "animehero.png",
               "previewAssetFileName": "animehero.png",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             },
             {
               "id": "fashion_editorial",
@@ -57,7 +57,16 @@
               "prompt": "A high-fashion editorial portrait with avant-garde styling, studio lighting, elegant pose, rich fabric texture, luxury magazine photography.",
               "assetFileName": "fashioneditorial.png",
               "previewAssetFileName": "fashioneditorial.png",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "couture_character",
+              "title": "Couture Character",
+              "subtitle": "Stylized fashion character portrait",
+              "prompt": "A striking couture character portrait with sculptural runway styling, expressive pose, intricate fabric layers, dramatic studio lighting, polished editorial composition, and premium fantasy-fashion detail.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
             }
           ]
         },
@@ -123,7 +132,7 @@
               "prompt": "A solo portrait on a subway platform, moving train blurred behind the subject, charcoal coat, cinematic film grain, vertical editorial composition.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             },
             {
               "id": "aesthetic_solo_2",
@@ -132,7 +141,7 @@
               "prompt": "A young adult reading beside a vintage street lamp, warm afternoon sun, autumn leaves, relaxed styling, cinematic portrait photography.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             },
             {
               "id": "aesthetic_solo_3",
@@ -141,7 +150,34 @@
               "prompt": "A person holding a red rose in a dark studio, sculptural shadows, elegant black outfit, dramatic side lighting, fine art portrait.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "aesthetic_solo_4",
+              "title": "Window Light",
+              "subtitle": "Create a quiet natural-light portrait",
+              "prompt": "A person sitting beside a large window with soft morning light across the face, neutral clothing, calm mood, subtle film grain, minimal editorial portrait photography.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "aesthetic_solo_5",
+              "title": "Bookstore Evening",
+              "subtitle": "Create a cozy bookstore portrait",
+              "prompt": "A person browsing books in a warm independent bookstore at evening, soft tungsten light, candid pose, gentle depth of field, cinematic lifestyle photography.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "aesthetic_solo_6",
+              "title": "Seaside Calm",
+              "subtitle": "Create a peaceful coastal portrait",
+              "prompt": "A relaxed solo portrait beside the sea at blue hour, gentle wind, soft pastel sky, natural clothing, reflective mood, cinematic lifestyle photography.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
             }
           ]
         },
@@ -156,7 +192,7 @@
               "prompt": "A student wizard with an owl perched on their arm in a grand stone hall, floating candles, embroidered robe, magical cinematic portrait.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             },
             {
               "id": "wizard_school_2",
@@ -165,7 +201,7 @@
               "prompt": "A young adult wizard studying an ancient spellbook in a towering library, glowing runes, warm window light, intricate fantasy illustration.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             },
             {
               "id": "wizard_school_3",
@@ -174,7 +210,7 @@
               "prompt": "A wizard casting an emerald spell in an ancient corridor at midnight, swirling sparks, flowing robe, cinematic fantasy portrait.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             }
           ]
         },
@@ -189,7 +225,7 @@
               "prompt": "An original anthropomorphic fox detective in a tailored coat, bustling animal city, expressive eyes, polished 3D animation character portrait.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             },
             {
               "id": "animal_characters_2",
@@ -198,7 +234,7 @@
               "prompt": "An original anthropomorphic bunny explorer with a small backpack in a colorful city park, optimistic expression, detailed stylized 3D character.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
             },
             {
               "id": "animal_characters_3",
@@ -207,7 +243,286 @@
               "prompt": "An original anthropomorphic tiger barista making latte art in a cozy cafe, apron, warm smile, polished animated feature style.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_IMAGE"
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "animal_characters_4",
+              "title": "Bear Chef",
+              "subtitle": "Create a charming animal chef",
+              "prompt": "An original anthropomorphic bear chef preparing a gourmet dish in a cozy restaurant kitchen, expressive face, detailed apron, warm cinematic lighting, polished animated feature style.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "animal_characters_5",
+              "title": "Cat Astronaut",
+              "subtitle": "Create a playful space explorer",
+              "prompt": "An original anthropomorphic cat astronaut floating inside a colorful spacecraft, curious expression, tiny mission patches, polished stylized 3D animation, bright cinematic lighting.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "animal_characters_6",
+              "title": "Raccoon Mechanic",
+              "subtitle": "Create a clever workshop character",
+              "prompt": "An original anthropomorphic raccoon mechanic repairing a small futuristic vehicle in a cluttered workshop, expressive pose, detailed tools, warm stylized 3D animated feature look.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            }
+          ]
+        },
+        {
+          "id": "cinematic_portraits",
+          "title": "Cinematic Portraits",
+          "templates": [
+            {
+              "id": "cinematic_portrait_1",
+              "title": "Neon Alley",
+              "subtitle": "Create a moody neon street portrait",
+              "prompt": "A cinematic portrait of a young adult standing in a rain-soaked neon alley at night, colorful reflections on the pavement, soft rim lighting, shallow depth of field, realistic skin detail, premium movie still composition.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "cinematic_portrait_2",
+              "title": "Desert Wanderer",
+              "subtitle": "Create an epic desert portrait",
+              "prompt": "A cinematic portrait of a lone traveler in a vast golden desert at sunset, wind moving the clothing, dramatic clouds, warm rim light, detailed textures, wide-lens movie still aesthetic.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "cinematic_portrait_3",
+              "title": "Midnight Rooftop",
+              "subtitle": "Create a modern city portrait",
+              "prompt": "A stylish person standing on a high-rise rooftop at midnight, glowing city skyline behind them, subtle fog, cool cinematic lighting, realistic editorial photography, confident pose.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "cinematic_portrait_4",
+              "title": "Rainy Street",
+              "subtitle": "Create a dramatic urban photo",
+              "prompt": "A dramatic street portrait in light rain, subject under a transparent umbrella, soft storefront bokeh, wet road reflections, natural expression, cinematic color grading, realistic photography.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            }
+          ]
+        },
+        {
+          "id": "photo_styles",
+          "title": "Photo Styles",
+          "templates": [
+            {
+              "id": "photo_style_1",
+              "title": "Vintage Film",
+              "subtitle": "Turn a photo into nostalgic film",
+              "prompt": "Transform the subject into a nostalgic 1990s film photograph with soft grain, slightly faded colors, gentle highlights, authentic analog texture, natural candid composition, and subtle lens imperfections.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "photo_style_2",
+              "title": "Polaroid Memory",
+              "subtitle": "Create a cozy instant-film look",
+              "prompt": "Create a warm instant-film portrait with soft flash, creamy highlights, gentle color fade, subtle grain, cozy nostalgic mood, and an authentic casual snapshot composition.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "photo_style_3",
+              "title": "Black & White Editorial",
+              "subtitle": "Create a timeless monochrome portrait",
+              "prompt": "A premium black-and-white editorial portrait with strong directional light, deep contrast, refined facial detail, elegant pose, clean background, and timeless fashion photography styling.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "photo_style_4",
+              "title": "Soft Dreamy Glow",
+              "subtitle": "Create an airy dreamlike portrait",
+              "prompt": "A soft dreamy portrait with diffused daylight, pastel tones, delicate bloom, gentle skin detail, airy atmosphere, subtle depth of field, and romantic editorial photography.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            }
+          ]
+        },
+        {
+          "id": "anime_manga",
+          "title": "Anime & Manga",
+          "templates": [
+            {
+              "id": "anime_manga_1",
+              "title": "Shonen Warrior",
+              "subtitle": "Create an energetic anime fighter",
+              "prompt": "Transform the subject into an original shonen-style warrior with bold linework, expressive eyes, dynamic pose, dramatic speed lines, glowing energy, richly painted background, and polished anime key art.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "anime_manga_2",
+              "title": "Cyber Anime",
+              "subtitle": "Create a futuristic anime portrait",
+              "prompt": "An original cyberpunk anime portrait with neon city lights, futuristic jacket, holographic signs, vibrant rim lighting, crisp cel shading, detailed eyes, and dramatic cinematic framing.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "anime_manga_3",
+              "title": "Manga Panel",
+              "subtitle": "Create a dramatic manga frame",
+              "prompt": "Transform the subject into a high-detail black-and-white manga panel with expressive ink lines, screentone shading, dramatic perspective, speed effects, and polished graphic-novel composition.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "anime_manga_4",
+              "title": "Fantasy Mage",
+              "subtitle": "Create a magical anime character",
+              "prompt": "An original anime fantasy mage surrounded by glowing spell circles, flowing cloak, luminous particles, enchanted ruins, expressive pose, vibrant fantasy lighting, and polished key visual quality.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            }
+          ]
+        },
+        {
+          "id": "gaming_worlds",
+          "title": "Gaming Worlds",
+          "templates": [
+            {
+              "id": "gaming_worlds_1",
+              "title": "RPG Adventurer",
+              "subtitle": "Create a fantasy game hero",
+              "prompt": "Turn the subject into an original fantasy RPG adventurer wearing detailed leather and metal armor, standing in an ancient valley, cinematic game key art, atmospheric fog, dramatic lighting, highly detailed environment.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "gaming_worlds_2",
+              "title": "Post-Apocalyptic Survivor",
+              "subtitle": "Create a gritty survival character",
+              "prompt": "A post-apocalyptic survivor in a ruined modern city, practical weathered clothing, dust and smoke in the air, dramatic sunlight beams, cinematic survival-game concept art, realistic detail.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "gaming_worlds_3",
+              "title": "Space Explorer",
+              "subtitle": "Create a sci-fi game portrait",
+              "prompt": "An original space explorer in a sleek futuristic suit standing inside a massive orbital station, glowing control panels, planet visible through the window, cinematic sci-fi game art, high detail.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "gaming_worlds_4",
+              "title": "Retro Pixel Hero",
+              "subtitle": "Create a pixel-art game character",
+              "prompt": "Transform the subject into a polished 16-bit pixel-art RPG hero, detailed sprite shading, colorful fantasy town background, nostalgic game aesthetic, crisp pixel edges, charming retro composition.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            }
+          ]
+        },
+        {
+          "id": "product_photography",
+          "title": "Product Photography",
+          "templates": [
+            {
+              "id": "product_photo_1",
+              "title": "Floating Product",
+              "subtitle": "Create a clean floating hero shot",
+              "prompt": "A premium product hero image with the product floating above a clean studio surface, soft realistic shadow, controlled rim light, subtle reflections, minimal composition, luxury commercial photography.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "product_photo_2",
+              "title": "Water Splash",
+              "subtitle": "Create a refreshing product ad",
+              "prompt": "A commercial product photograph surrounded by dynamic water splashes and droplets, crisp high-speed photography, fresh lighting, glossy detail, clean premium advertising composition.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "product_photo_3",
+              "title": "Nature Product",
+              "subtitle": "Create an organic brand visual",
+              "prompt": "A premium product placed among natural stone, leaves, soft water droplets and warm sunlight, elegant organic styling, shallow depth of field, high-end commercial photography.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "product_photo_4",
+              "title": "Minimal White Studio",
+              "subtitle": "Create an ecommerce-style hero",
+              "prompt": "A clean product photograph on a seamless white studio background with soft natural shadows, balanced composition, accurate proportions, premium ecommerce presentation, crisp commercial detail.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            }
+          ]
+        },
+        {
+          "id": "social_media",
+          "title": "Social Media",
+          "templates": [
+            {
+              "id": "social_media_1",
+              "title": "Profile Glow-Up",
+              "subtitle": "Create a premium profile picture",
+              "prompt": "Create a polished social media profile portrait with flattering soft light, clean background, confident natural expression, subtle cinematic depth, crisp detail, and a premium creator aesthetic.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "social_media_2",
+              "title": "Creator Thumbnail",
+              "subtitle": "Create a bold creator thumbnail",
+              "prompt": "Create a high-impact creator thumbnail with expressive subject framing, dramatic lighting, clean background separation, strong visual hierarchy, vibrant contrast, and space for optional headline text.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "social_media_3",
+              "title": "Streetwear Post",
+              "subtitle": "Create a trendy fashion post",
+              "prompt": "A stylish streetwear portrait in a modern urban setting, confident pose, editorial composition, natural city light, subtle film texture, premium social-media campaign aesthetic.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
+            },
+            {
+              "id": "social_media_4",
+              "title": "Travel Post",
+              "subtitle": "Create a cinematic travel portrait",
+              "prompt": "A cinematic travel portrait at a breathtaking destination, natural candid pose, golden-hour light, rich environmental detail, premium lifestyle photography, polished social media aesthetic.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_IMAGE"
             }
           ]
         }
@@ -228,7 +543,7 @@
               "prompt": "A cinematic product spin video with glossy reflections, dramatic rim light, slow camera orbit, premium studio background, elegant commercial pacing.",
               "assetFileName": "cinematic product.mp4",
               "previewAssetFileName": "cinematic product.png",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             },
             {
               "id": "travel_flythrough",
@@ -237,7 +552,7 @@
               "prompt": "A dreamlike travel flythrough over a surreal glowing landscape, smooth drone camera, atmospheric fog, sunrise light, cinematic depth.",
               "assetFileName": "Travel Flythrough.mp4",
               "previewAssetFileName": "Travel Flythrough.png",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             },
             {
               "id": "car_tunnel",
@@ -246,7 +561,7 @@
               "prompt": "A futuristic sports car racing through a glowing tunnel, dynamic tracking camera, blue light trails, speed ramp motion, cinematic action.",
               "assetFileName": "car tunnel.mp4",
               "previewAssetFileName": "car tunnel.png",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             }
           ]
         },
@@ -261,7 +576,7 @@
               "prompt": "A dramatic AI character reveal, glowing particles, slow push-in camera, neon atmosphere, confident stance, cinematic smoke and light movement.",
               "assetFileName": "animehero.mp4",
               "previewAssetFileName": "animehero.png",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             },
             {
               "id": "fashion_runway",
@@ -270,7 +585,7 @@
               "prompt": "A fashion runway video with confident model walk, soft spotlight sweeps, luxury editorial atmosphere, cinematic slow motion fabric movement.",
               "assetFileName": "fashion runway.mp4",
               "previewAssetFileName": "fashion runway.png",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             }
           ]
         },
@@ -285,7 +600,7 @@
               "prompt": "A person standing on a rooftop at sunset, wind gently moving their hair and jacket, slow camera orbit, natural movement, cinematic vertical video.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             },
             {
               "id": "aesthetic_motion_2",
@@ -294,7 +609,7 @@
               "prompt": "A person running through a golden meadow, grass moving in the breeze, smooth follow camera, warm late afternoon light, cinematic slow motion.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             },
             {
               "id": "aesthetic_motion_3",
@@ -303,7 +618,7 @@
               "prompt": "A person beside a rain-covered cafe window, reflections drifting across the glass, subtle head movement, slow push-in, moody cinematic video.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             }
           ]
         },
@@ -318,7 +633,7 @@
               "prompt": "A smooth aerial journey toward a floating castle above clouds, waterfalls spilling into the sky, drifting birds, sunrise, cinematic fantasy video.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             },
             {
               "id": "fantasy_motion_2",
@@ -327,7 +642,7 @@
               "prompt": "A small emerald dragon unfolding its wings in an ancient forest, glowing particles, slow camera push-in, detailed cinematic fantasy video.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             },
             {
               "id": "fantasy_motion_3",
@@ -336,7 +651,7 @@
               "prompt": "Books floating gently through a candlelit wizard library, pages turning, golden spell particles, smooth tracking camera, cinematic fantasy video.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             }
           ]
         },
@@ -351,7 +666,7 @@
               "prompt": "Waves rolling onto a tropical beach at sunrise, palm leaves moving, smooth aerial camera, natural light, relaxing cinematic video.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             },
             {
               "id": "nature_motion_2",
@@ -360,7 +675,7 @@
               "prompt": "A red train crossing a stone bridge in misty alpine mountains, drifting clouds, smooth drone tracking, cinematic travel video.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
             },
             {
               "id": "nature_motion_3",
@@ -369,7 +684,133 @@
               "prompt": "A gentle camera journey down a cherry blossom path, pink petals falling in the breeze, morning light, peaceful cinematic video.",
               "assetFileName": "",
               "previewAssetFileName": "",
-              "action": "TEXT_TO_VIDEO"
+              "action": "IMAGE_TO_VIDEO"
+            }
+          ]
+        },
+        {
+          "id": "urban_motion",
+          "title": "Urban & Lifestyle",
+          "templates": [
+            {
+              "id": "urban_motion_1",
+              "title": "Night City Walk",
+              "subtitle": "Generate a cinematic city walk",
+              "prompt": "A person walking through a neon-lit city street at night, natural body movement, wet reflections, subtle handheld camera motion, shallow depth of field, cinematic vertical video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            },
+            {
+              "id": "urban_motion_2",
+              "title": "Cafe Moment",
+              "subtitle": "Generate a calm lifestyle clip",
+              "prompt": "A relaxed person sitting in a cozy cafe, gently lifting a coffee cup, subtle steam, warm window light, slow push-in camera, natural cinematic motion.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            },
+            {
+              "id": "urban_motion_3",
+              "title": "Street Fashion",
+              "subtitle": "Generate an editorial fashion clip",
+              "prompt": "A stylish person walking confidently through a modern city street, clothing moving naturally, smooth tracking camera, soft editorial light, premium fashion-film aesthetic.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            },
+            {
+              "id": "urban_motion_4",
+              "title": "Metro Arrival",
+              "subtitle": "Generate a dramatic transit scene",
+              "prompt": "A person waiting on a modern metro platform as a train arrives behind them, wind movement, reflected lights, slow cinematic camera slide, realistic urban atmosphere.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            }
+          ]
+        },
+        {
+          "id": "action_motion",
+          "title": "Action & Energy",
+          "templates": [
+            {
+              "id": "action_motion_1",
+              "title": "Hero Landing",
+              "subtitle": "Generate a dramatic action reveal",
+              "prompt": "A cinematic hero landing with dust and particles bursting outward, low-angle camera, subtle slow motion, dramatic rim light, powerful stance, high-energy action sequence.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            },
+            {
+              "id": "action_motion_2",
+              "title": "Motorcycle Chase",
+              "subtitle": "Generate a fast road sequence",
+              "prompt": "A futuristic motorcycle speeding through a city highway at night, dynamic tracking camera, light trails, realistic motion blur, dramatic turns, cinematic action pacing.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            },
+            {
+              "id": "action_motion_3",
+              "title": "Sword Duel",
+              "subtitle": "Generate a fantasy combat moment",
+              "prompt": "Two original fantasy warriors exchanging a short sword clash in an ancient courtyard, sparks, flowing fabric, controlled camera orbit, cinematic lighting, dramatic but readable movement.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            },
+            {
+              "id": "action_motion_4",
+              "title": "Parkour Run",
+              "subtitle": "Generate a rooftop action clip",
+              "prompt": "An athletic runner moving across urban rooftops, smooth follow camera, natural body mechanics, sunset skyline, dynamic but stable cinematic motion, energetic pacing.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            }
+          ]
+        },
+        {
+          "id": "sci_fi_motion",
+          "title": "Sci-Fi",
+          "templates": [
+            {
+              "id": "sci_fi_motion_1",
+              "title": "Portal Opening",
+              "subtitle": "Generate a futuristic portal scene",
+              "prompt": "A glowing circular portal slowly opening inside a dark futuristic chamber, energy particles swirling, subtle camera push-in, volumetric light, cinematic science-fiction atmosphere.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            },
+            {
+              "id": "sci_fi_motion_2",
+              "title": "Spaceship Flyby",
+              "subtitle": "Generate a cinematic space shot",
+              "prompt": "A sleek original spacecraft flying past the camera above a luminous planet, slow majestic movement, distant stars, realistic light reflections, epic cinematic sci-fi video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            },
+            {
+              "id": "sci_fi_motion_3",
+              "title": "Hologram Interface",
+              "subtitle": "Generate a futuristic tech scene",
+              "prompt": "A person interacting with floating holographic panels, subtle hand gestures, translucent interface motion, dark futuristic room, blue ambient light, smooth cinematic camera movement.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
+            },
+            {
+              "id": "sci_fi_motion_4",
+              "title": "Cyber City Drone",
+              "subtitle": "Generate a futuristic aerial shot",
+              "prompt": "A smooth drone-like flight through a dense futuristic city filled with neon signs, flying vehicles, atmospheric haze, reflective towers, cinematic science-fiction worldbuilding.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "IMAGE_TO_VIDEO"
             }
           ]
         }
@@ -468,6 +909,132 @@
               "action": "PROMO_VIDEO"
             }
           ]
+        },
+        {
+          "id": "creator_marketing",
+          "title": "Creator Marketing",
+          "templates": [
+            {
+              "id": "creator_marketing_1",
+              "title": "YouTube Channel Intro",
+              "subtitle": "Create a modern creator intro",
+              "prompt": "Create a short high-energy YouTube channel intro with dynamic camera motion, bold branded visuals, fast clean transitions, energetic lighting, and a memorable final logo or creator reveal.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "creator_marketing_2",
+              "title": "Reel Promo",
+              "subtitle": "Create a vertical social promo",
+              "prompt": "Create a punchy vertical promotional reel with a strong opening hook, quick cinematic cuts, clear product or creator focus, energetic movement, polished lighting, and a memorable final frame.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "creator_marketing_3",
+              "title": "Podcast Promo",
+              "subtitle": "Create a polished podcast teaser",
+              "prompt": "Create a premium podcast promotional video featuring a studio microphone, host close-ups, subtle waveform-inspired motion, warm cinematic lighting, smooth cuts, and a professional final title frame.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "creator_marketing_4",
+              "title": "Course Promo",
+              "subtitle": "Create an educational launch ad",
+              "prompt": "Create a clean premium course launch video featuring instructor moments, interface previews, elegant text-friendly framing, confident pacing, smooth transitions, and a strong final enrollment callout frame.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            }
+          ]
+        },
+        {
+          "id": "tech_products",
+          "title": "Tech Products",
+          "templates": [
+            {
+              "id": "tech_products_1",
+              "title": "Smartphone Reveal",
+              "subtitle": "Create a premium phone commercial",
+              "prompt": "Create a sleek smartphone reveal video with macro camera passes across the display, frame and cameras, glossy reflections, controlled studio light, slow rotation, and a dramatic final hero shot.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "tech_products_2",
+              "title": "Laptop Launch",
+              "subtitle": "Create a modern laptop advertisement",
+              "prompt": "Create a cinematic laptop launch video with the lid opening smoothly, keyboard and display close-ups, subtle interface glow, elegant studio lighting, premium camera movement, and a refined hero ending.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "tech_products_3",
+              "title": "Headphone Campaign",
+              "subtitle": "Create an audio product commercial",
+              "prompt": "Create a premium headphone advertisement with floating product shots, close-ups of cushions and controls, rhythmic camera movement, moody studio lighting, and a bold polished final reveal.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "tech_products_4",
+              "title": "Gaming Gear",
+              "subtitle": "Create an RGB gaming product promo",
+              "prompt": "Create a high-energy gaming gear advertisement with dramatic RGB-inspired lighting, macro detail shots, smooth product rotation, quick clean transitions, and a strong final setup reveal.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            }
+          ]
+        },
+        {
+          "id": "events_promotions",
+          "title": "Events & Promotions",
+          "templates": [
+            {
+              "id": "events_promo_1",
+              "title": "Grand Opening",
+              "subtitle": "Create a business opening announcement",
+              "prompt": "Create an exciting grand opening promo with exterior reveal, interior details, welcoming atmosphere, smooth energetic transitions, premium lighting, and a strong final opening-date frame.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "events_promo_2",
+              "title": "Festival Campaign",
+              "subtitle": "Create a festive promotional video",
+              "prompt": "Create a vibrant festive campaign video with elegant decorations, warm lights, celebratory motion, product or brand highlights, smooth cinematic transitions, and a joyful premium commercial finish.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "events_promo_3",
+              "title": "Event Teaser",
+              "subtitle": "Create a cinematic event trailer",
+              "prompt": "Create a short cinematic event teaser with dramatic venue reveals, energetic crowd atmosphere, quick detail shots, rhythmic pacing, bold visual moments, and a memorable final event title frame.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "events_promo_4",
+              "title": "Giveaway Promo",
+              "subtitle": "Create a social giveaway ad",
+              "prompt": "Create a fast, engaging giveaway promotional video featuring the prize prominently, dynamic camera movement, celebratory visual effects, clear text-friendly framing, and a strong final participation frame.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            }
+          ]
         }
       ]
     },
@@ -559,6 +1126,132 @@
               "title": "Podcast Host",
               "subtitle": "Create a conversational host",
               "prompt": "Create a podcast host avatar delivering the provided script at a studio microphone, warm acoustic studio, relaxed expression, realistic lip movement and conversational gestures.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            }
+          ]
+        },
+        {
+          "id": "business_roles",
+          "title": "Business Roles",
+          "templates": [
+            {
+              "id": "business_roles_1",
+              "title": "Startup Founder",
+              "subtitle": "Create a confident founder avatar",
+              "prompt": "Create a modern startup founder avatar delivering the provided script with confident eye contact, smart-casual clothing, natural gestures, subtle enthusiasm, clean office background, and polished professional lighting.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "business_roles_2",
+              "title": "Sales Expert",
+              "subtitle": "Create a persuasive sales presenter",
+              "prompt": "Create a polished sales expert avatar delivering the provided script with confident posture, friendly expression, natural hand gestures, direct eye contact, and premium business presentation style.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "business_roles_3",
+              "title": "Financial Advisor",
+              "subtitle": "Create a trustworthy finance avatar",
+              "prompt": "Create a trustworthy financial advisor avatar delivering the provided script with calm expression, measured gestures, professional attire, direct eye contact, clean modern office setting, and premium studio lighting.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "business_roles_4",
+              "title": "Tech Expert",
+              "subtitle": "Create a modern technology presenter",
+              "prompt": "Create a technology expert avatar delivering the provided script in a modern studio with subtle screens in the background, confident natural gestures, clear eye contact, and polished educational presentation style.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            }
+          ]
+        },
+        {
+          "id": "education_presenters",
+          "title": "Education & Learning",
+          "templates": [
+            {
+              "id": "education_presenter_1",
+              "title": "Coding Instructor",
+              "subtitle": "Create a friendly coding teacher",
+              "prompt": "Create a coding instructor avatar delivering the provided script with clear explanations, natural hand gestures, direct eye contact, casual-professional clothing, subtle developer workspace background, and engaging teaching energy.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "education_presenter_2",
+              "title": "Science Teacher",
+              "subtitle": "Create an engaging science educator",
+              "prompt": "Create a science educator avatar delivering the provided script with expressive but controlled gestures, friendly eye contact, clean classroom or lab setting, professional posture, and approachable teaching style.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "education_presenter_3",
+              "title": "Language Tutor",
+              "subtitle": "Create a conversational language coach",
+              "prompt": "Create a friendly language tutor avatar delivering the provided script with clear pronunciation, warm expression, encouraging gestures, direct eye contact, bright simple background, and conversational teaching style.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "education_presenter_4",
+              "title": "History Narrator",
+              "subtitle": "Create a documentary-style presenter",
+              "prompt": "Create a history narrator avatar delivering the provided script with calm authority, subtle gestures, direct eye contact, tasteful historical visual background, cinematic studio lighting, and documentary presentation style.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            }
+          ]
+        },
+        {
+          "id": "entertainment_personas",
+          "title": "Entertainment Personas",
+          "templates": [
+            {
+              "id": "entertainment_persona_1",
+              "title": "Gaming Host",
+              "subtitle": "Create an energetic gaming presenter",
+              "prompt": "Create a gaming host avatar delivering the provided script with energetic facial expressions, conversational gestures, direct eye contact, modern gaming-room background, colorful ambient light, and creator-style presentation.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "entertainment_persona_2",
+              "title": "Movie Reviewer",
+              "subtitle": "Create a cinematic review host",
+              "prompt": "Create a movie reviewer avatar delivering the provided script with expressive reactions, relaxed confident gestures, direct eye contact, cozy cinema-inspired studio background, and polished creator presentation style.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "entertainment_persona_3",
+              "title": "Storyteller",
+              "subtitle": "Create an expressive narrative host",
+              "prompt": "Create a charismatic storyteller avatar delivering the provided script with warm facial expressions, natural gestures, dramatic but tasteful lighting, direct eye contact, and immersive narrative presentation style.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "entertainment_persona_4",
+              "title": "Comedy Host",
+              "subtitle": "Create a lively comedic presenter",
+              "prompt": "Create a lively comedy host avatar delivering the provided script with playful facial expressions, natural timing, animated but believable gestures, direct eye contact, colorful studio background, and energetic creator presentation.",
               "assetFileName": "",
               "previewAssetFileName": "",
               "action": "CREATE_AVATAR"

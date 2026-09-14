@@ -54,16 +54,24 @@ fun BannerAdView(
     configStore: AdsConfigStore,
     modifier: Modifier = Modifier,
     applyNavBarPadding: Boolean = true,
+    onLoadStateChange: (Boolean?) -> Unit = {},
 ) {
     val configVersion = configStore.version
     val config = configStore.current
-    if (!config.formatEnabled(AdFormat.BANNER) || !config.isPlacementEnabled(placement)) return
+    if (!config.formatEnabled(AdFormat.BANNER) || !config.isPlacementEnabled(placement)) {
+        onLoadStateChange(false)
+        return
+    }
 
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
-    val activity = context as? Activity ?: return
+    val activity = context as? Activity ?: run {
+        onLoadStateChange(false)
+        return
+    }
     val unitId = config.unitIdFor(placement) ?: run {
         AdsLogger.missingUnitId(placement)
+        onLoadStateChange(false)
         return
     }
 
@@ -73,6 +81,9 @@ fun BannerAdView(
 
     // load state: null=loading, true=loaded, false=failed(collapse)
     var loaded by remember(configVersion, unitId, adSize) { mutableStateOf<Boolean?>(null) }
+    androidx.compose.runtime.LaunchedEffect(loaded) {
+        onLoadStateChange(loaded)
+    }
 
     val heightModifier = Modifier.height(adSize.height.dp.coerceAtLeastZero())
     val containerModifier = modifier

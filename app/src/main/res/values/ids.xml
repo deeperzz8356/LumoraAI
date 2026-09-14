@@ -7,4 +7,5 @@
     <item name="generation_prompt_text_watcher" type="id" />
     <item name="generation_prompt_change_callback" type="id" />
     <item name="generation_prompt_model_text" type="id" />
+    <item name="history_viewer_media_player" type="id" />
 </resources>

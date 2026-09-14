@@ -112,6 +112,7 @@ class AdsManager @Inject constructor(
         activity: Activity?,
         placement: AdPlacement,
         requireTrigger: Boolean = false,
+        continueOnShown: Boolean = false,
         onContinue: () -> Unit,
     ) {
         if (activity == null) {
@@ -132,18 +133,29 @@ class AdsManager @Inject constructor(
             onContinue(); return
         }
 
-        var completed = false
-        val complete = {
-            if (!completed) {
-                completed = true
-                frequency.releaseFullScreen()
+        var continued = false
+        var released = false
+        val continueOnce = {
+            if (!continued) {
+                continued = true
                 onContinue()
             }
+        }
+        val releaseOnce = {
+            if (!released) {
+                released = true
+                frequency.releaseFullScreen()
+            }
+        }
+        val complete = {
+            releaseOnce()
+            continueOnce()
         }
         val shown = interstitialManager.show(
             activity = activity,
             placement = placement,
             onShown = { frequency.recordFullScreenShown(placement) },
+            onAdDisplayed = { if (continueOnShown) continueOnce() },
             onComplete = complete,
         )
         if (!shown) complete()

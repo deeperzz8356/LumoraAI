@@ -3,7 +3,9 @@ package com.deep.lumoraai.feature.credits
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.view.LayoutInflater
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -18,9 +20,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -42,19 +47,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.ads.LocalAdsManager
 import com.deep.lumoraai.ads.rememberCurrentActivity
-import com.deep.lumoraai.core.nativeui.LumoraXmlScreen
 import com.deep.lumoraai.core.nativeui.addTextCard
 import com.deep.lumoraai.core.nativeui.dp
-import com.deep.lumoraai.core.nativeui.resetContent
-import com.deep.lumoraai.core.nativeui.setupTopBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
+import com.deep.lumoraai.databinding.CreditsScreenBinding
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import compose.icons.tablericons.Coin
@@ -89,36 +93,58 @@ fun CreditsScreen(
         )
     }
 
-    LumoraXmlScreen(
-        selectedTab = "credits",
-        onNavigate = onNavigate,
+    Box(
         modifier = modifier
-    ) { binding ->
-        binding.scroll.isVerticalScrollBarEnabled = false
-        binding.scroll.overScrollMode = View.OVER_SCROLL_NEVER
-        binding.setupTopBar("Reward Center", null, onBack = onBack)
-        binding.resetContent()
-        when (uiState) {
-            CreditsUiState.Loading -> binding.content.addTextCard("Loading", "Reading your credit balance.")
-            is CreditsUiState.Error -> binding.content.addTextCard("Error", uiState.message)
-            is CreditsUiState.Success -> {
-                binding.content.renderRewardCenter(
-                    state = uiState,
-                    rewardAdEnabled = ads != null && !uiState.isDeveloperMode,
-                    rewardAdAmount = rewardAmount,
-                    onSubscribe = { onNavigate(Screen.Subscription.route) },
-                    onGenerate = { onNavigate(Screen.Home.route) },
-                    onReward = {
-                        if (it == REWARD_SPIN) showSpinWheel = true else viewModel.claimReward(it)
-                    },
-                    onMessageDismiss = {
-                        viewModel.clearRewardMessage()
-                        viewModel.clearSpinResult()
-                    },
-                    onWatchAd = onWatchAdForCredits,
-                )
+            .fillMaxSize()
+            .background(ComposeColor(0xFF081020))
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { context ->
+                CreditsScreenBinding.inflate(LayoutInflater.from(context)).apply {
+                    scroll.isVerticalScrollBarEnabled = false
+                    scroll.overScrollMode = View.OVER_SCROLL_NEVER
+                    checkInScroll.setOnTouchListener { view, event ->
+                        when (event.actionMasked) {
+                            MotionEvent.ACTION_DOWN,
+                            MotionEvent.ACTION_MOVE -> view.parent?.requestDisallowInterceptTouchEvent(true)
+                            MotionEvent.ACTION_UP,
+                            MotionEvent.ACTION_CANCEL -> view.parent?.requestDisallowInterceptTouchEvent(false)
+                        }
+                        false
+                    }
+                    root.tag = this
+                }.root
+            },
+            update = { root ->
+                val binding = root.tag as CreditsScreenBinding
+                binding.backButton.setOnClickListener { onBack() }
+
+                when (uiState) {
+                    CreditsUiState.Loading -> binding.showState("Loading", "Reading your credit balance.")
+                    is CreditsUiState.Error -> binding.showState("Error", uiState.message)
+                    is CreditsUiState.Success -> {
+                        binding.renderRewardCenter(
+                            state = uiState,
+                            rewardAdEnabled = ads != null && !uiState.isDeveloperMode,
+                            rewardAdAmount = rewardAmount,
+                            onSubscribe = { onNavigate(Screen.Subscription.route) },
+                            onGenerate = { onNavigate(Screen.Home.route) },
+                            onReward = {
+                                if (it == REWARD_SPIN) showSpinWheel = true else viewModel.claimReward(it)
+                            },
+                            onMessageDismiss = {
+                                viewModel.clearRewardMessage()
+                                viewModel.clearSpinResult()
+                            },
+                            onWatchAd = onWatchAdForCredits,
+                        )
+                    }
+                }
             }
-        }
+        )
     }
 
     if (uiState is CreditsUiState.Success && showSpinWheel) {
@@ -131,6 +157,80 @@ fun CreditsScreen(
             },
         )
     }
+}
+
+private fun CreditsScreenBinding.showState(title: String, subtitle: String) {
+    stateCard.visibility = View.VISIBLE
+    successContent.visibility = View.GONE
+    stateTitle.text = title
+    stateSubtitle.text = subtitle
+}
+
+private fun CreditsScreenBinding.renderRewardCenter(
+    state: CreditsUiState.Success,
+    rewardAdEnabled: Boolean,
+    rewardAdAmount: Int,
+    onSubscribe: () -> Unit,
+    onGenerate: () -> Unit,
+    onReward: (String) -> Unit,
+    onMessageDismiss: () -> Unit,
+    onWatchAd: () -> Unit,
+) {
+    stateCard.visibility = View.GONE
+    successContent.visibility = View.VISIBLE
+
+    val balance = if (state.isDeveloperMode || state.credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
+        "Unlimited"
+    } else {
+        state.credits.toString()
+    }
+
+    balanceText.text = balance
+    balanceText.textSize = if (balance.length > 8) 28f else 34f
+    balanceSubtitle.text = if (state.isDeveloperMode) "Developer mode active" else "Available credits"
+    subscribeButton.setOnClickListener { onSubscribe() }
+    generateButton.setOnClickListener { onGenerate() }
+
+    noticeContainer.removeAllViews()
+    state.purchaseMessage?.let { noticeContainer.addNotice("Purchase", it, onMessageDismiss) }
+    state.rewardMessage?.let { noticeContainer.addNotice("Reward", it, onMessageDismiss) }
+
+    checkInDaysRow.removeAllViews()
+    val rewards = listOf(1, 1, 2, 2, 2, 3, 4)
+    rewards.forEachIndexed { index, amount ->
+        checkInDaysRow.addView(
+            checkInDaysRow.dayTile(index, amount, state.checkInDayIndex == index),
+            LinearLayout.LayoutParams(checkInDaysRow.dp(66), checkInDaysRow.dp(80)).apply {
+                marginEnd = checkInDaysRow.dp(8)
+            }
+        )
+    }
+
+    val checkIn = state.rewards.firstOrNull { it.id == "check_in" }
+    checkInButton.text = checkIn?.actionLabel ?: "Claim"
+    val checkInAvailable = checkIn?.isAvailable == true && !state.isRewardBusy
+    checkInButton.setTextColor(
+        if (checkIn?.isAvailable == true) Color.rgb(8, 16, 32) else Color.rgb(156, 165, 186)
+    )
+    checkInButton.background = checkInButton.pill(
+        if (checkIn?.isAvailable == true) Color.rgb(214, 255, 47) else Color.rgb(21, 31, 51),
+        checkInButton.dp(27)
+    )
+    checkInButton.alpha = if (state.isRewardBusy) 0.55f else 1f
+    checkInButton.isEnabled = checkInAvailable
+    checkInButton.isClickable = checkInAvailable
+    checkInButton.setOnClickListener { if (checkInButton.isEnabled) onReward("check_in") }
+
+    dailyRewardsList.removeAllViews()
+    state.rewards.filterNot { it.id == "check_in" }.forEach { reward ->
+        dailyRewardsList.addRewardRow(reward, state.isRewardBusy, onReward)
+    }
+
+    rewardAdButton.visibility = if (rewardAdEnabled) View.VISIBLE else View.GONE
+    rewardAdButton.text = "WATCH AD FOR $rewardAdAmount CREDITS"
+    rewardAdButton.isEnabled = !state.isRewardBusy
+    rewardAdButton.alpha = if (state.isRewardBusy) 0.5f else 1f
+    rewardAdButton.setOnClickListener { if (rewardAdButton.isEnabled) onWatchAd() }
 }
 
 @Composable
@@ -239,7 +339,8 @@ private fun LinearLayout.renderRewardCenter(
     onMessageDismiss: () -> Unit,
     onWatchAd: () -> Unit,
 ) {
-    setPadding(paddingLeft, dp(14), paddingRight, dp(22))
+    // Do not override padding here — the shell XML already defines consistent
+    // paddingStart/End/Top/Bottom on the content LinearLayout.
     val balance = if (state.isDeveloperMode || state.credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
         "Unlimited"
     } else {
@@ -364,6 +465,17 @@ private fun LinearLayout.addCheckInSection(
     val scroll = HorizontalScrollView(context).apply {
         isHorizontalScrollBarEnabled = false
         overScrollMode = View.OVER_SCROLL_NEVER
+        // Prevent the parent vertical ScrollView from stealing horizontal swipe
+        // gestures — without this, diagonal drags feel broken.
+        setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN,
+                MotionEvent.ACTION_MOVE -> view.parent?.requestDisallowInterceptTouchEvent(true)
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> view.parent?.requestDisallowInterceptTouchEvent(false)
+            }
+            false
+        }
     }
     val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
     rewards.forEachIndexed { index, amount ->
@@ -431,7 +543,6 @@ private fun LinearLayout.addRewardRow(
         typeface = Typeface.DEFAULT_BOLD
         maxLines = 2
         includeFontPadding = false
-        ellipsize = android.text.TextUtils.TruncateAt.END
     }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
     titleLine.addView(TextView(context).apply {
         text = reward.rewardLabel
@@ -442,15 +553,15 @@ private fun LinearLayout.addRewardRow(
         background = pill(Color.rgb(28, 36, 56), dp(13), Color.rgb(53, 64, 88), dp(1))
         setPadding(dp(8), 0, dp(8), 0)
         maxLines = 1
-        ellipsize = android.text.TextUtils.TruncateAt.END
+        includeFontPadding = false
     }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(22)).apply { marginStart = dp(7) })
     textCol.addView(titleLine)
     textCol.addView(TextView(context).apply {
         text = reward.subtitle
         setTextColor(Color.rgb(143, 153, 174))
         textSize = 11f
-        maxLines = 1
-        ellipsize = android.text.TextUtils.TruncateAt.END
+        maxLines = 3
+        includeFontPadding = false
     }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
         topMargin = dp(4)
     })
@@ -462,12 +573,12 @@ private fun LinearLayout.addRewardRow(
         textSize = 13f
         typeface = Typeface.DEFAULT_BOLD
         background = pill(Color.rgb(19, 28, 46), dp(23), Color.rgb(45, 55, 76), dp(1))
+        alpha = if (reward.isAvailable && !busy) 1f else 0.4f
         isEnabled = reward.isAvailable && !busy
         isClickable = isEnabled
-        alpha = if (busy && reward.isAvailable) 0.55f else 1f
         setOnClickListener { if (isEnabled) onReward(reward.id) }
         maxLines = 1
-        ellipsize = android.text.TextUtils.TruncateAt.END
+        includeFontPadding = false
         minWidth = dp(82)
         setPadding(dp(10), 0, dp(10), 0)
     }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48)).apply { marginStart = dp(10) })

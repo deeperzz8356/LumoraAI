@@ -50,7 +50,7 @@ class InterstitialAdManager @Inject constructor(
                     ad.setOnPaidEventListener { adValue ->
                         AdRevenueTracker.trackPaidAd(context, placement, unitId, adValue)
                     }
-                    AdsLogger.loadSucceeded(placement, ad.responseInfo?.mediationAdapterClassName)
+                    AdsLogger.loadSucceeded(placement, ad.responseInfo.mediationAdapterClassName)
                     interstitial = ad
                     isLoading = false
                 }
@@ -75,6 +75,7 @@ class InterstitialAdManager @Inject constructor(
         activity: Activity,
         placement: AdPlacement,
         onShown: () -> Unit,
+        onAdDisplayed: () -> Unit = {},
         onComplete: () -> Unit,
     ): Boolean {
         val ad = interstitial ?: run {
@@ -92,6 +93,7 @@ class InterstitialAdManager @Inject constructor(
             override fun onAdShowedFullScreenContent() {
                 AdsLogger.showSuccess(placement)
                 onShown()
+                onAdDisplayed()
             }
 
             override fun onAdDismissedFullScreenContent() {

@@ -85,6 +85,8 @@ private enum class ProfileAction { Delete, SignOut, Login }
 
 private const val SupportEmail = "lumoraaisupport@gmail.com"
 private const val PrivacyPolicyUrl = "https://lumoraai.example/privacy-policy"
+private const val TermsAndConditionsUrl = "https://lumoraai.example/terms-and-conditions"
+private val HeaderNotificationDot = Color(0xFFCFBDFF)
 
 @Composable
 fun ProfileScreen(
@@ -197,6 +199,12 @@ private fun ProfileContent(
                     { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PrivacyPolicyUrl))) },
                 )
                 PremiumActionRow(
+                    "Terms & Conditions",
+                    "Read our terms of use and service agreement",
+                    Icons.Default.Policy,
+                    { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TermsAndConditionsUrl))) },
+                )
+                PremiumActionRow(
                     "Help & support",
                     SupportEmail,
                     Icons.AutoMirrored.Filled.HelpOutline,
@@ -267,8 +275,8 @@ private fun ProfileHeader(credits: Int, unreadCount: Int, onNavigate: (String) -
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(painterResource(R.drawable.ic_lumora_bell), "Open notifications", tint = PremiumText, modifier = Modifier.size(20.dp))
-                if (unreadCount > 0) Box(Modifier.align(Alignment.TopEnd).padding(top = 7.dp, end = 7.dp).size(8.dp).clip(CircleShape).background(PremiumLime))
+                Icon(painterResource(R.drawable.ic_lumora_bell), "Open notifications", tint = Color.White, modifier = Modifier.size(20.dp))
+                if (unreadCount > 0) Box(Modifier.align(Alignment.TopEnd).padding(top = 7.dp, end = 7.dp).size(8.dp).clip(CircleShape).background(HeaderNotificationDot))
             }
         }
     }

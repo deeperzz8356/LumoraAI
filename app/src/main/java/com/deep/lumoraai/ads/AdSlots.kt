@@ -18,13 +18,18 @@ fun PlacementBanner(
     placement: AdPlacement,
     modifier: Modifier = Modifier,
     applyNavBarPadding: Boolean = true,
+    onLoadStateChange: (Boolean?) -> Unit = {},
 ) {
-    val store = LocalAdsConfigStore.current ?: return
+    val store = LocalAdsConfigStore.current ?: run {
+        onLoadStateChange(false)
+        return
+    }
     BannerAdView(
         placement = placement,
         configStore = store,
         modifier = modifier,
         applyNavBarPadding = applyNavBarPadding,
+        onLoadStateChange = onLoadStateChange,
     )
 }
 

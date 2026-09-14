@@ -22,11 +22,12 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.deep.lumoraai.R
-import com.deep.lumoraai.ads.AdPlacement
-import com.deep.lumoraai.ads.PlacementNativeAd
+import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.core.components.BottomNavigationBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.navigation.avatarRoute
+import com.deep.lumoraai.core.navigation.imageToImageRoute
+import com.deep.lumoraai.core.navigation.imageToVideoRoute
 import com.deep.lumoraai.core.navigation.logoRoute
 import com.deep.lumoraai.core.navigation.promoVideoRoute
 import com.deep.lumoraai.core.navigation.templateSectionRoute
@@ -52,6 +53,7 @@ fun TemplatesScreen(
     scrollMemory: TemplateScrollMemory = TemplateScrollMemory(),
     modifier: Modifier = Modifier,
 ) {
+    val nativeTemplateInterval = LocalAdsConfigStore.current?.current?.nativeTemplateInterval ?: 3
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = ComposeColor(Background),
@@ -77,6 +79,7 @@ fun TemplatesScreen(
                         uiState = uiState,
                         selectedCategoryId = selectedCategoryId,
                         unreadCount = unreadCount,
+                        nativeTemplateInterval = nativeTemplateInterval,
                         scrollMemory = scrollMemory,
                         onCategorySelected = onCategorySelected,
                         onNavigate = onNavigate,
@@ -87,10 +90,6 @@ fun TemplatesScreen(
                 },
                 modifier = Modifier.weight(1f)
             )
-            PlacementNativeAd(
-                placement = AdPlacement.NATIVE_TEMPLATE,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
         }
     }
 }
@@ -100,6 +99,7 @@ private fun bindTemplates(
     uiState: TemplatesUiState,
     selectedCategoryId: String,
     unreadCount: Int,
+    nativeTemplateInterval: Int,
     scrollMemory: TemplateScrollMemory,
     onCategorySelected: (String) -> Unit,
     onNavigate: (String) -> Unit,
@@ -162,6 +162,7 @@ private fun bindTemplates(
                 binding.sectionsList.adapter = TemplateSectionsAdapter(
                     categoryId = category.id,
                     sections = category.sections,
+                    adRowInterval = nativeTemplateInterval,
                     scrollMemory = scrollMemory,
                     onTemplateClick = { navigateTemplate(it, onNavigate) },
                     onViewAll = { onViewAll(category.id, it.id) },
@@ -224,6 +225,7 @@ fun TemplateSectionScreen(
     modifier: Modifier = Modifier,
 ) {
     val widthDp = LocalConfiguration.current.screenWidthDp
+    val nativeTemplateInterval = LocalAdsConfigStore.current?.current?.nativeTemplateInterval ?: 3
     val spanCount = when {
         widthDp >= 840 -> 4
         widthDp >= 600 -> 3
@@ -238,6 +240,7 @@ fun TemplateSectionScreen(
                 categoryId = categoryId,
                 sectionId = sectionId,
                 spanCount = spanCount,
+                nativeTemplateInterval = nativeTemplateInterval,
                 onBack = onBack,
                 onNavigate = onNavigate,
             )
@@ -256,6 +259,7 @@ private fun bindTemplateSection(
     categoryId: String,
     sectionId: String,
     spanCount: Int,
+    nativeTemplateInterval: Int,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
 ) {
@@ -283,17 +287,34 @@ private fun bindTemplateSection(
             )
         )
     }
-    binding.grid.adapter = TemplateCardAdapter(
+    val adapter = TemplateCardAdapter(
         templates = section.templates,
         horizontal = false,
-        onTemplateClick = { navigateTemplate(it, onNavigate) }
+        spanCount = spanCount,
+        adRowInterval = nativeTemplateInterval,
+        onTemplateClick = { navigateTemplate(it, onNavigate) },
     )
+    binding.grid.adapter = adapter
+    // Ad rows must span all columns — configure this after setting the adapter
+    // so the layout manager can query getItemViewType() on demand.
+    (binding.grid.layoutManager as? GridLayoutManager)?.spanSizeLookup =
+        object : GridLayoutManager.SpanSizeLookup() {
+            override fun getSpanSize(position: Int): Int {
+                return if (adapter.getItemViewType(position) == TemplateCardAdapter.VIEW_TYPE_NATIVE_AD) {
+                    spanCount
+                } else {
+                    1
+                }
+            }
+        }
 }
 
 private fun navigateTemplate(item: TemplateListItem, onNavigate: (String) -> Unit) {
     val route = when (item.action) {
         TemplateAction.TEXT_TO_IMAGE -> textToImageRoute(item.prompt)
         TemplateAction.TEXT_TO_VIDEO -> textToVideoRoute(item.prompt)
+        TemplateAction.IMAGE_TO_IMAGE -> imageToImageRoute()
+        TemplateAction.IMAGE_TO_VIDEO -> imageToVideoRoute()
         TemplateAction.PROMO_VIDEO -> promoVideoRoute(item.prompt)
         TemplateAction.LOGO_CREATION -> logoRoute(item.prompt)
         TemplateAction.CREATE_AVATAR -> avatarRoute(item.prompt)
