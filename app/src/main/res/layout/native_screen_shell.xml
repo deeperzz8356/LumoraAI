@@ -96,7 +96,8 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:fillViewport="false"
-        android:overScrollMode="ifContentScrolls">
+        android:overScrollMode="never"
+        android:scrollbars="none">
 
         <LinearLayout
             android:id="@+id/content"

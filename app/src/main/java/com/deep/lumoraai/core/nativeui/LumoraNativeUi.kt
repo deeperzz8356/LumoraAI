@@ -14,8 +14,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -35,13 +36,14 @@ fun LumoraXmlScreen(
     modifier: Modifier = Modifier,
     bind: (NativeScreenShellBinding) -> Unit,
 ) {
+    val hasBottomNav = selectedTab != null
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = ComposeColor(0xFF081020),
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            if (selectedTab != null) {
-                BottomNavigationBar(emptyList(), selectedTab, onNavigate)
+            if (hasBottomNav) {
+                BottomNavigationBar(emptyList(), selectedTab!!, onNavigate)
             }
         }
     ) { padding ->
@@ -49,7 +51,13 @@ fun LumoraXmlScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(ComposeColor(0xFF081020))
-                .systemBarsPadding()
+                .statusBarsPadding()
+                .then(
+                    // When there is no bottom nav bar, consume the system
+                    // navigation bar inset here so content doesn't scroll
+                    // behind the gesture bar / 3-button nav on those screens.
+                    if (!hasBottomNav) Modifier.navigationBarsPadding() else Modifier
+                )
                 .padding(padding)
         ) {
             AndroidView(

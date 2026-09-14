@@ -1,66 +1,409 @@
 {
-  "ads_enabled": true,
-  "ads_banner_enabled": true,
-  "ads_native_enabled": true,
-  "ads_interstitial_enabled": true,
-  "ads_rewarded_enabled": true,
-  "ads_app_open_enabled": true,
-  "ads_test_mode": false,
-  "ads_banner_unit_id": "ca-app-pub-XXXXXXXXXXXXXXXX/BBBBBBBBBB",
-  "ads_native_unit_id": "ca-app-pub-XXXXXXXXXXXXXXXX/NNNNNNNNNN",
-  "ads_interstitial_unit_id": "ca-app-pub-XXXXXXXXXXXXXXXX/IIIIIIIIII",
-  "ads_rewarded_unit_id": "ca-app-pub-XXXXXXXXXXXXXXXX/RRRRRRRRRR",
-  "ads_app_open_unit_id": "ca-app-pub-XXXXXXXXXXXXXXXX/AAAAAAAAAA",
-  "inter_trigger_count": 3,
-  "inter_cooldown_ms": 30000,
-  "fullscreen_cooldown_ms": 30000,
-  "max_inter_per_session": 20,
-  "app_open_min_interval_ms": 60000,
-  "app_open_max_cache_ms": 14400000,
-  "splash_max_wait_ms": 6000,
-  "fullscreen_load_timeout_ms": 8000,
-  "reward_credits_amount": 2,
-  "reward_max_claims_per_day": 3,
-  "native_template_interval": 3,
-  "native_history_interval": 3,
-  "placement_enabled": {
-    "banner_splash": true,
-    "native_language": true,
-    "inter_language": true,
-    "ob_native_1": true,
-    "ob_native_2": true,
-    "ob_native_3": true,
-    "ob_native_4": true,
-    "ob_inter": true,
-    "banner_all": true,
-    "banner_text2img": true,
-    "banner_img2img": true,
-    "banner_img2video": true,
-    "banner_text2video": true,
-    "banner_promo": true,
-    "banner_bg": true,
-    "banner_enhancer": true,
-    "native_home": true,
-    "native_template": true,
-    "native_tools": true,
-    "native_history": true,
-    "native_compress": true,
-    "inter_all": true,
-    "inter_setting_language": true,
-    "inter_post_splash": true,
-    "app_open": true,
-    "reward_credits": true
-  },
-  "native_style": {
-    "ads_native_style_background_color": "#FF0E172A",
-    "ads_native_style_title_color": "#FFFFFFFF",
-    "ads_native_style_body_color": "#FF94A0B8",
-    "ads_native_style_cta_background_color": "#FFD6FF2F",
-    "ads_native_style_cta_text_color": "#FF081020",
-    "ads_native_style_corner_radius_dp": 14,
-    "ads_native_style_padding_dp": 14,
-    "ads_native_style_title_sp": 15,
-    "ads_native_style_body_sp": 12,
-    "ads_native_style_shimmer_enabled": true
+  "parameters": {
+    "ads_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Master switch – turns off all ad serving when false."
+    },
+    "ads_banner_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable all banner placements."
+    },
+    "ads_native_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable all native ad placements."
+    },
+    "ads_interstitial_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable all interstitial placements."
+    },
+    "ads_rewarded_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable rewarded ad placements."
+    },
+    "ads_app_open_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable App Open ad placements."
+    },
+    "ads_test_mode": {
+      "defaultValue": { "value": "false" },
+      "valueType": "BOOLEAN",
+      "description": "Force test ad unit IDs. Never publish true to production."
+    },
+    "banner_splash_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/1111111111" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the splash banner."
+    },
+    "native_language_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/2222222222" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the language-screen native ad."
+    },
+    "inter_language_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/3333333333" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the language-screen interstitial."
+    },
+    "ob_native_1_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/4444444441" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for onboarding native ad slot 1."
+    },
+    "ob_native_2_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/4444444442" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for onboarding native ad slot 2."
+    },
+    "ob_native_3_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/4444444443" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for onboarding native ad slot 3."
+    },
+    "ob_native_4_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/4444444444" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for onboarding native ad slot 4."
+    },
+    "ob_inter_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/5555555555" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the onboarding interstitial."
+    },
+    "banner_all_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/6666666666" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the persistent bottom banner."
+    },
+    "banner_text2img_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/7777777771" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the Text-to-Image screen banner."
+    },
+    "banner_img2img_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/7777777772" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the Image-to-Image screen banner."
+    },
+    "banner_img2video_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/7777777773" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the Image-to-Video screen banner."
+    },
+    "banner_text2video_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/7777777774" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the Text-to-Video screen banner."
+    },
+    "banner_promo_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/7777777775" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the Promo Video screen banner."
+    },
+    "banner_bg_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/7777777776" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the BG Studio screen banner."
+    },
+    "banner_enhancer_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/7777777777" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the Photo Enhancer screen banner."
+    },
+    "native_home_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/8888888881" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the Home screen native ad."
+    },
+    "nativ_template_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/8888888882" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the Templates screen native ad."
+    },
+    "native_tools_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/8888888883" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the AI Tools screen native ad."
+    },
+    "native_history_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/8888888884" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the History screen native ad."
+    },
+    "native_compress_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/8888888885" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the Compress screen native ad."
+    },
+    "Inter_all_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/9999999991" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the general interstitial."
+    },
+    "inter_setting_language_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/9999999992" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the settings language-change interstitial."
+    },
+    "inter_ad_post_splash_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/9999999993" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the post-splash interstitial."
+    },
+    "app_open_ad_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/1010101010" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the App Open ad."
+    },
+    "reward_credits_adunit": {
+      "defaultValue": { "value": "ca-app-pub-XXXXXXXXXXXXXXXX/1212121212" },
+      "valueType": "STRING",
+      "description": "AdMob unit ID for the rewarded credits ad."
+    },
+    "banner_splash_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the splash banner placement."
+    },
+    "native_language_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the language-screen native ad."
+    },
+    "inter_language_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the language-screen interstitial."
+    },
+    "ob_native_1_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable onboarding native slot 1."
+    },
+    "ob_native_2_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable onboarding native slot 2."
+    },
+    "ob_native_3_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable onboarding native slot 3."
+    },
+    "ob_native_4_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable onboarding native slot 4."
+    },
+    "ob_inter_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the onboarding interstitial."
+    },
+    "banner_all_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the persistent bottom banner."
+    },
+    "banner_text2img_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the Text-to-Image banner."
+    },
+    "banner_img2img_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the Image-to-Image banner."
+    },
+    "banner_img2video_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the Image-to-Video banner."
+    },
+    "banner_text2video_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the Text-to-Video banner."
+    },
+    "banner_promo_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the Promo Video banner."
+    },
+    "banner_bg_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the BG Studio banner."
+    },
+    "banner_enhancer_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the Photo Enhancer banner."
+    },
+    "native_home_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the Home screen native ad."
+    },
+    "nativ_template_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the Templates screen native ad."
+    },
+    "native_tools_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the AI Tools screen native ad."
+    },
+    "native_history_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the History screen native ad."
+    },
+    "native_compress_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the Compress screen native ad."
+    },
+    "Inter_all_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the general interstitial."
+    },
+    "inter_setting_language_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the settings language interstitial."
+    },
+    "inter_ad_post_splash_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the post-splash interstitial."
+    },
+    "app_open_ad_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the App Open ad."
+    },
+    "reward_credits_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Enable / disable the rewarded credits ad."
+    },
+    "inter_trigger_count": {
+      "defaultValue": { "value": "3" },
+      "valueType": "NUMBER",
+      "description": "Feature triggers required before showing an interstitial."
+    },
+    "inter_cooldown_ms": {
+      "defaultValue": { "value": "30000" },
+      "valueType": "NUMBER",
+      "description": "Minimum ms between interstitial impressions."
+    },
+    "fullscreen_cooldown_ms": {
+      "defaultValue": { "value": "30000" },
+      "valueType": "NUMBER",
+      "description": "Minimum ms between any fullscreen ad."
+    },
+    "max_inter_per_session": {
+      "defaultValue": { "value": "20" },
+      "valueType": "NUMBER",
+      "description": "Hard cap on interstitials per app session."
+    },
+    "app_open_min_interval_ms": {
+      "defaultValue": { "value": "60000" },
+      "valueType": "NUMBER",
+      "description": "Minimum ms between App Open impressions."
+    },
+    "app_open_max_cache_ms": {
+      "defaultValue": { "value": "14400000" },
+      "valueType": "NUMBER",
+      "description": "Max age (ms) of a cached App Open ad before discard."
+    },
+    "splash_max_wait_ms": {
+      "defaultValue": { "value": "6000" },
+      "valueType": "NUMBER",
+      "description": "Max ms the splash screen waits for an ad to load."
+    },
+    "fullscreen_load_timeout_ms": {
+      "defaultValue": { "value": "8000" },
+      "valueType": "NUMBER",
+      "description": "Timeout (ms) when pre-loading fullscreen ads."
+    },
+    "reward_credits_amount": {
+      "defaultValue": { "value": "2" },
+      "valueType": "NUMBER",
+      "description": "Credits awarded after a successful rewarded ad view."
+    },
+    "reward_max_claims_per_day": {
+      "defaultValue": { "value": "3" },
+      "valueType": "NUMBER",
+      "description": "Max rewarded ad claims per calendar day per user."
+    },
+    "native_template_interval": {
+      "defaultValue": { "value": "3" },
+      "valueType": "NUMBER",
+      "description": "Show a native ad every N items in the templates list."
+    },
+    "native_history_interval": {
+      "defaultValue": { "value": "3" },
+      "valueType": "NUMBER",
+      "description": "Show a native ad every N items in the history list."
+    },
+    "ads_native_style_background_color": {
+      "defaultValue": { "value": "#FF0E172A" },
+      "valueType": "STRING",
+      "description": "Background color of native ad cards (ARGB hex)."
+    },
+    "ads_native_style_title_color": {
+      "defaultValue": { "value": "#FFFFFFFF" },
+      "valueType": "STRING",
+      "description": "Title text color of native ad cards (ARGB hex)."
+    },
+    "ads_native_style_body_color": {
+      "defaultValue": { "value": "#FF94A0B8" },
+      "valueType": "STRING",
+      "description": "Body text color of native ad cards (ARGB hex)."
+    },
+    "ads_native_style_cta_background_color": {
+      "defaultValue": { "value": "#FFD6FF2F" },
+      "valueType": "STRING",
+      "description": "CTA button background color of native ad cards (ARGB hex)."
+    },
+    "ads_native_style_cta_text_color": {
+      "defaultValue": { "value": "#FF081020" },
+      "valueType": "STRING",
+      "description": "CTA button text color of native ad cards (ARGB hex)."
+    },
+    "ads_native_style_corner_radius_dp": {
+      "defaultValue": { "value": "14" },
+      "valueType": "NUMBER",
+      "description": "Corner radius in dp for native ad cards."
+    },
+    "ads_native_style_padding_dp": {
+      "defaultValue": { "value": "14" },
+      "valueType": "NUMBER",
+      "description": "Inner padding in dp for native ad cards."
+    },
+    "ads_native_style_title_sp": {
+      "defaultValue": { "value": "15" },
+      "valueType": "NUMBER",
+      "description": "Title font size in sp for native ad cards."
+    },
+    "ads_native_style_body_sp": {
+      "defaultValue": { "value": "12" },
+      "valueType": "NUMBER",
+      "description": "Body font size in sp for native ad cards."
+    },
+    "ads_native_style_shimmer_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Show shimmer placeholder while native ads are loading."
+    }
   }
 }

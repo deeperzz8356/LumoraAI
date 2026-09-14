@@ -62,7 +62,7 @@ fun BannerAdView(
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val activity = context as? Activity ?: return
-    val unitId = config.unitIdFor(AdFormat.BANNER) ?: run {
+    val unitId = config.unitIdFor(placement) ?: run {
         AdsLogger.missingUnitId(placement)
         return
     }

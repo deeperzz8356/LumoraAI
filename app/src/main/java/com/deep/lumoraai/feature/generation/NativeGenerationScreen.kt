@@ -1,6 +1,5 @@
 package com.deep.lumoraai.feature.generation
 
-import android.app.AlertDialog
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
@@ -43,6 +42,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.PlacementBanner
+import com.deep.lumoraai.core.components.MediaViewerDialog
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.core.utils.CreditBalanceStore
@@ -53,12 +53,12 @@ import com.deep.lumoraai.databinding.GenerationResultItemBinding
 import com.deep.lumoraai.databinding.GenerationScreenBinding
 import com.deep.lumoraai.databinding.GenerationSourceItemBinding
 import com.deep.lumoraai.databinding.GenerationStyleItemBinding
-import com.deep.lumoraai.databinding.ProfileMediaViewerBinding
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Adjustments
 import compose.icons.tablericons.AspectRatio
 import compose.icons.tablericons.Bell
 import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.ChevronRight
 import compose.icons.tablericons.ChevronUp
 import compose.icons.tablericons.Palette
 import compose.icons.tablericons.Pencil
@@ -70,6 +70,12 @@ import java.io.File
 data class NativeGenerationSource(
     val id: String,
     val bitmap: Bitmap,
+)
+
+private data class NativeGeneratedMedia(
+    val path: String,
+    val mediaType: String,
+    val mimeType: String,
 )
 
 data class NativeGenerationConfig(
@@ -127,6 +133,7 @@ fun NativeGenerationScreen(
 ) {
     var showPrompt by remember(config.promptOptional) { mutableStateOf(!config.promptOptional || config.prompt.isNotBlank()) }
     var selectorsOpen by remember { mutableStateOf(false) }
+    var viewerMedia by remember { mutableStateOf<NativeGeneratedMedia?>(null) }
     val credits by CreditBalanceStore.balance.collectAsState()
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
@@ -163,6 +170,9 @@ fun NativeGenerationScreen(
                         onImprovePrompt = onImprovePrompt,
                         onGenerate = onGenerate,
                         onEditResult = onEditResult,
+                        onOpenMedia = { path, mediaType, mimeType ->
+                            viewerMedia = NativeGeneratedMedia(path, mediaType, mimeType)
+                        },
                         onDismissError = onDismissError,
                         onShowPromptChanged = { showPrompt = it },
                         onSelectorsOpenChanged = { selectorsOpen = it },
@@ -179,6 +189,15 @@ fun NativeGenerationScreen(
                 applyNavBarPadding = false,
             )
         }
+    }
+
+    viewerMedia?.let { media ->
+        MediaViewerDialog(
+            filePath = media.path,
+            mediaType = media.mediaType,
+            mimeType = media.mimeType,
+            onDismiss = { viewerMedia = null },
+        )
     }
 }
 
@@ -197,6 +216,7 @@ private fun bindGeneration(
     onImprovePrompt: () -> Unit,
     onGenerate: () -> Unit,
     onEditResult: () -> Unit,
+    onOpenMedia: (String, String, String) -> Unit,
     onDismissError: () -> Unit,
     onShowPromptChanged: (Boolean) -> Unit,
     onSelectorsOpenChanged: (Boolean) -> Unit,
@@ -219,7 +239,7 @@ private fun bindGeneration(
     bindMultiSources(binding, config)
     bindPrompt(binding, config, showPrompt, onPromptChanged, onImprovePrompt, onShowPromptChanged)
     bindLoading(binding, config)
-    bindResult(binding, config, scope, onEditResult)
+    bindResult(binding, config, scope, onEditResult, onOpenMedia)
     bindError(binding, error, onDismissError)
     bindBottomBar(binding, config, selectorsOpen, onAspectRatioChanged, onGenerate, onSelectorsOpenChanged)
     if (config.isGenerating || config.generatedPaths.isNotEmpty() || config.generatedPath != null) {
@@ -420,6 +440,7 @@ private fun bindResult(
     config: NativeGenerationConfig,
     scope: CoroutineScope,
     onEditResult: () -> Unit,
+    onOpenMedia: (String, String, String) -> Unit,
 ) {
     val paths = (config.generatedPaths.ifEmpty { config.generatedPath?.let(::listOf).orEmpty() }).distinct()
     binding.resultPanel.visibility = if (paths.isEmpty()) View.GONE else View.VISIBLE
@@ -431,7 +452,7 @@ private fun bindResult(
         val item = GenerationResultItemBinding.inflate(LayoutInflater.from(binding.root.context), binding.resultRow, false)
         bindMediaThumb(item.resultImage, path, isVideo, if (isVideo) R.drawable.style_digital else R.drawable.style_fantasy)
         item.playBadge.visibility = if (isVideo) View.VISIBLE else View.GONE
-        item.root.setOnClickListener { showMediaViewer(binding.root, path, config.mediaType, config.generatedMimeType) }
+        item.root.setOnClickListener { onOpenMedia(path, config.mediaType, config.generatedMimeType) }
         binding.resultRow.addView(item.root)
     }
     val selectedPath = paths.last()
@@ -483,7 +504,7 @@ private fun bindBottomBar(
     binding.summaryRatioDivider.visibility = if (sliderSummary.isNotBlank() && config.showRatio) View.VISIBLE else View.GONE
     bindTablerIcon(binding.summaryStyleIconHost, TablerIcons.Palette, Color.White)
     bindTablerIcon(binding.summaryRatioIconHost, TablerIcons.AspectRatio, Color.White)
-    bindTablerIcon(binding.summaryChevronIconHost, if (selectorsOpen) TablerIcons.ChevronUp else TablerIcons.ChevronDown, Color.White)
+    bindTablerIcon(binding.summaryChevronIconHost, if (selectorsOpen) TablerIcons.ChevronRight else TablerIcons.ChevronDown, Color.White)
     bindTablerIcon(binding.styleHeaderIconHost, TablerIcons.Palette, Color.White.copy(alpha = 0.78f))
     bindTablerIcon(binding.ratioHeaderIconHost, TablerIcons.AspectRatio, Color.White.copy(alpha = 0.78f))
     bindTablerIcon(binding.sliderHeaderIconHost, TablerIcons.Adjustments, Color.White.copy(alpha = 0.78f))
@@ -505,7 +526,7 @@ private fun bindBottomBar(
     binding.generateButton.text = if (config.isGenerating) {
         binding.root.context.getString(R.string.loading)
     } else {
-        config.generateButtonText ?: binding.root.context.getString(R.string.ui_generate_now)
+        config.generateButtonText ?: "${binding.root.context.getString(R.string.ui_generate_now)} ->"
     }
     binding.generateButton.setOnClickListener { if (config.generateEnabled && !config.isGenerating) onGenerate() }
     binding.creditNote.text = binding.root.context.getString(R.string.ui_credits_consumed_note, config.creditCost)
@@ -623,34 +644,6 @@ private fun bindRatios(
         item.ratioLabel.isClickable = false
         binding.ratioRow.addView(item.root, rowParams(binding.root, 84, 8))
     }
-}
-
-private fun showMediaViewer(anchor: View, path: String, mediaType: String, mimeType: String) {
-    val context = anchor.context
-    val viewer = ProfileMediaViewerBinding.inflate(LayoutInflater.from(context))
-    val file = File(path)
-    val video = isVideo(mediaType, mimeType)
-    viewer.mediaFrame.layoutParams = viewer.mediaFrame.layoutParams.apply {
-        height = (context.resources.displayMetrics.heightPixels * 0.62f).toInt().coerceAtMost(dp(anchor, 420))
-    }
-    viewer.mediaTitle.text = file.name.ifBlank { if (video) "Video" else "Image" }
-    viewer.missingText.visibility = if (file.exists()) View.GONE else View.VISIBLE
-    viewer.mediaImage.visibility = if (file.exists() && !video) View.VISIBLE else View.GONE
-    viewer.mediaVideo.visibility = if (file.exists() && video) View.VISIBLE else View.GONE
-    if (file.exists() && video) {
-        viewer.mediaVideo.setVideoURI(Uri.fromFile(file))
-        viewer.mediaVideo.setOnPreparedListener {
-            it.isLooping = true
-            viewer.mediaVideo.start()
-        }
-    } else if (file.exists()) {
-        viewer.mediaImage.setImageURI(Uri.fromFile(file))
-    }
-    val dialog = AlertDialog.Builder(context)
-        .setView(viewer.root)
-        .setNegativeButton(R.string.ui_cancel, null)
-        .show()
-    dialog.setOnDismissListener { viewer.mediaVideo.stopPlayback() }
 }
 
 private fun bindMediaThumb(image: android.widget.ImageView, path: String, isVideo: Boolean, fallbackRes: Int) {

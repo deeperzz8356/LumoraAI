@@ -83,12 +83,9 @@ class AdsManager @Inject constructor(
                 if (!task.isSuccessful) {
                     AdsLogger.w("AdsConfig: Remote Config fetch failed", task.exception)
                 }
-                val json = remoteConfig.getString(ADS_CONFIG_JSON_KEY)
-                if (json.isNotBlank()) {
-                    configStore.applyRemoteJson(json)
-                } else {
-                    AdsLogger.w("AdsConfig: Remote Config key $ADS_CONFIG_JSON_KEY is blank; ads require remote unit IDs")
-                }
+                // Read every parameter individually (flat layout) and build the
+                // config in one shot — no JSON blob needed.
+                configStore.applyRemoteConfig(remoteConfig)
                 onComplete()
             }
     }
@@ -265,6 +262,7 @@ class AdsManager @Inject constructor(
     fun clearNativeAds() = nativeManager.destroyAll()
 
     private companion object {
-        const val ADS_CONFIG_JSON_KEY = "ads_config_json"
+        // Legacy single-blob key kept for reference only — no longer used.
+        // const val ADS_CONFIG_JSON_KEY = "ads_config_json"
     }
 }

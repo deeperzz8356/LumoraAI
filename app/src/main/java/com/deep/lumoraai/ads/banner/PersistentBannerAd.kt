@@ -58,7 +58,7 @@ class PersistentBannerAd(
         }
         if (adView != null) return
 
-        val unitId = config.unitIdFor(AdFormat.BANNER) ?: run {
+        val unitId = config.unitIdFor(AdPlacement.BANNER_ALL) ?: run {
             AdsLogger.missingUnitId(AdPlacement.BANNER_ALL)
             updateState(false)
             return

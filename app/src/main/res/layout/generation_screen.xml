@@ -350,10 +350,47 @@
                     <LinearLayout android:id="@+id/resultRow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
                 </HorizontalScrollView>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
-                    <Button android:id="@+id/editResultButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_weight="1" android:background="@drawable/bg_generation_unselected" android:text="Edit" android:textColor="@color/white" android:textStyle="bold" />
-                    <Button android:id="@+id/downloadResultButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_marginStart="8dp" android:layout_weight="1" android:background="@drawable/bg_generation_unselected" android:text="@string/ui_download" android:textColor="@color/white" android:textStyle="bold" />
-                    <Button android:id="@+id/shareResultButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_marginStart="8dp" android:layout_weight="1" android:background="@drawable/bg_generation_unselected" android:text="@string/ui_share" android:textColor="@color/white" android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:id="@+id/editResultButton"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:background="@drawable/bg_generation_unselected"
+                        android:contentDescription="@string/ui_edit"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_lumora_edit"
+                        android:tint="@color/white" />
+
+                    <ImageButton
+                        android:id="@+id/downloadResultButton"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_generation_unselected"
+                        android:contentDescription="@string/ui_download"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_lumora_download"
+                        android:tint="@color/white" />
+
+                    <ImageButton
+                        android:id="@+id/shareResultButton"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_generation_unselected"
+                        android:contentDescription="@string/ui_share"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_lumora_share"
+                        android:tint="@color/white" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -385,19 +422,19 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_generation_selector_sheet"
             android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="12dp"
             android:visibility="gone">
 
             <LinearLayout
                 android:id="@+id/styleSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_generation_selector_sheet"
-                android:orientation="vertical"
-                android:paddingStart="12dp"
-                android:paddingTop="10dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="12dp">
+                android:orientation="vertical">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -442,13 +479,8 @@
                 android:id="@+id/ratioSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_generation_selector_sheet"
-                android:orientation="vertical"
-                android:paddingStart="12dp"
-                android:paddingTop="10dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="12dp">
+                android:layout_marginTop="18dp"
+                android:orientation="vertical">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -493,13 +525,8 @@
                 android:id="@+id/sliderSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_generation_selector_sheet"
+                android:layout_marginTop="18dp"
                 android:orientation="vertical"
-                android:paddingStart="12dp"
-                android:paddingTop="10dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="10dp"
                 android:visibility="gone">
 
                 <LinearLayout
@@ -581,7 +608,7 @@
                 android:id="@+id/durationSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="18dp"
                 android:orientation="vertical"
                 android:visibility="gone">
 
@@ -618,6 +645,12 @@
                     android:progressDrawable="@drawable/bg_photo_slider_progress"
                     android:thumb="@drawable/bg_photo_slider_thumb" />
             </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="14dp"
+                android:background="#16FFFFFF" />
         </LinearLayout>
 
         <LinearLayout

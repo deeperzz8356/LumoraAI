@@ -48,7 +48,7 @@ class NativeAdManager @Inject constructor(
         if (key in loading) return
         loading.add(key)
 
-        val unitId = config.unitIdFor(AdFormat.NATIVE) ?: run {
+        val unitId = config.unitIdFor(placement) ?: run {
             AdsLogger.missingUnitId(placement)
             onFailed()
             return

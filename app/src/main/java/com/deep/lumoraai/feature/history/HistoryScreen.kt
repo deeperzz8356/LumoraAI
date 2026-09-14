@@ -31,12 +31,9 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
@@ -65,7 +62,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -216,26 +212,40 @@ private fun HistoryGallery(
 private fun HistoryHeader(credits: Int, unreadCount: Int, onNavigate: (String) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("YOUR ARCHIVE", color = PremiumLime, fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp)
-            Text("History", color = PremiumText, fontSize = 30.sp, lineHeight = 33.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.8).sp, modifier = Modifier.semantics { heading() })
-            Text("Everything you've made, ready to revisit.", color = PremiumMuted, fontSize = 11.sp)
+            Text("History", color = PremiumText, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
         }
         Surface(
             onClick = { onNavigate(Screen.Credits.route) },
-            shape = RoundedCornerShape(12.dp),
-            color = PremiumLime.copy(alpha = 0.10f),
-            border = BorderStroke(1.dp, PremiumLime.copy(alpha = 0.24f)),
+            modifier = Modifier.widthIn(min = 90.dp).height(30.dp),
+            shape = RoundedCornerShape(50.dp),
+            color = Color.White.copy(alpha = 0.05f),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
         ) {
-            Row(Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Icon(Icons.Default.CreditCard, null, tint = PremiumLime, modifier = Modifier.size(17.dp))
-                Text(if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "∞" else credits.toString(), color = PremiumLime, fontWeight = FontWeight.Black)
+            Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                Icon(painterResource(R.drawable.ic_lumora_star), null, tint = PremiumLime, modifier = Modifier.size(15.dp))
+                Text(
+                    if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else credits.toString(),
+                    color = PremiumLime,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
             }
         }
-        Box {
-            IconButton(onClick = { onNavigate(Screen.Notifications.route) }, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.Notifications, "Notifications", tint = PremiumText) }
-            if (unreadCount > 0) Box(Modifier.align(Alignment.TopEnd).size(9.dp).clip(CircleShape).background(PremiumLime))
+        Surface(
+            onClick = { onNavigate(Screen.Notifications.route) },
+            modifier = Modifier.padding(start = 14.dp).size(38.dp),
+            shape = RoundedCornerShape(50.dp),
+            color = Color.White.copy(alpha = 0.05f),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(painterResource(R.drawable.ic_lumora_bell), "Open notifications", tint = PremiumText, modifier = Modifier.size(20.dp))
+                if (unreadCount > 0) Box(Modifier.align(Alignment.TopEnd).padding(top = 7.dp, end = 7.dp).size(8.dp).clip(CircleShape).background(PremiumLime))
+            }
         }
-        IconButton(onClick = { onNavigate(Screen.Profile.route) }, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.Person, "Profile", tint = PremiumText) }
     }
 }
 

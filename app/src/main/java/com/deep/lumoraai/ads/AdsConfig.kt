@@ -47,12 +47,8 @@ data class AdsConfig(
     // ---- Native styling (validated; malformed values fall back to defaults) ----
     val nativeStyle: NativeStyleConfig = NativeStyleConfig(),
 
-    // ---- Ad unit IDs, expected from Remote Config ----
-    val prodBannerUnitId: String? = null,
-    val prodNativeUnitId: String? = null,
-    val prodInterstitialUnitId: String? = null,
-    val prodRewardedUnitId: String? = null,
-    val prodAppOpenUnitId: String? = null,
+    // ---- Per-placement ad unit IDs, expected from Remote Config ----
+    val adUnitIds: Map<String, String> = emptyMap(),
 ) {
     fun formatEnabled(format: AdFormat): Boolean = adsEnabled && when (format) {
         AdFormat.BANNER -> bannerEnabled
@@ -65,19 +61,32 @@ data class AdsConfig(
     fun isPlacementEnabled(placement: AdPlacement): Boolean =
         placementEnabled[placement.key] ?: true
 
-    /** Resolve the effective ad unit ID. Missing Remote Config ID = no ad load. */
-    fun unitIdFor(format: AdFormat): String? =
-        when (format) {
-            AdFormat.BANNER -> prodBannerUnitId
-            AdFormat.NATIVE -> prodNativeUnitId
-            AdFormat.INTERSTITIAL -> prodInterstitialUnitId
-            AdFormat.REWARDED -> prodRewardedUnitId
-            AdFormat.APP_OPEN -> prodAppOpenUnitId
-        }?.takeIf { it.isNotBlank() }
+    /** Resolve the effective ad unit ID. Test mode uses official Google test IDs. */
+    fun unitIdFor(placement: AdPlacement): String? {
+        if (testMode) return TestIds.of(placement.format)
+        return adUnitIds[placement.key]?.takeIf { it.isNotBlank() }
+    }
 
     companion object {
         /** The immutable local default used before Remote Config resolves. */
         val DEFAULT = AdsConfig()
+    }
+}
+
+/** Google's official Android test ad unit IDs, centralized in one place. */
+object TestIds {
+    const val BANNER = "ca-app-pub-3940256099942544/9214589741"
+    const val NATIVE = "ca-app-pub-3940256099942544/2247696110"
+    const val INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712"
+    const val REWARDED = "ca-app-pub-3940256099942544/5224354917"
+    const val APP_OPEN = "ca-app-pub-3940256099942544/9257395921"
+
+    fun of(format: AdFormat): String = when (format) {
+        AdFormat.BANNER -> BANNER
+        AdFormat.NATIVE -> NATIVE
+        AdFormat.INTERSTITIAL -> INTERSTITIAL
+        AdFormat.REWARDED -> REWARDED
+        AdFormat.APP_OPEN -> APP_OPEN
     }
 }
 

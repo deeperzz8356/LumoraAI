@@ -94,6 +94,8 @@ fun CreditsScreen(
         onNavigate = onNavigate,
         modifier = modifier
     ) { binding ->
+        binding.scroll.isVerticalScrollBarEnabled = false
+        binding.scroll.overScrollMode = View.OVER_SCROLL_NEVER
         binding.setupTopBar("Reward Center", null, onBack = onBack)
         binding.resetContent()
         when (uiState) {
@@ -281,6 +283,7 @@ private fun LinearLayout.addHeroCard(
         textSize = 16f
         typeface = Typeface.DEFAULT_BOLD
         includeFontPadding = false
+        maxLines = 2
     }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
     top.addView(TextView(context).apply {
         text = "Subscribe Now"
@@ -292,7 +295,11 @@ private fun LinearLayout.addHeroCard(
         background = roundedGradient(intArrayOf(Color.rgb(154, 92, 245), Color.rgb(174, 88, 255)), dp(23))
         setOnClickListener { onSubscribe() }
         isClickable = true
-    }, LinearLayout.LayoutParams(dp(132), dp(46)))
+        minWidth = dp(118)
+        setPadding(dp(12), 0, dp(12), 0)
+    }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(46)).apply {
+        marginStart = dp(10)
+    })
     card.addView(top)
 
     card.addView(TextView(context).apply {
@@ -317,6 +324,7 @@ private fun LinearLayout.addHeroCard(
         typeface = Typeface.DEFAULT_BOLD
         includeFontPadding = false
         maxLines = 1
+        ellipsize = android.text.TextUtils.TruncateAt.END
     }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
     balanceRow.addView(TextView(context).apply {
         text = "Generate Now"
@@ -327,7 +335,11 @@ private fun LinearLayout.addHeroCard(
         background = pill(Color.rgb(214, 255, 47), dp(23))
         setOnClickListener { onGenerate() }
         isClickable = true
-    }, LinearLayout.LayoutParams(dp(116), dp(46)))
+        minWidth = dp(112)
+        setPadding(dp(12), 0, dp(12), 0)
+    }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(46)).apply {
+        marginStart = dp(8)
+    })
     card.addView(balanceRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
         topMargin = dp(16)
     })
@@ -419,6 +431,7 @@ private fun LinearLayout.addRewardRow(
         typeface = Typeface.DEFAULT_BOLD
         maxLines = 2
         includeFontPadding = false
+        ellipsize = android.text.TextUtils.TruncateAt.END
     }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
     titleLine.addView(TextView(context).apply {
         text = reward.rewardLabel
@@ -428,6 +441,8 @@ private fun LinearLayout.addRewardRow(
         typeface = Typeface.DEFAULT_BOLD
         background = pill(Color.rgb(28, 36, 56), dp(13), Color.rgb(53, 64, 88), dp(1))
         setPadding(dp(8), 0, dp(8), 0)
+        maxLines = 1
+        ellipsize = android.text.TextUtils.TruncateAt.END
     }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(22)).apply { marginStart = dp(7) })
     textCol.addView(titleLine)
     textCol.addView(TextView(context).apply {
@@ -451,7 +466,11 @@ private fun LinearLayout.addRewardRow(
         isClickable = isEnabled
         alpha = if (busy && reward.isAvailable) 0.55f else 1f
         setOnClickListener { if (isEnabled) onReward(reward.id) }
-    }, LinearLayout.LayoutParams(dp(96), dp(48)).apply { marginStart = dp(10) })
+        maxLines = 1
+        ellipsize = android.text.TextUtils.TruncateAt.END
+        minWidth = dp(82)
+        setPadding(dp(10), 0, dp(10), 0)
+    }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48)).apply { marginStart = dp(10) })
     addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
         topMargin = dp(8)
     })
