@@ -55,6 +55,7 @@ import com.deep.lumoraai.databinding.GenerationSourceItemBinding
 import com.deep.lumoraai.databinding.GenerationStyleItemBinding
 import com.deep.lumoraai.databinding.ProfileMediaViewerBinding
 import compose.icons.TablerIcons
+import compose.icons.tablericons.Adjustments
 import compose.icons.tablericons.AspectRatio
 import compose.icons.tablericons.Bell
 import compose.icons.tablericons.ChevronDown
@@ -483,6 +484,9 @@ private fun bindBottomBar(
     bindTablerIcon(binding.summaryStyleIconHost, TablerIcons.Palette, Color.White)
     bindTablerIcon(binding.summaryRatioIconHost, TablerIcons.AspectRatio, Color.White)
     bindTablerIcon(binding.summaryChevronIconHost, if (selectorsOpen) TablerIcons.ChevronUp else TablerIcons.ChevronDown, Color.White)
+    bindTablerIcon(binding.styleHeaderIconHost, TablerIcons.Palette, Color.White.copy(alpha = 0.78f))
+    bindTablerIcon(binding.ratioHeaderIconHost, TablerIcons.AspectRatio, Color.White.copy(alpha = 0.78f))
+    bindTablerIcon(binding.sliderHeaderIconHost, TablerIcons.Adjustments, Color.White.copy(alpha = 0.78f))
     val toggleSelectorsClick = View.OnClickListener { onSelectorsOpenChanged(!selectorsOpen) }
     binding.summaryRow.isClickable = hasSelectors
     binding.summaryRow.isFocusable = hasSelectors
@@ -519,6 +523,11 @@ private fun bindSlider(binding: GenerationScreenBinding, config: NativeGeneratio
     val progress = (currentValue * 100).toInt()
     binding.sliderTitle.text = label
     binding.sliderValue.text = "$progress%"
+    binding.sliderHint.text = if (label.equals("Image Similarity", ignoreCase = true)) {
+        "Higher values keep closer"
+    } else {
+        "Fine tune the output"
+    }
     binding.valueSlider.setOnSeekBarChangeListener(null)
     if (binding.valueSlider.progress != progress) binding.valueSlider.progress = progress
     binding.valueSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -560,6 +569,7 @@ private fun bindDuration(binding: GenerationScreenBinding, config: NativeGenerat
 }
 
 private fun bindStyles(binding: GenerationScreenBinding, config: NativeGenerationConfig) {
+    binding.styleSection.visibility = if (config.styleItems.isEmpty()) View.GONE else View.VISIBLE
     binding.styleTitle.visibility = if (config.styleItems.isEmpty()) View.GONE else View.VISIBLE
     binding.styleScroll.visibility = if (config.styleItems.isEmpty()) View.GONE else View.VISIBLE
     val signature = config.styleItems.joinToString("|") { "${it.labelRes}:${it.assetFileName}:${it.selected}" }
@@ -588,6 +598,7 @@ private fun bindRatios(
     config: NativeGenerationConfig,
     onAspectRatioChanged: (GenerationAspectRatio) -> Unit,
 ) {
+    binding.ratioSection.visibility = if (config.showRatio) View.VISIBLE else View.GONE
     binding.ratioTitle.visibility = if (config.showRatio) View.VISIBLE else View.GONE
     binding.ratioScroll.visibility = if (config.showRatio) View.VISIBLE else View.GONE
     val signature = if (config.showRatio) {
