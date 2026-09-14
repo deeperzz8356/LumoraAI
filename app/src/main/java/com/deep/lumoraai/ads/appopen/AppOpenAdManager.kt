@@ -35,7 +35,11 @@ class AppOpenAdManager @Inject constructor(
         if (isLoading) return
 
         isLoading = true
-        val unitId = config.unitIdFor(AdFormat.APP_OPEN)
+        val unitId = config.unitIdFor(AdFormat.APP_OPEN) ?: run {
+            AdsLogger.missingUnitId(AdPlacement.APP_OPEN)
+            isLoading = false
+            return
+        }
         AdsLogger.loadStarted(AdPlacement.APP_OPEN, unitId, config.testMode)
         AppOpenAd.load(
             context.applicationContext,

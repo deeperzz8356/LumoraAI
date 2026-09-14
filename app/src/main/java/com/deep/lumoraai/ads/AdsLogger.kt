@@ -52,6 +52,10 @@ object AdsLogger {
         w("LOAD fail  | ${placement.key} | ${placement.format} | code=$code | $message")
     }
 
+    fun missingUnitId(placement: AdPlacement) {
+        w("LOAD skip  | ${placement.key} | ${placement.format} | missing Remote Config ad unit id")
+    }
+
     fun showAttempt(placement: AdPlacement) = d("SHOW try   | ${placement.key} | ${placement.format}")
     fun showSuccess(placement: AdPlacement) = d("SHOW ok    | ${placement.key} | ${placement.format}")
     fun showFailure(placement: AdPlacement, message: String?) =

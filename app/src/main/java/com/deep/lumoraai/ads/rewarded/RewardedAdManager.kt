@@ -37,7 +37,11 @@ class RewardedAdManager @Inject constructor(
         if (rewarded != null || isLoading) return
 
         isLoading = true
-        val unitId = config.unitIdFor(AdFormat.REWARDED)
+        val unitId = config.unitIdFor(AdFormat.REWARDED) ?: run {
+            AdsLogger.missingUnitId(placement)
+            isLoading = false
+            return
+        }
         AdsLogger.loadStarted(placement, unitId, config.testMode)
         RewardedAd.load(
             context.applicationContext,

@@ -2,11 +2,14 @@ package com.deep.lumoraai.ads
 
 import android.app.Activity
 import android.content.Context
+import com.deep.lumoraai.BuildConfig
 import com.deep.lumoraai.ads.appopen.AppOpenAdManager
 import com.deep.lumoraai.ads.interstitial.InterstitialAdManager
 import com.deep.lumoraai.ads.nativead.NativeAdManager
 import com.deep.lumoraai.ads.rewarded.AdReward
 import com.deep.lumoraai.ads.rewarded.RewardedAdManager
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
 import java.util.concurrent.atomic.AtomicBoolean
@@ -39,9 +42,19 @@ class AdsManager @Inject constructor(
         if (!config.adsEnabled) return
         if (!initialized.compareAndSet(false, true)) return
         val appContext = context.applicationContext
+        fetchRemoteAdsConfig {
+            initializeMobileAds(appContext)
+        }
+    }
 
+    private fun initializeMobileAds(appContext: Context) {
+        val config = configStore.current
+        if (!config.adsEnabled) {
+            AdsLogger.d("MobileAds skipped: ads disabled by Remote Config")
+            return
+        }
         if (config.testMode) {
-            // Ensure only non-personalized/test-safe content during development.
+            // Diagnostics/policy mode only. Ad unit IDs still come from Remote Config.
             MobileAds.setRequestConfiguration(
                 RequestConfiguration.Builder()
                     .setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_G)
@@ -55,6 +68,29 @@ class AdsManager @Inject constructor(
             rewardedManager.preload(appContext)
             appOpenManager.preload(appContext)
         }
+    }
+
+    private fun fetchRemoteAdsConfig(onComplete: () -> Unit) {
+        val remoteConfig = FirebaseRemoteConfig.getInstance()
+        val minFetchSeconds = if (BuildConfig.DEBUG) 0L else 3_600L
+        remoteConfig.setConfigSettingsAsync(
+            FirebaseRemoteConfigSettings.Builder()
+                .setMinimumFetchIntervalInSeconds(minFetchSeconds)
+                .build()
+        )
+        remoteConfig.fetchAndActivate()
+            .addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    AdsLogger.w("AdsConfig: Remote Config fetch failed", task.exception)
+                }
+                val json = remoteConfig.getString(ADS_CONFIG_JSON_KEY)
+                if (json.isNotBlank()) {
+                    configStore.applyRemoteJson(json)
+                } else {
+                    AdsLogger.w("AdsConfig: Remote Config key $ADS_CONFIG_JSON_KEY is blank; ads require remote unit IDs")
+                }
+                onComplete()
+            }
     }
 
     fun isInitialized(): Boolean = initialized.get()
@@ -227,4 +263,8 @@ class AdsManager @Inject constructor(
     // ---- Native ----
 
     fun clearNativeAds() = nativeManager.destroyAll()
+
+    private companion object {
+        const val ADS_CONFIG_JSON_KEY = "ads_config_json"
+    }
 }

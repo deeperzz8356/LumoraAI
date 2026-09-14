@@ -58,10 +58,15 @@ class PersistentBannerAd(
         }
         if (adView != null) return
 
+        val unitId = config.unitIdFor(AdFormat.BANNER) ?: run {
+            AdsLogger.missingUnitId(AdPlacement.BANNER_ALL)
+            updateState(false)
+            return
+        }
         val resolvedSize = this.adSize
         val view = AdView(activityContext).apply {
             setAdSize(resolvedSize)
-            adUnitId = config.unitIdFor(AdFormat.BANNER)
+            adUnitId = unitId
             adListener = object : AdListener() {
                 override fun onAdLoaded() {
                     AdsLogger.showSuccess(AdPlacement.BANNER_ALL)
@@ -85,7 +90,7 @@ class PersistentBannerAd(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
             ).apply { gravity = android.view.Gravity.CENTER },
         )
-        AdsLogger.loadStarted(AdPlacement.BANNER_ALL, view.adUnitId ?: "", config.testMode)
+        AdsLogger.loadStarted(AdPlacement.BANNER_ALL, view.adUnitId, config.testMode)
         view.loadAd(AdRequest.Builder().build())
     }
 

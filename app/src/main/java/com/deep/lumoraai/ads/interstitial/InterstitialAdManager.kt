@@ -35,7 +35,11 @@ class InterstitialAdManager @Inject constructor(
         if (interstitial != null || isLoading) return
 
         isLoading = true
-        val unitId = config.unitIdFor(AdFormat.INTERSTITIAL)
+        val unitId = config.unitIdFor(AdFormat.INTERSTITIAL) ?: run {
+            AdsLogger.missingUnitId(placement)
+            isLoading = false
+            return
+        }
         AdsLogger.loadStarted(placement, unitId, config.testMode)
         InterstitialAd.load(
             context.applicationContext,

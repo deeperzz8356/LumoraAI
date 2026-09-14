@@ -1,5 +1,8 @@
 package com.deep.lumoraai.ads
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
@@ -8,10 +11,10 @@ import javax.inject.Singleton
 /**
  * Holds the live [AdsConfig] snapshot.
  *
- * Starts from mandatory local defaults so the app is fully functional with no
- * network/Firebase. A production Remote Config layer can call [applyRemoteJson]
- * with the fetched JSON; parsing is fully defensive so malformed/partial/absent
- * values simply keep the previous (or default) value — never a crash.
+ * Starts from safe local defaults with no bundled ad unit IDs. Firebase Remote
+ * Config should call [applyRemoteJson] with the fetched JSON before ads load;
+ * parsing is fully defensive so malformed/partial/absent values simply keep the
+ * previous (or default) value — never a crash.
  *
  * This is the ONLY place that knows the Remote Config JSON shape, keeping the
  * rest of the ads layer decoupled from Firebase.
@@ -22,6 +25,9 @@ class AdsConfigStore @Inject constructor() {
     private val ref = AtomicReference(AdsConfig.DEFAULT)
 
     val current: AdsConfig get() = ref.get()
+
+    var version by mutableIntStateOf(0)
+        private set
 
     /**
      * Apply a Remote Config JSON payload on top of the current config. Any field
@@ -47,6 +53,7 @@ class AdsConfigStore @Inject constructor() {
             globalFullScreenCooldownMs = parsed.optLongIn("fullscreen_cooldown_ms", 0, 600_000, base.globalFullScreenCooldownMs),
             maxInterstitialsPerSession = parsed.optIntIn("max_inter_per_session", 0, 200, base.maxInterstitialsPerSession),
             appOpenMinIntervalMs = parsed.optLongIn("app_open_min_interval_ms", 0, 3_600_000, base.appOpenMinIntervalMs),
+            appOpenMaxCacheMs = parsed.optLongIn("app_open_max_cache_ms", 0, 14_400_000, base.appOpenMaxCacheMs),
             splashMaxWaitMs = parsed.optLongIn("splash_max_wait_ms", 0, 20_000, base.splashMaxWaitMs),
             fullScreenLoadTimeoutMs = parsed.optLongIn("fullscreen_load_timeout_ms", 1_000, 30_000, base.fullScreenLoadTimeoutMs),
             rewardCreditsAmount = parsed.optIntIn("reward_credits_amount", 1, 1_000, base.rewardCreditsAmount),
@@ -61,6 +68,7 @@ class AdsConfigStore @Inject constructor() {
             prodAppOpenUnitId = parsed.optStringOrNull("ads_app_open_unit_id") ?: base.prodAppOpenUnitId,
         )
         ref.set(updated)
+        version += 1
         AdsLogger.d("AdsConfig updated from remote (testMode=${updated.testMode}, adsEnabled=${updated.adsEnabled})")
     }
 

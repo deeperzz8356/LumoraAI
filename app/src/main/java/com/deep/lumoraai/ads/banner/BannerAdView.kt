@@ -55,20 +55,24 @@ fun BannerAdView(
     modifier: Modifier = Modifier,
     applyNavBarPadding: Boolean = true,
 ) {
+    val configVersion = configStore.version
     val config = configStore.current
     if (!config.formatEnabled(AdFormat.BANNER) || !config.isPlacementEnabled(placement)) return
 
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val activity = context as? Activity ?: return
-    val unitId = config.unitIdFor(AdFormat.BANNER)
+    val unitId = config.unitIdFor(AdFormat.BANNER) ?: run {
+        AdsLogger.missingUnitId(placement)
+        return
+    }
 
     val adSize = remember(configuration.screenWidthDp) {
         AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, configuration.screenWidthDp)
     }
 
     // load state: null=loading, true=loaded, false=failed(collapse)
-    var loaded by remember(unitId, adSize) { mutableStateOf<Boolean?>(null) }
+    var loaded by remember(configVersion, unitId, adSize) { mutableStateOf<Boolean?>(null) }
 
     val heightModifier = Modifier.height(adSize.height.dp.coerceAtLeastZero())
     val containerModifier = modifier
@@ -81,7 +85,7 @@ fun BannerAdView(
             AdShimmerBox(modifier = Modifier.fillMaxWidth().then(heightModifier))
         }
 
-        val adView = remember(unitId, adSize) {
+        val adView = remember(configVersion, unitId, adSize) {
             AdView(context).apply {
                 setAdSize(adSize)
                 adUnitId = unitId

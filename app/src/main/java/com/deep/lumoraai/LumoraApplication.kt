@@ -43,8 +43,7 @@ class LumoraApplication : Application() {
         // Initialize notification lifecycle handler
         notificationLifecycleHandler.initialize()
 
-        // Initialize the Google Mobile Ads SDK (uses Google's sample App ID and
-        // test ad units until real AdMob values are wired in).
+        // Initialize Google Mobile Ads after fetching ad unit IDs from Remote Config.
         adsManager.initialize(this)
 
         // Observe foreground/background transitions to show App Open ads.

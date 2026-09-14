@@ -31,11 +31,11 @@
         android:theme="@style/Theme.LumoraAI">
 
         <!-- Google Mobile Ads (AdMob) App ID.
-             This is Google's official SAMPLE App ID for development/testing.
-             Replace with the real AdMob App ID before publishing. -->
+             Set ADMOB_APP_ID in local.properties/build config. Ad unit IDs
+             are supplied by Firebase Remote Config. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="${ADMOB_APP_ID}" />
 
         <!-- Optimize ad loading: defer SDK measurement init so app start isn't
              blocked; MobileAds.initialize() is still called explicitly. -->
