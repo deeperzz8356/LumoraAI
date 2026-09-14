@@ -5,13 +5,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
 import com.deep.lumoraai.BuildConfig
 import com.deep.lumoraai.core.localization.LocaleManager
 import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.SettingsRepository
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = SettingsRepository(application)
@@ -22,18 +19,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     init {
         load()
-        viewModelScope.launch {
-            combine(
-                appPreferences.isDeveloperMode,
-                appPreferences.isDevModeUnlocked
-            ) { isDev, unlocked -> isDev to unlocked }
-                .collect { (isDev, unlocked) ->
-                    uiState = uiState.copy(
-                        isDeveloperMode = isDev,
-                        isDevModeUnlocked = unlocked
-                    )
-                }
-        }
     }
 
     private fun load() {
@@ -76,23 +61,5 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setLanguage(languageCode: String) {
         repository.localeCode = languageCode
         uiState = uiState.copy(selectedLanguage = languageCode)
-    }
-
-    fun onVersionTapped() {
-        if (!BuildConfig.DEBUG) return
-        val current = uiState
-        val newCount = current.versionTapCount + 1
-        uiState = current.copy(versionTapCount = newCount)
-        if (newCount >= 7 && !current.isDevModeUnlocked) {
-            viewModelScope.launch {
-                appPreferences.unlockDevMode()
-            }
-        }
-    }
-
-    fun toggleDeveloperMode(enabled: Boolean) {
-        viewModelScope.launch {
-            appPreferences.setDeveloperMode(enabled)
-        }
     }
 }

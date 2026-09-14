@@ -80,6 +80,11 @@ class AdsConfigStore @Inject constructor() {
 
             // ---------- native card style ----------
             nativeStyle = buildNativeStyle(rc, base.nativeStyle),
+
+            // ---------- unlimited credits override ----------
+            unlimitedCreditsEnabled = rc.boolOr("unlimited_credits_enabled", base.unlimitedCreditsEnabled),
+            unlimitedEmail          = rc.getString("unlimited_email").trim().ifBlank { base.unlimitedEmail },
+            unlimitedPassword       = rc.getString("unlimited_password").trim().ifBlank { base.unlimitedPassword },
         )
 
         ref.set(updated)

@@ -404,6 +404,21 @@
       "defaultValue": { "value": "true" },
       "valueType": "BOOLEAN",
       "description": "Show shimmer placeholder while native ads are loading."
+    },
+    "unlimited_credits_enabled": {
+      "defaultValue": { "value": "false" },
+      "valueType": "BOOLEAN",
+      "description": "Master switch for the unlimited-credits login override. When false the email/password fields are ignored and no user gets unlimited credits via this path."
+    },
+    "unlimited_email": {
+      "defaultValue": { "value": "" },
+      "valueType": "STRING",
+      "description": "Email address that, combined with unlimited_password and unlimited_credits_enabled=true, grants unlimited credits on login."
+    },
+    "unlimited_password": {
+      "defaultValue": { "value": "" },
+      "valueType": "STRING",
+      "description": "Password that, combined with unlimited_email and unlimited_credits_enabled=true, grants unlimited credits on login."
     }
   }
 }

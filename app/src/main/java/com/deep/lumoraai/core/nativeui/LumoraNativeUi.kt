@@ -34,7 +34,7 @@ fun LumoraXmlScreen(
     selectedTab: String? = null,
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier,
-    bind: (NativeScreenShellBinding) -> Unit,
+    content: (NativeScreenShellBinding) -> Unit,
 ) {
     val hasBottomNav = selectedTab != null
     Scaffold(
@@ -43,7 +43,7 @@ fun LumoraXmlScreen(
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
             if (hasBottomNav) {
-                BottomNavigationBar(emptyList(), selectedTab!!, onNavigate)
+                BottomNavigationBar(emptyList(), selectedTab, onNavigate)
             }
         }
     ) { padding ->
@@ -53,16 +53,28 @@ fun LumoraXmlScreen(
                 .background(ComposeColor(0xFF081020))
                 .statusBarsPadding()
                 .then(
-                    // When there is no bottom nav bar, consume the system
-                    // navigation bar inset here so content doesn't scroll
-                    // behind the gesture bar / 3-button nav on those screens.
                     if (!hasBottomNav) Modifier.navigationBarsPadding() else Modifier
                 )
                 .padding(padding)
         ) {
             AndroidView(
-                factory = { NativeScreenShellBinding.inflate(LayoutInflater.from(it)).root },
-                update = { bind(NativeScreenShellBinding.bind(it)) },
+                factory = { context ->
+                    // Inflate once — store the typed binding in the tag so
+                    // update() can retrieve it without re-binding every frame.
+                    val binding = NativeScreenShellBinding.inflate(LayoutInflater.from(context))
+                    binding.scroll.apply {
+                        isFillViewport = true
+                        isVerticalScrollBarEnabled = false
+                        overScrollMode = View.OVER_SCROLL_IF_CONTENT_SCROLLS
+                    }
+                    binding.root.tag = binding
+                    binding.root
+                },
+                update = { root ->
+                    // Retrieve the cached binding — no re-inflation on recompose.
+                    val binding = root.tag as NativeScreenShellBinding
+                    content(binding)
+                },
                 modifier = Modifier.fillMaxSize()
             )
         }

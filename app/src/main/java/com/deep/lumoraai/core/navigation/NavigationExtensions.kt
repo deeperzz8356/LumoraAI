@@ -56,6 +56,10 @@ fun textToVideoRoute(prompt: String? = null): String =
         }
     }
 
+fun imageToImageRoute(): String = Screen.ImageToImage.route
+
+fun imageToVideoRoute(): String = Screen.ImageToVideo.route
+
 fun promoVideoRoute(prompt: String? = null): String =
     buildString {
         append(Screen.PromoVideo.route)

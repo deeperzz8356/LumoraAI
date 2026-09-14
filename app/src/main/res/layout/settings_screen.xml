@@ -127,37 +127,10 @@
     </LinearLayout>
 
     <TextView
-        style="@style/LumoraSettingsSection"
-        android:text="Developer" />
-
-    <LinearLayout
-        android:id="@+id/developerRow"
-        style="@style/LumoraSettingsRow"
-        android:layout_height="84dp">
-
-        <LinearLayout style="@style/LumoraSettingsTextColumn">
-            <TextView
-                style="@style/LumoraSettingsRowTitle"
-                android:text="Developer Mode" />
-            <TextView
-                style="@style/LumoraSettingsRowSubtitle"
-                android:text="Unlimited trial - no restrictions" />
-        </LinearLayout>
-
-        <Switch
-            android:id="@+id/developerSwitch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp" />
-    </LinearLayout>
-
-    <TextView
         android:id="@+id/versionText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:clickable="true"
-        android:focusable="true"
         android:gravity="center"
         android:includeFontPadding="false"
         android:textColor="#97A1B7"

@@ -49,6 +49,14 @@ data class AdsConfig(
 
     // ---- Per-placement ad unit IDs, expected from Remote Config ----
     val adUnitIds: Map<String, String> = emptyMap(),
+
+    // ---- Unlimited credits override (remote-controlled tester access) ----
+    /** Master switch for the unlimited-credits login override. */
+    val unlimitedCreditsEnabled: Boolean = false,
+    /** Email that triggers unlimited credits when matched at login. */
+    val unlimitedEmail: String = "",
+    /** Password that triggers unlimited credits when matched at login. */
+    val unlimitedPassword: String = "",
 ) {
     fun formatEnabled(format: AdFormat): Boolean = adsEnabled && when (format) {
         AdFormat.BANNER -> bannerEnabled
