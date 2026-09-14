@@ -61,7 +61,6 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
 
     fun loadImage(uri: Uri) {
         viewModelScope.launch {
-            uiState = uiState.copy(isEnhancing = true, error = null, savedPath = null)
             val decoded = withContext(Dispatchers.IO) {
                 runCatching { decodeBitmap(uri) }.getOrNull()
             }
@@ -104,12 +103,14 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun enhance() {
+        if (uiState.isEnhancing) return
         val original = uiState.originalBitmap
         if (original == null) {
             uiState = uiState.copy(error = "Upload an image first.")
             return
         }
 
+        uiState = uiState.copy(isEnhancing = true)
         val taskId = UUID.randomUUID().toString()
         
         // Send task start notification
@@ -122,6 +123,11 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
         }
 
         viewModelScope.launch {
+            val charge = com.deep.lumoraai.data.repository.GenerationRepository().deductForAction("photo_enhance", taskId)
+            if (charge.isFailure) {
+                uiState = uiState.copy(isEnhancing = false, error = charge.exceptionOrNull()?.message ?: "Temporarily unavailable.")
+                return@launch
+            }
             uiState = uiState.copy(isEnhancing = true, error = null, savedPath = null)
             val result = withContext(Dispatchers.Default) {
                 runCatching {
@@ -148,6 +154,7 @@ class PhotoEnhanceViewModel(application: Application) : AndroidViewModel(applica
                 }
             }
 
+            if (result.isFailure) com.deep.lumoraai.data.repository.GenerationRepository().refundTool(taskId)
             uiState = result.fold(
                 onSuccess = { (bitmapAndPath, historyId) ->
                     val (bitmap, path) = bitmapAndPath

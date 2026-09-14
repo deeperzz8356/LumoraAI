@@ -27,7 +27,7 @@ import com.deep.lumoraai.feature.templates.model.TemplateSection
 
 internal class TemplateSectionsAdapter(
     val categoryId: String,
-    private val sections: List<TemplateSection>,
+    val sections: List<TemplateSection>,
     private val adRowInterval: Int,
     private val scrollMemory: TemplateScrollMemory,
     private val onTemplateClick: (TemplateListItem) -> Unit,
@@ -296,15 +296,15 @@ internal class TemplateCardAdapter(
             binding.ideaTitle.text = item.title
             binding.ideaDescription.text = "${item.subtitle}\n\nTap to create"
             binding.ideaPlaceholder.visibility = View.VISIBLE
-            binding.videoPreview.bind(item.assetFileName.takeIf { it.endsWith(".mp4", true) })
+            binding.videoPreview.bind((item.mediaUrl ?: item.assetFileName).takeIf { item.assetFileName.endsWith(".mp4", true) })
             binding.preview.setImageDrawable(null)
-            val preview = item.previewAssetFileName
+            val preview = item.previewUrl ?: item.previewAssetFileName
             if (preview.isNullOrBlank()) {
                 binding.preview.visibility = View.INVISIBLE
                 return
             }
             binding.preview.visibility = View.VISIBLE
-            binding.preview.load("file:///android_asset/templates/${Uri.encode(preview)}") {
+            binding.preview.load(if (preview.startsWith("https://")) preview else "file:///android_asset/templates/${Uri.encode(preview)}") {
                 crossfade(true)
                 placeholder(null)
                 error(null)

@@ -40,6 +40,7 @@ fun ImageToImageScreen(
     }
     NativeGenerationScreen(
         config = NativeGenerationConfig(
+            toolId = "image_to_image",
             title = stringResource(com.deep.lumoraai.R.string.ui_image_2_image),
             promptHint = "Describe the image you want to generate...",
             promptOptional = true,

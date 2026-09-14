@@ -38,6 +38,7 @@ fun ImageToVideoScreen(
     }
     NativeGenerationScreen(
         config = NativeGenerationConfig(
+            toolId = "image_to_video",
             title = stringResource(com.deep.lumoraai.R.string.ui_image_2_video),
             promptHint = "Describe the video you want to generate...",
             promptOptional = true,

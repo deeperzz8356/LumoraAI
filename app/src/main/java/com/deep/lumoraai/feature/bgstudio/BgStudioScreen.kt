@@ -40,6 +40,7 @@ fun BgStudioScreen(
 
     NativeGenerationScreen(
         config = NativeGenerationConfig(
+            toolId = if (uiState.mode == BgStudioMode.Remove) "background_removal" else "background_replace",
             title = "BG Studio",
             promptHint = "",
             promptOptional = uiState.mode == BgStudioMode.Remove,

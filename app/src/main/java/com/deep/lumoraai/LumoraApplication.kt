@@ -27,6 +27,8 @@ class LumoraApplication : Application() {
     @Inject
     lateinit var appOpenLifecycleObserver: AppOpenLifecycleObserver
 
+    @Inject lateinit var remoteSettings: com.deep.lumoraai.core.restrictions.RemoteSettings
+
     override fun onCreate() {
         super.onCreate()
 
@@ -44,7 +46,7 @@ class LumoraApplication : Application() {
         notificationLifecycleHandler.initialize()
 
         // Initialize Google Mobile Ads after fetching ad unit IDs from Remote Config.
-        adsManager.initialize(this)
+        remoteSettings.initialize(this)
 
         // Observe foreground/background transitions to show App Open ads.
         appOpenLifecycleObserver.register(this)

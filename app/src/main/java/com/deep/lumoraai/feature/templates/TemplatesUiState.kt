@@ -9,7 +9,8 @@ sealed interface TemplatesUiState {
 
     data class Success(
         val categories: List<TemplateCategoryData>,
-        val credits: Int = 0
+        val credits: Int = 0,
+        val offlineMessage: String? = null,
     ) : TemplatesUiState {
         fun category(id: String): TemplateCategoryData? = categories.firstOrNull { it.id == id }
 

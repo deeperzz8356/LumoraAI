@@ -1,0 +1,158 @@
+{
+  "parameters": {
+    "tool_text_to_image_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new text_to_image operations. Existing jobs finish."
+    },
+    "tool_text_to_image_credit_cost": {
+      "defaultValue": {
+        "value": "1"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per text_to_image output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_image_to_image_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new image_to_image operations. Existing jobs finish."
+    },
+    "tool_image_to_image_credit_cost": {
+      "defaultValue": {
+        "value": "1"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per image_to_image output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_logo_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new logo operations. Existing jobs finish."
+    },
+    "tool_logo_credit_cost": {
+      "defaultValue": {
+        "value": "1"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per logo output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_avatar_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new avatar operations. Existing jobs finish."
+    },
+    "tool_avatar_credit_cost": {
+      "defaultValue": {
+        "value": "1"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per avatar output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_text_to_video_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new text_to_video operations. Existing jobs finish."
+    },
+    "tool_text_to_video_credit_cost": {
+      "defaultValue": {
+        "value": "5"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per text_to_video output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_image_to_video_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new image_to_video operations. Existing jobs finish."
+    },
+    "tool_image_to_video_credit_cost": {
+      "defaultValue": {
+        "value": "5"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per image_to_video output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_promo_video_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new promo_video operations. Existing jobs finish."
+    },
+    "tool_promo_video_credit_cost": {
+      "defaultValue": {
+        "value": "5"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per promo_video output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_background_removal_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new background_removal operations. Existing jobs finish."
+    },
+    "tool_background_removal_credit_cost": {
+      "defaultValue": {
+        "value": "1"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per background_removal output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_background_replace_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new background_replace operations. Existing jobs finish."
+    },
+    "tool_background_replace_credit_cost": {
+      "defaultValue": {
+        "value": "1"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per background_replace output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_photo_enhance_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new photo_enhance operations. Existing jobs finish."
+    },
+    "tool_photo_enhance_credit_cost": {
+      "defaultValue": {
+        "value": "0"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per photo_enhance output. Integer 0\u2013100000; do not add audience conditions."
+    },
+    "tool_compress_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Allow new compress operations. Existing jobs finish."
+    },
+    "tool_compress_credit_cost": {
+      "defaultValue": {
+        "value": "0"
+      },
+      "valueType": "NUMBER",
+      "description": "Global credits per compress output. Integer 0\u2013100000; do not add audience conditions."
+    }
+  }
+}

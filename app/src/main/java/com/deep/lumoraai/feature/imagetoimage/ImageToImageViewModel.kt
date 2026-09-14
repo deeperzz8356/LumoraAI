@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.imagetoimage
 
+import com.deep.lumoraai.core.restrictions.ToolPolicyStore
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -138,10 +139,10 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                val creditCost = GenerationGate.imageCreditCost(sources.size, 1)
+                val creditCost = ToolPolicyStore.cost("image_to_image")
                 // creditCost now equals the requested output count regardless of
                 // how many references were uploaded.
-                if (!GenerationGate.canGenerateImage(credits, isDev, creditCost)) {
+                if (!(isDev || credits >= ToolPolicyStore.cost("image_to_image"))) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
@@ -224,6 +225,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             )
             val progressJob = launchProgressJob(jobTitle, outputIndex + 1, requestedGenerations)
             val result = generationRepository.generateImage(
+                    tool = "image_to_image",
                 prompt = prompt,
                 style = uiState.selectedStyle.apiStyle,
                 width = uiState.aspectRatio.width,

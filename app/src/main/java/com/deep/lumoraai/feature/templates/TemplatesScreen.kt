@@ -45,6 +45,7 @@ private const val Background = 0xFF081020
 @Composable
 fun TemplatesScreen(
     uiState: TemplatesUiState,
+    onRetry: () -> Unit = {},
     onNext: () -> Unit,
     onNavigate: (String) -> Unit = {},
     unreadCount: Int = 0,
@@ -71,6 +72,13 @@ fun TemplatesScreen(
                 .background(ComposeColor(Background))
                 .padding(padding)
         ) {
+            if (uiState is TemplatesUiState.Success && (uiState.offlineMessage != null || uiState.category(selectedCategoryId)?.sections?.isEmpty() == true)) {
+                androidx.compose.material3.Text(uiState.offlineMessage ?: "Connect to load templates in this category.", modifier = Modifier.padding(16.dp), color = ComposeColor.White)
+                androidx.compose.material3.TextButton(onClick = onRetry) { androidx.compose.material3.Text("Refresh library") }
+            }
+            if (uiState is TemplatesUiState.Error) {
+                androidx.compose.material3.TextButton(onClick = onRetry) { androidx.compose.material3.Text("Try again") }
+            }
             AndroidView(
                 factory = { TemplatesScreenBinding.inflate(LayoutInflater.from(it)).root },
                 update = { root ->
@@ -152,7 +160,7 @@ private fun bindTemplates(
                     binding.sectionsList.layoutManager = it
                 }
             val currentAdapter = binding.sectionsList.adapter as? TemplateSectionsAdapter
-            if (currentAdapter?.categoryId != category.id) {
+            if (currentAdapter?.categoryId != category.id || currentAdapter.sections != category.sections) {
                 if (currentAdapter != null) {
                     scrollMemory.saveCategoryPosition(
                         currentAdapter.categoryId,

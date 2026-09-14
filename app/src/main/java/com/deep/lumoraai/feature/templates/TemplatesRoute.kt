@@ -17,6 +17,7 @@ fun TemplatesRoute(
     val unreadCount by notificationViewModel.unreadCount.collectAsState()
 
     TemplatesScreen(
+        onRetry = viewModel::refreshTemplates,
         uiState = viewModel.uiState,
         onNext = onNext,
         onNavigate = onNavigate,

@@ -41,6 +41,7 @@ fun TextToVideoScreen(
     }
     NativeGenerationScreen(
         config = NativeGenerationConfig(
+            toolId = if (isPromo) "promo_video" else "text_to_video",
             title = uiState.title,
             promptHint = uiState.promptHint,
             promptOptional = false,

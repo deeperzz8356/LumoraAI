@@ -23,7 +23,7 @@ class TemplatesViewModel(application: Application) : AndroidViewModel(applicatio
     private val generationRepository = GenerationRepository()
     private val appPreferences = AppPreferencesRepository.getInstance(application)
 
-    var uiState: TemplatesUiState by mutableStateOf(loadTemplates())
+    var uiState: TemplatesUiState by mutableStateOf(TemplatesUiState.Loading)
         private set
 
     var selectedCategoryId: String by mutableStateOf(TemplateCategory.IMAGE.id)
@@ -31,74 +31,38 @@ class TemplatesViewModel(application: Application) : AndroidViewModel(applicatio
 
     val scrollMemory = TemplateScrollMemory()
 
-    init {
-        loadCredits()
-    }
+
 
     fun selectCategory(categoryId: String) {
         val state = uiState as? TemplatesUiState.Success ?: return
         if (state.category(categoryId) != null) selectedCategoryId = categoryId
     }
 
-    private fun loadTemplates(): TemplatesUiState.Success =
-        try {
-            val jsonText = getApplication<Application>()
-                .assets
-                .open("templates/template.json")
-                .bufferedReader()
-                .use { it.readText() }
-            val categoryArray = JSONObject(jsonText).getJSONArray("categories")
-            val categories = buildList {
-                for (categoryIndex in 0 until categoryArray.length()) {
-                    val category = categoryArray.getJSONObject(categoryIndex)
-                    val sectionArray = category.getJSONArray("sections")
-                    val sections = buildList {
-                        for (sectionIndex in 0 until sectionArray.length()) {
-                            val section = sectionArray.getJSONObject(sectionIndex)
-                            val templateArray = section.getJSONArray("templates")
-                            val templates = buildList {
-                                for (templateIndex in 0 until templateArray.length()) {
-                                    val template = templateArray.getJSONObject(templateIndex)
-                                    val action = runCatching {
-                                        TemplateAction.valueOf(template.getString("action"))
-                                    }.getOrNull() ?: continue
-                                    add(
-                                        TemplateListItem(
-                                            id = template.getString("id"),
-                                            title = template.getString("title"),
-                                            subtitle = template.optString("subtitle"),
-                                            prompt = template.getString("prompt"),
-                                            assetFileName = template.optString("assetFileName"),
-                                            previewAssetFileName = template
-                                                .optString("previewAssetFileName")
-                                                .takeIf { it.isNotBlank() },
-                                            action = action
-                                        )
-                                    )
-                                }
-                            }
-                            add(
-                                TemplateSection(
-                                    id = section.getString("id"),
-                                    title = section.getString("title"),
-                                    templates = templates
-                                )
-                            )
-                        }
-                    }
-                    add(
-                        TemplateCategoryData(
-                            id = category.getString("id"),
-                            title = category.getString("title"),
-                            sections = sections
-                        )
-                    )
-                }
+    private val templatesRepository = com.deep.lumoraai.data.repository.TemplateRepository(application)
+
+    init { refreshTemplates() }
+
+    fun refreshTemplates() {
+        viewModelScope.launch {
+            if (uiState !is TemplatesUiState.Success) {
+                try {
+                    uiState = TemplatesUiState.Success(templatesRepository.bundled())
+                } catch (error: kotlinx.coroutines.CancellationException) { throw error
+                } catch (_: Exception) { uiState = TemplatesUiState.Error("Could not read starter templates.") }
             }
-            TemplatesUiState.Success(categories = categories)
-        } catch (_: Exception) {
-            TemplatesUiState.Success(categories = emptyList())
+            try {
+                val categories = templatesRepository.remote()
+                val credits = (uiState as? TemplatesUiState.Success)?.credits ?: 0
+                uiState = TemplatesUiState.Success(categories, credits)
+            } catch (error: kotlinx.coroutines.CancellationException) { throw error
+            } catch (_: Exception) {
+                val current = uiState as? TemplatesUiState.Success
+                if (current != null) uiState = current.copy(offlineMessage = "Showing saved templates. Connect to load the full library.")
+                else uiState = TemplatesUiState.Error("Connect to load templates, then try again.")
+            }
+            loadCredits()
         }
+    }
 
     private fun loadCredits() {
         val user = FirebaseAuth.getInstance().currentUser ?: return

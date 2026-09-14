@@ -69,12 +69,14 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun compress() {
+        if (uiState.isCompressing) return
         val uri = uiState.selectedUri ?: run {
             uiState = uiState.copy(error = "Select an image or video first.")
             return
         }
         val mimeType = uiState.mimeType
 
+        uiState = uiState.copy(isCompressing = true)
         val taskId = UUID.randomUUID().toString()
         
         // Send task start notification
@@ -87,6 +89,12 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
         }
 
         viewModelScope.launch {
+            val charge = com.deep.lumoraai.data.repository.GenerationRepository().deductForAction("compress", taskId)
+            if (charge.isFailure) {
+                uiState = uiState.copy(isCompressing = false, error = charge.exceptionOrNull()?.message ?: "Temporarily unavailable.")
+                return@launch
+            }
+
             uiState = uiState.copy(isCompressing = true, error = null, result = null)
             if (mimeType.startsWith("image/")) {
                 compressImage(uri, taskId)
@@ -159,6 +167,7 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                 uiState.copy(isCompressing = false, result = compressionResult)
             },
             onFailure = { error ->
+                viewModelScope.launch { com.deep.lumoraai.data.repository.GenerationRepository().refundTool(taskId) }
                 val errorMsg = error.message ?: "Could not compress this image."
                 // Send task failure notification
                 viewModelScope.launch {
@@ -243,6 +252,7 @@ class CompressViewModel(application: Application) : AndroidViewModel(application
                     exportResult: ExportResult,
                     exportException: ExportException
                 ) {
+                    viewModelScope.launch { com.deep.lumoraai.data.repository.GenerationRepository().refundTool(taskId) }
                     if (output.exists()) output.delete()
                     input.delete()
                     val errorMsg = exportException.message ?: "Could not compress this video."

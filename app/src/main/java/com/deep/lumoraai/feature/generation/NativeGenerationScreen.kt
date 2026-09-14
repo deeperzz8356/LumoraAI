@@ -111,6 +111,7 @@ data class NativeGenerationConfig(
     val mediaType: String,
     val generateEnabled: Boolean,
     val creditCost: Int,
+    val toolId: String = "text_to_image",
     val bannerPlacement: AdPlacement,
     val showRatio: Boolean = true,
     val generateButtonText: String? = null,
@@ -131,6 +132,10 @@ fun NativeGenerationScreen(
     error: String?,
     modifier: Modifier = Modifier,
 ) {
+    val rule = com.deep.lumoraai.core.restrictions.ToolPolicyStore.rule(config.toolId)
+    val liveConfig = config.copy(creditCost = rule.creditCost,
+        generateEnabled = config.generateEnabled && rule.enabled,
+        generateButtonText = if (!rule.enabled) "Temporarily unavailable" else config.generateButtonText)
     var showPrompt by remember(config.promptOptional) { mutableStateOf(!config.promptOptional || config.prompt.isNotBlank()) }
     var selectorsOpen by remember { mutableStateOf(false) }
     var viewerMedia by remember { mutableStateOf<NativeGeneratedMedia?>(null) }
@@ -157,7 +162,7 @@ fun NativeGenerationScreen(
                 update = { root ->
                     bindGeneration(
                         binding = GenerationScreenBinding.bind(root),
-                        config = config,
+                        config = liveConfig,
                         credits = credits,
                         showPrompt = showPrompt,
                         selectorsOpen = selectorsOpen,

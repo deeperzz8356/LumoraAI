@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.texttovideo
 
+import com.deep.lumoraai.core.restrictions.ToolPolicyStore
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -163,7 +164,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                     uiState = uiState.copy(error = s(R.string.credits_verification_failed))
                     return@launch
                 }
-                if (!GenerationGate.canGenerateVideo(credits, isDev, 1)) {
+                if (!(isDev || credits >= ToolPolicyStore.cost(if (isPromoMode) "promo_video" else "text_to_video"))) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
@@ -175,7 +176,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
             // Optimistic: drop the header instantly by the expected cost
             // (5 credits per video). Reconciled by the post-completion refresh.
             if (!isDev) {
-                CreditBalanceStore.applyOptimistic(-GenerationGate.CREDITS_PER_VIDEO * requestedGenerations)
+                CreditBalanceStore.applyOptimistic(-ToolPolicyStore.cost(if (isPromoMode) "promo_video" else "text_to_video") * requestedGenerations)
             }
             uiState = uiState.copy(
                 isGenerating = true,
@@ -214,6 +215,7 @@ class TextToVideoViewModel(application: Application) : AndroidViewModel(applicat
                 )
                 val progressJob = launchProgressJob(jobTitle, index + 1, requestedGenerations)
                 val result = generationRepository.generateVideo(
+                    tool = if (isPromoMode) "promo_video" else "text_to_video",
                     prompt = prompt,
                     engine = uiState.selectedEngine.modelId,
                     // Promo Video supports an optional uploaded source image.

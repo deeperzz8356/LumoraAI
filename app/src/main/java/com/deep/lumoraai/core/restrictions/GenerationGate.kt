@@ -1,8 +1,8 @@
 package com.deep.lumoraai.core.restrictions
 
 object GenerationGate {
-    const val CREDITS_PER_IMAGE = 1
-    const val CREDITS_PER_VIDEO = 5
+    val CREDITS_PER_IMAGE: Int get() = ToolPolicyStore.cost("text_to_image")
+    val CREDITS_PER_VIDEO: Int get() = ToolPolicyStore.cost("text_to_video")
     const val DEVELOPER_MODE_CREDITS_DISPLAY = 9999
 
     fun canGenerateImage(credits: Int, isDeveloperMode: Boolean, generations: Int = 1): Boolean =

@@ -139,8 +139,8 @@ private fun bindCompress(
     binding.fileType.visibility = if (uiState.fileName.isBlank()) View.GONE else View.VISIBLE
     binding.fileType.text = if (uiState.mimeType.startsWith("video/")) "Video selected" else "Image selected"
 
-    binding.compressButton.isEnabled = uiState.selectedUri != null && !uiState.isCompressing
-    binding.compressButton.text = if (uiState.isCompressing) "Compressing..." else "Compress Now"
+    binding.compressButton.isEnabled = com.deep.lumoraai.core.restrictions.ToolPolicyStore.rule("compress").enabled && uiState.selectedUri != null && !uiState.isCompressing
+    binding.compressButton.text = if (!com.deep.lumoraai.core.restrictions.ToolPolicyStore.rule("compress").enabled) "Temporarily unavailable" else if (uiState.isCompressing) "Compressing..." else "Compress · ${com.deep.lumoraai.core.restrictions.ToolPolicyStore.cost("compress")} credits"
     binding.compressButton.setOnClickListener { onCompress() }
 
     uiState.result?.let { result ->

@@ -23,7 +23,9 @@ data class TemplateListItem(
     val prompt: String,
     val assetFileName: String,
     val previewAssetFileName: String?,
-    val action: TemplateAction
+    val action: TemplateAction,
+    val mediaUrl: String? = null,
+    val previewUrl: String? = null,
 )
 
 enum class TemplateAction {

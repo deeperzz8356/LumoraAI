@@ -94,7 +94,7 @@ class TemplateVideoPreview @JvmOverloads constructor(
                 releasePlayer()
             }
         })
-        next.setMediaItem(MediaItem.fromUri("asset:///templates/${Uri.encode(fileName)}"))
+        next.setMediaItem(MediaItem.fromUri(if (fileName.startsWith("https://")) fileName else "asset:///templates/${Uri.encode(fileName)}"))
         next.prepare()
         next.playWhenReady = true
     }

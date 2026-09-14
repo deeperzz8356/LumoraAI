@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.texttoimage
 
+import com.deep.lumoraai.core.restrictions.ToolPolicyStore
 import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -98,7 +99,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                if (!GenerationGate.canGenerateImage(credits, isDev, 1)) {
+                if (!(isDev || credits >= ToolPolicyStore.cost(when (mode) { TextToImageMode.Logo -> "logo"; TextToImageMode.Avatar -> "avatar"; else -> "text_to_image" }))) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
@@ -109,7 +110,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
             // (1 credit per image). The post-completion refresh reconciles to
             // the authoritative server balance (and undoes this if it failed).
             if (!isDev) {
-                CreditBalanceStore.applyOptimistic(-GenerationGate.CREDITS_PER_IMAGE * requestedGenerationsFor())
+                CreditBalanceStore.applyOptimistic(-ToolPolicyStore.cost(when (mode) { TextToImageMode.Logo -> "logo"; TextToImageMode.Avatar -> "avatar"; else -> "text_to_image" }) * requestedGenerationsFor())
             }
             startImageJobs(mode = mode, developerMode = isDev)
         }
@@ -187,6 +188,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
                 )
                 val progressJob = launchProgressJob(jobTitle, index + 1, requestedGenerations)
                 val result = generationRepository.generateImage(
+                    tool = when (mode) { TextToImageMode.Logo -> "logo"; TextToImageMode.Avatar -> "avatar"; else -> "text_to_image" },
                     prompt = prompt,
                     style = mode.apiStyle(uiState.selectedStyle),
                     width = uiState.aspectRatio.width,

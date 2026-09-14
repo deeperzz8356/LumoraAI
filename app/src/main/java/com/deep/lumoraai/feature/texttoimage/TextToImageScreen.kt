@@ -41,6 +41,7 @@ fun TextToImageScreen(
     }
     NativeGenerationScreen(
         config = NativeGenerationConfig(
+            toolId = when (mode) { TextToImageMode.Logo -> "logo"; TextToImageMode.Avatar -> "avatar"; else -> "text_to_image" },
             title = stringResource(titleRes),
             promptHint = promptHint,
             promptOptional = false,

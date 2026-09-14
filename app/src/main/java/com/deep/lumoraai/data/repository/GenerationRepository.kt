@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import com.deep.lumoraai.core.restrictions.ToolPolicyStore
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -122,8 +123,10 @@ class GenerationRepository {
         sourceImageB64: String? = null,
         sourceImagesB64: List<String> = emptyList(),
         developerMode: Boolean = false,
+        tool: String = if (sourceImageB64 != null || sourceImagesB64.isNotEmpty()) "image_to_image" else "text_to_image",
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
+            val policyRevision = ToolPolicyStore.prepare(tool)
             val user = auth.currentUser
                 ?: return@withContext Result.failure(Exception("Please sign in to generate images."))
             
@@ -132,6 +135,8 @@ class GenerationRepository {
                 ?: return@withContext Result.failure(Exception("Failed to get authentication token."))
 
             val jsonInputString = JSONObject().apply {
+                put("tool", tool)
+                put("policy_revision", policyRevision)
                 put("prompt", prompt)
                 put("style", style)
                 put("width", width)
@@ -173,6 +178,7 @@ class GenerationRepository {
                 }
 
                 val responseCode = connection.responseCode
+                if (responseCode == 409 || responseCode == 503) ToolPolicyStore.refresh()
                 val responseBody = connection.readResponseBody()
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     val responseJson = JSONObject(responseBody)
@@ -225,13 +231,17 @@ class GenerationRepository {
         aspectRatio: String? = null,
         style: String? = null,
         developerMode: Boolean = false,
+        tool: String = if (sourceImageB64 != null) "image_to_video" else "text_to_video",
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
+            val policyRevision = ToolPolicyStore.prepare(tool)
             val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))
             val tokenResult = user.getIdToken(true).await()
             val idToken = tokenResult.token ?: return@withContext Result.failure(Exception("Failed to get ID token"))
 
             val jsonInputString = JSONObject().apply {
+                put("tool", tool)
+                put("policy_revision", policyRevision)
                 put("prompt", prompt)
                 put("model", engine)
                 put("motion_strength", motionStrength)
@@ -265,6 +275,7 @@ class GenerationRepository {
                 }
 
                 val responseCode = connection.responseCode
+                if (responseCode == 409 || responseCode == 503) ToolPolicyStore.refresh()
                 val responseBody = connection.readResponseBody()
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     val responseJson = JSONObject(responseBody)
@@ -349,8 +360,10 @@ class GenerationRepository {
      * background removal that don't flow through a generation endpoint.
      * Returns the new balance on success, or a failure (e.g. HTTP 402 insufficient).
      */
-    suspend fun deductForAction(action: String): Result<Int> = withContext(Dispatchers.IO) {
+    suspend fun deductForAction(action: String, requestId: String = java.util.UUID.randomUUID().toString()): Result<Int> = withContext(Dispatchers.IO) {
         try {
+            val policyTool = when (action) { "image_generation" -> "text_to_image"; "video_generation" -> "text_to_video"; else -> action }
+            val policyRevision = ToolPolicyStore.prepare(policyTool)
             val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))
             val idToken = user.getIdToken(true).await().token
                 ?: return@withContext Result.failure(Exception("Failed to get ID token"))
@@ -365,7 +378,7 @@ class GenerationRepository {
                 connectTimeout = 15000
                 readTimeout = 15000
             }
-            OutputStreamWriter(connection.outputStream).use { it.write(JSONObject().put("action", action).toString()) }
+            OutputStreamWriter(connection.outputStream).use { it.write(JSONObject().put("action", action).put("policy_revision", policyRevision).put("request_id", requestId).toString()) }
 
             val code = connection.responseCode
             val body = connection.readResponseBody()
@@ -380,6 +393,29 @@ class GenerationRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun refundTool(requestId: String): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val user = auth.currentUser ?: error("Please sign in.")
+            val token = user.getIdToken(false).await().token ?: error("Please sign in.")
+            val connection = URL("https://lumoraai-backend-rlcy.onrender.com/api/v1/credits/refund-tool").openConnection() as HttpURLConnection
+            try {
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Authorization", "Bearer $token")
+                connection.setRequestProperty("x-user-id", user.uid)
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
+                connection.doOutput = true
+                connection.outputStream.bufferedWriter().use { it.write(JSONObject().put("request_id", requestId).toString()) }
+                check(connection.responseCode == 200) { "Could not restore credits." }
+                val balance = JSONObject(connection.inputStream.bufferedReader().use { it.readText() }).getInt("balance")
+                com.deep.lumoraai.core.utils.CreditBalanceStore.set(balance)
+                Result.success(balance)
+            } finally { connection.disconnect() }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
+        } catch (error: Exception) { Result.failure(error) }
     }
 
     suspend fun getCredits(): Result<Int> = withContext(Dispatchers.IO) {

@@ -201,9 +201,9 @@ private fun bindPhotoEnhance(
     binding.statusText.setTextColor(if (uiState.error != null) 0xFFFF6B6B.toInt() else context.getColor(R.color.lumora_lime))
     binding.statusText.visibility = if (status == null) View.GONE else View.VISIBLE
 
-    binding.enhanceButton.isEnabled = uiState.originalBitmap != null && !uiState.isEnhancing
+    binding.enhanceButton.isEnabled = com.deep.lumoraai.core.restrictions.ToolPolicyStore.rule("photo_enhance").enabled && uiState.originalBitmap != null && !uiState.isEnhancing
     binding.enhanceButton.alpha = if (binding.enhanceButton.isEnabled) 1f else 0.42f
-    binding.enhanceButtonText.text = if (uiState.isEnhancing) "Enhancing..." else "Enhance Now"
+    binding.enhanceButtonText.text = if (!com.deep.lumoraai.core.restrictions.ToolPolicyStore.rule("photo_enhance").enabled) "Temporarily unavailable" else if (uiState.isEnhancing) "Enhancing..." else "Enhance · ${com.deep.lumoraai.core.restrictions.ToolPolicyStore.cost("photo_enhance")} credits"
     binding.enhanceProgress.visibility = if (uiState.isEnhancing) View.VISIBLE else View.GONE
     binding.enhanceButtonIconHost.visibility = if (uiState.isEnhancing) View.GONE else View.VISIBLE
     binding.enhanceButton.setOnClickListener {

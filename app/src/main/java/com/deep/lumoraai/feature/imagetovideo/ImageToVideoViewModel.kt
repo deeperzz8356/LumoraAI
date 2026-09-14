@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.imagetovideo
 
+import com.deep.lumoraai.core.restrictions.ToolPolicyStore
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -126,7 +127,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     uiState = uiState.copy(error = "Could not verify credits. Check your connection and try again.")
                     return@launch
                 }
-                if (!GenerationGate.canGenerateVideo(credits, isDev, 1)) {
+                if (!(isDev || credits >= ToolPolicyStore.cost("image_to_video"))) {
                     uiState = uiState.copy(error = GenerationGate.insufficientCreditsMessage())
                     return@launch
                 }
@@ -170,6 +171,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
 
                 val progressJob = launchProgressJob(jobTitle, index + 1, requestedGenerations)
                 val result = generationRepository.generateVideo(
+                    tool = "image_to_video",
                     prompt = prompt,
                     engine = uiState.selectedEngine.modelId,
                     sourceImageB64 = source,

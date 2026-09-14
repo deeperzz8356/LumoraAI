@@ -1,5 +1,6 @@
 package com.deep.lumoraai.feature.bgstudio
 
+import com.deep.lumoraai.core.restrictions.ToolPolicyStore
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -132,13 +133,13 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                         uiState = uiState.copy(status = BgStudioStatus.Error("Could not verify credits. Check your connection and try again."))
                         return@launch
                     }
-                    if (!GenerationGate.canGenerateImage(credits, isDev)) {
+                    if (!(isDev || credits >= ToolPolicyStore.cost(if (uiState.mode == BgStudioMode.Remove) "background_removal" else "background_replace"))) {
                         uiState = uiState.copy(status = BgStudioStatus.TrialExpired)
                         return@launch
                     }
                     // Optimistic: bg removal costs 1 credit; reconciled by the
                     // deduct response on completion.
-                    CreditBalanceStore.applyOptimistic(-GenerationGate.CREDITS_PER_IMAGE)
+                    CreditBalanceStore.applyOptimistic(-ToolPolicyStore.cost(if (uiState.mode == BgStudioMode.Remove) "background_removal" else "background_replace"))
                 }
                 startRemoveBackgroundJob(bitmap, developerMode = isDev)
                 return@launch
@@ -155,7 +156,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                     uiState = uiState.copy(status = BgStudioStatus.Error("Could not verify credits. Check your connection and try again."))
                     return@launch
                 }
-                if (!GenerationGate.canGenerateImage(credits, isDev)) {
+                if (!(isDev || credits >= ToolPolicyStore.cost(if (uiState.mode == BgStudioMode.Remove) "background_removal" else "background_replace"))) {
                     uiState = uiState.copy(status = BgStudioStatus.TrialExpired)
                     return@launch
                 }
@@ -350,6 +351,12 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
         )
 
         viewModelScope.launch {
+            val charge = generationRepository.deductForAction("background_removal", taskId)
+            if (charge.isFailure) {
+                uiState = uiState.copy(status = BgStudioStatus.Error(charge.exceptionOrNull()?.message ?: "Temporarily unavailable."))
+                return@launch
+            }
+            charge.getOrNull()?.let { CreditBalanceStore.set(it) }
             val resolver = getApplication<Application>().contentResolver
             val online = getApplication<Application>().hasInternetConnection()
 
@@ -381,6 +388,7 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                     Triple(saved, outcome.bitmap, true)
                 }
                 is BackgroundRemovalRepository.Outcome.Failure -> {
+                    generationRepository.refundTool(taskId)
                     val message = outcome.message
                     uiState = uiState.copy(
                         status = BgStudioStatus.Error(message),
@@ -397,15 +405,6 @@ class BgStudioViewModel(application: Application) : AndroidViewModel(application
                         errorMessage = message
                     )
                     return@launch
-                }
-            }
-
-            // Charge 1 credit for a successful background removal (server-priced).
-            // Removal runs on-device/via a third-party API, so it does not flow
-            // through a generation endpoint that would deduct — charge explicitly.
-            if (!developerMode) {
-                generationRepository.deductForAction("background_removal").getOrNull()?.let { balance ->
-                    CreditBalanceStore.set(balance)
                 }
             }
 

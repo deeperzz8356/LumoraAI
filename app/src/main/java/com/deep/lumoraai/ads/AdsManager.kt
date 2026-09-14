@@ -42,9 +42,7 @@ class AdsManager @Inject constructor(
         if (!config.adsEnabled) return
         if (!initialized.compareAndSet(false, true)) return
         val appContext = context.applicationContext
-        fetchRemoteAdsConfig {
-            initializeMobileAds(appContext)
-        }
+        initializeMobileAds(appContext)
     }
 
     private fun initializeMobileAds(appContext: Context) {
@@ -68,26 +66,6 @@ class AdsManager @Inject constructor(
             rewardedManager.preload(appContext)
             appOpenManager.preload(appContext)
         }
-    }
-
-    private fun fetchRemoteAdsConfig(onComplete: () -> Unit) {
-        val remoteConfig = FirebaseRemoteConfig.getInstance()
-        val minFetchSeconds = if (BuildConfig.DEBUG) 0L else 3_600L
-        remoteConfig.setConfigSettingsAsync(
-            FirebaseRemoteConfigSettings.Builder()
-                .setMinimumFetchIntervalInSeconds(minFetchSeconds)
-                .build()
-        )
-        remoteConfig.fetchAndActivate()
-            .addOnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    AdsLogger.w("AdsConfig: Remote Config fetch failed", task.exception)
-                }
-                // Read every parameter individually (flat layout) and build the
-                // config in one shot — no JSON blob needed.
-                configStore.applyRemoteConfig(remoteConfig)
-                onComplete()
-            }
     }
 
     fun isInitialized(): Boolean = initialized.get()
