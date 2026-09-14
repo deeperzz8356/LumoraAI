@@ -128,14 +128,14 @@ private fun android.widget.LinearLayout.addInboxTitle() {
     addView(TextView(context).apply {
         text = "Inbox"
         setTextColor(android.graphics.Color.WHITE)
-        textSize = 25f
+        textSize = 21f
         typeface = android.graphics.Typeface.DEFAULT_BOLD
         includeFontPadding = false
     }, android.widget.LinearLayout.LayoutParams(
         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
         android.view.ViewGroup.LayoutParams.WRAP_CONTENT
     ).apply {
-        topMargin = (40 * resources.displayMetrics.density).toInt()
+        topMargin = (24 * resources.displayMetrics.density).toInt()
     })
 }
 

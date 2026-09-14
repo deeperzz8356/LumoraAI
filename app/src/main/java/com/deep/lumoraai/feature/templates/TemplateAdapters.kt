@@ -140,8 +140,12 @@ internal class TemplateCardAdapter(
         private val binding: TemplateCardBinding
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: TemplateListItem) {
-            binding.root.contentDescription = item.title
+            binding.root.contentDescription = "${item.title}. ${item.subtitle}. Tap to create."
             binding.root.setOnClickListener { onTemplateClick(item) }
+            binding.ideaTitle.text = item.title
+            binding.ideaDescription.text = "${item.subtitle}\n\nTap to create"
+            binding.ideaPlaceholder.visibility = View.VISIBLE
+            binding.videoPreview.bind(item.assetFileName.takeIf { it.endsWith(".mp4", true) })
             binding.preview.setImageDrawable(null)
             val preview = item.previewAssetFileName
             if (preview.isNullOrBlank()) {
@@ -154,8 +158,14 @@ internal class TemplateCardAdapter(
                 placeholder(null)
                 error(null)
                 listener(
-                    onError = { _, _ -> binding.preview.visibility = View.INVISIBLE },
-                    onSuccess = { _, _ -> binding.preview.visibility = View.VISIBLE }
+                    onError = { _, _ ->
+                        binding.preview.visibility = View.INVISIBLE
+                        binding.ideaPlaceholder.visibility = View.VISIBLE
+                    },
+                    onSuccess = { _, _ ->
+                        binding.preview.visibility = View.VISIBLE
+                        binding.ideaPlaceholder.visibility = View.GONE
+                    }
                 )
             }
         }

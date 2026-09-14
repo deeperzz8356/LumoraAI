@@ -71,8 +71,8 @@ fun PremiumPage(
                 .widthIn(max = 760.dp)
                 .then(scrollModifier)
                 .padding(horizontal = sidePadding)
-                .padding(top = 18.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(22.dp),
+                .padding(top = 10.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             PremiumTopBar(title, eyebrow, subtitle, onBack, action)
             content()
@@ -101,20 +101,20 @@ fun PremiumTopBar(
                 eyebrow.uppercase(),
                 color = PremiumLime,
                 fontFamily = FontFamily.Monospace,
-                fontSize = 10.sp,
+                fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.4.sp,
             )
             Text(
                 title,
                 color = PremiumText,
-                fontSize = 28.sp,
-                lineHeight = 31.sp,
+                fontSize = 22.sp,
+                lineHeight = 25.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-0.7).sp,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(subtitle, color = PremiumMuted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(subtitle, color = PremiumMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         action?.invoke()
     }
@@ -126,17 +126,17 @@ fun PremiumSection(
     subtitle: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 title,
                 color = PremiumText,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-0.35).sp,
                 modifier = Modifier.semantics { heading() },
             )
-            subtitle?.let { Text(it, color = PremiumMuted, fontSize = 12.sp, lineHeight = 16.sp) }
+            subtitle?.let { Text(it, color = PremiumMuted, fontSize = 11.sp, lineHeight = 15.sp) }
         }
         content()
     }
@@ -152,7 +152,7 @@ fun PremiumHero(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(20.dp),
         color = PremiumSurface,
         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)),
         shadowElevation = 12.dp,
@@ -162,25 +162,29 @@ fun PremiumHero(
                 Brush.linearGradient(listOf(Color(0xFF202548), Color(0xFF151B2D), Color(0xFF0F1726))),
             ),
         ) {
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(PremiumLime.copy(alpha = 0.12f), RoundedCornerShape(14.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(icon, null, tint = PremiumLime, modifier = Modifier.size(25.dp))
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(PremiumLime.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(icon, null, tint = PremiumLime, modifier = Modifier.size(22.dp))
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            label.uppercase(),
+                            color = PremiumLime,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.1.sp,
+                        )
+                        Text(title, color = PremiumText, fontSize = 19.sp, lineHeight = 22.sp, fontWeight = FontWeight.Black)
+                        Text(body, color = PremiumMuted, fontSize = 11.sp, lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
                 }
-                Text(
-                    label.uppercase(),
-                    color = PremiumLime,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.2.sp,
-                )
-                Text(title, color = PremiumText, fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Black)
-                Text(body, color = PremiumMuted, fontSize = 13.sp, lineHeight = 18.sp)
                 content?.invoke(this)
             }
         }
@@ -203,23 +207,23 @@ fun PremiumActionRow(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(17.dp),
+        shape = RoundedCornerShape(15.dp),
         color = PremiumSurface,
         border = BorderStroke(1.dp, PremiumStroke.copy(alpha = 0.72f)),
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Box(
-                modifier = Modifier.size(46.dp).background(accent.copy(alpha = 0.10f), RoundedCornerShape(13.dp)),
+                modifier = Modifier.size(40.dp).background(accent.copy(alpha = 0.10f), RoundedCornerShape(11.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, null, tint = accent, modifier = Modifier.size(23.dp))
+                Icon(icon, null, tint = accent, modifier = Modifier.size(20.dp))
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(title, color = if (danger) PremiumDanger else PremiumText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(title, color = if (danger) PremiumDanger else PremiumText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Text(subtitle, color = PremiumMuted, fontSize = 11.sp, lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             trailing?.let {
@@ -240,23 +244,23 @@ fun PremiumToggleRow(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(17.dp),
+        shape = RoundedCornerShape(15.dp),
         color = PremiumSurface,
         border = BorderStroke(1.dp, if (checked) PremiumLime.copy(alpha = 0.24f) else PremiumStroke.copy(alpha = 0.70f)),
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Box(
-                modifier = Modifier.size(46.dp).background(PremiumLime.copy(alpha = 0.09f), RoundedCornerShape(13.dp)),
+                modifier = Modifier.size(40.dp).background(PremiumLime.copy(alpha = 0.09f), RoundedCornerShape(11.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, null, tint = if (checked) PremiumLime else PremiumMuted, modifier = Modifier.size(23.dp))
+                Icon(icon, null, tint = if (checked) PremiumLime else PremiumMuted, modifier = Modifier.size(20.dp))
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(title, color = PremiumText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(title, color = PremiumText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Text(subtitle, color = PremiumMuted, fontSize = 11.sp, lineHeight = 15.sp)
             }
             Switch(

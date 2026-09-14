@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="76dp"
+    android:layout_height="64dp"
     android:background="@android:color/transparent">
 
     <LinearLayout
         android:id="@+id/navRow"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="58dp"
         android:layout_gravity="bottom"
         android:background="@drawable/bg_bottom_navigation"
         android:baselineAligned="false"
@@ -16,106 +16,50 @@
 
         <LinearLayout
             android:id="@+id/homeItem"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
+            style="@style/LumoraBottomNavItem">
             <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/homeIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp" />
-
+                style="@style/LumoraBottomNavIcon" />
             <TextView
                 android:id="@+id/homeLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:includeFontPadding="false"
-                android:text="@string/ui_home"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                style="@style/LumoraBottomNavLabel"
+                android:text="@string/ui_home" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/templatesItem"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
+            style="@style/LumoraBottomNavItem">
             <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/templatesIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp" />
-
+                style="@style/LumoraBottomNavIcon" />
             <TextView
                 android:id="@+id/templatesLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:includeFontPadding="false"
-                android:text="@string/ui_templates"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                style="@style/LumoraBottomNavLabel"
+                android:text="@string/ui_templates" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/historyItem"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
+            style="@style/LumoraBottomNavItem">
             <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/historyIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp" />
-
+                style="@style/LumoraBottomNavIcon" />
             <TextView
                 android:id="@+id/historyLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:includeFontPadding="false"
-                android:text="@string/ui_history"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                style="@style/LumoraBottomNavLabel"
+                android:text="@string/ui_history" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/profileItem"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
+            style="@style/LumoraBottomNavItem">
             <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/profileIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp" />
-
+                style="@style/LumoraBottomNavIcon" />
             <TextView
                 android:id="@+id/profileLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:includeFontPadding="false"
-                android:text="@string/ui_profile"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                style="@style/LumoraBottomNavLabel"
+                android:text="@string/ui_profile" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

@@ -111,6 +111,105 @@
               "action": "LOGO_CREATION"
             }
           ]
+        },
+        {
+          "id": "aesthetic_solo",
+          "title": "Aesthetic Solo",
+          "templates": [
+            {
+              "id": "aesthetic_solo_1",
+              "title": "City Muse",
+              "subtitle": "Create a cinematic subway portrait",
+              "prompt": "A solo portrait on a subway platform, moving train blurred behind the subject, charcoal coat, cinematic film grain, vertical editorial composition.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_IMAGE"
+            },
+            {
+              "id": "aesthetic_solo_2",
+              "title": "Golden Hour Reader",
+              "subtitle": "Create a warm street-side portrait",
+              "prompt": "A young adult reading beside a vintage street lamp, warm afternoon sun, autumn leaves, relaxed styling, cinematic portrait photography.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_IMAGE"
+            },
+            {
+              "id": "aesthetic_solo_3",
+              "title": "Rose & Shadow",
+              "subtitle": "Create a dramatic floral portrait",
+              "prompt": "A person holding a red rose in a dark studio, sculptural shadows, elegant black outfit, dramatic side lighting, fine art portrait.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_IMAGE"
+            }
+          ]
+        },
+        {
+          "id": "wizard_school",
+          "title": "Wizard School",
+          "templates": [
+            {
+              "id": "wizard_school_1",
+              "title": "Owl Companion",
+              "subtitle": "Create a magical character portrait",
+              "prompt": "A student wizard with an owl perched on their arm in a grand stone hall, floating candles, embroidered robe, magical cinematic portrait.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_IMAGE"
+            },
+            {
+              "id": "wizard_school_2",
+              "title": "Spellbook Study",
+              "subtitle": "Create an enchanted library scene",
+              "prompt": "A young adult wizard studying an ancient spellbook in a towering library, glowing runes, warm window light, intricate fantasy illustration.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_IMAGE"
+            },
+            {
+              "id": "wizard_school_3",
+              "title": "Midnight Magic",
+              "subtitle": "Create a glowing wand scene",
+              "prompt": "A wizard casting an emerald spell in an ancient corridor at midnight, swirling sparks, flowing robe, cinematic fantasy portrait.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_IMAGE"
+            }
+          ]
+        },
+        {
+          "id": "animal_characters",
+          "title": "Animal Characters",
+          "templates": [
+            {
+              "id": "animal_characters_1",
+              "title": "Fox Detective",
+              "subtitle": "Create a clever animated fox",
+              "prompt": "An original anthropomorphic fox detective in a tailored coat, bustling animal city, expressive eyes, polished 3D animation character portrait.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_IMAGE"
+            },
+            {
+              "id": "animal_characters_2",
+              "title": "Bunny Explorer",
+              "subtitle": "Create a playful bunny hero",
+              "prompt": "An original anthropomorphic bunny explorer with a small backpack in a colorful city park, optimistic expression, detailed stylized 3D character.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_IMAGE"
+            },
+            {
+              "id": "animal_characters_3",
+              "title": "Tiger Barista",
+              "subtitle": "Create a friendly animal character",
+              "prompt": "An original anthropomorphic tiger barista making latte art in a cozy cafe, apron, warm smile, polished animated feature style.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_IMAGE"
+            }
+          ]
         }
       ]
     },
@@ -171,6 +270,105 @@
               "prompt": "A fashion runway video with confident model walk, soft spotlight sweeps, luxury editorial atmosphere, cinematic slow motion fabric movement.",
               "assetFileName": "fashion runway.mp4",
               "previewAssetFileName": "fashion runway.png",
+              "action": "TEXT_TO_VIDEO"
+            }
+          ]
+        },
+        {
+          "id": "aesthetic_motion",
+          "title": "Aesthetic Solo",
+          "templates": [
+            {
+              "id": "aesthetic_motion_1",
+              "title": "Breezy Rooftop",
+              "subtitle": "Generate a wind-swept portrait clip",
+              "prompt": "A person standing on a rooftop at sunset, wind gently moving their hair and jacket, slow camera orbit, natural movement, cinematic vertical video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_VIDEO"
+            },
+            {
+              "id": "aesthetic_motion_2",
+              "title": "Meadow Escape",
+              "subtitle": "Generate a golden meadow moment",
+              "prompt": "A person running through a golden meadow, grass moving in the breeze, smooth follow camera, warm late afternoon light, cinematic slow motion.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_VIDEO"
+            },
+            {
+              "id": "aesthetic_motion_3",
+              "title": "Rainy Window",
+              "subtitle": "Generate a quiet cinematic moment",
+              "prompt": "A person beside a rain-covered cafe window, reflections drifting across the glass, subtle head movement, slow push-in, moody cinematic video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_VIDEO"
+            }
+          ]
+        },
+        {
+          "id": "fantasy_motion",
+          "title": "Fantasy Worlds",
+          "templates": [
+            {
+              "id": "fantasy_motion_1",
+              "title": "Floating Castle",
+              "subtitle": "Generate a magical aerial journey",
+              "prompt": "A smooth aerial journey toward a floating castle above clouds, waterfalls spilling into the sky, drifting birds, sunrise, cinematic fantasy video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_VIDEO"
+            },
+            {
+              "id": "fantasy_motion_2",
+              "title": "Dragon Encounter",
+              "subtitle": "Generate an epic creature reveal",
+              "prompt": "A small emerald dragon unfolding its wings in an ancient forest, glowing particles, slow camera push-in, detailed cinematic fantasy video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_VIDEO"
+            },
+            {
+              "id": "fantasy_motion_3",
+              "title": "Enchanted Library",
+              "subtitle": "Generate moving books and magic",
+              "prompt": "Books floating gently through a candlelit wizard library, pages turning, golden spell particles, smooth tracking camera, cinematic fantasy video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_VIDEO"
+            }
+          ]
+        },
+        {
+          "id": "nature_motion",
+          "title": "Nature & Travel",
+          "templates": [
+            {
+              "id": "nature_motion_1",
+              "title": "Ocean Sunrise",
+              "subtitle": "Generate a peaceful coastal clip",
+              "prompt": "Waves rolling onto a tropical beach at sunrise, palm leaves moving, smooth aerial camera, natural light, relaxing cinematic video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_VIDEO"
+            },
+            {
+              "id": "nature_motion_2",
+              "title": "Mountain Train",
+              "subtitle": "Generate a scenic travel reel",
+              "prompt": "A red train crossing a stone bridge in misty alpine mountains, drifting clouds, smooth drone tracking, cinematic travel video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "TEXT_TO_VIDEO"
+            },
+            {
+              "id": "nature_motion_3",
+              "title": "Cherry Blossom Walk",
+              "subtitle": "Generate a spring travel moment",
+              "prompt": "A gentle camera journey down a cherry blossom path, pink petals falling in the breeze, morning light, peaceful cinematic video.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
               "action": "TEXT_TO_VIDEO"
             }
           ]
@@ -237,6 +435,39 @@
               "action": "PROMO_VIDEO"
             }
           ]
+        },
+        {
+          "id": "small_business",
+          "title": "Small Business Stories",
+          "templates": [
+            {
+              "id": "small_business_1",
+              "title": "Coffee Ritual",
+              "subtitle": "Generate a cozy cafe promotion",
+              "prompt": "Create a premium cafe promo showing coffee pouring into a ceramic cup, rising steam, fresh pastries, warm sunlight, slow close-up camera movement.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "small_business_2",
+              "title": "Skincare Reveal",
+              "subtitle": "Generate a beauty product ad",
+              "prompt": "Create a skincare product reveal with a frosted serum bottle, water droplets, soft cream background, slow camera orbit, elegant commercial lighting.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            },
+            {
+              "id": "small_business_3",
+              "title": "Sneaker Drop",
+              "subtitle": "Generate a bold launch teaser",
+              "prompt": "Create a sneaker launch teaser with a rotating shoe, dramatic light sweeps, detailed fabric close-ups, energetic camera movement, clean studio setting.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "PROMO_VIDEO"
+            }
+          ]
         }
       ]
     },
@@ -297,6 +528,39 @@
               "prompt": "Centered avatar portrait of Zeus, the Greek god of thunder, sitting on a majestic marble throne inside an ancient temple. He has a powerful build, white hair, a long silver beard, and a laurel wreath crown. He is looking directly at the camera with a joyful expression, smiling broadly and laughing heartily. Bright crackling lightning arcs from his hands and surrounds his body. Detailed armor with ornate gold embellishments and deep blue drapery. Stormy blue atmosphere, cinematic lighting, epic fantasy art style, high detail.",
               "assetFileName": "course_instructor.png",
               "previewAssetFileName": "course_instructor.png",
+              "action": "CREATE_AVATAR"
+            }
+          ]
+        },
+        {
+          "id": "creator_personas",
+          "title": "Creator Personas",
+          "templates": [
+            {
+              "id": "creator_personas_1",
+              "title": "Travel Host",
+              "subtitle": "Create a friendly travel presenter",
+              "prompt": "Create a friendly travel host avatar delivering the provided script with natural eye contact, relaxed outdoor clothing, warm daylight and engaging gestures.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "creator_personas_2",
+              "title": "Fitness Coach",
+              "subtitle": "Create an energetic coach avatar",
+              "prompt": "Create a fitness coach avatar delivering the provided script in a bright gym, confident posture, encouraging expression, natural gestures and clear eye contact.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
+              "action": "CREATE_AVATAR"
+            },
+            {
+              "id": "creator_personas_3",
+              "title": "Podcast Host",
+              "subtitle": "Create a conversational host",
+              "prompt": "Create a podcast host avatar delivering the provided script at a studio microphone, warm acoustic studio, relaxed expression, realistic lip movement and conversational gestures.",
+              "assetFileName": "",
+              "previewAssetFileName": "",
               "action": "CREATE_AVATAR"
             }
           ]

@@ -44,7 +44,7 @@ class TemplatesViewModel(application: Application) : AndroidViewModel(applicatio
         try {
             val jsonText = getApplication<Application>()
                 .assets
-                .open("templates/templates.json")
+                .open("templates/template.json")
                 .bufferedReader()
                 .use { it.readText() }
             val categoryArray = JSONObject(jsonText).getJSONArray("categories")
