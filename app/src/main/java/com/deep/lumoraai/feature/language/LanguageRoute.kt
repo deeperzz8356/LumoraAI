@@ -35,7 +35,7 @@ fun LanguageRoute(
     // save + locale apply already happened before this runs, so proceeding is
     // guaranteed regardless of whether an ad shows.
     val proceed: () -> Unit = {
-        if (ads == null) onNext() else ads.showInterstitial(adActivity, interPlacement) { onNext() }
+        if (ads == null) onNext() else ads.showInterstitial(adActivity, interPlacement, continueOnShown = true) { onNext() }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(

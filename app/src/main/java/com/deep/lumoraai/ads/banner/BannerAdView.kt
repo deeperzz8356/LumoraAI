@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.ads.AdFormat
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.AdRevenueTracker
 import com.deep.lumoraai.ads.AdsConfigStore
 import com.deep.lumoraai.ads.AdsLogger
 import com.deep.lumoraai.ads.shimmer.AdShimmerBox
@@ -53,21 +54,36 @@ fun BannerAdView(
     configStore: AdsConfigStore,
     modifier: Modifier = Modifier,
     applyNavBarPadding: Boolean = true,
+    onLoadStateChange: (Boolean?) -> Unit = {},
 ) {
+    val configVersion = configStore.version
     val config = configStore.current
-    if (!config.formatEnabled(AdFormat.BANNER) || !config.isPlacementEnabled(placement)) return
+    if (!config.formatEnabled(AdFormat.BANNER) || !config.isPlacementEnabled(placement)) {
+        onLoadStateChange(false)
+        return
+    }
 
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
-    val activity = context as? Activity ?: return
-    val unitId = config.unitIdFor(AdFormat.BANNER)
+    val activity = context as? Activity ?: run {
+        onLoadStateChange(false)
+        return
+    }
+    val unitId = config.unitIdFor(placement) ?: run {
+        AdsLogger.missingUnitId(placement)
+        onLoadStateChange(false)
+        return
+    }
 
     val adSize = remember(configuration.screenWidthDp) {
         AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, configuration.screenWidthDp)
     }
 
     // load state: null=loading, true=loaded, false=failed(collapse)
-    var loaded by remember(unitId, adSize) { mutableStateOf<Boolean?>(null) }
+    var loaded by remember(configVersion, unitId, adSize) { mutableStateOf<Boolean?>(null) }
+    androidx.compose.runtime.LaunchedEffect(loaded) {
+        onLoadStateChange(loaded)
+    }
 
     val heightModifier = Modifier.height(adSize.height.dp.coerceAtLeastZero())
     val containerModifier = modifier
@@ -80,7 +96,7 @@ fun BannerAdView(
             AdShimmerBox(modifier = Modifier.fillMaxWidth().then(heightModifier))
         }
 
-        val adView = remember(unitId, adSize) {
+        val adView = remember(configVersion, unitId, adSize) {
             AdView(context).apply {
                 setAdSize(adSize)
                 adUnitId = unitId
@@ -94,6 +110,9 @@ fun BannerAdView(
                         AdsLogger.loadFailed(placement, error.code, error.message)
                         loaded = false // collapse
                     }
+                }
+                setOnPaidEventListener { adValue ->
+                    AdRevenueTracker.trackPaidAd(context, placement, unitId, adValue)
                 }
                 loadAd(AdRequest.Builder().build())
             }

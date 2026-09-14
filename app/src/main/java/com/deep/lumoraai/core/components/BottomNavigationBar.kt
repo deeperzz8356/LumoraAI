@@ -7,7 +7,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -45,7 +44,6 @@ fun BottomNavigationBar(
         },
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
     )
 }
 

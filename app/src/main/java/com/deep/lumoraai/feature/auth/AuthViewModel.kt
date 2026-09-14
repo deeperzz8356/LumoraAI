@@ -1,23 +1,33 @@
 package com.deep.lumoraai.feature.auth
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.deep.lumoraai.ads.AdsConfigStore
+import com.deep.lumoraai.data.repository.AppPreferencesRepository
 import com.deep.lumoraai.data.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.AuthCredential
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AuthViewModel(
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    application: Application,
+    private val adsConfigStore: AdsConfigStore,
+) : AndroidViewModel(application) {
+
+    private val appPreferences = AppPreferencesRepository.getInstance(application)
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val authRepository: AuthRepository = AuthRepository()
-) : ViewModel() {
     var uiState: AuthUiState by mutableStateOf(AuthUiState.Initial)
         private set
 
@@ -80,13 +90,10 @@ class AuthViewModel(
             try {
                 val currentUser = auth.currentUser
                 val credential = EmailAuthProvider.getCredential(cleanEmail, password)
-                // Track whether this flow actually created a new account so we can
-                // give the user explicit confirmation.
                 var createdNewAccount = false
                 if (currentUser?.isAnonymous == true) {
                     runCatching {
                         currentUser.linkWithCredential(credential).await()
-                        // Upgrading a guest into a real account is a new account.
                         createdNewAccount = true
                     }.getOrElse {
                         auth.signInWithEmailAndPassword(cleanEmail, password).await()
@@ -97,6 +104,10 @@ class AuthViewModel(
                     createdNewAccount = true
                 } else {
                     auth.signInWithEmailAndPassword(cleanEmail, password).await()
+                }
+                // Activate unlimited credits if remote config credentials match.
+                if (appPreferences.isUnlimitedCreditsLogin(cleanEmail, password, adsConfigStore)) {
+                    appPreferences.setUnlimitedCreditsMode(true)
                 }
                 finishWithBackendSync(isNewAccount = createdNewAccount)
             } catch (error: Exception) {

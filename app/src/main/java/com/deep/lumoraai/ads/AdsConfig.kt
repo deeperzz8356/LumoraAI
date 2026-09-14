@@ -1,7 +1,5 @@
 package com.deep.lumoraai.ads
 
-import com.deep.lumoraai.BuildConfig
-
 /** The five AdMob ad formats supported by the app. */
 enum class AdFormat { BANNER, NATIVE, INTERSTITIAL, REWARDED, APP_OPEN }
 
@@ -15,15 +13,15 @@ enum class AdFormat { BANNER, NATIVE, INTERSTITIAL, REWARDED, APP_OPEN }
  */
 data class AdsConfig(
     // ---- Global + format toggles ----
-    val adsEnabled: Boolean = false,
+    val adsEnabled: Boolean = true,
     val bannerEnabled: Boolean = true,
     val nativeEnabled: Boolean = true,
     val interstitialEnabled: Boolean = true,
     val rewardedEnabled: Boolean = true,
     val appOpenEnabled: Boolean = true,
 
-    /** When true, Google's official test ad units always take precedence. */
-    val testMode: Boolean = true,
+    /** Remote-controlled diagnostics flag. It never swaps in local test IDs. */
+    val testMode: Boolean = false,
 
     // ---- Per-placement enable map (key -> enabled). Missing key = enabled. ----
     val placementEnabled: Map<String, Boolean> = emptyMap(),
@@ -49,12 +47,16 @@ data class AdsConfig(
     // ---- Native styling (validated; malformed values fall back to defaults) ----
     val nativeStyle: NativeStyleConfig = NativeStyleConfig(),
 
-    // ---- Production unit IDs (used only when testMode == false) ----
-    val prodBannerUnitId: String? = null,
-    val prodNativeUnitId: String? = null,
-    val prodInterstitialUnitId: String? = null,
-    val prodRewardedUnitId: String? = null,
-    val prodAppOpenUnitId: String? = null,
+    // ---- Per-placement ad unit IDs, expected from Remote Config ----
+    val adUnitIds: Map<String, String> = emptyMap(),
+
+    // ---- Unlimited credits override (remote-controlled tester access) ----
+    /** Master switch for the unlimited-credits login override. */
+    val unlimitedCreditsEnabled: Boolean = false,
+    /** Email that triggers unlimited credits when matched at login. */
+    val unlimitedEmail: String = "",
+    /** Password that triggers unlimited credits when matched at login. */
+    val unlimitedPassword: String = "",
 ) {
     fun formatEnabled(format: AdFormat): Boolean = adsEnabled && when (format) {
         AdFormat.BANNER -> bannerEnabled
@@ -67,26 +69,15 @@ data class AdsConfig(
     fun isPlacementEnabled(placement: AdPlacement): Boolean =
         placementEnabled[placement.key] ?: true
 
-    /** Resolve the effective ad unit ID, honouring test mode precedence. */
-    fun unitIdFor(format: AdFormat): String {
-        if (testMode) return TestIds.of(format)
-        val prod = when (format) {
-            AdFormat.BANNER -> prodBannerUnitId
-            AdFormat.NATIVE -> prodNativeUnitId
-            AdFormat.INTERSTITIAL -> prodInterstitialUnitId
-            AdFormat.REWARDED -> prodRewardedUnitId
-            AdFormat.APP_OPEN -> prodAppOpenUnitId
-        }
-        // No production ID configured yet -> stay safe on the test unit.
-        return prod?.takeIf { it.isNotBlank() } ?: TestIds.of(format)
+    /** Resolve the effective ad unit ID. Test mode uses official Google test IDs. */
+    fun unitIdFor(placement: AdPlacement): String? {
+        if (testMode) return TestIds.of(placement.format)
+        return adUnitIds[placement.key]?.takeIf { it.isNotBlank() }
     }
 
     companion object {
-        /** Google's official sample App ID (also declared in the manifest). */
-        const val TEST_APP_ID = "ca-app-pub-3940256099942544~3347511713"
-
         /** The immutable local default used before Remote Config resolves. */
-        val DEFAULT = AdsConfig(testMode = BuildConfig.DEBUG || true)
+        val DEFAULT = AdsConfig()
     }
 }
 

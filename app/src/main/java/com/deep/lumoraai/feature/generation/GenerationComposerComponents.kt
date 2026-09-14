@@ -12,7 +12,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -42,9 +41,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Crop169
+import androidx.compose.material.icons.filled.CropSquare
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Feedback
@@ -54,6 +56,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
@@ -84,7 +87,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -1683,10 +1685,6 @@ fun GenerationBottomBar(
     creditNote: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val chevronRotation by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        label = "bottomBarChevron",
-    )
     val hasStyles = styleItems.isNotEmpty()
     // Whether there's anything to reveal in the expandable panel.
     // Count controls are disabled even if a caller opts in during this release.
@@ -1745,12 +1743,10 @@ fun GenerationBottomBar(
                     // }
                     Spacer(modifier = Modifier.weight(1f))
                     Icon(
-                        imageVector = Icons.Default.KeyboardArrowUp,
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.85f),
-                        modifier = Modifier
-                            .size(24.dp)
-                            .rotate(chevronRotation),
+                        tint = Color.White.copy(alpha = 0.70f),
+                        modifier = Modifier.size(22.dp),
                     )
                 }
 
@@ -1899,70 +1895,119 @@ private fun SummaryDivider() {
 }
 
 @Composable
-private fun BottomBarSectionTitle(text: String) {
-    Text(text, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-}
-
-@Composable
-private fun BottomBarStyleRow(items: List<StyleItem>) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        BottomBarSectionTitle(stringResource(com.deep.lumoraai.R.string.ui_style))
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            items.forEach { item -> CompactStyleCard(item = item) }
+private fun BottomBarSectionTitle(text: String, subtitle: String? = null) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+        if (subtitle != null) {
+            Text(subtitle, color = GenerationMuted, fontSize = 12.sp)
         }
     }
 }
 
 @Composable
-private fun CompactStyleCard(item: StyleItem) {
+private fun BottomBarStyleRow(items: List<StyleItem>) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        BottomBarSectionTitle(
+            text = stringResource(com.deep.lumoraai.R.string.ui_style),
+            subtitle = stringResource(com.deep.lumoraai.R.string.ui_choose_a_visual_style),
+        )
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items.forEach { item -> BottomBarStyleCard(item = item) }
+        }
+    }
+}
+
+@Composable
+private fun BottomBarStyleCard(item: StyleItem) {
+    val isNoStyle = item.assetFileName.contains("nostyle", ignoreCase = true)
     Box(
         modifier = Modifier
-            .width(96.dp)
-            .height(120.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (item.selected) GenerationLime.copy(alpha = 0.14f) else GenerationPanel)
+            .width(110.dp)
+            .height(140.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (item.selected) GenerationLime.copy(alpha = 0.08f) else Color(0xFF131C2E))
             .border(
-                1.dp,
-                if (item.selected) GenerationLime.copy(alpha = 0.82f) else Color.White.copy(alpha = 0.08f),
-                RoundedCornerShape(12.dp),
+                width = if (item.selected) 2.dp else 1.dp,
+                color = if (item.selected) GenerationLime else Color.White.copy(alpha = 0.10f),
+                shape = RoundedCornerShape(14.dp),
             )
             .clickable(onClick = item.onClick),
     ) {
-        AsyncImage(
-            model = assetUri(item.assetFileName),
-            contentDescription = stringResource(item.labelRes),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(88.dp),
-        )
+        if (isNoStyle) {
+            // "No Style" — prohibition circle icon, no thumbnail.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(54.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.06f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Block,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.50f),
+                        modifier = Modifier.size(36.dp),
+                    )
+                }
+            }
+        } else {
+            AsyncImage(
+                model = assetUri(item.assetFileName),
+                contentDescription = stringResource(item.labelRes),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp)),
+            )
+        }
+
+        // Selected check badge in top-end corner.
         if (item.selected) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(6.dp)
-                    .size(20.dp)
+                    .padding(7.dp)
+                    .size(22.dp)
                     .background(GenerationLime, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Default.Check, contentDescription = null, tint = Color.Black, modifier = Modifier.size(13.dp))
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    tint = Color.Black,
+                    modifier = Modifier.size(14.dp),
+                )
             }
         }
+
+        // Title label centered in the bottom area.
         Box(
             modifier = Modifier
-                .align(Alignment.BottomStart)
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(Color(0xDD101827))
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .height(40.dp),
+            contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = stringResource(item.labelRes),
                 color = if (item.selected) GenerationLime else Color.White,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1976,41 +2021,50 @@ private fun BottomBarRatioRow(
     onSelected: (GenerationAspectRatio) -> Unit,
     options: List<GenerationAspectRatio>,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        BottomBarSectionTitle(stringResource(com.deep.lumoraai.R.string.ui_ratio))
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        BottomBarSectionTitle(
+            text = stringResource(com.deep.lumoraai.R.string.ui_ratio),
+            subtitle = stringResource(com.deep.lumoraai.R.string.ui_select_aspect_ratio),
+        )
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             options.forEach { ratio ->
                 val isSelected = ratio == selected
+                // Orientation icon that visually represents the ratio shape.
+                val ratioIcon = when {
+                    ratio.width < ratio.height -> Icons.Default.PhoneAndroid   // portrait
+                    ratio.width == ratio.height -> Icons.Default.CropSquare    // square
+                    else -> Icons.Default.Crop169                              // landscape
+                }
                 Row(
                     modifier = Modifier
-                        .height(42.dp)
-                        .widthIn(min = 84.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isSelected) GenerationLime.copy(alpha = 0.14f) else Color(0xFF182137))
+                        .height(48.dp)
+                        .widthIn(min = 90.dp)
+                        .clip(CircleShape)
+                        .background(if (isSelected) GenerationLime else Color(0xFF1A2440))
                         .border(
                             1.dp,
-                            if (isSelected) GenerationLime else Color.White.copy(alpha = 0.08f),
-                            RoundedCornerShape(10.dp),
+                            if (isSelected) GenerationLime else Color.White.copy(alpha = 0.10f),
+                            CircleShape,
                         )
                         .clickable { onSelected(ratio) }
-                        .padding(horizontal = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        .padding(horizontal = 18.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        Icons.Default.AspectRatio,
+                        ratioIcon,
                         contentDescription = null,
-                        tint = if (isSelected) GenerationLime else Color.White.copy(alpha = 0.7f),
-                        modifier = Modifier.size(16.dp),
+                        tint = if (isSelected) Color.Black else Color.White.copy(alpha = 0.80f),
+                        modifier = Modifier.size(18.dp),
                     )
                     Text(
                         text = ratio.label,
-                        color = if (isSelected) GenerationLime else Color.White.copy(alpha = 0.85f),
-                        fontSize = 13.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) Color.Black else Color.White.copy(alpha = 0.90f),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
             }

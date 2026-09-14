@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import com.deep.lumoraai.ads.AdFormat
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.AdRevenueTracker
 import com.deep.lumoraai.ads.AdsConfigStore
 import com.deep.lumoraai.ads.AdsLogger
 import com.google.android.gms.ads.AdError
@@ -34,7 +35,11 @@ class InterstitialAdManager @Inject constructor(
         if (interstitial != null || isLoading) return
 
         isLoading = true
-        val unitId = config.unitIdFor(AdFormat.INTERSTITIAL)
+        val unitId = config.unitIdFor(placement) ?: run {
+            AdsLogger.missingUnitId(placement)
+            isLoading = false
+            return
+        }
         AdsLogger.loadStarted(placement, unitId, config.testMode)
         InterstitialAd.load(
             context.applicationContext,
@@ -42,7 +47,10 @@ class InterstitialAdManager @Inject constructor(
             AdRequest.Builder().build(),
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
-                    AdsLogger.loadSucceeded(placement, ad.responseInfo?.mediationAdapterClassName)
+                    ad.setOnPaidEventListener { adValue ->
+                        AdRevenueTracker.trackPaidAd(context, placement, unitId, adValue)
+                    }
+                    AdsLogger.loadSucceeded(placement, ad.responseInfo.mediationAdapterClassName)
                     interstitial = ad
                     isLoading = false
                 }
@@ -67,6 +75,7 @@ class InterstitialAdManager @Inject constructor(
         activity: Activity,
         placement: AdPlacement,
         onShown: () -> Unit,
+        onAdDisplayed: () -> Unit = {},
         onComplete: () -> Unit,
     ): Boolean {
         val ad = interstitial ?: run {
@@ -84,6 +93,7 @@ class InterstitialAdManager @Inject constructor(
             override fun onAdShowedFullScreenContent() {
                 AdsLogger.showSuccess(placement)
                 onShown()
+                onAdDisplayed()
             }
 
             override fun onAdDismissedFullScreenContent() {

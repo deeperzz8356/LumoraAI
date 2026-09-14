@@ -144,6 +144,8 @@
 
     <string name="ui_download_now">Download Now</string>
 
+    <string name="ui_edit">Edit</string>
+
     <string name="ui_edit_faster_with_focused_ai_actions">Edit faster with focused AI actions</string>
 
     <string name="ui_email_address">Email Address</string>
@@ -752,7 +754,9 @@
     <!-- Generation bottom bar -->
     <string name="ui_creations_count">%1$d Creations</string>
     <string name="ui_generate_now">Generate Now</string>
-    <string name="ui_credits_consumed_note">Creation consume %1$d credits.</string>
+    <string name="ui_credits_consumed_note">Creation consumes %1$d credits.</string>
+    <string name="ui_choose_a_visual_style">Choose a visual style</string>
+    <string name="ui_select_aspect_ratio">Select aspect ratio</string>
 
     <!-- Template titles / subtitles -->
     <string name="ui_tpl_cyberpunk_portrait_title">Cyberpunk Portrait</string>

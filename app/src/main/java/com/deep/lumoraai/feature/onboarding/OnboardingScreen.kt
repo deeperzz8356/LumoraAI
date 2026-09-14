@@ -54,7 +54,7 @@ fun OnboardingScreen(uiState: OnboardingUiState, onNext: () -> Unit, modifier: M
     val complete = {
         if (!completing) {
             completing = true
-            if (ads == null) onNext() else ads.showInterstitial(activity, AdPlacement.OB_INTER, onContinue = onNext)
+            if (ads == null) onNext() else ads.showInterstitial(activity, AdPlacement.OB_INTER, continueOnShown = true, onContinue = onNext)
         }
     }
     Column(modifier.fillMaxSize().systemBarsPadding()) {

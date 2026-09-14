@@ -350,10 +350,47 @@
                     <LinearLayout android:id="@+id/resultRow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
                 </HorizontalScrollView>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
-                    <Button android:id="@+id/editResultButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_weight="1" android:background="@drawable/bg_generation_unselected" android:text="Edit" android:textColor="@color/white" android:textStyle="bold" />
-                    <Button android:id="@+id/downloadResultButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_marginStart="8dp" android:layout_weight="1" android:background="@drawable/bg_generation_unselected" android:text="@string/ui_download" android:textColor="@color/white" android:textStyle="bold" />
-                    <Button android:id="@+id/shareResultButton" android:layout_width="0dp" android:layout_height="42dp" android:layout_marginStart="8dp" android:layout_weight="1" android:background="@drawable/bg_generation_unselected" android:text="@string/ui_share" android:textColor="@color/white" android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:id="@+id/editResultButton"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:background="@drawable/bg_generation_unselected"
+                        android:contentDescription="@string/ui_edit"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_lumora_edit"
+                        android:tint="@color/white" />
+
+                    <ImageButton
+                        android:id="@+id/downloadResultButton"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_generation_unselected"
+                        android:contentDescription="@string/ui_download"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_lumora_download"
+                        android:tint="@color/white" />
+
+                    <ImageButton
+                        android:id="@+id/shareResultButton"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_generation_unselected"
+                        android:contentDescription="@string/ui_share"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_lumora_share"
+                        android:tint="@color/white" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -375,56 +412,120 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bg_generation_bottom"
         android:orientation="vertical"
-        android:paddingTop="8dp"
-        android:paddingBottom="10dp">
+        android:paddingTop="6dp"
+        android:paddingBottom="8dp">
 
         <LinearLayout
             android:id="@+id/selectorPanel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
             android:background="@drawable/bg_generation_selector_sheet"
             android:orientation="vertical"
-            android:paddingStart="18dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="18dp"
-            android:paddingBottom="16dp"
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="12dp"
             android:visibility="gone">
 
-            <TextView
-                android:id="@+id/styleTitle"
+            <LinearLayout
+                android:id="@+id/styleSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/ui_style"
-                android:textColor="@color/white"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:orientation="vertical">
 
-            <HorizontalScrollView android:id="@+id/styleScroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:overScrollMode="never" android:scrollbars="none">
-                <LinearLayout android:id="@+id/styleRow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
-            </HorizontalScrollView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/ratioTitle"
+                    <androidx.compose.ui.platform.ComposeView
+                        android:id="@+id/styleHeaderIconHost"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/styleTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/ui_style"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/styleHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:maxWidth="160dp"
+                        android:text="Choose a visual style"
+                        android:textColor="#FF6F7A92"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <HorizontalScrollView android:id="@+id/styleScroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:overScrollMode="never" android:scrollbars="none">
+                    <LinearLayout android:id="@+id/styleRow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
+                </HorizontalScrollView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ratioSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:text="@string/ui_ratio"
-                android:textColor="@color/white"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="18dp"
+                android:orientation="vertical">
 
-            <HorizontalScrollView android:id="@+id/ratioScroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:overScrollMode="never" android:scrollbars="none">
-                <LinearLayout android:id="@+id/ratioRow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
-            </HorizontalScrollView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <androidx.compose.ui.platform.ComposeView
+                        android:id="@+id/ratioHeaderIconHost"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/ratioTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/ui_ratio"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/ratioHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:maxWidth="150dp"
+                        android:text="Choose the aspect ratio"
+                        android:textColor="#FF6F7A92"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <HorizontalScrollView android:id="@+id/ratioScroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:overScrollMode="never" android:scrollbars="none">
+                    <LinearLayout android:id="@+id/ratioRow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
+                </HorizontalScrollView>
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/sliderSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="18dp"
                 android:orientation="vertical"
                 android:visibility="gone">
 
@@ -434,6 +535,12 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
+                    <androidx.compose.ui.platform.ComposeView
+                        android:id="@+id/sliderHeaderIconHost"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginEnd="8dp" />
+
                     <TextView
                         android:id="@+id/sliderTitle"
                         android:layout_width="0dp"
@@ -441,6 +548,18 @@
                         android:layout_weight="1"
                         android:textColor="@color/white"
                         android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/sliderHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:gravity="end"
+                        android:maxWidth="150dp"
+                        android:text="Higher values keep closer"
+                        android:textColor="#FF6F7A92"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -460,13 +579,36 @@
                     android:max="100"
                     android:progressDrawable="@drawable/bg_photo_slider_progress"
                     android:thumb="@drawable/bg_photo_slider_thumb" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Less similar"
+                        android:textColor="#FF6F7A92"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="More similar"
+                        android:textColor="#FF6F7A92"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/durationSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="18dp"
                 android:orientation="vertical"
                 android:visibility="gone">
 
@@ -503,12 +645,18 @@
                     android:progressDrawable="@drawable/bg_photo_slider_progress"
                     android:thumb="@drawable/bg_photo_slider_thumb" />
             </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="14dp"
+                android:background="#16FFFFFF" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/summaryRow"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="48dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:background="@drawable/bg_generation_summary_row"
@@ -569,9 +717,9 @@
         <Button
             android:id="@+id/generateButton"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="54dp"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:layout_marginEnd="16dp"
             android:background="@drawable/bg_generation_generate"
             android:text="@string/ui_generate_now"
@@ -584,7 +732,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="6dp"
             android:layout_marginEnd="16dp"
             android:gravity="center"
             android:textColor="#FF9AA5B8"

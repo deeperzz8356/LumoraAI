@@ -8,12 +8,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.ads.LocalAdsManager
 import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.ads.rememberCurrentActivity
@@ -23,17 +27,41 @@ import kotlinx.coroutines.delay
 @Composable
 fun SplashScreen(isReady: Boolean, onNext: () -> Unit, modifier: Modifier = Modifier) {
     val ads = LocalAdsManager.current
+    val adConfig = LocalAdsConfigStore.current
     val activity = rememberCurrentActivity()
     val context = LocalContext.current
     val handler = remember { Handler(Looper.getMainLooper()) }
     val messages = remember { listOf("INITIALIZING ENGINE...", "LOADING MODELS...", "OPTIMIZING GENERATION...") }
-    LaunchedEffect(isReady) {
-        if (isReady) {
-            delay(1_400)
-            if (ads == null) onNext()
-            else if (ads.isFirstLaunch(context)) { ads.markLaunched(context); onNext() }
-            else ads.showInterstitial(activity, AdPlacement.INTER_POST_SPLASH, onContinue = onNext)
+    val splashMaxWaitMs = adConfig?.current?.splashMaxWaitMs ?: 6_000L
+    var bannerLoadState by remember { mutableStateOf<Boolean?>(null) }
+    var advanced by remember { mutableStateOf(false) }
+
+    suspend fun advanceFromSplash() {
+        if (advanced) return
+        advanced = true
+        ads?.markLaunched(context)
+        if (ads == null) {
+            onNext()
+        } else {
+            ads.showInterstitial(
+                activity = activity,
+                placement = AdPlacement.INTER_POST_SPLASH,
+                continueOnShown = true,
+                onContinue = onNext,
+            )
         }
+    }
+
+    LaunchedEffect(isReady, bannerLoadState) {
+        if (isReady && bannerLoadState == true) {
+            advanceFromSplash()
+        }
+    }
+
+    LaunchedEffect(isReady, splashMaxWaitMs) {
+        if (!isReady) return@LaunchedEffect
+        delay(splashMaxWaitMs.coerceAtLeast(0L))
+        advanceFromSplash()
     }
     DisposableEffect(Unit) { onDispose { handler.removeCallbacksAndMessages(null) } }
     Box(modifier.fillMaxSize()) {
@@ -52,6 +80,10 @@ fun SplashScreen(isReady: Boolean, onNext: () -> Unit, modifier: Modifier = Modi
                 binding.root
             }, modifier = Modifier.fillMaxSize()
         )
-        PlacementBanner(placement = AdPlacement.BANNER_SPLASH, modifier = Modifier.align(Alignment.BottomCenter))
+        PlacementBanner(
+            placement = AdPlacement.BANNER_SPLASH,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onLoadStateChange = { state -> bannerLoadState = state },
+        )
     }
 }

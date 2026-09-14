@@ -29,6 +29,8 @@ data class TemplateListItem(
 enum class TemplateAction {
     TEXT_TO_IMAGE,
     TEXT_TO_VIDEO,
+    IMAGE_TO_IMAGE,
+    IMAGE_TO_VIDEO,
     PROMO_VIDEO,
     LOGO_CREATION,
     CREATE_AVATAR

@@ -1,6 +1,5 @@
 package com.deep.lumoraai.feature.settings
 
-import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import androidx.compose.runtime.Composable
@@ -11,8 +10,6 @@ import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.databinding.SettingsScreenBinding
 import com.google.firebase.auth.FirebaseAuth
 
-private const val SettingsLime = 0xFFD6FF3F.toInt()
-
 @Composable
 fun SettingsScreen(
     uiState: SettingsUiState,
@@ -21,8 +18,6 @@ fun SettingsScreen(
     onToggleDarkMode: (Boolean) -> Unit,
     onToggleNotifications: (Boolean) -> Unit,
     onToggleHighQualityMode: (Boolean) -> Unit,
-    onToggleDeveloperMode: (Boolean) -> Unit,
-    onVersionTapped: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val user = FirebaseAuth.getInstance().currentUser
@@ -45,18 +40,5 @@ fun SettingsScreen(
         }
         binding.subscriptionRow.setOnClickListener { onNavigate(Screen.Subscription.route) }
         binding.languageRow.setOnClickListener { onNavigate("${Screen.Language.route}?source=settings") }
-        binding.versionText.setOnClickListener { onVersionTapped() }
-
-        binding.developerSwitch.setOnCheckedChangeListener(null)
-        binding.developerSwitch.isChecked = uiState.isDeveloperMode
-        binding.developerSwitch.thumbTintList = ColorStateList(
-            arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-            intArrayOf(SettingsLime, 0xFFE7EDF7.toInt())
-        )
-        binding.developerSwitch.trackTintList = ColorStateList(
-            arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-            intArrayOf(0xFF5B7628.toInt(), 0xFF273249.toInt())
-        )
-        binding.developerSwitch.setOnCheckedChangeListener { _, value -> onToggleDeveloperMode(value) }
     }
 }

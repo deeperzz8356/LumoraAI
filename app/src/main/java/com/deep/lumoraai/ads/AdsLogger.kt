@@ -52,6 +52,10 @@ object AdsLogger {
         w("LOAD fail  | ${placement.key} | ${placement.format} | code=$code | $message")
     }
 
+    fun missingUnitId(placement: AdPlacement) {
+        w("LOAD skip  | ${placement.key} | ${placement.format} | missing Remote Config ad unit id")
+    }
+
     fun showAttempt(placement: AdPlacement) = d("SHOW try   | ${placement.key} | ${placement.format}")
     fun showSuccess(placement: AdPlacement) = d("SHOW ok    | ${placement.key} | ${placement.format}")
     fun showFailure(placement: AdPlacement, message: String?) =
@@ -60,6 +64,9 @@ object AdsLogger {
     fun dismissed(placement: AdPlacement) = d("DISMISS    | ${placement.key} | ${placement.format}")
     fun reward(placement: AdPlacement, amount: Int, type: String) =
         d("REWARD     | ${placement.key} | $amount $type")
+
+    fun adImpression(placement: AdPlacement, revenue: Double, currency: String, unitId: String?) =
+        d("IMPRESSION | ${placement.key} | ${placement.format} | value=$revenue $currency${unitId?.let { " | unit=$it" } ?: ""}")
 
     fun rejected(placement: AdPlacement, reason: AdRejectionReason, detail: String? = null) {
         d("REJECT     | ${placement.key} | ${placement.format} | $reason${detail?.let { " | $it" } ?: ""}")

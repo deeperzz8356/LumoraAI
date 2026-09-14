@@ -39,7 +39,7 @@ enum class AdPlacement(
     // 17
     NATIVE_HOME("native_home", AdFormat.NATIVE, NativeAdStyle.LARGE),
     // 18
-    NATIVE_TEMPLATE("native_template", AdFormat.NATIVE, NativeAdStyle.REGULAR),
+    NATIVE_TEMPLATE("nativ_template", AdFormat.NATIVE, NativeAdStyle.REGULAR),
     // 19
     NATIVE_TOOLS("native_tools", AdFormat.NATIVE, NativeAdStyle.REGULAR),
     // 20
@@ -47,13 +47,13 @@ enum class AdPlacement(
     // 21
     NATIVE_COMPRESS("native_compress", AdFormat.NATIVE, NativeAdStyle.LARGE),
     // 22
-    INTER_ALL("inter_all", AdFormat.INTERSTITIAL),
+    INTER_ALL("Inter_all", AdFormat.INTERSTITIAL),
     // 23
     INTER_SETTING_LANGUAGE("inter_setting_language", AdFormat.INTERSTITIAL),
     // 24
-    INTER_POST_SPLASH("inter_post_splash", AdFormat.INTERSTITIAL),
+    INTER_POST_SPLASH("inter_ad_post_splash", AdFormat.INTERSTITIAL),
     // 25
-    APP_OPEN("app_open", AdFormat.APP_OPEN),
+    APP_OPEN("app_open_ad", AdFormat.APP_OPEN),
     // 26
     REWARD_CREDITS("reward_credits", AdFormat.REWARDED),
     ;

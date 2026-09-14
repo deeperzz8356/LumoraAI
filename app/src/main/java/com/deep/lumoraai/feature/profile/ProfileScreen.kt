@@ -5,8 +5,11 @@ import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,7 +31,6 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -68,12 +71,12 @@ import com.deep.lumoraai.core.components.PremiumBackground
 import com.deep.lumoraai.core.components.PremiumDanger
 import com.deep.lumoraai.core.components.PremiumLime
 import com.deep.lumoraai.core.components.PremiumMuted
-import com.deep.lumoraai.core.components.PremiumPage
 import com.deep.lumoraai.core.components.PremiumSection
 import com.deep.lumoraai.core.components.PremiumStroke
 import com.deep.lumoraai.core.components.PremiumSurface
 import com.deep.lumoraai.core.components.PremiumText
 import com.deep.lumoraai.core.navigation.Screen
+import com.deep.lumoraai.core.restrictions.GenerationGate
 import com.deep.lumoraai.data.model.HistoryModel
 import com.google.firebase.auth.FirebaseAuth
 import java.io.File
@@ -82,6 +85,8 @@ private enum class ProfileAction { Delete, SignOut, Login }
 
 private const val SupportEmail = "lumoraaisupport@gmail.com"
 private const val PrivacyPolicyUrl = "https://lumoraai.example/privacy-policy"
+private const val TermsAndConditionsUrl = "https://lumoraai.example/terms-and-conditions"
+private val HeaderNotificationDot = Color(0xFFCFBDFF)
 
 @Composable
 fun ProfileScreen(
@@ -149,83 +154,130 @@ private fun ProfileContent(
         )
     }
 
-    PremiumPage(
-        title = "Profile",
-        eyebrow = "Creator space",
-        subtitle = "Your work, credits and account",
-        onBack = onBack,
-        action = {
-            Box {
-                IconButton(onClick = { onNavigate(Screen.Notifications.route) }, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Default.Notifications, "Open notifications", tint = PremiumText)
-                }
-                if (unreadCount > 0) Box(Modifier.align(Alignment.TopEnd).size(9.dp).clip(CircleShape).background(PremiumLime))
+    BoxWithConstraints(Modifier.fillMaxSize().background(PremiumBackground)) {
+        val sidePadding = if (maxWidth >= 600.dp) 32.dp else 18.dp
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .widthIn(max = 760.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = sidePadding)
+                .padding(top = 18.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            ProfileHeader(state.credits, unreadCount, onNavigate)
+            ProfileHero(name, username, plan, saved.avatarUri) {
+                onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
             }
-        },
-    ) {
-        ProfileHero(name, username, plan, saved.avatarUri) {
-            onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ProfileStat("Credits", state.credits.toString(), Icons.Default.CreditCard, Modifier.weight(1f)) { onNavigate(Screen.Credits.route) }
-            ProfileStat("Creations", state.generations.size.toString(), Icons.Default.GridView, Modifier.weight(1f)) { onNavigate(Screen.History.route) }
-        }
-        PremiumSection("Recent work", "Your latest Lumora creations") {
-            if (state.generations.isEmpty()) {
-                PremiumActionRow("Start your first creation", "Generate an image or video from Home", Icons.Default.AutoAwesome, { onNavigate(Screen.TextToImage.route) })
-            } else {
-                state.generations.take(4).chunked(2).forEach { rowItems ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        rowItems.forEach { item -> CreationCard(item, Modifier.weight(1f)) { onNavigate(Screen.History.route) } }
-                        if (rowItems.size == 1) Box(Modifier.weight(1f))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ProfileStat("Credits", state.credits.toString(), Icons.Default.CreditCard, Modifier.weight(1f)) { onNavigate(Screen.Credits.route) }
+                ProfileStat("Creations", state.generations.size.toString(), Icons.Default.GridView, Modifier.weight(1f)) { onNavigate(Screen.History.route) }
+            }
+            PremiumSection("Recent work", "Your latest Lumora creations") {
+                if (state.generations.isEmpty()) {
+                    PremiumActionRow("Start your first creation", "Generate an image or video from Home", Icons.Default.AutoAwesome, { onNavigate(Screen.TextToImage.route) })
+                } else {
+                    state.generations.take(4).chunked(2).forEach { rowItems ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            rowItems.forEach { item -> CreationCard(item, Modifier.weight(1f)) { onNavigate(Screen.History.route) } }
+                            if (rowItems.size == 1) Box(Modifier.weight(1f))
+                        }
                     }
-                }
-                TextButton(onClick = { onNavigate(Screen.History.route) }, modifier = Modifier.align(Alignment.End)) {
-                    Text("View all creations", color = PremiumLime, fontWeight = FontWeight.Bold)
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = PremiumLime, modifier = Modifier.padding(start = 6.dp).size(17.dp))
+                    TextButton(onClick = { onNavigate(Screen.History.route) }, modifier = Modifier.align(Alignment.End)) {
+                        Text("View all creations", color = PremiumLime, fontWeight = FontWeight.Bold)
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = PremiumLime, modifier = Modifier.padding(start = 6.dp).size(17.dp))
+                    }
                 }
             }
+            PremiumSection("Account", "Shortcuts and preferences") {
+                PremiumActionRow("Account settings", "Preferences, language and billing", Icons.Default.Settings, { onNavigate(Screen.Settings.route) })
+                PremiumActionRow(
+                    "Privacy Policy",
+                    "Open Lumora privacy details in your browser",
+                    Icons.Default.Policy,
+                    { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PrivacyPolicyUrl))) },
+                )
+                PremiumActionRow(
+                    "Terms & Conditions",
+                    "Read our terms of use and service agreement",
+                    Icons.Default.Policy,
+                    { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TermsAndConditionsUrl))) },
+                )
+                PremiumActionRow(
+                    "Help & support",
+                    SupportEmail,
+                    Icons.AutoMirrored.Filled.HelpOutline,
+                    {
+                        val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse("mailto:$SupportEmail")
+                            putExtra(Intent.EXTRA_SUBJECT, "Lumora AI support")
+                        }
+                        context.startActivity(Intent.createChooser(emailIntent, "Email support"))
+                    },
+                )
+                PremiumActionRow(
+                    "Share profile",
+                    "Invite others to see your Lumora identity",
+                    Icons.Default.Share,
+                    {
+                        val share = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, "$name on LumoraAI")
+                        }
+                        context.startActivity(Intent.createChooser(share, context.getString(R.string.ui_share)))
+                    },
+                )
+                PremiumActionRow("Delete account", "Permanently remove your Lumora account", Icons.Default.DeleteOutline, { pendingAction = ProfileAction.Delete }, danger = true)
+                PremiumActionRow(
+                    if (state.isGuest) "Log in" else "Sign out",
+                    if (state.isGuest) "Save your work across devices" else "End this session on this device",
+                    if (state.isGuest) Icons.AutoMirrored.Filled.Login else Icons.AutoMirrored.Filled.Logout,
+                    { pendingAction = if (state.isGuest) ProfileAction.Login else ProfileAction.SignOut },
+                    danger = !state.isGuest,
+                )
+            }
         }
-        PremiumSection("Account", "Shortcuts and preferences") {
-            PremiumActionRow("Account settings", "Preferences, language and billing", Icons.Default.Settings, { onNavigate(Screen.Settings.route) })
-            PremiumActionRow(
-                "Privacy Policy",
-                "Open Lumora privacy details in your browser",
-                Icons.Default.Policy,
-                { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PrivacyPolicyUrl))) },
-            )
-            PremiumActionRow(
-                "Help & support",
-                SupportEmail,
-                Icons.AutoMirrored.Filled.HelpOutline,
-                {
-                    val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse("mailto:$SupportEmail")
-                        putExtra(Intent.EXTRA_SUBJECT, "Lumora AI support")
-                    }
-                    context.startActivity(Intent.createChooser(emailIntent, "Email support"))
-                },
-            )
-            PremiumActionRow(
-                "Share profile",
-                "Invite others to see your Lumora identity",
-                Icons.Default.Share,
-                {
-                    val share = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, "$name on LumoraAI")
-                    }
-                    context.startActivity(Intent.createChooser(share, context.getString(R.string.ui_share)))
-                },
-            )
-            PremiumActionRow("Delete account", "Permanently remove your Lumora account", Icons.Default.DeleteOutline, { pendingAction = ProfileAction.Delete }, danger = true)
-            PremiumActionRow(
-                if (state.isGuest) "Log in" else "Sign out",
-                if (state.isGuest) "Save your work across devices" else "End this session on this device",
-                if (state.isGuest) Icons.AutoMirrored.Filled.Login else Icons.AutoMirrored.Filled.Logout,
-                { pendingAction = if (state.isGuest) ProfileAction.Login else ProfileAction.SignOut },
-                danger = !state.isGuest,
-            )
+    }
+}
+
+@Composable
+private fun ProfileHeader(credits: Int, unreadCount: Int, onNavigate: (String) -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Profile", color = PremiumText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+        Surface(
+            onClick = { onNavigate(Screen.Credits.route) },
+            modifier = Modifier.widthIn(min = 90.dp).height(30.dp),
+            shape = RoundedCornerShape(50.dp),
+            color = Color.White.copy(alpha = 0.05f),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+        ) {
+            Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                Icon(painterResource(R.drawable.ic_lumora_star), null, tint = PremiumLime, modifier = Modifier.size(15.dp))
+                Text(
+                    if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else credits.toString(),
+                    color = PremiumLime,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+            }
+        }
+        Surface(
+            onClick = { onNavigate(Screen.Notifications.route) },
+            modifier = Modifier.padding(start = 14.dp).size(38.dp),
+            shape = RoundedCornerShape(50.dp),
+            color = Color.White.copy(alpha = 0.05f),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(painterResource(R.drawable.ic_lumora_bell), "Open notifications", tint = Color.White, modifier = Modifier.size(20.dp))
+                if (unreadCount > 0) Box(Modifier.align(Alignment.TopEnd).padding(top = 7.dp, end = 7.dp).size(8.dp).clip(CircleShape).background(HeaderNotificationDot))
+            }
         }
     }
 }

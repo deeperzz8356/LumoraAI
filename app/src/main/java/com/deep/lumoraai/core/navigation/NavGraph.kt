@@ -1,10 +1,7 @@
 package com.deep.lumoraai.core.navigation
 
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -96,18 +93,10 @@ fun NavGraph(
         navController = navController,
         startDestination = Screen.Splash.route,
         modifier = Modifier.weight(1f),
-        enterTransition = {
-            fadeIn(animationSpec = tween(180)) + slideInHorizontally(animationSpec = tween(220)) { it / 10 }
-        },
-        exitTransition = {
-            fadeOut(animationSpec = tween(120)) + slideOutHorizontally(animationSpec = tween(180)) { -it / 16 }
-        },
-        popEnterTransition = {
-            fadeIn(animationSpec = tween(180)) + slideInHorizontally(animationSpec = tween(220)) { -it / 10 }
-        },
-        popExitTransition = {
-            fadeOut(animationSpec = tween(120)) + slideOutHorizontally(animationSpec = tween(180)) { it / 12 }
-        },
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None },
     ) {
         composable(Screen.Splash.route) {
             SplashRoute(

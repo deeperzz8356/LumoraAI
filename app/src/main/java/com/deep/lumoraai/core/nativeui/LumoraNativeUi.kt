@@ -14,8 +14,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -33,14 +34,15 @@ fun LumoraXmlScreen(
     selectedTab: String? = null,
     onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier,
-    bind: (NativeScreenShellBinding) -> Unit,
+    content: (NativeScreenShellBinding) -> Unit,
 ) {
+    val hasBottomNav = selectedTab != null
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = ComposeColor(0xFF081020),
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            if (selectedTab != null) {
+            if (hasBottomNav) {
                 BottomNavigationBar(emptyList(), selectedTab, onNavigate)
             }
         }
@@ -49,12 +51,30 @@ fun LumoraXmlScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(ComposeColor(0xFF081020))
-                .systemBarsPadding()
+                .statusBarsPadding()
+                .then(
+                    if (!hasBottomNav) Modifier.navigationBarsPadding() else Modifier
+                )
                 .padding(padding)
         ) {
             AndroidView(
-                factory = { NativeScreenShellBinding.inflate(LayoutInflater.from(it)).root },
-                update = { bind(NativeScreenShellBinding.bind(it)) },
+                factory = { context ->
+                    // Inflate once — store the typed binding in the tag so
+                    // update() can retrieve it without re-binding every frame.
+                    val binding = NativeScreenShellBinding.inflate(LayoutInflater.from(context))
+                    binding.scroll.apply {
+                        isFillViewport = true
+                        isVerticalScrollBarEnabled = false
+                        overScrollMode = View.OVER_SCROLL_IF_CONTENT_SCROLLS
+                    }
+                    binding.root.tag = binding
+                    binding.root
+                },
+                update = { root ->
+                    // Retrieve the cached binding — no re-inflation on recompose.
+                    val binding = root.tag as NativeScreenShellBinding
+                    content(binding)
+                },
                 modifier = Modifier.fillMaxSize()
             )
         }

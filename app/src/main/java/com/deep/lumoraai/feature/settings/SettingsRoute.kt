@@ -36,7 +36,5 @@ fun SettingsRoute(
         onToggleDarkMode = viewModel::toggleDarkMode,
         onToggleNotifications = viewModel::toggleNotifications,
         onToggleHighQualityMode = viewModel::toggleHighQualityMode,
-        onToggleDeveloperMode = viewModel::toggleDeveloperMode,
-        onVersionTapped = viewModel::onVersionTapped,
     )
 }

@@ -62,7 +62,8 @@ class MainActivity : ComponentActivity() {
                 // One long-lived banner_all AdView, created once and re-parented
                 // across primary tabs (never recreated/refreshed on tab switch).
                 val screenWidthDp = LocalConfiguration.current.screenWidthDp
-                val persistentBanner = remember(screenWidthDp) {
+                val adsConfigVersion = adsConfigStore.version
+                val persistentBanner = remember(screenWidthDp, adsConfigVersion) {
                     com.deep.lumoraai.ads.banner.PersistentBannerAd(
                         // AdView requires an Activity context to render; the app
                         // context makes the banner silently fail to display.

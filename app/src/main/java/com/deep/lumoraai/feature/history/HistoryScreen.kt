@@ -1,8 +1,11 @@
 package com.deep.lumoraai.feature.history
 
 import android.net.Uri
+import android.view.LayoutInflater
+import android.view.View
+import android.media.MediaPlayer
+import android.widget.MediaController
 import android.widget.Toast
-import android.widget.VideoView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,25 +24,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -65,7 +62,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -73,6 +69,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import com.deep.lumoraai.R
+import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsConfigStore
+import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
@@ -89,12 +88,25 @@ import com.deep.lumoraai.core.utils.HistoryFeedbackReporter
 import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.core.utils.MediaShareUtils
 import com.deep.lumoraai.data.model.HistoryModel
+import com.deep.lumoraai.databinding.HistoryViewerBinding
 import kotlinx.coroutines.launch
 import java.io.File
 
 private enum class HistoryFilter(val label: String) {
     All("All"), Images("Images"), Videos("Videos"), Enhancer("Enhanced"), Compress("Compressed")
 }
+
+private sealed interface HistoryGridItem {
+    data class Content(val model: HistoryModel) : HistoryGridItem
+    data class Ad(val slotIndex: Int) : HistoryGridItem
+}
+
+private val HeaderNotificationDot = Color(0xFFCFBDFF)
+
+private data class ImageViewerTransform(
+    val scale: Float = 1f,
+    val rotation: Float = 0f,
+)
 
 @Composable
 fun HistoryScreen(
@@ -195,16 +207,78 @@ private fun HistoryGallery(
                     if (filteredItems.isEmpty()) {
                         FilterEmpty(selectedFilter)
                     } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(156.dp),
-                            modifier = Modifier.fillMaxWidth().weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            items(filteredItems, key = { it.id }) { item ->
-                                HistoryTile(item, item.id in selectedIds, { onToggleSelected(item.id) }, { onOpen(item) })
-                            }
-                        }
+                        HistoryGrid(
+                            items = filteredItems,
+                            selectedIds = selectedIds,
+                            onToggleSelected = onToggleSelected,
+                            onOpen = onOpen,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryGrid(
+    items: List<HistoryModel>,
+    selectedIds: Set<String>,
+    onToggleSelected: (String) -> Unit,
+    onOpen: (HistoryModel) -> Unit,
+) {
+    val adInterval = LocalAdsConfigStore.current?.current?.nativeHistoryInterval ?: 3
+
+    val columns = 2
+    val gridItems: List<HistoryGridItem> = remember(items, adInterval) {
+        buildList {
+            var completedRows = 0
+            var adSlotIndex = 0
+            items.forEachIndexed { i, model ->
+                add(HistoryGridItem.Content(model))
+                val count = i + 1
+                if (count % columns == 0) {
+                    completedRows++
+                    val isLastRow = count >= items.size
+                    if (completedRows % adInterval == 0 && !isLastRow) {
+                        add(HistoryGridItem.Ad(adSlotIndex++))
+                    }
+                }
+            }
+        }
+    }
+
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(156.dp),
+        modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        gridItems.forEach { gridItem ->
+            when (gridItem) {
+                is HistoryGridItem.Content -> {
+                    val item = gridItem.model
+                    item(key = item.id) {
+                        HistoryTile(
+                            item = item,
+                            selected = item.id in selectedIds,
+                            onToggleSelected = { onToggleSelected(item.id) },
+                            onOpen = { onOpen(item) },
+                        )
+                    }
+                }
+                is HistoryGridItem.Ad -> {
+                    item(
+                        key = "native_ad_${gridItem.slotIndex}",
+                        span = { GridItemSpan(maxLineSpan) },
+                    ) {
+                        PlacementNativeAd(
+                            placement = AdPlacement.NATIVE_HISTORY,
+                            slotKey = "native_history_${gridItem.slotIndex}",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                        )
                     }
                 }
             }
@@ -216,26 +290,40 @@ private fun HistoryGallery(
 private fun HistoryHeader(credits: Int, unreadCount: Int, onNavigate: (String) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("YOUR ARCHIVE", color = PremiumLime, fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp)
-            Text("History", color = PremiumText, fontSize = 30.sp, lineHeight = 33.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.8).sp, modifier = Modifier.semantics { heading() })
-            Text("Everything you've made, ready to revisit.", color = PremiumMuted, fontSize = 11.sp)
+            Text("History", color = PremiumText, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
         }
         Surface(
             onClick = { onNavigate(Screen.Credits.route) },
-            shape = RoundedCornerShape(12.dp),
-            color = PremiumLime.copy(alpha = 0.10f),
-            border = BorderStroke(1.dp, PremiumLime.copy(alpha = 0.24f)),
+            modifier = Modifier.widthIn(min = 90.dp).height(30.dp),
+            shape = RoundedCornerShape(50.dp),
+            color = Color.White.copy(alpha = 0.05f),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
         ) {
-            Row(Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Icon(Icons.Default.CreditCard, null, tint = PremiumLime, modifier = Modifier.size(17.dp))
-                Text(if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "∞" else credits.toString(), color = PremiumLime, fontWeight = FontWeight.Black)
+            Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                Icon(painterResource(R.drawable.ic_lumora_star), null, tint = PremiumLime, modifier = Modifier.size(15.dp))
+                Text(
+                    if (credits >= GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) "Unlimited" else credits.toString(),
+                    color = PremiumLime,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
             }
         }
-        Box {
-            IconButton(onClick = { onNavigate(Screen.Notifications.route) }, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.Notifications, "Notifications", tint = PremiumText) }
-            if (unreadCount > 0) Box(Modifier.align(Alignment.TopEnd).size(9.dp).clip(CircleShape).background(PremiumLime))
+        Surface(
+            onClick = { onNavigate(Screen.Notifications.route) },
+            modifier = Modifier.padding(start = 14.dp).size(38.dp),
+            shape = RoundedCornerShape(50.dp),
+            color = Color.White.copy(alpha = 0.05f),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(painterResource(R.drawable.ic_lumora_bell), "Open notifications", tint = Color.White, modifier = Modifier.size(20.dp))
+                if (unreadCount > 0) Box(Modifier.align(Alignment.TopEnd).padding(top = 7.dp, end = 7.dp).size(8.dp).clip(CircleShape).background(HeaderNotificationDot))
+            }
         }
-        IconButton(onClick = { onNavigate(Screen.Profile.route) }, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.Person, "Profile", tint = PremiumText) }
     }
 }
 
@@ -330,53 +418,162 @@ private fun HistoryViewer(item: HistoryModel, onBack: () -> Unit, onDelete: () -
     val file = remember(item.mediaUrl) { File(item.mediaUrl.orEmpty()) }
     val isVideo = item.type.equals("VIDEO", true)
     var showFeedback by remember { mutableStateOf(false) }
+
     if (showFeedback) FeedbackDialog(item, { showFeedback = false }) { reason ->
         HistoryFeedbackReporter.submit(context, item, reason)
         Toast.makeText(context, "Thanks, feedback saved.", Toast.LENGTH_SHORT).show()
         showFeedback = false
     }
-    Column(Modifier.fillMaxSize().padding(horizontal = 18.dp).padding(top = 14.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to history", tint = PremiumText) }
-            Column(Modifier.weight(1f)) {
-                Text(item.title.ifBlank { if (isVideo) "Video" else "Image" }, color = PremiumText, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(item.createdAt, color = PremiumMuted, fontSize = 11.sp)
-            }
-        }
-        Surface(Modifier.fillMaxWidth().weight(1f), shape = RoundedCornerShape(24.dp), color = PremiumSurface, border = BorderStroke(1.dp, PremiumStroke)) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                when {
-                    !file.exists() -> Text("This media file is no longer available.", color = PremiumMuted)
-                    isVideo -> AndroidView(
-                        factory = { VideoView(it).apply { setVideoURI(Uri.fromFile(file)); setOnPreparedListener { player -> player.isLooping = true; start() } } },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    else -> AsyncImage(Uri.fromFile(file), item.title, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                }
-            }
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ViewerAction("Save", Icons.Default.Download, file.exists(), Modifier.weight(1f)) {
+
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { androidContext ->
+            HistoryViewerBinding.inflate(LayoutInflater.from(androidContext)).apply {
+                root.tag = this
+            }.root
+        },
+        update = { root ->
+            val binding = root.tag as HistoryViewerBinding
+            val exists = file.exists()
+
+            binding.mediaTitle.text = item.title.ifBlank { if (isVideo) "Video" else "Image" }
+            binding.createdAt.text = item.createdAt
+            binding.backButton.setOnClickListener { onBack() }
+            binding.feedbackButton.setOnClickListener { showFeedback = true }
+            binding.deleteButton.setOnClickListener { onDelete() }
+
+            binding.downloadButton.isEnabled = exists
+            binding.downloadButton.alpha = if (exists) 1f else 0.35f
+            binding.downloadButton.setOnClickListener {
+                if (!file.exists()) return@setOnClickListener
                 scope.launch {
                     val result = MediaGallerySaver.saveToGallery(context, file.absolutePath, mimeTypeFor(item), item.type)
-                    Toast.makeText(context, result.fold({ "Saved to gallery" }, { it.message ?: "Could not save media." }), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        context,
+                        result.fold({ "Saved to gallery" }, { it.message ?: "Could not save media." }),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
-            ViewerAction("Share", Icons.Default.Share, file.exists(), Modifier.weight(1f)) { MediaShareUtils.shareMedia(context, file.absolutePath, mimeTypeFor(item)) }
-            ViewerAction("Feedback", Icons.Default.Feedback, true, Modifier.weight(1f)) { showFeedback = true }
-            ViewerAction("Delete", Icons.Default.DeleteOutline, true, Modifier.weight(1f), danger = true, onClick = onDelete)
+
+            binding.shareButton.isEnabled = exists
+            binding.shareButton.alpha = if (exists) 1f else 0.35f
+            binding.shareButton.setOnClickListener {
+                if (file.exists()) MediaShareUtils.shareMedia(context, file.absolutePath, mimeTypeFor(item))
+            }
+
+            binding.missingText.visibility = if (exists) View.GONE else View.VISIBLE
+            binding.mediaImage.visibility = View.GONE
+            binding.mediaVideo.visibility = View.GONE
+            binding.imageControls.visibility = View.GONE
+            binding.videoControls.visibility = View.GONE
+
+            if (!exists) {
+                binding.mediaVideo.stopPlayback()
+                binding.mediaImage.setImageDrawable(null)
+                binding.mediaFrame.tag = null
+                return@AndroidView
+            }
+
+            val mediaKey = "${item.id}:${file.absolutePath}:${file.lastModified()}"
+            val isNewMedia = binding.mediaFrame.tag != mediaKey
+            if (isNewMedia) {
+                binding.mediaFrame.tag = mediaKey
+            }
+
+            if (isVideo) {
+                binding.mediaImage.setImageDrawable(null)
+                binding.imageControls.visibility = View.GONE
+                binding.videoControls.visibility = View.VISIBLE
+                binding.mediaVideo.visibility = View.VISIBLE
+                if (isNewMedia) {
+                    binding.mediaVideo.stopPlayback()
+                    binding.mediaVideo.setTag(R.id.history_viewer_media_player, null)
+                    val controller = MediaController(binding.root.context)
+                    controller.setAnchorView(binding.mediaVideo)
+                    binding.mediaVideo.setMediaController(controller)
+                    binding.mediaVideo.setVideoURI(Uri.fromFile(file))
+                }
+                binding.mediaVideo.setOnPreparedListener { player ->
+                    binding.mediaVideo.setTag(R.id.history_viewer_media_player, player)
+                    player.isLooping = false
+                    player.setVolume(1f, 1f)
+                    binding.muteButton.isSelected = false
+                    binding.muteButton.text = "Mute"
+                    binding.playPauseButton.text = "Pause"
+                    binding.mediaVideo.start()
+                }
+                binding.mediaVideo.setOnErrorListener { _, _, _ ->
+                    binding.mediaVideo.visibility = View.GONE
+                    binding.videoControls.visibility = View.GONE
+                    binding.missingText.visibility = View.VISIBLE
+                    binding.missingText.text = "Could not play this video."
+                    true
+                }
+                binding.playPauseButton.setOnClickListener {
+                    if (binding.mediaVideo.isPlaying) {
+                        binding.mediaVideo.pause()
+                        binding.playPauseButton.text = "Play"
+                    } else {
+                        binding.mediaVideo.start()
+                        binding.playPauseButton.text = "Pause"
+                    }
+                }
+                binding.muteButton.setOnClickListener {
+                    val muted = !binding.muteButton.isSelected
+                    binding.muteButton.isSelected = muted
+                    (binding.mediaVideo.getTag(R.id.history_viewer_media_player) as? MediaPlayer)
+                        ?.setVolume(if (muted) 0f else 1f, if (muted) 0f else 1f)
+                    binding.muteButton.text = if (muted) "Unmute" else "Mute"
+                }
+            } else {
+                binding.mediaVideo.stopPlayback()
+                binding.mediaVideo.setTag(R.id.history_viewer_media_player, null)
+                binding.videoControls.visibility = View.GONE
+                binding.imageControls.visibility = View.VISIBLE
+                binding.mediaImage.visibility = View.VISIBLE
+                if (isNewMedia) {
+                    binding.mediaImage.setImageURI(Uri.fromFile(file))
+                    binding.mediaImage.tag = ImageViewerTransform()
+                    applyImageTransform(binding, binding.mediaImage.tag as ImageViewerTransform)
+                }
+
+                binding.zoomOutButton.setOnClickListener {
+                    updateImageTransform(binding) { copy(scale = (scale / 1.2f).coerceAtLeast(1f)) }
+                }
+                binding.zoomInButton.setOnClickListener {
+                    updateImageTransform(binding) { copy(scale = (scale * 1.2f).coerceAtMost(4f)) }
+                }
+                binding.rotateLeftButton.setOnClickListener {
+                    updateImageTransform(binding) { copy(rotation = rotation - 90f) }
+                }
+                binding.rotateRightButton.setOnClickListener {
+                    updateImageTransform(binding) { copy(rotation = rotation + 90f) }
+                }
+                binding.resetImageButton.setOnClickListener {
+                    updateImageTransform(binding) { ImageViewerTransform() }
+                }
+            }
         }
-    }
+    )
 }
 
-@Composable
-private fun ViewerAction(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, enabled: Boolean, modifier: Modifier, danger: Boolean = false, onClick: () -> Unit) {
-    Surface(onClick = onClick, enabled = enabled, modifier = modifier.height(62.dp), shape = RoundedCornerShape(15.dp), color = PremiumSurface, border = BorderStroke(1.dp, if (danger) PremiumDanger.copy(alpha = 0.35f) else PremiumStroke)) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Icon(icon, null, tint = if (danger) PremiumDanger else if (enabled) PremiumLime else PremiumMuted, modifier = Modifier.size(20.dp))
-            Text(label, color = if (danger) PremiumDanger else PremiumText, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-        }
-    }
+private fun updateImageTransform(
+    binding: HistoryViewerBinding,
+    transform: ImageViewerTransform.() -> ImageViewerTransform,
+) {
+    val current = binding.mediaImage.tag as? ImageViewerTransform ?: ImageViewerTransform()
+    val next = current.transform()
+    binding.mediaImage.tag = next
+    applyImageTransform(binding, next)
+}
+
+private fun applyImageTransform(binding: HistoryViewerBinding, transform: ImageViewerTransform) {
+    binding.mediaImage.scaleX = transform.scale
+    binding.mediaImage.scaleY = transform.scale
+    binding.mediaImage.rotation = transform.rotation
+    binding.zoomOutButton.isEnabled = transform.scale > 1f
+    binding.zoomOutButton.alpha = if (transform.scale > 1f) 1f else 0.45f
 }
 
 @Composable

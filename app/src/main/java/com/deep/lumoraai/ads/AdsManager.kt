@@ -2,11 +2,14 @@ package com.deep.lumoraai.ads
 
 import android.app.Activity
 import android.content.Context
+import com.deep.lumoraai.BuildConfig
 import com.deep.lumoraai.ads.appopen.AppOpenAdManager
 import com.deep.lumoraai.ads.interstitial.InterstitialAdManager
 import com.deep.lumoraai.ads.nativead.NativeAdManager
 import com.deep.lumoraai.ads.rewarded.AdReward
 import com.deep.lumoraai.ads.rewarded.RewardedAdManager
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
 import java.util.concurrent.atomic.AtomicBoolean
@@ -39,9 +42,19 @@ class AdsManager @Inject constructor(
         if (!config.adsEnabled) return
         if (!initialized.compareAndSet(false, true)) return
         val appContext = context.applicationContext
+        fetchRemoteAdsConfig {
+            initializeMobileAds(appContext)
+        }
+    }
 
+    private fun initializeMobileAds(appContext: Context) {
+        val config = configStore.current
+        if (!config.adsEnabled) {
+            AdsLogger.d("MobileAds skipped: ads disabled by Remote Config")
+            return
+        }
         if (config.testMode) {
-            // Ensure only non-personalized/test-safe content during development.
+            // Diagnostics/policy mode only. Ad unit IDs still come from Remote Config.
             MobileAds.setRequestConfiguration(
                 RequestConfiguration.Builder()
                     .setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_G)
@@ -55,6 +68,26 @@ class AdsManager @Inject constructor(
             rewardedManager.preload(appContext)
             appOpenManager.preload(appContext)
         }
+    }
+
+    private fun fetchRemoteAdsConfig(onComplete: () -> Unit) {
+        val remoteConfig = FirebaseRemoteConfig.getInstance()
+        val minFetchSeconds = if (BuildConfig.DEBUG) 0L else 3_600L
+        remoteConfig.setConfigSettingsAsync(
+            FirebaseRemoteConfigSettings.Builder()
+                .setMinimumFetchIntervalInSeconds(minFetchSeconds)
+                .build()
+        )
+        remoteConfig.fetchAndActivate()
+            .addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    AdsLogger.w("AdsConfig: Remote Config fetch failed", task.exception)
+                }
+                // Read every parameter individually (flat layout) and build the
+                // config in one shot — no JSON blob needed.
+                configStore.applyRemoteConfig(remoteConfig)
+                onComplete()
+            }
     }
 
     fun isInitialized(): Boolean = initialized.get()
@@ -79,6 +112,7 @@ class AdsManager @Inject constructor(
         activity: Activity?,
         placement: AdPlacement,
         requireTrigger: Boolean = false,
+        continueOnShown: Boolean = false,
         onContinue: () -> Unit,
     ) {
         if (activity == null) {
@@ -99,18 +133,29 @@ class AdsManager @Inject constructor(
             onContinue(); return
         }
 
-        var completed = false
-        val complete = {
-            if (!completed) {
-                completed = true
-                frequency.releaseFullScreen()
+        var continued = false
+        var released = false
+        val continueOnce = {
+            if (!continued) {
+                continued = true
                 onContinue()
             }
+        }
+        val releaseOnce = {
+            if (!released) {
+                released = true
+                frequency.releaseFullScreen()
+            }
+        }
+        val complete = {
+            releaseOnce()
+            continueOnce()
         }
         val shown = interstitialManager.show(
             activity = activity,
             placement = placement,
             onShown = { frequency.recordFullScreenShown(placement) },
+            onAdDisplayed = { if (continueOnShown) continueOnce() },
             onComplete = complete,
         )
         if (!shown) complete()
@@ -227,4 +272,9 @@ class AdsManager @Inject constructor(
     // ---- Native ----
 
     fun clearNativeAds() = nativeManager.destroyAll()
+
+    private companion object {
+        // Legacy single-blob key kept for reference only — no longer used.
+        // const val ADS_CONFIG_JSON_KEY = "ads_config_json"
+    }
 }

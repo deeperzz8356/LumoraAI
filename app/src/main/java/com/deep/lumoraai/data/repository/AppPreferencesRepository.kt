@@ -24,7 +24,7 @@ class AppPreferencesRepository private constructor(context: Context) {
 
     val isDeveloperMode: Flow<Boolean> = dataStore.data
         .catch { if (it is IOException) emit(androidx.datastore.preferences.core.emptyPreferences()) else throw it }
-        .map { BuildConfig.DEBUG && (it[PreferenceKeys.IS_DEVELOPER_MODE] ?: false) }
+        .map { it[PreferenceKeys.IS_DEVELOPER_MODE] ?: false }
 
     val isDevModeUnlocked: Flow<Boolean> = dataStore.data
         .catch { if (it is IOException) emit(androidx.datastore.preferences.core.emptyPreferences()) else throw it }
@@ -44,6 +44,18 @@ class AppPreferencesRepository private constructor(context: Context) {
             if (!enabled) {
                 prefs[PreferenceKeys.DEV_MODE_UNLOCKED] = false
             }
+        }
+    }
+
+    /**
+     * Activates the unlimited-credits override granted by the remote config
+     * credential match. Unlike [setDeveloperMode] this is NOT gated on
+     * [BuildConfig.DEBUG] so it works in release builds for authorised testers.
+     */
+    suspend fun setUnlimitedCreditsMode(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.IS_DEVELOPER_MODE] = enabled
+            if (!enabled) prefs[PreferenceKeys.DEV_MODE_UNLOCKED] = false
         }
     }
 
@@ -73,6 +85,30 @@ class AppPreferencesRepository private constructor(context: Context) {
             .map(String::trim)
             .filter(String::isNotEmpty)
             .any { it.lowercase() == email }
+    }
+
+    /**
+     * Returns true when all three remote-controlled conditions are met:
+     *  1. [unlimitedCreditsEnabled] is true in Remote Config
+     *  2. The signed-in user's email matches [unlimitedEmail] (case-insensitive)
+     *  3. The password used at login matches [unlimitedPassword]
+     *
+     * Call this immediately after a successful email sign-in, passing the raw
+     * credentials the user just typed. The password is NEVER stored — it is only
+     * compared in memory at the moment of login and then discarded.
+     */
+    fun isUnlimitedCreditsLogin(
+        email: String,
+        password: String,
+        adsConfigStore: com.deep.lumoraai.ads.AdsConfigStore,
+    ): Boolean {
+        val config = adsConfigStore.current
+        if (!config.unlimitedCreditsEnabled) return false
+        val targetEmail = config.unlimitedEmail.trim()
+        val targetPassword = config.unlimitedPassword.trim()
+        if (targetEmail.isBlank() || targetPassword.isBlank()) return false
+        return email.trim().lowercase() == targetEmail.lowercase() &&
+                password == targetPassword
     }
 
     companion object {

@@ -7,12 +7,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.DrawableRes
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.nativeui.LumoraXmlScreen
 import com.deep.lumoraai.core.nativeui.dp
@@ -20,6 +25,11 @@ import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.databinding.SubscriptionPlanCardBinding
 import com.deep.lumoraai.databinding.SubscriptionScreenBinding
 import com.deep.lumoraai.feature.subscription.model.SubscriptionPlan
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Check
+import compose.icons.tablericons.Settings
+import compose.icons.tablericons.Stars
+import compose.icons.tablericons.Wand
 
 private const val SubscriptionCard = 0xFF111A2E.toInt()
 private const val SubscriptionStroke = 0xFF223049.toInt()
@@ -82,6 +92,7 @@ private fun SubscriptionScreenBinding.bindSuccess(
     } else {
         "Unlock more credits, faster runs, and Pro tools."
     }
+    bindTablerIcon(heroIconHost, TablerIcons.Stars, ComposeColor(0xFFFF4AA2))
     featureTiles.removeAllViews()
     addFeatureTiles(featureTiles)
 
@@ -120,6 +131,7 @@ private fun SubscriptionScreenBinding.createPlanCard(plan: SubscriptionPlan, sel
     binding.price.setTextColor(if (selected) SubscriptionLime else SubscriptionMuted)
     binding.badge.visibility = if (plan.highlighted) View.VISIBLE else View.GONE
     binding.selectedBadge.visibility = if (selected) View.VISIBLE else View.GONE
+    bindTablerIcon(binding.selectedIconHost, TablerIcons.Check, ComposeColor(0xFF081020))
     binding.root.setOnClickListener { onClick() }
     binding.features.removeAllViews()
     plan.features.forEach { feature ->
@@ -164,10 +176,7 @@ private fun featureLine(parent: View, text: String, selected: Boolean): LinearLa
     LinearLayout(parent.context).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = android.view.Gravity.CENTER_VERTICAL
-        addView(ImageView(context).apply {
-            setImageResource(R.drawable.ic_lumora_check)
-            setColorFilter(if (selected) SubscriptionLime else SubscriptionMuted)
-        }, LinearLayout.LayoutParams(parent.dp(18), parent.dp(18)).apply { marginEnd = parent.dp(10) })
+        addView(parent.tablerIcon(TablerIcons.Check, ComposeColor(if (selected) SubscriptionLime else SubscriptionMuted)), LinearLayout.LayoutParams(parent.dp(18), parent.dp(18)).apply { marginEnd = parent.dp(10) })
         addView(TextView(context).apply {
             this.text = text
             setTextColor(if (selected) 0xFFE6EAF2.toInt() else 0xFFD2D6DF.toInt())
@@ -182,12 +191,29 @@ private fun featureLine(parent: View, text: String, selected: Boolean): LinearLa
 private fun View.iconBlock(@DrawableRes icon: Int, background: Int, tint: Int): FrameLayout =
     FrameLayout(context).apply {
         this.background = rounded(background, dp(18))
-        addView(ImageView(context).apply {
-            setImageResource(icon)
-            setColorFilter(tint)
+        addView(tablerIcon(subscriptionIcon(icon), ComposeColor(tint)).apply {
             setPadding(dp(11), dp(11), dp(11), dp(11))
         }, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     }
+
+private fun subscriptionIcon(@DrawableRes icon: Int): ImageVector = when (icon) {
+    R.drawable.ic_lumora_magic -> TablerIcons.Wand
+    R.drawable.ic_lumora_settings -> TablerIcons.Settings
+    else -> TablerIcons.Check
+}
+
+private fun View.tablerIcon(imageVector: ImageVector, tint: ComposeColor): ComposeView =
+    ComposeView(context).apply {
+        setContent {
+            Icon(imageVector = imageVector, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
+        }
+    }
+
+private fun bindTablerIcon(host: ComposeView, imageVector: ImageVector, tint: ComposeColor) {
+    host.setContent {
+        Icon(imageVector = imageVector, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
+    }
+}
 
 private fun View.rounded(color: Int, radius: Int, strokeColor: Int? = null, strokeWidth: Int = 0): GradientDrawable =
     GradientDrawable().apply {

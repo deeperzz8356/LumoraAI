@@ -48,6 +48,7 @@ fun NativeAdCard(
     modifier: Modifier = Modifier,
     slotKey: String? = null,
 ) {
+    val configVersion = configStore.version
     val config = configStore.current
     if (!config.formatEnabled(AdFormat.NATIVE) || !config.isPlacementEnabled(placement)) return
 
@@ -55,10 +56,10 @@ fun NativeAdCard(
     val style = config.nativeStyle
     val cacheKey = slotKey ?: placement.key
     // null = loading, ad = loaded, and a separate failed flag to collapse.
-    var nativeAd by remember(cacheKey) { mutableStateOf<NativeAd?>(null) }
-    var failed by remember(cacheKey) { mutableStateOf(false) }
+    var nativeAd by remember(configVersion, cacheKey) { mutableStateOf<NativeAd?>(null) }
+    var failed by remember(configVersion, cacheKey) { mutableStateOf(false) }
 
-    DisposableEffect(cacheKey) {
+    DisposableEffect(configVersion, cacheKey) {
         nativeAdManager.load(
             context = context,
             placement = placement,
