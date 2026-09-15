@@ -153,7 +153,8 @@ private fun bindHome(
 ) {
     binding.loading.visibility = if (uiState is HomeUiState.Loading) View.VISIBLE else View.GONE
     binding.messageState.visibility = View.GONE
-    binding.contentScroll.visibility = View.GONE
+    // Keep the last rendered content (including View All) reachable during refresh.
+    if (uiState !is HomeUiState.Loading) binding.contentScroll.visibility = View.GONE
 
     when (uiState) {
         is HomeUiState.Loading -> return

@@ -17,8 +17,11 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Rotate90DegreesCcw
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -58,10 +61,12 @@ fun ZoomableVideoPlayer(
     val context = LocalContext.current
     
     // State management
-    var scale by remember { mutableFloatStateOf(1f) }
-    var offsetX by remember { mutableFloatStateOf(0f) }
-    var offsetY by remember { mutableFloatStateOf(0f) }
-    var rotation by remember { mutableIntStateOf(0) }
+    var scale by remember(filePath) { mutableFloatStateOf(1f) }
+    var offsetX by remember(filePath) { mutableFloatStateOf(0f) }
+    var offsetY by remember(filePath) { mutableFloatStateOf(0f) }
+    var rotation by remember(filePath) { mutableIntStateOf(0) }
+    var playing by remember(filePath) { mutableStateOf(true) }
+    var muted by remember(filePath) { mutableStateOf(false) }
 
     // Create and manage ExoPlayer
     val exoPlayer = remember(filePath) {
@@ -74,7 +79,14 @@ fun ZoomableVideoPlayer(
     }
 
     DisposableEffect(filePath) {
-        onDispose { exoPlayer.release() }
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying }
+        }
+        exoPlayer.addListener(listener)
+        onDispose {
+            exoPlayer.removeListener(listener)
+            exoPlayer.release()
+        }
     }
 
     Box(
@@ -136,6 +148,26 @@ fun ZoomableVideoPlayer(
                     .align(Alignment.TopEnd)
                     .padding(16.dp)
             )
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .background(controlsBackgroundColor, shape = RoundedCornerShape(8.dp))
+            ) {
+                TextButton(onClick = { exoPlayer.seekTo((exoPlayer.currentPosition - 10_000L).coerceAtLeast(0L)) }) {
+                    Text("−10s", color = Color.White)
+                }
+                TextButton(onClick = { if (playing) exoPlayer.pause() else exoPlayer.play() }) {
+                    Text(if (playing) "Pause" else "Play", color = Color.White)
+                }
+                TextButton(onClick = {
+                    val duration = exoPlayer.duration.takeIf { it > 0L } ?: Long.MAX_VALUE
+                    exoPlayer.seekTo((exoPlayer.currentPosition + 10_000L).coerceAtMost(duration))
+                }) { Text("+10s", color = Color.White) }
+                TextButton(onClick = {
+                    muted = !muted
+                    exoPlayer.volume = if (muted) 0f else 1f
+                }) { Text(if (muted) "Unmute" else "Mute", color = Color.White) }
+            }
         }
     }
 }
@@ -185,6 +217,9 @@ private fun ControlsPanelVideo(
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
+            }
+            TextButton(onClick = onResetZoom) {
+                Text(stringResource(com.deep.lumoraai.R.string.ui_reset), color = Color.White)
             }
         }
     }

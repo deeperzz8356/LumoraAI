@@ -162,6 +162,20 @@
             </LinearLayout>
         </HorizontalScrollView>
 
+        <TextView
+            android:id="@+id/uploadTemplateImage"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_generation_upload"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="@string/ui_upload_image"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/sectionsList"
             android:layout_width="match_parent"

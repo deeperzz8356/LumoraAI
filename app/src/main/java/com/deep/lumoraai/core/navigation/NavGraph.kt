@@ -342,7 +342,21 @@ fun NavGraph(
         }
         composable(Screen.AITools.route) { AIToolsRoute(onNavigate = { navController.goTo(it) }) }
         composable(Screen.Queue.route) { QueueRoute(onNext = next(Screen.Queue), onNavigate = { navController.goTo(it) }) }
-        composable(Screen.Result.route) { ResultRoute(onNext = next(Screen.Result)) }
+        composable(
+            route = "${Screen.Result.route}?path={path}&type={type}&mime={mime}",
+            arguments = listOf(
+                navArgument("path") { type = NavType.StringType; defaultValue = "" },
+                navArgument("type") { type = NavType.StringType; defaultValue = "IMAGE" },
+                navArgument("mime") { type = NavType.StringType; defaultValue = "image/png" },
+            ),
+        ) { entry ->
+            ResultRoute(
+                path = entry.arguments?.getString("path").orEmpty(),
+                mediaType = entry.arguments?.getString("type").orEmpty(),
+                mimeType = entry.arguments?.getString("mime").orEmpty(),
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable(Screen.History.route) {
             HistoryRoute(onNext = next(Screen.History), onNavigate = { route -> navController.navigate(route) })
         }

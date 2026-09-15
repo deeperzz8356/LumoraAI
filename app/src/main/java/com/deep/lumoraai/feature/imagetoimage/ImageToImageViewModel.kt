@@ -204,7 +204,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                 generationProgress = 0f,
                 generationStatusText = "Output generating"
             )
-            val jobTitle = "Image 2 Image ${shortTimestamp()} output ${outputIndex + 1}"
+            val jobTitle = "Image to Image ${shortTimestamp()} output ${outputIndex + 1}"
             val taskId = UUID.randomUUID().toString()
             notificationManager.sendTaskStartNotification(
                 taskType = TaskNotificationHelper.IMAGE_TO_IMAGE,
@@ -215,7 +215,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
                 ActiveJobInfo(
                     title = jobTitle,
                     subtitle = "Using ${sources.size} reference image${if (sources.size > 1) "s" else ""}...",
-                    badgeText = "Image 2 Image",
+                    badgeText = "Image to Image",
                     statusText = "Queued",
                     progressPercent = 0.0f,
                     isCompleted = false,
@@ -261,7 +261,7 @@ class ImageToImageViewModel(application: Application) : AndroidViewModel(applica
             LumoraNotificationCenter.notifyCompletion(
                 context = getApplication<Application>(),
                 title = "$completed images ready",
-                message = "Your Image 2 Image batch has finished.",
+                message = "Your Image to Image batch has finished.",
                 route = Screen.History.route,
                 mediaType = MediaStorageRepository.MEDIA_IMAGE,
             )

@@ -476,9 +476,9 @@
 
     <string name="ui_home">Home</string>
 
-    <string name="ui_image_2_image">Image 2 Image</string>
+    <string name="ui_image_2_image">Image to Image</string>
 
-    <string name="ui_image_2_video">Image 2 Video</string>
+    <string name="ui_image_2_video">Image to Video</string>
 
     <string name="ui_images_and_videos">Images and videos</string>
 
@@ -550,7 +550,7 @@
     <string name="ui_template_back">Back to Templates</string>
     <string name="ui_profile_tip">Tap your avatar to open Profile</string>
 
-    <string name="ui_text_2_image">Text 2 Image</string>
+    <string name="ui_text_2_image">Text to Image</string>
 
     <string name="ui_text_to_image">Text To Image</string>
 
@@ -706,9 +706,9 @@
     <string name="ui_onboarding_step_illustration">Step %1$d</string>
     <string name="ui_create_text_to_image">Text → Image</string>
     <string name="ui_create_dream_it">Dream it</string>
-    <string name="ui_create_img_to_img">Img → Img</string>
+    <string name="ui_create_img_to_img">Image to Image</string>
     <string name="ui_create_refine_it">Refine it</string>
-    <string name="ui_create_img_to_video">Img → Video</string>
+    <string name="ui_create_img_to_video">Image to Video</string>
     <string name="ui_create_animate_it">Animate it</string>
     <string name="ui_create_text_to_video">Text → Video</string>
     <string name="ui_create_direct_it">Direct it</string>

@@ -19,6 +19,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.deep.lumoraai.ads.AdsConfigStore
@@ -83,6 +89,16 @@ class MainActivity : ComponentActivity() {
                 }
 
                 DisposableEffect(context) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            hasInternet = context.hasInternetConnection()
+                        }
+                    }
+                    this@MainActivity.lifecycle.addObserver(observer)
+                    onDispose { this@MainActivity.lifecycle.removeObserver(observer) }
+                }
+
+                DisposableEffect(context) {
                     val connectivityManager =
                         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
                     val mainHandler = Handler(Looper.getMainLooper())
@@ -118,20 +134,22 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (hasInternet) {
+                Box(Modifier.fillMaxSize()) {
                     NavGraph(
                         notificationRoute = notificationRoute,
                         onNotificationRouteConsumed = { notificationRoute = null }
                     )
-                } else {
+                if (!hasInternet) {
                     NoInternetScreen(
                         onTurnOnNetwork = {
                             startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
                         },
                         onRetry = {
                             hasInternet = context.hasInternetConnection()
-                        }
+                        },
+                        modifier = Modifier.zIndex(1f)
                     )
+                }
                 }
                 }
               }

@@ -150,7 +150,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     generationStatusText = "Video generating"
                 )
                 val taskId = UUID.randomUUID().toString()
-                val jobTitle = "Image 2 Video ${shortTimestamp()} #${index + 1}"
+                val jobTitle = "Image to Video ${shortTimestamp()} #${index + 1}"
                 notificationManager.sendTaskStartNotification(
                     taskType = TaskNotificationHelper.IMAGE_TO_VIDEO,
                     taskId = taskId,
@@ -160,7 +160,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
                     ActiveJobInfo(
                         title = jobTitle,
                         subtitle = "Animating clip...",
-                        badgeText = "Image 2 Video",
+                        badgeText = "Image to Video",
                         statusText = "Queued",
                         progressPercent = 0.1f,
                         isCompleted = false,
@@ -276,7 +276,7 @@ class ImageToVideoViewModel(application: Application) : AndroidViewModel(applica
         LumoraNotificationCenter.notifyCompletion(
             context = getApplication<Application>(),
             title = "Video ready",
-            message = "Your Image 2 Video creation has finished.",
+            message = "Your Image to Video creation has finished.",
             route = Screen.History.route,
             mediaType = MediaStorageRepository.MEDIA_VIDEO,
         )

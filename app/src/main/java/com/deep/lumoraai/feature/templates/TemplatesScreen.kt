@@ -133,6 +133,8 @@ private fun bindTemplates(
             }
             showContent(binding)
             bindHeader(binding, uiState.credits, unreadCount, onNavigate)
+            binding.uploadTemplateImage.visibility = if (selectedCategoryId == TemplateCategory.IMAGE.id) View.VISIBLE else View.GONE
+            binding.uploadTemplateImage.setOnClickListener { onNavigate(Screen.ImageToImage.route) }
 
             val tabs = mapOf(
                 TemplateCategory.IMAGE.id to binding.imagesTab,
@@ -228,11 +230,14 @@ private fun showMessage(binding: TemplatesScreenBinding, message: String) {
 
 private fun showLoading(binding: TemplatesScreenBinding) {
     binding.content.animate().cancel()
-    binding.content.alpha = 0f
-    binding.content.visibility = View.GONE
+    // Preserve loaded sections and their View All buttons while refreshing media.
+    if (binding.sectionsList.adapter == null) {
+        binding.content.alpha = 0f
+        binding.content.visibility = View.GONE
+    }
     binding.messageState.visibility = View.GONE
     binding.loading.alpha = 1f
-    binding.loading.visibility = View.VISIBLE
+    binding.loading.visibility = if (binding.sectionsList.adapter == null) View.VISIBLE else View.GONE
 }
 
 private fun showContent(binding: TemplatesScreenBinding) {

@@ -6,9 +6,9 @@ import com.deep.lumoraai.feature.generation.GenerationAspectRatio
 import com.deep.lumoraai.feature.imagetoimage.VideoStyle
 
 data class TextToVideoUiState(
-    val title: String = "Text 2 Video",
+    val title: String = "Text to Video",
     val promptHint: String = "Describe the video you want to generate...",
-    val jobBadge: String = "Text 2 Video",
+    val jobBadge: String = "Text to Video",
     val prompt: String = "",
     // Optional source image used by the Promo Video path (upload support).
     val sourceBitmap: Bitmap? = null,

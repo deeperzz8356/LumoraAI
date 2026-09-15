@@ -17,6 +17,7 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -24,6 +25,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,7 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsManager
 import com.deep.lumoraai.ads.PlacementBanner
+import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.core.components.MediaViewerDialog
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
@@ -141,8 +147,39 @@ fun NativeGenerationScreen(
     var viewerMedia by remember { mutableStateOf<NativeGeneratedMedia?>(null) }
     val credits by CreditBalanceStore.balance.collectAsState()
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val ads = LocalAdsManager.current
+    val activity = rememberCurrentActivity()
+    var showPrivacyNotice by remember { mutableStateOf(false) }
+    var showCreditsExhausted by remember { mutableStateOf(false) }
+    val privacyPrefs = remember(context) { context.getSharedPreferences("generation_privacy", android.content.Context.MODE_PRIVATE) }
+    val startGeneration = {
+        val balance = credits
+        if (balance != null && balance < liveConfig.creditCost && balance < GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
+            showCreditsExhausted = true
+        } else if (!privacyPrefs.getBoolean("notice_seen", false)) {
+            showPrivacyNotice = true
+        } else {
+            if (ads == null) onGenerate() else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { onGenerate() }
+        }
+    }
+    val exitGeneration = {
+        if (config.generatedPath != null || config.generatedPaths.isNotEmpty() || ads == null) onBack()
+        else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { onBack() }
+    }
+    BackHandler { exitGeneration() }
     LaunchedEffect(Unit) {
         CreditBalanceStore.refresh()
+    }
+    LaunchedEffect(config.generatedPath, config.isGenerating) {
+        val path = config.generatedPath
+        if (!config.isGenerating && !path.isNullOrBlank()) {
+            val resultPrefs = context.getSharedPreferences("generation_results", android.content.Context.MODE_PRIVATE)
+            if (resultPrefs.getString("last_opened", null) != path) {
+                resultPrefs.edit().putString("last_opened", path).apply()
+                onNavigate("${Screen.Result.route}?path=${Uri.encode(path)}&type=${Uri.encode(config.mediaType)}&mime=${Uri.encode(config.generatedMimeType)}")
+            }
+        }
     }
 
     Scaffold(
@@ -167,13 +204,13 @@ fun NativeGenerationScreen(
                         showPrompt = showPrompt,
                         selectorsOpen = selectorsOpen,
                         scope = scope,
-                        onBack = onBack,
+                        onBack = exitGeneration,
                         onNavigate = onNavigate,
                         onPromptChanged = onPromptChanged,
                         onNegativePromptChanged = onNegativePromptChanged,
                         onAspectRatioChanged = onAspectRatioChanged,
                         onImprovePrompt = onImprovePrompt,
-                        onGenerate = onGenerate,
+                        onGenerate = startGeneration,
                         onEditResult = onEditResult,
                         onOpenMedia = { path, mediaType, mimeType ->
                             viewerMedia = NativeGeneratedMedia(path, mediaType, mimeType)
@@ -204,6 +241,27 @@ fun NativeGenerationScreen(
             onDismiss = { viewerMedia = null },
         )
     }
+    if (showPrivacyNotice) AlertDialog(
+        onDismissRequest = { showPrivacyNotice = false },
+        title = { Text("Your content and privacy") },
+        text = { Text("Your content is securely processed by third-party generation services to create your result. We do not use it to harm or misuse you.") },
+        confirmButton = { TextButton(onClick = {
+            privacyPrefs.edit().putBoolean("notice_seen", true).apply()
+            showPrivacyNotice = false
+            if (ads == null) onGenerate() else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { onGenerate() }
+        }) { Text("Continue") } },
+        dismissButton = { TextButton(onClick = { showPrivacyNotice = false }) { Text("Cancel") } },
+    )
+    if (showCreditsExhausted) AlertDialog(
+        onDismissRequest = { showCreditsExhausted = false },
+        title = { Text("Credits Exhausted") },
+        text = { Text("You need more credits to generate. Watch an ad to earn credits.") },
+        confirmButton = { TextButton(onClick = {
+            showCreditsExhausted = false
+            onNavigate(Screen.Credits.route)
+        }) { Text("Watch Ad") } },
+        dismissButton = { TextButton(onClick = { showCreditsExhausted = false }) { Text("Later") } },
+    )
 }
 
 private fun bindGeneration(
@@ -525,7 +583,7 @@ private fun bindBottomBar(
     binding.summaryRatioDivider.visibility = if (sliderSummary.isNotBlank() && config.showRatio) View.VISIBLE else View.GONE
     bindTablerIcon(binding.summaryStyleIconHost, TablerIcons.Palette, Color.White)
     bindTablerIcon(binding.summaryRatioIconHost, TablerIcons.AspectRatio, Color.White)
-    bindTablerIcon(binding.summaryChevronIconHost, if (selectorsOpen) TablerIcons.ChevronRight else TablerIcons.ChevronDown, Color.White)
+    bindTablerIcon(binding.summaryChevronIconHost, if (selectorsOpen) TablerIcons.ChevronDown else TablerIcons.ChevronUp, Color.White)
     bindTablerIcon(binding.styleHeaderIconHost, TablerIcons.Palette, Color.White.copy(alpha = 0.78f))
     bindTablerIcon(binding.ratioHeaderIconHost, TablerIcons.AspectRatio, Color.White.copy(alpha = 0.78f))
     bindTablerIcon(binding.sliderHeaderIconHost, TablerIcons.Adjustments, Color.White.copy(alpha = 0.78f))
@@ -663,7 +721,7 @@ private fun bindRatios(
         item.root.setOnClickListener { onAspectRatioChanged(ratio) }
         item.ratioIconHost.isClickable = false
         item.ratioLabel.isClickable = false
-        binding.ratioRow.addView(item.root, rowParams(binding.root, 84, 8))
+        binding.ratioRow.addView(item.root, rowParams(binding.root, 104, 8))
     }
 }
 

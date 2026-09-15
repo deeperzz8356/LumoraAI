@@ -10,7 +10,7 @@ sealed class Screen(val route: String, val title: String) {
     data object BgStudio : Screen("bgstudio", "Bg Studio")
     data object PhotoEnhance : Screen("photoenhance", "Photo Enhancer")
     data object Compress : Screen("compress", "Compress")
-    data object ImageToImage : Screen("imagetoimage", "Image 2 Image")
+    data object ImageToImage : Screen("imagetoimage", "Image to Image")
     data object TextToImage : Screen("texttoimage", "Text To Image")
     data object Logo : Screen("logo", "Logo")
     data object Avatar : Screen("avatar", "AI Avatar")

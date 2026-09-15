@@ -274,7 +274,7 @@ class TextToImageViewModel(application: Application) : AndroidViewModel(applicat
         LumoraNotificationCenter.notifyCompletion(
             context = getApplication<Application>(),
             title = "Image ready",
-            message = "Your Text 2 Image creation has finished.",
+            message = "Your Text to Image creation has finished.",
             route = Screen.History.route,
             mediaType = MediaStorageRepository.MEDIA_IMAGE,
         )
@@ -358,7 +358,7 @@ private const val API_PROMPT_LIMIT = 500
 
 private val TextToImageMode.displayName: String
     get() = when (this) {
-        TextToImageMode.TextToImage -> "Text 2 Image"
+        TextToImageMode.TextToImage -> "Text to Image"
         TextToImageMode.Logo -> "Logo"
         TextToImageMode.Avatar -> "Avatar"
     }

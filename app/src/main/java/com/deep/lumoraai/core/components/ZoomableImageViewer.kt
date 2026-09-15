@@ -17,6 +17,8 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Rotate90DegreesCcw
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -55,10 +57,10 @@ fun ZoomableImageViewer(
     val file = File(filePath)
     
     // State management
-    var scale by remember { mutableFloatStateOf(1f) }
-    var offsetX by remember { mutableFloatStateOf(0f) }
-    var offsetY by remember { mutableFloatStateOf(0f) }
-    var rotation by remember { mutableIntStateOf(0) }
+    var scale by remember(filePath) { mutableFloatStateOf(1f) }
+    var offsetX by remember(filePath) { mutableFloatStateOf(0f) }
+    var offsetY by remember(filePath) { mutableFloatStateOf(0f) }
+    var rotation by remember(filePath) { mutableIntStateOf(0) }
     var imageSize by remember { mutableStateOf(IntSize.Zero) }
 
     Box(
@@ -174,6 +176,9 @@ private fun ControlsPanel(
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
+            }
+            TextButton(onClick = onResetZoom) {
+                Text(stringResource(com.deep.lumoraai.R.string.ui_reset), color = Color.White)
             }
         }
     }
