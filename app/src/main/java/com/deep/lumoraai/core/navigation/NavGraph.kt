@@ -148,7 +148,7 @@ fun NavGraph(
                         OnboardingPreferences.markCompleted(context)
                         navController.goTo(Screen.Home.route)
                     }
-                }
+                },
             )
         }
         composable(Screen.Auth.route) { AuthRoute(onNext = { navController.goTo(Screen.Home.route) }) }

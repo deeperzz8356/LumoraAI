@@ -46,15 +46,29 @@ private val pages = listOf(
 )
 
 @Composable
-fun OnboardingScreen(uiState: OnboardingUiState, onNext: () -> Unit, modifier: Modifier = Modifier) {
+fun OnboardingScreen(
+    uiState: OnboardingUiState,
+    onNext: () -> Unit,
+    onSkip: () -> Unit = onNext,
+    modifier: Modifier = Modifier,
+) {
     var pageIndex by remember { mutableIntStateOf(0) }
     var completing by remember { mutableStateOf(false) }
     val ads = LocalAdsManager.current
     val activity = rememberCurrentActivity()
-    val complete = {
+    val skip = {
         if (!completing) {
             completing = true
-            if (ads == null) onNext() else ads.showInterstitial(activity, AdPlacement.OB_INTER, continueOnShown = true, onContinue = onNext)
+            if (ads == null) {
+                onSkip()
+            } else {
+                ads.showInterstitial(
+                    activity,
+                    AdPlacement.OB_INTER,
+                    continueOnShown = true,
+                    onContinue = onSkip,
+                )
+            }
         }
     }
     Column(modifier.fillMaxSize().systemBarsPadding()) {
@@ -80,9 +94,9 @@ fun OnboardingScreen(uiState: OnboardingUiState, onNext: () -> Unit, modifier: M
                     width = ((if (pageIndex == pages.lastIndex) 140 else 82) * root.resources.displayMetrics.density).toInt()
                     height = ((if (pageIndex == pages.lastIndex) 52 else 48) * root.resources.displayMetrics.density).toInt()
                 }
-                binding.skipButton.setOnClickListener { complete() }
+                binding.skipButton.setOnClickListener { skip() }
                 binding.nextButton.setOnClickListener {
-                    if (pageIndex == pages.lastIndex) complete() else pageIndex++
+                    if (pageIndex == pages.lastIndex) onNext() else pageIndex++
                 }
             }, modifier = Modifier.fillMaxSize().weight(1f)
         )
