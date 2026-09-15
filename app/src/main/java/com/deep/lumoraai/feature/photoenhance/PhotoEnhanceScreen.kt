@@ -154,7 +154,6 @@ private fun bindPhotoEnhance(
     bindTablerIcon(binding.bellIconHost, TablerIcons.Bell, ComposeColor.White)
     bindTablerIcon(binding.uploadIconHost, TablerIcons.Upload, ComposeColor(0xFFD4FF3B))
     bindTablerIcon(binding.enhancementIconHost, TablerIcons.Adjustments, ComposeColor(0xFFD4FF3B))
-    bindTablerIcon(binding.enhanceButtonIconHost, TablerIcons.Wand, ComposeColor.Black)
 
     binding.uploadPanel.clipToOutline = true
     binding.previewImage.clipToOutline = true
@@ -203,9 +202,17 @@ private fun bindPhotoEnhance(
 
     binding.enhanceButton.isEnabled = com.deep.lumoraai.core.restrictions.ToolPolicyStore.rule("photo_enhance").enabled && uiState.originalBitmap != null && !uiState.isEnhancing
     binding.enhanceButton.alpha = if (binding.enhanceButton.isEnabled) 1f else 0.42f
-    binding.enhanceButtonText.text = if (!com.deep.lumoraai.core.restrictions.ToolPolicyStore.rule("photo_enhance").enabled) "Temporarily unavailable" else if (uiState.isEnhancing) "Enhancing..." else "Enhance · ${com.deep.lumoraai.core.restrictions.ToolPolicyStore.cost("photo_enhance")} credits"
+    val enhanceRule = com.deep.lumoraai.core.restrictions.ToolPolicyStore.rule("photo_enhance")
+    val enhanceCost = com.deep.lumoraai.core.restrictions.ToolPolicyStore.cost("photo_enhance")
+    binding.enhanceButtonText.text = when {
+        !enhanceRule.enabled -> "Temporarily unavailable"
+        uiState.isEnhancing -> "Enhancing..."
+        else -> "Enhance"
+    }
+    binding.enhanceCreditIcon.visibility = if (enhanceRule.enabled && !uiState.isEnhancing) View.VISIBLE else View.GONE
+    binding.enhanceCreditText.visibility = if (enhanceRule.enabled && !uiState.isEnhancing) View.VISIBLE else View.GONE
+    binding.enhanceCreditText.text = "$enhanceCost credits"
     binding.enhanceProgress.visibility = if (uiState.isEnhancing) View.VISIBLE else View.GONE
-    binding.enhanceButtonIconHost.visibility = if (uiState.isEnhancing) View.GONE else View.VISIBLE
     binding.enhanceButton.setOnClickListener {
         if (binding.enhanceButton.isEnabled) onEnhance()
     }
