@@ -14,6 +14,7 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.AuthCredential
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
@@ -105,10 +106,11 @@ class AuthViewModel @Inject constructor(
                 } else {
                     auth.signInWithEmailAndPassword(cleanEmail, password).await()
                 }
-                // Activate unlimited credits if remote config credentials match.
-                if (appPreferences.isUnlimitedCreditsLogin(cleanEmail, password, adsConfigStore)) {
-                    appPreferences.setUnlimitedCreditsMode(true)
-                }
+                refreshUnlimitedCreditsConfig()
+                // Activate unlimited credits only when the Remote Config tester
+                // credentials match this email login.
+                val unlimitedLogin = appPreferences.isUnlimitedCreditsLogin(cleanEmail, password, adsConfigStore)
+                appPreferences.setUnlimitedCreditsMode(unlimitedLogin)
                 finishWithBackendSync(isNewAccount = createdNewAccount)
             } catch (error: Exception) {
                 uiState = AuthUiState.Error(authenticationMessage(error))
@@ -153,6 +155,14 @@ class AuthViewModel @Inject constructor(
             }
         } else {
             auth.signInWithCredential(credential).await()
+        }
+    }
+
+    private suspend fun refreshUnlimitedCreditsConfig() {
+        runCatching {
+            val remote = FirebaseRemoteConfig.getInstance()
+            remote.fetchAndActivate().await()
+            adsConfigStore.applyRemoteConfig(remote)
         }
     }
 

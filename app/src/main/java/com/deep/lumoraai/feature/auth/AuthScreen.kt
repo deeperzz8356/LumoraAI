@@ -2,6 +2,9 @@ package com.deep.lumoraai.feature.auth
 
 import android.view.LayoutInflater
 import android.view.View
+import android.text.InputType
+import android.text.method.PasswordTransformationMethod
+import android.text.method.HideReturnsTransformationMethod
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
@@ -56,6 +59,28 @@ private fun bindAuth(
 
     if (showEmail) {
         val signUp = emailState.isSignUp
+        if (binding.passwordToggle.tag == null) {
+            binding.passwordInput.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            binding.passwordInput.transformationMethod = PasswordTransformationMethod.getInstance()
+            binding.passwordToggle.setImageResource(R.drawable.ic_visibility_off)
+            binding.passwordToggle.contentDescription = context.getString(R.string.auth_show_password)
+            binding.passwordToggle.tag = false
+        }
+        binding.passwordToggle.setOnClickListener {
+            val isShowing = binding.passwordToggle.tag as? Boolean ?: false
+            val shouldShow = !isShowing
+            binding.passwordInput.transformationMethod = if (shouldShow) {
+                HideReturnsTransformationMethod.getInstance()
+            } else {
+                PasswordTransformationMethod.getInstance()
+            }
+            binding.passwordInput.setSelection(binding.passwordInput.text.length)
+            binding.passwordToggle.setImageResource(if (shouldShow) R.drawable.ic_visibility else R.drawable.ic_visibility_off)
+            binding.passwordToggle.contentDescription = context.getString(
+                if (shouldShow) R.string.auth_hide_password else R.string.auth_show_password
+            )
+            binding.passwordToggle.tag = shouldShow
+        }
         binding.title.setText(if (signUp) R.string.auth_create_account else R.string.auth_welcome_back)
         binding.titleSecondary.visibility = View.GONE
         binding.subtitle.setText(if (signUp) R.string.auth_signup_description else R.string.auth_signin_description)

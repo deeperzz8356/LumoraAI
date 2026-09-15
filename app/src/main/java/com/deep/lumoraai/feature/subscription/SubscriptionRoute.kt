@@ -2,8 +2,10 @@ package com.deep.lumoraai.feature.subscription
 
 import android.app.Activity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.core.navigation.ResetLoadingOnLeave
 
 @Composable
@@ -15,20 +17,37 @@ fun SubscriptionRoute(
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Reset any lingering purchase spinner when leaving this screen.
+    // Push Remote Config values (subscription_enabled + plans JSON) into the
+    // ViewModel as soon as the config store resolves.  The VM handles the
+    // Disabled fast-path and plan overrides defensively — safe to call repeatedly.
+    val adsConfig = LocalAdsConfigStore.current?.current
+
+    if (adsConfig?.subscriptionEnabled == false) {
+        LaunchedEffect(Unit) { onBack() }
+        return
+    }
+
+    LaunchedEffect(adsConfig?.subscriptionEnabled, adsConfig?.subscriptionPlansJson) {
+        if (adsConfig != null) {
+            viewModel.applyRemoteConfig(
+                subscriptionEnabled = true,
+                plansJson = adsConfig.subscriptionPlansJson,
+            )
+        }
+    }
+
+    // Reset any lingering purchase spinner when the user navigates away.
     ResetLoadingOnLeave { viewModel.clearPurchasingState() }
 
     SubscriptionScreen(
         uiState = viewModel.uiState,
         onSelectPlan = viewModel::selectPlan,
         onPurchase = {
-            if (activity != null) {
-                viewModel.purchaseSelectedPlan(activity)
-            }
+            if (activity != null) viewModel.purchaseSelectedPlan(activity)
         },
         onRestore = viewModel::restorePurchases,
         onClearMessage = viewModel::clearPurchaseMessage,
         onBack = onBack,
-        onNavigate = onNavigate
+        onNavigate = onNavigate,
     )
 }

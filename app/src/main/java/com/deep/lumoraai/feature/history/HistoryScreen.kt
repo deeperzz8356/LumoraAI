@@ -2,9 +2,9 @@ package com.deep.lumoraai.feature.history
 
 import android.net.Uri
 import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
-import android.media.MediaPlayer
-import android.widget.MediaController
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -66,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import com.deep.lumoraai.R
@@ -89,6 +90,10 @@ import com.deep.lumoraai.core.utils.MediaGallerySaver
 import com.deep.lumoraai.core.utils.MediaShareUtils
 import com.deep.lumoraai.data.model.HistoryModel
 import com.deep.lumoraai.databinding.HistoryViewerBinding
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -106,6 +111,8 @@ private val HeaderNotificationDot = Color(0xFFCFBDFF)
 private data class ImageViewerTransform(
     val scale: Float = 1f,
     val rotation: Float = 0f,
+    val offsetX: Float = 0f,
+    val offsetY: Float = 0f,
 )
 
 @Composable
@@ -290,7 +297,7 @@ private fun HistoryGrid(
 private fun HistoryHeader(credits: Int, unreadCount: Int, onNavigate: (String) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("History", color = PremiumText, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
+            Text(stringResource(R.string.ui_history), color = PremiumText, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
         }
         Surface(
             onClick = { onNavigate(Screen.Credits.route) },
@@ -348,8 +355,8 @@ private fun FilterRow(selected: HistoryFilter, onSelected: (HistoryFilter) -> Un
 private fun SelectionBar(selectedCount: Int, allSelected: Boolean, onSelectAll: () -> Unit, onDelete: () -> Unit, onClear: () -> Unit) {
     Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = PremiumSurface, border = BorderStroke(1.dp, PremiumLime.copy(alpha = 0.25f))) {
         Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("$selectedCount selected", color = PremiumText, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            TextButton(onClick = onSelectAll) { Text(if (allSelected) "Clear all" else "Select all", color = PremiumLime) }
+            Text(stringResource(R.string.ui_selected_count, selectedCount), color = PremiumText, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            TextButton(onClick = onSelectAll) { Text(if (allSelected) stringResource(R.string.ui_clear_all) else stringResource(R.string.ui_select_all), color = PremiumLime) }
             IconButton(onClick = onDelete) { Icon(Icons.Default.DeleteOutline, "Delete selected", tint = PremiumDanger) }
             IconButton(onClick = onClear) { Icon(Icons.Default.Close, "Cancel selection", tint = PremiumMuted) }
         }
@@ -396,9 +403,9 @@ private fun HistoryEmpty(onCreate: () -> Unit) {
         Surface(shape = RoundedCornerShape(26.dp), color = PremiumSurface, border = BorderStroke(1.dp, PremiumStroke)) {
             Column(Modifier.padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(Modifier.size(64.dp).background(PremiumLime.copy(alpha = 0.10f), RoundedCornerShape(20.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Default.AutoAwesome, null, tint = PremiumLime, modifier = Modifier.size(32.dp)) }
-                Text("Your archive starts here", color = PremiumText, fontSize = 22.sp, fontWeight = FontWeight.Black)
-                Text("Create an image or video and it will appear here.", color = PremiumMuted, fontSize = 13.sp)
-                Button(onClick = onCreate, colors = ButtonDefaults.buttonColors(containerColor = PremiumLime, contentColor = PremiumBackground), shape = RoundedCornerShape(14.dp)) { Text("Start creating", fontWeight = FontWeight.ExtraBold) }
+                Text(stringResource(R.string.ui_history_empty_title), color = PremiumText, fontSize = 22.sp, fontWeight = FontWeight.Black)
+                Text(stringResource(R.string.ui_history_empty_body), color = PremiumMuted, fontSize = 13.sp)
+                Button(onClick = onCreate, colors = ButtonDefaults.buttonColors(containerColor = PremiumLime, contentColor = PremiumBackground), shape = RoundedCornerShape(14.dp)) { Text(stringResource(R.string.ui_start_creating), fontWeight = FontWeight.ExtraBold) }
             }
         }
     }
@@ -407,7 +414,7 @@ private fun HistoryEmpty(onCreate: () -> Unit) {
 @Composable
 private fun FilterEmpty(filter: HistoryFilter) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("No ${filter.label.lowercase()} yet.", color = PremiumMuted, fontSize = 14.sp)
+        Text(stringResource(R.string.ui_no_filter_items, filter.label.lowercase()), color = PremiumMuted, fontSize = 14.sp)
     }
 }
 
@@ -430,6 +437,12 @@ private fun HistoryViewer(item: HistoryModel, onBack: () -> Unit, onDelete: () -
         factory = { androidContext ->
             HistoryViewerBinding.inflate(LayoutInflater.from(androidContext)).apply {
                 root.tag = this
+                root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                    override fun onViewAttachedToWindow(v: View) = Unit
+                    override fun onViewDetachedFromWindow(v: View) {
+                        releaseHistoryPlayer(this@apply)
+                    }
+                })
             }.root
         },
         update = { root ->
@@ -469,7 +482,7 @@ private fun HistoryViewer(item: HistoryModel, onBack: () -> Unit, onDelete: () -
             binding.videoControls.visibility = View.GONE
 
             if (!exists) {
-                binding.mediaVideo.stopPlayback()
+                releaseHistoryPlayer(binding)
                 binding.mediaImage.setImageDrawable(null)
                 binding.mediaFrame.tag = null
                 return@AndroidView
@@ -483,97 +496,215 @@ private fun HistoryViewer(item: HistoryModel, onBack: () -> Unit, onDelete: () -
 
             if (isVideo) {
                 binding.mediaImage.setImageDrawable(null)
+                binding.mediaImage.setOnTouchListener(null)
                 binding.imageControls.visibility = View.GONE
                 binding.videoControls.visibility = View.VISIBLE
                 binding.mediaVideo.visibility = View.VISIBLE
                 if (isNewMedia) {
-                    binding.mediaVideo.stopPlayback()
-                    binding.mediaVideo.setTag(R.id.history_viewer_media_player, null)
-                    val controller = MediaController(binding.root.context)
-                    controller.setAnchorView(binding.mediaVideo)
-                    binding.mediaVideo.setMediaController(controller)
-                    binding.mediaVideo.setVideoURI(Uri.fromFile(file))
-                }
-                binding.mediaVideo.setOnPreparedListener { player ->
+                    releaseHistoryPlayer(binding)
+                    val player = ExoPlayer.Builder(binding.root.context).build().apply {
+                        repeatMode = Player.REPEAT_MODE_OFF
+                        volume = 1f
+                        setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+                        addListener(object : Player.Listener {
+                            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                                binding.playPauseButton.setImageResource(
+                                    if (isPlaying) R.drawable.ic_lumora_pause else R.drawable.ic_lumora_play
+                                )
+                                binding.playPauseButton.contentDescription = binding.root.context.getString(
+                                    if (isPlaying) R.string.ui_pause else R.string.ui_play
+                                )
+                            }
+
+                            override fun onPlayerError(error: PlaybackException) {
+                                binding.mediaVideo.visibility = View.GONE
+                                binding.videoControls.visibility = View.GONE
+                                binding.missingText.visibility = View.VISIBLE
+                                binding.missingText.text = "Could not play this video."
+                                releaseHistoryPlayer(binding)
+                            }
+                        })
+                        prepare()
+                        playWhenReady = true
+                    }
+                    binding.mediaVideo.player = player
                     binding.mediaVideo.setTag(R.id.history_viewer_media_player, player)
-                    player.isLooping = false
-                    player.setVolume(1f, 1f)
+                    binding.playPauseButton.setImageResource(R.drawable.ic_lumora_pause)
+                    binding.playPauseButton.contentDescription = binding.root.context.getString(R.string.ui_pause)
                     binding.muteButton.isSelected = false
-                    binding.muteButton.text = "Mute"
-                    binding.playPauseButton.text = "Pause"
-                    binding.mediaVideo.start()
-                }
-                binding.mediaVideo.setOnErrorListener { _, _, _ ->
-                    binding.mediaVideo.visibility = View.GONE
-                    binding.videoControls.visibility = View.GONE
-                    binding.missingText.visibility = View.VISIBLE
-                    binding.missingText.text = "Could not play this video."
-                    true
+                    binding.muteButton.setImageResource(R.drawable.ic_lumora_volume_on)
+                    binding.muteButton.contentDescription = binding.root.context.getString(R.string.ui_mute)
                 }
                 binding.playPauseButton.setOnClickListener {
-                    if (binding.mediaVideo.isPlaying) {
-                        binding.mediaVideo.pause()
-                        binding.playPauseButton.text = "Play"
+                    val player = binding.mediaVideo.getTag(R.id.history_viewer_media_player) as? ExoPlayer ?: return@setOnClickListener
+                    if (player.isPlaying) {
+                        player.pause()
                     } else {
-                        binding.mediaVideo.start()
-                        binding.playPauseButton.text = "Pause"
+                        player.play()
                     }
                 }
                 binding.muteButton.setOnClickListener {
+                    val player = binding.mediaVideo.getTag(R.id.history_viewer_media_player) as? ExoPlayer ?: return@setOnClickListener
                     val muted = !binding.muteButton.isSelected
                     binding.muteButton.isSelected = muted
-                    (binding.mediaVideo.getTag(R.id.history_viewer_media_player) as? MediaPlayer)
-                        ?.setVolume(if (muted) 0f else 1f, if (muted) 0f else 1f)
-                    binding.muteButton.text = if (muted) "Unmute" else "Mute"
+                    player.volume = if (muted) 0f else 1f
+                    binding.muteButton.setImageResource(
+                        if (muted) R.drawable.ic_lumora_volume_off else R.drawable.ic_lumora_volume_on
+                    )
+                    binding.muteButton.contentDescription = binding.root.context.getString(
+                        if (muted) R.string.ui_unmute else R.string.ui_mute
+                    )
                 }
             } else {
-                binding.mediaVideo.stopPlayback()
-                binding.mediaVideo.setTag(R.id.history_viewer_media_player, null)
+                releaseHistoryPlayer(binding)
                 binding.videoControls.visibility = View.GONE
                 binding.imageControls.visibility = View.VISIBLE
                 binding.mediaImage.visibility = View.VISIBLE
+                val gestureController = binding.mediaImage.getTag(R.id.history_viewer_image_gesture)
+                    as? HistoryImageGestureController
+                    ?: HistoryImageGestureController(binding) { next ->
+                        binding.mediaImage.setTag(R.id.history_viewer_image_transform, next)
+                        applyImageTransform(binding, next)
+                    }.also {
+                        binding.mediaImage.setTag(R.id.history_viewer_image_gesture, it)
+                        binding.mediaImage.setOnTouchListener(it)
+                    }
                 if (isNewMedia) {
                     binding.mediaImage.setImageURI(Uri.fromFile(file))
-                    binding.mediaImage.tag = ImageViewerTransform()
-                    applyImageTransform(binding, binding.mediaImage.tag as ImageViewerTransform)
+                    gestureController.reset()
                 }
 
                 binding.zoomOutButton.setOnClickListener {
-                    updateImageTransform(binding) { copy(scale = (scale / 1.2f).coerceAtLeast(1f)) }
+                    gestureController.zoomBy(1f / 1.2f)
                 }
                 binding.zoomInButton.setOnClickListener {
-                    updateImageTransform(binding) { copy(scale = (scale * 1.2f).coerceAtMost(4f)) }
+                    gestureController.zoomBy(1.2f)
                 }
                 binding.rotateLeftButton.setOnClickListener {
-                    updateImageTransform(binding) { copy(rotation = rotation - 90f) }
+                    gestureController.rotateBy(-90f)
                 }
                 binding.rotateRightButton.setOnClickListener {
-                    updateImageTransform(binding) { copy(rotation = rotation + 90f) }
+                    gestureController.rotateBy(90f)
                 }
                 binding.resetImageButton.setOnClickListener {
-                    updateImageTransform(binding) { ImageViewerTransform() }
+                    gestureController.reset()
                 }
             }
         }
     )
 }
 
-private fun updateImageTransform(
-    binding: HistoryViewerBinding,
-    transform: ImageViewerTransform.() -> ImageViewerTransform,
-) {
-    val current = binding.mediaImage.tag as? ImageViewerTransform ?: ImageViewerTransform()
-    val next = current.transform()
-    binding.mediaImage.tag = next
-    applyImageTransform(binding, next)
+private fun releaseHistoryPlayer(binding: HistoryViewerBinding) {
+    (binding.mediaVideo.getTag(R.id.history_viewer_media_player) as? ExoPlayer)?.release()
+    binding.mediaVideo.setTag(R.id.history_viewer_media_player, null)
+    binding.mediaVideo.player = null
 }
 
 private fun applyImageTransform(binding: HistoryViewerBinding, transform: ImageViewerTransform) {
     binding.mediaImage.scaleX = transform.scale
     binding.mediaImage.scaleY = transform.scale
     binding.mediaImage.rotation = transform.rotation
+    binding.mediaImage.translationX = transform.offsetX
+    binding.mediaImage.translationY = transform.offsetY
     binding.zoomOutButton.isEnabled = transform.scale > 1f
     binding.zoomOutButton.alpha = if (transform.scale > 1f) 1f else 0.45f
+}
+
+private class HistoryImageGestureController(
+    private val binding: HistoryViewerBinding,
+    private val onTransform: (ImageViewerTransform) -> Unit,
+) : View.OnTouchListener {
+    private var transform = ImageViewerTransform()
+    private var lastX = 0f
+    private var lastY = 0f
+    private var dragging = false
+    private var lastTapTime = 0L
+
+    private val scaleDetector = ScaleGestureDetector(
+        binding.mediaImage.context,
+        object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                zoomBy(detector.scaleFactor)
+                return true
+            }
+        }
+    )
+
+    fun reset() {
+        transform = ImageViewerTransform()
+        publish()
+    }
+
+    fun zoomBy(factor: Float) {
+        val nextScale = (transform.scale * factor).coerceIn(1f, 4f)
+        transform = if (nextScale <= 1.01f) {
+            transform.copy(scale = 1f, offsetX = 0f, offsetY = 0f)
+        } else {
+            transform.copy(scale = nextScale)
+        }
+        publish()
+    }
+
+    fun rotateBy(degrees: Float) {
+        transform = transform.copy(rotation = transform.rotation + degrees)
+        publish()
+    }
+
+    override fun onTouch(view: View, event: MotionEvent): Boolean {
+        scaleDetector.onTouchEvent(event)
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                lastX = event.x
+                lastY = event.y
+                dragging = true
+                handleDoubleTap(event.eventTime)
+            }
+
+            MotionEvent.ACTION_POINTER_DOWN -> dragging = false
+
+            MotionEvent.ACTION_MOVE -> {
+                if (!scaleDetector.isInProgress && dragging && transform.scale > 1f) {
+                    val dx = event.x - lastX
+                    val dy = event.y - lastY
+                    transform = transform.copy(
+                        offsetX = clampOffset(transform.offsetX + dx, binding.mediaImage.width, transform.scale),
+                        offsetY = clampOffset(transform.offsetY + dy, binding.mediaImage.height, transform.scale),
+                    )
+                    publish()
+                    lastX = event.x
+                    lastY = event.y
+                }
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> dragging = false
+        }
+        view.parent?.requestDisallowInterceptTouchEvent(transform.scale > 1f || scaleDetector.isInProgress)
+        return true
+    }
+
+    private fun handleDoubleTap(eventTime: Long) {
+        if (eventTime - lastTapTime < DOUBLE_TAP_MS) {
+            transform = if (transform.scale > 1f) ImageViewerTransform() else transform.copy(scale = 2f)
+            publish()
+            lastTapTime = 0L
+        } else {
+            lastTapTime = eventTime
+        }
+    }
+
+    private fun publish() {
+        binding.mediaImage.setTag(R.id.history_viewer_image_transform, transform)
+        onTransform(transform)
+    }
+
+    private fun clampOffset(offset: Float, size: Int, scale: Float): Float {
+        val max = (size * (scale - 1f) / 2f).coerceAtLeast(0f)
+        return offset.coerceIn(-max, max)
+    }
+
+    private companion object {
+        const val DOUBLE_TAP_MS = 280L
+    }
 }
 
 @Composable
@@ -582,10 +713,10 @@ private fun FeedbackDialog(item: HistoryModel, onDismiss: () -> Unit, onSelect: 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = PremiumSurface,
-        title = { Text("Send feedback", color = PremiumText, fontWeight = FontWeight.ExtraBold) },
+        title = { Text(stringResource(R.string.ui_send_feedback), color = PremiumText, fontWeight = FontWeight.ExtraBold) },
         text = { Column { options.forEach { option -> TextButton(onClick = { onSelect(option) }, modifier = Modifier.fillMaxWidth()) { Text(option, color = PremiumText, modifier = Modifier.fillMaxWidth()) } } } },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = PremiumMuted) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel), color = PremiumMuted) } },
     )
 }
 

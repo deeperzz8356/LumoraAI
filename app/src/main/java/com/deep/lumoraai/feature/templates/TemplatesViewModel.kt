@@ -44,21 +44,14 @@ class TemplatesViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun refreshTemplates() {
         viewModelScope.launch {
-            if (uiState !is TemplatesUiState.Success) {
-                try {
-                    uiState = TemplatesUiState.Success(templatesRepository.bundled())
-                } catch (error: kotlinx.coroutines.CancellationException) { throw error
-                } catch (_: Exception) { uiState = TemplatesUiState.Error("Could not read starter templates.") }
-            }
             try {
-                val categories = templatesRepository.remote()
+                val categories = templatesRepository.load()
                 val credits = (uiState as? TemplatesUiState.Success)?.credits ?: 0
                 uiState = TemplatesUiState.Success(categories, credits)
+                templatesRepository.warmPreviewCache(categories, limit = 18)
             } catch (error: kotlinx.coroutines.CancellationException) { throw error
             } catch (_: Exception) {
-                val current = uiState as? TemplatesUiState.Success
-                if (current != null) uiState = current.copy(offlineMessage = "Showing saved templates. Connect to load the full library.")
-                else uiState = TemplatesUiState.Error("Connect to load templates, then try again.")
+                uiState = TemplatesUiState.Error("Could not read templates.")
             }
             loadCredits()
         }

@@ -57,6 +57,25 @@ data class AdsConfig(
     val unlimitedEmail: String = "",
     /** Password that triggers unlimited credits when matched at login. */
     val unlimitedPassword: String = "",
+
+    // ---- Subscription feature toggle ----
+    /**
+     * Master switch for the entire subscription / paywall feature.
+     * When false: subscription acquisition entry points are hidden and direct
+     * navigation immediately exits before rendering a paywall. Defaults to true
+     * so existing subscribers and purchase entitlement checks are unaffected.
+     */
+    val subscriptionEnabled: Boolean = true,
+
+    /**
+     * Optional JSON array of plan objects that override the in-app default plans.
+     * Format (each element):
+     *   { "id":"pro_monthly","name":"Pro Monthly","price":"$19.99",
+     *     "billing_period":"per month","highlighted":false,
+     *     "features":["500 credits/month","HD image generation"] }
+     * Blank/invalid JSON falls back to the ViewModel default plans silently.
+     */
+    val subscriptionPlansJson: String = "",
 ) {
     fun formatEnabled(format: AdFormat): Boolean = adsEnabled && when (format) {
         AdFormat.BANNER -> bannerEnabled

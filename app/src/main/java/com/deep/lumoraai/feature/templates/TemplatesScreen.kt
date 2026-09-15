@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -72,10 +73,6 @@ fun TemplatesScreen(
                 .background(ComposeColor(Background))
                 .padding(padding)
         ) {
-            if (uiState is TemplatesUiState.Success && (uiState.offlineMessage != null || uiState.category(selectedCategoryId)?.sections?.isEmpty() == true)) {
-                androidx.compose.material3.Text(uiState.offlineMessage ?: "Connect to load templates in this category.", modifier = Modifier.padding(16.dp), color = ComposeColor.White)
-                androidx.compose.material3.TextButton(onClick = onRetry) { androidx.compose.material3.Text("Refresh library") }
-            }
             if (uiState is TemplatesUiState.Error) {
                 androidx.compose.material3.TextButton(onClick = onRetry) { androidx.compose.material3.Text("Try again") }
             }
@@ -96,7 +93,9 @@ fun TemplatesScreen(
                         }
                     )
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             )
         }
     }
@@ -118,7 +117,7 @@ private fun bindTemplates(
     binding.content.visibility = View.GONE
 
     when (uiState) {
-        TemplatesUiState.Loading -> binding.loading.visibility = View.VISIBLE
+        TemplatesUiState.Loading -> showLoading(binding)
         TemplatesUiState.Empty -> showMessage(binding, binding.root.context.getString(R.string.ui_template_empty))
         is TemplatesUiState.Error -> showMessage(binding, uiState.message)
         is TemplatesUiState.Success -> {
@@ -128,7 +127,11 @@ private fun bindTemplates(
                 showMessage(binding, binding.root.context.getString(R.string.ui_template_empty))
                 return
             }
-            binding.content.visibility = View.VISIBLE
+            if (category.sections.isEmpty()) {
+                showMessage(binding, binding.root.context.getString(R.string.ui_template_empty))
+                return
+            }
+            showContent(binding)
             bindHeader(binding, uiState.credits, unreadCount, onNavigate)
 
             val tabs = mapOf(
@@ -221,6 +224,27 @@ private fun saveMainScroll(list: RecyclerView, memory: TemplateScrollMemory) {
 private fun showMessage(binding: TemplatesScreenBinding, message: String) {
     binding.messageState.text = message
     binding.messageState.visibility = View.VISIBLE
+}
+
+private fun showLoading(binding: TemplatesScreenBinding) {
+    binding.content.animate().cancel()
+    binding.content.alpha = 0f
+    binding.content.visibility = View.GONE
+    binding.messageState.visibility = View.GONE
+    binding.loading.alpha = 1f
+    binding.loading.visibility = View.VISIBLE
+}
+
+private fun showContent(binding: TemplatesScreenBinding) {
+    binding.loading.visibility = View.GONE
+    binding.messageState.visibility = View.GONE
+    if (binding.content.visibility != View.VISIBLE) {
+        binding.content.alpha = 0f
+        binding.content.visibility = View.VISIBLE
+        binding.content.animate().alpha(1f).setDuration(180L).start()
+    } else {
+        binding.content.alpha = 1f
+    }
 }
 
 @Composable
@@ -321,8 +345,8 @@ private fun navigateTemplate(item: TemplateListItem, onNavigate: (String) -> Uni
     val route = when (item.action) {
         TemplateAction.TEXT_TO_IMAGE -> textToImageRoute(item.prompt)
         TemplateAction.TEXT_TO_VIDEO -> textToVideoRoute(item.prompt)
-        TemplateAction.IMAGE_TO_IMAGE -> imageToImageRoute()
-        TemplateAction.IMAGE_TO_VIDEO -> imageToVideoRoute()
+        TemplateAction.IMAGE_TO_IMAGE -> imageToImageRoute(item.prompt)
+        TemplateAction.IMAGE_TO_VIDEO -> imageToVideoRoute(item.prompt)
         TemplateAction.PROMO_VIDEO -> promoVideoRoute(item.prompt)
         TemplateAction.LOGO_CREATION -> logoRoute(item.prompt)
         TemplateAction.CREATE_AVATAR -> avatarRoute(item.prompt)

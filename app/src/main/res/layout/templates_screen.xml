@@ -4,13 +4,31 @@
     android:layout_height="match_parent"
     android:background="@color/lumora_app_background">
 
-    <ProgressBar
+    <LinearLayout
         android:id="@+id/loading"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
-        android:indeterminateTint="@color/lumora_lime"
-        android:visibility="gone" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:indeterminateTint="@color/lumora_lime" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="Loading templates..."
+            android:textColor="#FFB4BDD0"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/messageState"

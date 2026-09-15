@@ -59,11 +59,17 @@
                     android:textColor="@color/lumora_text_primary" android:textColorHint="@color/lumora_text_subtle"
                     android:textCursorDrawable="@drawable/bg_text_cursor_white"
                     android:textSize="14sp" android:background="@drawable/bg_lumora_field" />
-                <EditText android:id="@+id/passwordInput" android:layout_width="match_parent" android:layout_height="56dp"
-                    android:layout_marginTop="12dp" android:hint="@string/ui_password" android:inputType="textPassword" android:singleLine="true"
-                    android:textColor="@color/lumora_text_primary" android:textColorHint="@color/lumora_text_subtle"
-                    android:textCursorDrawable="@drawable/bg_text_cursor_white"
-                    android:textSize="14sp" android:background="@drawable/bg_lumora_field" />
+                <FrameLayout android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp">
+                    <EditText android:id="@+id/passwordInput" android:layout_width="match_parent" android:layout_height="match_parent"
+                        android:paddingEnd="52dp" android:hint="@string/ui_password" android:inputType="textPassword" android:singleLine="true"
+                        android:textColor="@color/lumora_text_primary" android:textColorHint="@color/lumora_text_subtle"
+                        android:textCursorDrawable="@drawable/bg_text_cursor_white"
+                        android:textSize="14sp" android:background="@drawable/bg_lumora_field" />
+                    <ImageButton android:id="@+id/passwordToggle" android:layout_width="48dp" android:layout_height="match_parent"
+                        android:layout_gravity="end|center_vertical" android:background="@android:color/transparent"
+                        android:contentDescription="@string/auth_show_password" android:padding="12dp"
+                        android:src="@drawable/ic_visibility_off" android:tint="@color/lumora_text_subtle" />
+                </FrameLayout>
                 <Button android:id="@+id/submitButton" android:layout_width="match_parent" android:layout_height="56dp"
                     android:layout_marginTop="12dp" android:textColor="@color/white" android:textSize="14sp" android:textStyle="bold"
                     android:background="@drawable/bg_lumora_button" />

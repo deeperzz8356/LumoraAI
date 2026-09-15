@@ -22,6 +22,11 @@
         android:importantForAccessibility="no"
         android:visibility="gone" />
 
+    <com.deep.lumoraai.feature.templates.TemplateMediaStateOverlay
+        android:id="@+id/mediaState"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <LinearLayout
         android:id="@+id/ideaPlaceholder"
         android:layout_width="match_parent"

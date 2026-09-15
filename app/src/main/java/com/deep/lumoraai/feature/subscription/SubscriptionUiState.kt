@@ -5,6 +5,10 @@ import com.deep.lumoraai.feature.subscription.model.SubscriptionPlan
 
 sealed interface SubscriptionUiState {
     data object Loading : SubscriptionUiState
+
+    /** Subscription feature is disabled via Remote Config — hide everything. */
+    data object Disabled : SubscriptionUiState
+
     data class Success(
         val plans: List<SubscriptionPlan>,
         val selectedPlanId: String,
@@ -12,7 +16,8 @@ sealed interface SubscriptionUiState {
         val isPurchasing: Boolean = false,
         val purchaseMessage: String? = null,
         val billingState: BillingState = BillingState.Disconnected,
-        val restoredProductIds: List<String> = emptyList()
+        val restoredProductIds: List<String> = emptyList(),
     ) : SubscriptionUiState
+
     data class Error(val message: String) : SubscriptionUiState
 }

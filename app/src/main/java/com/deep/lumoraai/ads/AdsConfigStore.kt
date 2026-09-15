@@ -82,9 +82,19 @@ class AdsConfigStore @Inject constructor() {
             nativeStyle = buildNativeStyle(rc, base.nativeStyle),
 
             // ---------- unlimited credits override ----------
-            unlimitedCreditsEnabled = rc.boolOr("unlimited_credits_enabled", base.unlimitedCreditsEnabled),
+            unlimitedCreditsEnabled = rc.boolOr(
+                "unlimited_credits_enabled",
+                rc.boolOr("unlimited_creds", base.unlimitedCreditsEnabled),
+            ),
             unlimitedEmail          = rc.getString("unlimited_email").trim().ifBlank { base.unlimitedEmail },
-            unlimitedPassword       = rc.getString("unlimited_password").trim().ifBlank { base.unlimitedPassword },
+            unlimitedPassword       = rc.stringOr(
+                key = "unlimited_password",
+                fallback = rc.stringOr("unlimited_pswd", base.unlimitedPassword),
+            ),
+
+            // ---------- subscription feature toggle ----------
+            subscriptionEnabled   = rc.boolOr("subscription_enabled", base.subscriptionEnabled),
+            subscriptionPlansJson = rc.getString("subscription_plans_json").trim(),
         )
 
         ref.set(updated)
@@ -165,6 +175,13 @@ class AdsConfigStore @Inject constructor() {
             rewardMaxClaimsPerDay           = parsed.optIntIn("reward_max_claims_per_day", 0, 100, base.rewardMaxClaimsPerDay),
             nativeTemplateInterval          = parsed.optIntIn("native_template_interval", 2, 50, base.nativeTemplateInterval),
             nativeHistoryInterval           = parsed.optIntIn("native_history_interval", 2, 50, base.nativeHistoryInterval),
+            unlimitedCreditsEnabled         = parsed.optBoolOr("unlimited_credits_enabled", parsed.optBoolOr("unlimited_creds", base.unlimitedCreditsEnabled)),
+            unlimitedEmail                  = parsed.optStringOrNull("unlimited_email") ?: base.unlimitedEmail,
+            unlimitedPassword               = parsed.optStringOrNull("unlimited_password")
+                ?: parsed.optStringOrNull("unlimited_pswd")
+                ?: base.unlimitedPassword,
+            subscriptionEnabled             = parsed.optBoolOr("subscription_enabled", base.subscriptionEnabled),
+            subscriptionPlansJson           = parsed.optStringOrNull("subscription_plans_json") ?: base.subscriptionPlansJson,
             nativeStyle = parseNativeStyleJson(parsed, base.nativeStyle),
             adUnitIds   = parseAdUnitIdsJson(parsed, base.adUnitIds),
         )
@@ -220,6 +237,9 @@ private fun FirebaseRemoteConfig.boolOr(key: String, fallback: Boolean): Boolean
     val v = getString(key).trim()
     return if (v.isBlank()) fallback else getBoolean(key)
 }
+
+private fun FirebaseRemoteConfig.stringOr(key: String, fallback: String): String =
+    getString(key).trim().ifBlank { fallback }
 
 private fun FirebaseRemoteConfig.intIn(key: String, min: Int, max: Int, fallback: Int): Int {
     val v = getString(key).trim()

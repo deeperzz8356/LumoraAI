@@ -248,6 +248,8 @@
     <string name="ui_profile">Profile</string>
 
     <string name="ui_password">Password</string>
+    <string name="auth_show_password">Show password</string>
+    <string name="auth_hide_password">Hide password</string>
 
     <string name="ui_queue">Queue</string>
 
@@ -362,6 +364,16 @@
     <string name="ui_zoom_out">Zoom out</string>
 
     <string name="ui_zoomable_image">Zoomable image</string>
+
+    <string name="ui_reset">Reset</string>
+
+    <string name="ui_play">Play</string>
+
+    <string name="ui_pause">Pause</string>
+
+    <string name="ui_mute">Mute</string>
+
+    <string name="ui_unmute">Unmute</string>
 
     <string name="ui_image">Image</string>
 
@@ -715,7 +727,14 @@
     <string name="ui_filter_video">Video</string>
     <string name="ui_filter_enhancer">Enhancer</string>
     <string name="ui_filter_compress">Compress</string>
+    <string name="ui_selected_count">%1$d selected</string>
+    <string name="ui_select_all">Select all</string>
+    <string name="ui_clear_all">Clear all</string>
+    <string name="ui_history_empty_title">No creations yet</string>
     <string name="ui_history_empty_body">Generated images and videos will appear here after you create them.</string>
+    <string name="ui_start_creating">Start creating</string>
+    <string name="ui_no_filter_items">No %1$s items yet.</string>
+    <string name="ui_send_feedback">Send feedback</string>
     <string name="ui_privacy_policy">Privacy Policy</string>
     <string name="ui_terms_of_service">Terms of Service</string>
     <string name="ui_delete_account">Delete Account</string>

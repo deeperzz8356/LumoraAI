@@ -244,7 +244,7 @@ private fun bindGeneration(
     bindMultiSources(binding, config)
     bindPrompt(binding, config, showPrompt, onPromptChanged, onImprovePrompt, onShowPromptChanged)
     bindLoading(binding, config)
-    bindResult(binding, config, scope, onEditResult, onOpenMedia)
+    bindResult(binding, config, scope, onEditResult, onOpenMedia, onShowPromptChanged, showPrompt)
     bindError(binding, error, onDismissError)
     bindBottomBar(binding, config, selectorsOpen, onAspectRatioChanged, onGenerate, onSelectorsOpenChanged)
     if (config.isGenerating || config.generatedPaths.isNotEmpty() || config.generatedPath != null) {
@@ -446,6 +446,8 @@ private fun bindResult(
     scope: CoroutineScope,
     onEditResult: () -> Unit,
     onOpenMedia: (String, String, String) -> Unit,
+    onShowPromptChanged: (Boolean) -> Unit,
+    showPrompt: Boolean,
 ) {
     val paths = (config.generatedPaths.ifEmpty { config.generatedPath?.let(::listOf).orEmpty() }).distinct()
     binding.resultPanel.visibility = if (paths.isEmpty()) View.GONE else View.VISIBLE
@@ -453,15 +455,29 @@ private fun bindResult(
     val isVideo = isVideo(config.mediaType, config.generatedMimeType)
     binding.resultTitle.text = if (paths.size > 1) "${paths.size} Results Ready" else if (isVideo) "Video Ready" else "Image Ready"
     binding.resultRow.removeAllViews()
+    val previewWidth = (binding.resultPanel.width - dp(binding.root, 32)).takeIf { it > 0 }
+        ?: (binding.root.resources.displayMetrics.widthPixels - dp(binding.root, 64))
     paths.forEach { path ->
         val item = GenerationResultItemBinding.inflate(LayoutInflater.from(binding.root.context), binding.resultRow, false)
+        item.root.layoutParams = LinearLayout.LayoutParams(
+            previewWidth.coerceAtLeast(dp(binding.root, 260)),
+            dp(binding.root, 220),
+        ).apply {
+            if (paths.size > 1) marginEnd = dp(binding.root, 12)
+        }
         bindMediaThumb(item.resultImage, path, isVideo, if (isVideo) R.drawable.style_digital else R.drawable.style_fantasy)
         item.playBadge.visibility = if (isVideo) View.VISIBLE else View.GONE
         item.root.setOnClickListener { onOpenMedia(path, config.mediaType, config.generatedMimeType) }
         binding.resultRow.addView(item.root)
     }
     val selectedPath = paths.last()
-    binding.editResultButton.setOnClickListener { onEditResult() }
+    binding.editResultButton.setOnClickListener {
+        onShowPromptChanged(true)
+        onEditResult()
+        binding.contentScroll.post {
+            binding.contentScroll.smoothScrollTo(0, binding.promptWrapper.top)
+        }
+    }
     binding.downloadResultButton.setOnClickListener {
         scope.launch {
             val result = MediaGallerySaver.saveToGallery(binding.root.context, selectedPath, config.generatedMimeType, config.mediaType)

@@ -19,7 +19,7 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.deep.lumoraai.core.navigation.ResetLoadingOnLeave
 import com.deep.lumoraai.core.utils.GuestIdentity
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AuthRoute(
     onNext: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

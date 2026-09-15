@@ -1,6 +1,7 @@
 package com.deep.lumoraai.feature.credits
 
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
@@ -43,10 +44,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import com.deep.lumoraai.R
@@ -139,23 +142,60 @@ internal fun SpinWheelDialog(
 }
 @Composable
 private fun SpinWheel(rotation: Float) {
+    // Keep the client wheel aligned with the backend reward config:
+    // 50 (2%), 25 (8%), 10 (20%), 2 (40%), Better luck (30%).
+    val labels = listOf("50", "25", "10", "2", "Better\nluck")
+    val weights = listOf(0.02f, 0.08f, 0.20f, 0.40f, 0.30f)
     val colors = listOf(
         ComposeColor(0xFFD6FF2F),
         ComposeColor(0xFF9C63FF),
         ComposeColor(0xFF30D8DE),
         ComposeColor(0xFFFF3D9D),
-        ComposeColor(0xFF273249),
         ComposeColor(0xFF5DD96B),
     )
     Canvas(modifier = Modifier.size(214.dp).rotate(rotation)) {
-        val sweep = 360f / colors.size
-        colors.forEachIndexed { index, color ->
+        val totalWeight = weights.sum()
+        var startAngle = -90f
+        weights.forEachIndexed { index, weight ->
+            val sweep = 360f * (weight / totalWeight)
             drawArc(
-                color = color,
-                startAngle = -90f + index * sweep,
+                color = colors[index],
+                startAngle = startAngle,
                 sweepAngle = sweep,
                 useCenter = true,
             )
+            startAngle += sweep
+        }
+        val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            textSize = 16.sp.toPx()
+            setShadowLayer(5f, 0f, 2f, Color.argb(135, 0, 0, 0))
+        }
+        val darkLabelPaint = Paint(labelPaint).apply {
+            color = Color.rgb(8, 16, 32)
+            clearShadowLayer()
+        }
+        val centerX = size.width / 2f
+        val centerY = size.height / 2f
+        val labelRadius = size.minDimension * 0.34f
+        var labelStartAngle = -90f
+        drawContext.canvas.nativeCanvas.apply {
+            labels.forEachIndexed { index, label ->
+                val sweep = 360f * (weights[index] / totalWeight)
+                val angle = Math.toRadians((labelStartAngle + sweep / 2f).toDouble())
+                val x = centerX + kotlin.math.cos(angle).toFloat() * labelRadius
+                val y = centerY + kotlin.math.sin(angle).toFloat() * labelRadius
+                val paint = if (index == 0) darkLabelPaint else labelPaint
+                val lines = label.split('\n')
+                val lineHeight = paint.textSize * 0.92f
+                val firstBaseline = y - ((lines.size - 1) * lineHeight / 2f) + (paint.textSize * 0.34f)
+                lines.forEachIndexed { lineIndex, line ->
+                    drawText(line, x, firstBaseline + lineIndex * lineHeight, paint)
+                }
+                labelStartAngle += sweep
+            }
         }
         drawCircle(
             color = ComposeColor.White.copy(alpha = 0.22f),

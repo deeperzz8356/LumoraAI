@@ -13,15 +13,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShortText
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.Button
@@ -82,7 +83,6 @@ fun EditProfileScreen(
     var username by remember { mutableStateOf(saved.username) }
     var email by remember { mutableStateOf(saved.email) }
     var bio by remember { mutableStateOf(saved.bio) }
-    var location by remember { mutableStateOf(saved.location) }
     var avatarUri by remember(saved.avatarUri) { mutableStateOf(saved.avatarUri) }
     var isSaving by remember { mutableStateOf(false) }
     var validationError by remember { mutableStateOf<String?>(null) }
@@ -97,7 +97,7 @@ fun EditProfileScreen(
             username = username.trim().removePrefix("@"),
             email = email.trim(),
             bio = bio.trim(),
-            location = location.trim(),
+            location = saved.location.trim(),
             avatarUri = avatarUri,
         )
         validationError = when {
@@ -137,7 +137,13 @@ fun EditProfileScreen(
         }
     }
 
-    PremiumPage("Edit profile", "Creator identity", "Update how you appear across Lumora", onBack, modifier) {
+    PremiumPage(
+        "Edit profile",
+        "Creator identity",
+        "Update how you appear across Lumora",
+        onBack,
+        modifier.statusBarsPadding().navigationBarsPadding(),
+    ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
@@ -179,7 +185,6 @@ fun EditProfileScreen(
             ProfileField("Username", username, { username = it }, Icons.Default.Tag, prefix = "@")
             ProfileField("Email", email, { email = it }, Icons.Default.Person, keyboardType = KeyboardType.Email)
             ProfileField("Bio", bio, { bio = it }, Icons.AutoMirrored.Filled.ShortText, singleLine = false)
-            ProfileField("Location", location, { location = it }, Icons.Default.LocationOn)
         }
         validationError?.let {
             Surface(color = Color(0x22FF7D88), shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, Color(0x55FF7D88))) {

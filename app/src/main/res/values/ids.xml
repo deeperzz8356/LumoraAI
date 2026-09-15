@@ -8,4 +8,8 @@
     <item name="generation_prompt_change_callback" type="id" />
     <item name="generation_prompt_model_text" type="id" />
     <item name="history_viewer_media_player" type="id" />
+    <item name="history_viewer_image_gesture" type="id" />
+    <item name="history_viewer_image_transform" type="id" />
+    <item name="subscription_feature_tiles_bound" type="id" />
+    <item name="subscription_plan_signature" type="id" />
 </resources>

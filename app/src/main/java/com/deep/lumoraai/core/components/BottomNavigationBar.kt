@@ -23,6 +23,10 @@ import compose.icons.tablericons.History
 import compose.icons.tablericons.Home
 import compose.icons.tablericons.Search
 
+internal fun shouldShowBottomNavigation(route: String, screenWidthDp: Int): Boolean {
+    return screenWidthDp < 600 && route != "subscription"
+}
+
 @Composable
 fun BottomNavigationBar(
     items: List<String>,
@@ -31,7 +35,7 @@ fun BottomNavigationBar(
     modifier: Modifier = Modifier,
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
-    if (screenWidth >= 600) return
+    if (!shouldShowBottomNavigation(selected, screenWidth)) return
 
     AndroidView(
         factory = { CommonBottomNavigationBinding.inflate(LayoutInflater.from(it)).root },

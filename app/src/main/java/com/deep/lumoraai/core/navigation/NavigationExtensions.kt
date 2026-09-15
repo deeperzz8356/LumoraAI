@@ -56,9 +56,21 @@ fun textToVideoRoute(prompt: String? = null): String =
         }
     }
 
-fun imageToImageRoute(): String = Screen.ImageToImage.route
+fun imageToImageRoute(prompt: String? = null): String =
+    buildString {
+        append(Screen.ImageToImage.route)
+        if (!prompt.isNullOrBlank()) {
+            append("?prompt=${Uri.encode(prompt)}")
+        }
+    }
 
-fun imageToVideoRoute(): String = Screen.ImageToVideo.route
+fun imageToVideoRoute(prompt: String? = null): String =
+    buildString {
+        append(Screen.ImageToVideo.route)
+        if (!prompt.isNullOrBlank()) {
+            append("?prompt=${Uri.encode(prompt)}")
+        }
+    }
 
 fun promoVideoRoute(prompt: String? = null): String =
     buildString {

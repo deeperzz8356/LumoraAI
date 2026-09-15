@@ -13,9 +13,15 @@ import com.google.firebase.auth.FirebaseAuth
 fun ImageToVideoRoute(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
+    initialPrompt: String? = null,
     viewModel: ImageToVideoViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    LaunchedEffect(initialPrompt) {
+        if (!initialPrompt.isNullOrBlank()) {
+            viewModel.updatePrompt(initialPrompt)
+        }
+    }
     val uiState = viewModel.uiState
     LaunchedEffect(uiState.error) {
         if (

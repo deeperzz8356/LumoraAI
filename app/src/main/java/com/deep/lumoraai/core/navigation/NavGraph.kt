@@ -230,10 +230,20 @@ fun NavGraph(
                 mode = TextToImageMode.Avatar,
             )
         }
-        composable(Screen.ImageToImage.route) {
+        composable(
+            route = Screen.ImageToImage.route + "?prompt={prompt}",
+            arguments = listOf(
+                navArgument("prompt") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
             ImageToImageRoute(
                 onBack = { navController.popBackStack() },
-                onNavigate = { navController.goTo(it) }
+                onNavigate = { navController.goTo(it) },
+                initialPrompt = backStackEntry.arguments?.getString("prompt"),
             )
         }
         composable(
@@ -264,10 +274,20 @@ fun NavGraph(
                 onNavigate = { navController.goTo(it) }
             )
         }
-        composable(Screen.ImageToVideo.route) {
+        composable(
+            route = Screen.ImageToVideo.route + "?prompt={prompt}",
+            arguments = listOf(
+                navArgument("prompt") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
             ImageToVideoRoute(
                 onBack = { navController.popBackStack() },
-                onNavigate = { navController.goTo(it) }
+                onNavigate = { navController.goTo(it) },
+                initialPrompt = backStackEntry.arguments?.getString("prompt"),
             )
         }
         composable(

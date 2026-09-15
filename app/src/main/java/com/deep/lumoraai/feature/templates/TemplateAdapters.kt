@@ -123,14 +123,17 @@ internal class TemplateSectionsAdapter(
             if (binding.cards.itemDecorationCount == 0) {
                 binding.cards.addItemDecoration(HorizontalSpacingDecoration(dp(binding.root, 12)))
             }
-            // Horizontal carousel cards stay template-only; the parent list owns
-            // the full-width native template ad rows after every three sections.
-            binding.cards.adapter = TemplateCardAdapter(
-                templates = section.templates,
-                horizontal = true,
-                onTemplateClick = onTemplateClick,
-                spanCount = 0,
-            )
+            val currentAdapter = binding.cards.adapter as? TemplateCardAdapter
+            if (currentAdapter?.templates != section.templates || !currentAdapter.horizontal) {
+                // Horizontal carousel cards stay template-only; the parent list owns
+                // the full-width native template ad rows after every three sections.
+                binding.cards.adapter = TemplateCardAdapter(
+                    templates = section.templates,
+                    horizontal = true,
+                    onTemplateClick = onTemplateClick,
+                    spanCount = 0,
+                )
+            }
             manager.scrollToPositionWithOffset(
                 scrollMemory.sectionPosition(categoryId, section.id), 0
             )
@@ -184,8 +187,8 @@ internal class TemplateSectionsAdapter(
 // ---------------------------------------------------------------------------
 
 internal class TemplateCardAdapter(
-    private val templates: List<TemplateListItem>,
-    private val horizontal: Boolean,
+    val templates: List<TemplateListItem>,
+    val horizontal: Boolean,
     private val onTemplateClick: (TemplateListItem) -> Unit,
     /** Grid column count.  0 = carousel mode (no ads). */
     val spanCount: Int = 0,
@@ -283,6 +286,11 @@ internal class TemplateCardAdapter(
         }
     }
 
+    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
+        if (holder is TemplateViewHolder) holder.recycle()
+        super.onViewRecycled(holder)
+    }
+
     override fun getItemCount(): Int = items.size
 
     // ---- ViewHolders ----
@@ -291,34 +299,102 @@ internal class TemplateCardAdapter(
         private val binding: TemplateCardBinding
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: TemplateListItem) {
+            binding.root.tag = item.id
             binding.root.contentDescription = "${item.title}. ${item.subtitle}. Tap to create."
             binding.root.setOnClickListener { onTemplateClick(item) }
             binding.ideaTitle.text = item.title
             binding.ideaDescription.text = "${item.subtitle}\n\nTap to create"
-            binding.ideaPlaceholder.visibility = View.VISIBLE
-            binding.videoPreview.bind((item.mediaUrl ?: item.assetFileName).takeIf { item.assetFileName.endsWith(".mp4", true) })
+            binding.ideaPlaceholder.visibility = View.GONE
             binding.preview.setImageDrawable(null)
+            val videoCacheKey = item.assetFileName.ifBlank { "${item.id}.mp4" }
+            val remoteVideo = item.mediaUrl?.takeIf { it.startsWith("http") }
+            val cachedVideo = TemplateAssetCache.cachedFile(binding.root.context, videoCacheKey)?.absolutePath
+            val videoSource = (cachedVideo ?: remoteVideo ?: item.assetFileName)
+                .takeIf { videoCacheKey.endsWith(".mp4", true) || it.endsWith(".mp4", true) }
+            binding.videoPreview.bind(videoSource)
+            if (videoSource != null) {
+                binding.ideaPlaceholder.visibility = View.GONE
+                binding.preview.visibility = View.INVISIBLE
+                binding.mediaState.visibility = View.GONE
+            }
+            if (cachedVideo == null && remoteVideo != null && videoSource != null) {
+                TemplateAssetCache.cache(binding.root.context, remoteVideo, videoCacheKey) { file ->
+                    if (binding.root.tag == item.id) binding.videoPreview.bind(file.absolutePath)
+                }
+            }
+            if (videoSource != null) return
             val preview = item.previewUrl ?: item.previewAssetFileName
             if (preview.isNullOrBlank()) {
                 binding.preview.visibility = View.INVISIBLE
+                binding.mediaState.showError()
+                return
+            }
+            if (preview.endsWith(".mp4", true)) {
+                binding.preview.visibility = View.INVISIBLE
+                binding.mediaState.showError()
                 return
             }
             binding.preview.visibility = View.VISIBLE
-            binding.preview.load(if (preview.startsWith("https://")) preview else "file:///android_asset/templates/${Uri.encode(preview)}") {
+            val previewCacheKey = (item.previewAssetFileName ?: item.assetFileName).ifBlank { "${item.id}.jpg" }
+            val cachedPreview = TemplateAssetCache.cachedFile(binding.root.context, previewCacheKey)
+            val showImageLoader = cachedPreview == null
+            if (showImageLoader) {
+                binding.mediaState.showLoading()
+            } else {
+                binding.mediaState.visibility = View.GONE
+            }
+            binding.preview.load(cachedPreview ?: preview.toTemplateImageModel()) {
                 crossfade(true)
                 placeholder(null)
                 error(null)
                 listener(
+                    onStart = {
+                        if (binding.root.tag == item.id && showImageLoader) binding.mediaState.showLoading()
+                    },
                     onError = { _, _ ->
                         binding.preview.visibility = View.INVISIBLE
-                        binding.ideaPlaceholder.visibility = View.VISIBLE
+                        binding.ideaPlaceholder.visibility = View.GONE
+                        binding.mediaState.showError()
                     },
                     onSuccess = { _, _ ->
                         binding.preview.visibility = View.VISIBLE
                         binding.ideaPlaceholder.visibility = View.GONE
+                        binding.mediaState.showSuccess()
                     }
                 )
             }
+            if (cachedPreview == null && preview.startsWith("http")) {
+                TemplateAssetCache.cache(binding.root.context, preview, previewCacheKey) { file ->
+                    if (binding.root.tag == item.id && binding.preview.drawable == null) {
+                        binding.preview.load(file) {
+                            crossfade(true)
+                            listener(
+                                onStart = {
+                                    if (binding.root.tag == item.id) binding.mediaState.showLoading()
+                                },
+                                onError = { _, _ ->
+                                    binding.preview.visibility = View.INVISIBLE
+                                    binding.ideaPlaceholder.visibility = View.GONE
+                                    binding.mediaState.showError()
+                                },
+                                onSuccess = { _, _ ->
+                                    binding.preview.visibility = View.VISIBLE
+                                    binding.ideaPlaceholder.visibility = View.GONE
+                                    binding.mediaState.showSuccess()
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        fun recycle() {
+            binding.videoPreview.bind(null)
+            binding.preview.setImageDrawable(null)
+            binding.preview.visibility = View.INVISIBLE
+            binding.ideaPlaceholder.visibility = View.GONE
+            binding.mediaState.showLoading()
         }
     }
 
@@ -361,3 +437,10 @@ internal class GridSpacingDecoration(
 
 private fun dp(view: View, value: Int): Int =
     (value * view.resources.displayMetrics.density).toInt()
+
+private fun String.toTemplateImageModel(): String =
+    if (startsWith("https://")) {
+        this
+    } else {
+        "file:///android_asset/${split('/').joinToString("/") { Uri.encode(it) }}"
+    }
