@@ -7,6 +7,7 @@ import com.deep.lumoraai.core.notification.NotificationChannelManager
 import com.deep.lumoraai.core.notification.NotificationLifecycleHandler
 import com.deep.lumoraai.core.notification.OneSignalManager
 import com.deep.lumoraai.core.utils.CreditBalanceStore
+import com.deep.lumoraai.core.utils.InstallStateCleaner
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -31,6 +32,8 @@ class LumoraApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        InstallStateCleaner.clearRestoredStateOnFreshInstall(this)
 
         // Seed the credit header from the persisted cache so it shows instantly
         // on cold start (server reconciles it shortly after).
