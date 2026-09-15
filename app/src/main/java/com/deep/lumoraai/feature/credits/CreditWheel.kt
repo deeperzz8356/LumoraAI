@@ -83,10 +83,10 @@ internal fun SpinWheelDialog(
         state.isRewardBusy -> 360f
         result == null -> 0f
         result.creditsAwarded >= 50 -> 720f + 18f
-        result.creditsAwarded >= 25 -> 720f + 78f
-        result.creditsAwarded >= 10 -> 720f + 138f
-        result.creditsAwarded > 0 -> 720f + 258f
-        else -> 720f + 318f
+        result.creditsAwarded >= 25 -> 720f + 90f
+        result.creditsAwarded >= 10 -> 720f + 162f
+        result.creditsAwarded > 0 -> 720f + 234f
+        else -> 720f + 306f
     }
     val rotation by animateFloatAsState(
         targetValue = targetRotation,
@@ -142,10 +142,8 @@ internal fun SpinWheelDialog(
 }
 @Composable
 private fun SpinWheel(rotation: Float) {
-    // Keep the client wheel aligned with the backend reward config:
-    // 50 (2%), 25 (8%), 10 (20%), 2 (40%), Better luck (30%).
+    // Keep visual sectors equal; reward probabilities remain server-controlled.
     val labels = listOf("50", "25", "10", "2", "Better\nluck")
-    val weights = listOf(0.02f, 0.08f, 0.20f, 0.40f, 0.30f)
     val colors = listOf(
         ComposeColor(0xFFD6FF2F),
         ComposeColor(0xFF9C63FF),
@@ -154,17 +152,16 @@ private fun SpinWheel(rotation: Float) {
         ComposeColor(0xFF5DD96B),
     )
     Canvas(modifier = Modifier.size(214.dp).rotate(rotation)) {
-        val totalWeight = weights.sum()
+        val sliceSweep = 360f / labels.size
         var startAngle = -90f
-        weights.forEachIndexed { index, weight ->
-            val sweep = 360f * (weight / totalWeight)
+        labels.forEachIndexed { index, _ ->
             drawArc(
                 color = colors[index],
                 startAngle = startAngle,
-                sweepAngle = sweep,
+                sweepAngle = sliceSweep,
                 useCenter = true,
             )
-            startAngle += sweep
+            startAngle += sliceSweep
         }
         val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
@@ -183,8 +180,7 @@ private fun SpinWheel(rotation: Float) {
         var labelStartAngle = -90f
         drawContext.canvas.nativeCanvas.apply {
             labels.forEachIndexed { index, label ->
-                val sweep = 360f * (weights[index] / totalWeight)
-                val angle = Math.toRadians((labelStartAngle + sweep / 2f).toDouble())
+                val angle = Math.toRadians((labelStartAngle + sliceSweep / 2f).toDouble())
                 val x = centerX + kotlin.math.cos(angle).toFloat() * labelRadius
                 val y = centerY + kotlin.math.sin(angle).toFloat() * labelRadius
                 val paint = if (index == 0) darkLabelPaint else labelPaint
@@ -194,7 +190,7 @@ private fun SpinWheel(rotation: Float) {
                 lines.forEachIndexed { lineIndex, line ->
                     drawText(line, x, firstBaseline + lineIndex * lineHeight, paint)
                 }
-                labelStartAngle += sweep
+                labelStartAngle += sliceSweep
             }
         }
         drawCircle(
