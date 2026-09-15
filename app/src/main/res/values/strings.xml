@@ -292,6 +292,7 @@
     <string name="ui_send">Send</string>
 
     <string name="ui_share">Share</string>
+    <string name="ui_share_app">Share LumoraAI</string>
 
     <string name="ui_sharper_detail_cleaner_tone_richer_color">Sharper detail, cleaner tone, richer color</string>
 

@@ -95,6 +95,11 @@ class AdsConfigStore @Inject constructor() {
             // ---------- subscription feature toggle ----------
             subscriptionEnabled   = rc.boolOr("subscription_enabled", base.subscriptionEnabled),
             subscriptionPlansJson = rc.getString("subscription_plans_json").trim(),
+
+            // ---------- legal links ----------
+            privacyPolicyUrl = rc.stringOr("privacy_policy_url", base.privacyPolicyUrl),
+            termsAndConditionsUrl = rc.stringOr("terms_and_conditions_url", base.termsAndConditionsUrl),
+            appShareUrl = rc.stringOr("app_share_url", base.appShareUrl),
         )
 
         ref.set(updated)

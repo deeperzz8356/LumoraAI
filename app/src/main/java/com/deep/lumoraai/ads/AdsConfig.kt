@@ -76,6 +76,11 @@ data class AdsConfig(
      * Blank/invalid JSON falls back to the ViewModel default plans silently.
      */
     val subscriptionPlansJson: String = "",
+
+    // ---- Legal links ----
+    val privacyPolicyUrl: String = "https://lumoraai.example/privacy-policy",
+    val termsAndConditionsUrl: String = "https://lumoraai.example/terms-and-conditions",
+    val appShareUrl: String = "https://play.google.com/store/apps/details?id=com.deep.lumoraai",
 ) {
     fun formatEnabled(format: AdFormat): Boolean = adsEnabled && when (format) {
         AdFormat.BANNER -> bannerEnabled

@@ -291,6 +291,42 @@
                 </FrameLayout>
             </LinearLayout>
 
+            <!-- Share App row -->
+            <LinearLayout
+                android:id="@+id/shareAppRow"
+                style="@style/LumoraSettingsRow">
+
+                <ImageView
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_common_lime_circle_soft"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_lumora_settings"
+                    android:tint="@color/lumora_lime" />
+
+                <LinearLayout
+                    style="@style/LumoraSettingsTextColumn"
+                    android:layout_marginStart="14dp">
+
+                    <TextView
+                        style="@style/LumoraSettingsRowTitle"
+                        android:text="Share LumoraAI" />
+
+                    <TextView
+                        style="@style/LumoraSettingsRowSubtitle"
+                        android:text="Invite others to create with Lumora" />
+                </LinearLayout>
+
+                <FrameLayout style="@style/LumoraSettingsArrowButton">
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="15dp"
+                        android:src="@drawable/ic_lumora_arrow_right"
+                        android:tint="@color/lumora_lime" />
+                </FrameLayout>
+            </LinearLayout>
+
             <!-- ── Version ────────────────────────────────────────────── -->
             <TextView
                 android:id="@+id/versionText"

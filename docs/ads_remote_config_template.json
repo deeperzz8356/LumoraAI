@@ -8,5 +8,20 @@
     "defaultValue": { "value": "" },
     "valueType": "STRING",
     "description": "Optional JSON array of subscription plans. Google Play Billing prices override these display prices when available."
+  },
+  "privacy_policy_url": {
+    "defaultValue": { "value": "https://lumoraai.example/privacy-policy" },
+    "valueType": "STRING",
+    "description": "Browser URL opened from Privacy Policy links in Settings, Profile, and Privacy & Security."
+  },
+  "terms_and_conditions_url": {
+    "defaultValue": { "value": "https://lumoraai.example/terms-and-conditions" },
+    "valueType": "STRING",
+    "description": "Browser URL opened from Terms & Conditions links in Settings and Profile."
+  },
+  "app_share_url": {
+    "defaultValue": { "value": "https://play.google.com/store/apps/details?id=com.deep.lumoraai" },
+    "valueType": "STRING",
+    "description": "App URL included when users share LumoraAI from Settings or Profile."
   }
 }

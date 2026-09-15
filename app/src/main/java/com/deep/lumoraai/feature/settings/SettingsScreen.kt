@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.deep.lumoraai.R
 import com.deep.lumoraai.BuildConfig
 import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.core.navigation.Screen
@@ -22,9 +23,6 @@ import com.deep.lumoraai.databinding.ScreenSettingsRootBinding
 import com.google.firebase.auth.FirebaseAuth
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Language
-
-private const val PrivacyPolicyUrl = "https://lumoraai.example/privacy-policy"
-private const val TermsAndConditionsUrl = "https://lumoraai.example/terms-and-conditions"
 
 @Composable
 fun SettingsScreen(
@@ -38,7 +36,11 @@ fun SettingsScreen(
 ) {
     val user = FirebaseAuth.getInstance().currentUser
     // Read subscription toggle from Remote Config — hide the billing row when off.
-    val subscriptionEnabled = LocalAdsConfigStore.current?.current?.subscriptionEnabled ?: true
+    val config = LocalAdsConfigStore.current?.current
+    val subscriptionEnabled = config?.subscriptionEnabled ?: true
+    val privacyPolicyUrl = config?.privacyPolicyUrl ?: "https://lumoraai.example/privacy-policy"
+    val termsAndConditionsUrl = config?.termsAndConditionsUrl ?: "https://lumoraai.example/terms-and-conditions"
+    val appShareUrl = config?.appShareUrl ?: "https://play.google.com/store/apps/details?id=com.deep.lumoraai"
 
     AndroidView(
         factory = { context ->
@@ -82,12 +84,19 @@ fun SettingsScreen(
                 onNavigate("${Screen.Language.route}?source=settings")
             }
             binding.privacyPolicyRow.setOnClickListener {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(PrivacyPolicyUrl))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(privacyPolicyUrl))
                 root.context.startActivity(intent)
             }
             binding.termsRow.setOnClickListener {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(TermsAndConditionsUrl))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(termsAndConditionsUrl))
                 root.context.startActivity(intent)
+            }
+            binding.shareAppRow.setOnClickListener {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "Create with LumoraAI: $appShareUrl")
+                }
+                root.context.startActivity(Intent.createChooser(shareIntent, root.context.getString(R.string.ui_share_app)))
             }
         },
         modifier = modifier

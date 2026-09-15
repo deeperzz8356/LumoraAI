@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.deep.lumoraai.R
+import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.core.components.AppErrorScreen
 import com.deep.lumoraai.core.components.AppLoadingScreen
 import com.deep.lumoraai.core.components.BottomNavigationBar
@@ -84,8 +85,6 @@ import java.io.File
 private enum class ProfileAction { Delete, SignOut, Login }
 
 private const val SupportEmail = "lumoraaisupport@gmail.com"
-private const val PrivacyPolicyUrl = "https://lumoraai.example/privacy-policy"
-private const val TermsAndConditionsUrl = "https://lumoraai.example/terms-and-conditions"
 private val HeaderNotificationDot = Color(0xFFCFBDFF)
 
 @Composable
@@ -132,6 +131,10 @@ private fun ProfileContent(
     onDeleteAccount: () -> Unit,
 ) {
     val context = LocalContext.current
+    val config = LocalAdsConfigStore.current?.current
+    val privacyPolicyUrl = config?.privacyPolicyUrl ?: "https://lumoraai.example/privacy-policy"
+    val termsAndConditionsUrl = config?.termsAndConditionsUrl ?: "https://lumoraai.example/terms-and-conditions"
+    val appShareUrl = config?.appShareUrl ?: "https://play.google.com/store/apps/details?id=com.deep.lumoraai"
     val user = FirebaseAuth.getInstance().currentUser
     val saved = remember(user?.uid) { ProfilePreferences.load(context, user) }
     val name = saved.fullName.ifBlank { state.items.getOrNull(0).orEmpty() }.ifBlank { "Lumora Creator" }
@@ -196,13 +199,13 @@ private fun ProfileContent(
                     "Privacy Policy",
                     "Open Lumora privacy details in your browser",
                     Icons.Default.Policy,
-                    { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PrivacyPolicyUrl))) },
+                    { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(privacyPolicyUrl))) },
                 )
                 PremiumActionRow(
                     "Terms & Conditions",
                     "Read our terms of use and service agreement",
                     Icons.Default.Policy,
-                    { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TermsAndConditionsUrl))) },
+                    { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(termsAndConditionsUrl))) },
                 )
                 PremiumActionRow(
                     "Help & support",
@@ -223,7 +226,7 @@ private fun ProfileContent(
                     {
                         val share = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, "$name on LumoraAI")
+                            putExtra(Intent.EXTRA_TEXT, "$name on LumoraAI\nCreate with LumoraAI: $appShareUrl")
                         }
                         context.startActivity(Intent.createChooser(share, context.getString(R.string.ui_share)))
                     },

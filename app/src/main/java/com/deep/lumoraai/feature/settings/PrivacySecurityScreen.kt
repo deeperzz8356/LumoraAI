@@ -1,5 +1,7 @@
 package com.deep.lumoraai.feature.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Download
@@ -21,6 +23,7 @@ import com.deep.lumoraai.core.components.PremiumPage
 import com.deep.lumoraai.core.components.PremiumSection
 import com.deep.lumoraai.core.components.PremiumToggleRow
 import com.deep.lumoraai.core.nativeui.toast
+import com.deep.lumoraai.ads.LocalAdsConfigStore
 
 @Composable
 fun PrivacySecurityScreen(
@@ -29,6 +32,8 @@ fun PrivacySecurityScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val config = LocalAdsConfigStore.current?.current
+    val privacyPolicyUrl = config?.privacyPolicyUrl ?: "https://lumoraai.example/privacy-policy"
     var dataCollection by remember { mutableStateOf(true) }
     var thirdPartySharing by remember { mutableStateOf(false) }
     var twoFactorAuth by remember { mutableStateOf(true) }
@@ -46,7 +51,12 @@ fun PrivacySecurityScreen(
         }
         PremiumSection("Your data") {
             PremiumActionRow("Download your data", "Request an export of your Lumora account", Icons.Default.Download, { context.toast("Data export request received.") })
-            PremiumActionRow("Privacy policy", "Read how Lumora handles your information", Icons.Default.Policy, { context.toast("Privacy policy will open here.") })
+            PremiumActionRow(
+                "Privacy policy",
+                "Read how Lumora handles your information",
+                Icons.Default.Policy,
+                { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(privacyPolicyUrl))) },
+            )
         }
     }
 }
