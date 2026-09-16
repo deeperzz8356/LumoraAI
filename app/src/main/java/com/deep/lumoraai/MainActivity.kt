@@ -51,6 +51,8 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val NOTIFICATION_ROUTE_EXTRA = "lumora_destination_route"
+        const val ACTION_OPEN_HOME = "com.deep.lumoraai.action.OPEN_HOME"
+        const val ACTION_OPEN_UNINSTALL = "com.deep.lumoraai.action.OPEN_UNINSTALL"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,7 +61,7 @@ class MainActivity : ComponentActivity() {
         window.setBackgroundDrawable(ColorDrawable(Color.rgb(8, 16, 32)))
         window.statusBarColor = Color.rgb(8, 16, 32)
         window.navigationBarColor = Color.rgb(8, 16, 32)
-        notificationRoute = intent.getStringExtra(NOTIFICATION_ROUTE_EXTRA)
+        notificationRoute = destinationFromIntent(intent)
 
         setContent {
             LumoraTheme {
@@ -171,6 +173,14 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        notificationRoute = intent.getStringExtra(NOTIFICATION_ROUTE_EXTRA)
+        notificationRoute = destinationFromIntent(intent)
+    }
+
+    private fun destinationFromIntent(intent: Intent?): String? {
+        return when (intent?.action) {
+            ACTION_OPEN_HOME -> com.deep.lumoraai.core.navigation.Screen.Home.route
+            ACTION_OPEN_UNINSTALL -> com.deep.lumoraai.core.navigation.Screen.UninstallConfirm.route
+            else -> intent?.getStringExtra(NOTIFICATION_ROUTE_EXTRA)
+        }
     }
 }

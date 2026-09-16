@@ -56,21 +56,23 @@ fun OnboardingScreen(
     var completing by remember { mutableStateOf(false) }
     val ads = LocalAdsManager.current
     val activity = rememberCurrentActivity()
-    val skip = {
+    val leaveOnboarding: (() -> Unit) -> Unit = { continueWith ->
         if (!completing) {
             completing = true
             if (ads == null) {
-                onSkip()
+                continueWith()
             } else {
                 ads.showInterstitial(
                     activity,
                     AdPlacement.OB_INTER,
                     continueOnShown = true,
-                    onContinue = onSkip,
+                    onContinue = continueWith,
                 )
             }
         }
     }
+    val skip = { leaveOnboarding(onSkip) }
+    val finish = { leaveOnboarding(onNext) }
     Column(modifier.fillMaxSize().systemBarsPadding()) {
         AndroidView(
             factory = { context -> OnboardingScreenBinding.inflate(LayoutInflater.from(context)).root },
@@ -96,7 +98,7 @@ fun OnboardingScreen(
                 }
                 binding.skipButton.setOnClickListener { skip() }
                 binding.nextButton.setOnClickListener {
-                    if (pageIndex == pages.lastIndex) onNext() else pageIndex++
+                    if (pageIndex == pages.lastIndex) finish() else pageIndex++
                 }
             }, modifier = Modifier.fillMaxSize().weight(1f)
         )
@@ -104,7 +106,7 @@ fun OnboardingScreen(
             0 -> AdPlacement.OB_NATIVE_1
             1 -> AdPlacement.OB_NATIVE_2
             2 -> AdPlacement.OB_NATIVE_3
-            3 -> AdPlacement.OB_NATIVE_4
+            3, 4 -> AdPlacement.OB_NATIVE_4
             else -> null
         }
         if (placement != null) PlacementNativeAd(placement = placement)

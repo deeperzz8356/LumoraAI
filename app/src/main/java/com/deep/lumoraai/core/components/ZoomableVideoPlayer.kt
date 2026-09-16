@@ -110,12 +110,12 @@ fun ZoomableVideoPlayer(
                 }
             }
     ) {
-        // Video player with native ExoPlayer controls
+        // Playback uses the compact Play/Pause and Mute controls below.
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
                     player = exoPlayer
-                    useController = true
+                    useController = false
                 }
             },
             modifier = Modifier
@@ -129,7 +129,7 @@ fun ZoomableVideoPlayer(
                 }
         )
 
-        // Custom control buttons (only zoom/rotate, not play/pause)
+        // Transform controls plus compact playback controls.
         if (showControls) {
             ControlsPanelVideo(
                 scale = scale,
@@ -153,16 +153,9 @@ fun ZoomableVideoPlayer(
                     .align(Alignment.BottomCenter)
                     .background(controlsBackgroundColor, shape = RoundedCornerShape(8.dp))
             ) {
-                TextButton(onClick = { exoPlayer.seekTo((exoPlayer.currentPosition - 10_000L).coerceAtLeast(0L)) }) {
-                    Text("−10s", color = Color.White)
-                }
                 TextButton(onClick = { if (playing) exoPlayer.pause() else exoPlayer.play() }) {
                     Text(if (playing) "Pause" else "Play", color = Color.White)
                 }
-                TextButton(onClick = {
-                    val duration = exoPlayer.duration.takeIf { it > 0L } ?: Long.MAX_VALUE
-                    exoPlayer.seekTo((exoPlayer.currentPosition + 10_000L).coerceAtMost(duration))
-                }) { Text("+10s", color = Color.White) }
                 TextButton(onClick = {
                     muted = !muted
                     exoPlayer.volume = if (muted) 0f else 1f

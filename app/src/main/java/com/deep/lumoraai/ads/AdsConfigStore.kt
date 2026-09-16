@@ -100,6 +100,7 @@ class AdsConfigStore @Inject constructor() {
             privacyPolicyUrl = rc.stringOr("privacy_policy_url", base.privacyPolicyUrl),
             termsAndConditionsUrl = rc.stringOr("terms_and_conditions_url", base.termsAndConditionsUrl),
             appShareUrl = rc.stringOr("app_share_url", base.appShareUrl),
+            supportEmail = rc.stringOr("support_email", base.supportEmail),
         )
 
         ref.set(updated)
@@ -187,6 +188,10 @@ class AdsConfigStore @Inject constructor() {
                 ?: base.unlimitedPassword,
             subscriptionEnabled             = parsed.optBoolOr("subscription_enabled", base.subscriptionEnabled),
             subscriptionPlansJson           = parsed.optStringOrNull("subscription_plans_json") ?: base.subscriptionPlansJson,
+            privacyPolicyUrl                = parsed.optStringOrNull("privacy_policy_url") ?: base.privacyPolicyUrl,
+            termsAndConditionsUrl           = parsed.optStringOrNull("terms_and_conditions_url") ?: base.termsAndConditionsUrl,
+            appShareUrl                     = parsed.optStringOrNull("app_share_url") ?: base.appShareUrl,
+            supportEmail                    = parsed.optStringOrNull("support_email") ?: base.supportEmail,
             nativeStyle = parseNativeStyleJson(parsed, base.nativeStyle),
             adUnitIds   = parseAdUnitIdsJson(parsed, base.adUnitIds),
         )

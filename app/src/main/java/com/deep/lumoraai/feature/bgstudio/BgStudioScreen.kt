@@ -72,6 +72,7 @@ fun BgStudioScreen(
             bannerPlacement = AdPlacement.BANNER_BG,
             showRatio = false,
             generateButtonText = "REMOVE BACKGROUND",
+            showGenerateArrow = false,
         ),
         onBack = onBack,
         onNavigate = onNavigate,

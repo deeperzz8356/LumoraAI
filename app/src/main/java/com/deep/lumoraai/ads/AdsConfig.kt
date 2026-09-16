@@ -81,6 +81,7 @@ data class AdsConfig(
     val privacyPolicyUrl: String = "https://lumoraai.example/privacy-policy",
     val termsAndConditionsUrl: String = "https://lumoraai.example/terms-and-conditions",
     val appShareUrl: String = "https://play.google.com/store/apps/details?id=com.deep.lumoraai",
+    val supportEmail: String = "lumoraaisupport@gmail.com",
 ) {
     fun formatEnabled(format: AdFormat): Boolean = adsEnabled && when (format) {
         AdFormat.BANNER -> bannerEnabled

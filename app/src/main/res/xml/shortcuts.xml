@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="home"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_home"
+        android:shortcutShortLabel="@string/shortcut_home"
+        android:shortcutLongLabel="@string/shortcut_home_long">
+        <intent
+            android:action="com.deep.lumoraai.action.OPEN_HOME"
+            android:targetPackage="com.deep.lumoraai"
+            android:targetClass="com.deep.lumoraai.MainActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="uninstall"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_uninstall"
+        android:shortcutShortLabel="@string/shortcut_uninstall"
+        android:shortcutLongLabel="@string/shortcut_uninstall_long">
+        <intent
+            android:action="com.deep.lumoraai.action.OPEN_UNINSTALL"
+            android:targetPackage="com.deep.lumoraai"
+            android:targetClass="com.deep.lumoraai.MainActivity" />
+    </shortcut>
+</shortcuts>

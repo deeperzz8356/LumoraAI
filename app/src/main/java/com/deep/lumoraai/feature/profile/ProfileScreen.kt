@@ -72,7 +72,6 @@ import java.io.File
 
 private enum class ProfileAction { Delete, SignOut, Login }
 
-private const val SupportEmail = "lumoraaisupport@gmail.com"
 private val HeaderNotificationDot = Color(0xFFCFBDFF)
 
 @Composable
@@ -123,6 +122,8 @@ private fun ProfileContent(
     val privacyPolicyUrl = config?.privacyPolicyUrl ?: "https://lumoraai.example/privacy-policy"
     val termsAndConditionsUrl = config?.termsAndConditionsUrl ?: "https://lumoraai.example/terms-and-conditions"
     val appShareUrl = config?.appShareUrl ?: "https://play.google.com/store/apps/details?id=com.deep.lumoraai"
+    val supportEmail = config?.supportEmail?.takeIf { android.util.Patterns.EMAIL_ADDRESS.matcher(it).matches() }
+        ?: "lumoraaisupport@gmail.com"
     val user = FirebaseAuth.getInstance().currentUser
     val saved = remember(user?.uid) { ProfilePreferences.load(context, user) }
     val name = saved.fullName.ifBlank { state.items.getOrNull(0).orEmpty() }.ifBlank { "Lumora Creator" }
@@ -165,22 +166,6 @@ private fun ProfileContent(
                 ProfileStat("Credits", state.credits.toString(), TablerIcons.CreditCard, Modifier.weight(1f)) { onNavigate(Screen.Credits.route) }
                 ProfileStat("Creations", state.generations.size.toString(), TablerIcons.LayoutGrid, Modifier.weight(1f)) { onNavigate(Screen.History.route) }
             }
-            PremiumSection("Recent work", "Your latest Lumora creations") {
-                if (state.generations.isEmpty()) {
-                    PremiumActionRow("Start your first creation", "Generate an image or video from Home", TablerIcons.Star, { onNavigate(Screen.TextToImage.route) })
-                } else {
-                    state.generations.take(4).chunked(2).forEach { rowItems ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            rowItems.forEach { item -> CreationCard(item, Modifier.weight(1f)) { onNavigate(Screen.History.route) } }
-                            if (rowItems.size == 1) Box(Modifier.weight(1f))
-                        }
-                    }
-                    TextButton(onClick = { onNavigate(Screen.History.route) }, modifier = Modifier.align(Alignment.End)) {
-                        Text("View all creations", color = PremiumLime, fontWeight = FontWeight.Bold)
-                        Icon(TablerIcons.ChevronRight, null, tint = PremiumLime, modifier = Modifier.padding(start = 6.dp).size(17.dp))
-                    }
-                }
-            }
             PremiumSection("Account", "Shortcuts and preferences") {
                 PremiumActionRow("Account settings", "Preferences, language and billing", TablerIcons.Settings, { onNavigate(Screen.Settings.route) })
                 PremiumActionRow(
@@ -197,11 +182,11 @@ private fun ProfileContent(
                 )
                 PremiumActionRow(
                     "Help & support",
-                    SupportEmail,
+                    supportEmail,
                     TablerIcons.Help,
                     {
                         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                            data = Uri.parse("mailto:$SupportEmail")
+                            data = Uri.parse("mailto:$supportEmail")
                             putExtra(Intent.EXTRA_SUBJECT, "Lumora AI support")
                         }
                         context.startActivity(Intent.createChooser(emailIntent, "Email support"))
@@ -219,7 +204,9 @@ private fun ProfileContent(
                         context.startActivity(Intent.createChooser(share, context.getString(R.string.ui_share)))
                     },
                 )
-                PremiumActionRow("Delete account", "Permanently remove your Lumora account", TablerIcons.Trash, { pendingAction = ProfileAction.Delete }, danger = true)
+                if (user != null && !user.isAnonymous) {
+                    PremiumActionRow("Delete account", "Permanently remove your Lumora account", TablerIcons.Trash, { pendingAction = ProfileAction.Delete }, danger = true)
+                }
                 PremiumActionRow(
                     if (state.isGuest) "Log in" else "Sign out",
                     if (state.isGuest) "Save your work across devices" else "End this session on this device",

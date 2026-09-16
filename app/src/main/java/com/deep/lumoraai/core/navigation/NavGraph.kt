@@ -52,6 +52,8 @@ import com.deep.lumoraai.feature.templates.TemplateSectionRoute
 import com.deep.lumoraai.feature.texttoimage.TextToImageMode
 import com.deep.lumoraai.feature.texttoimage.TextToImageRoute
 import com.deep.lumoraai.feature.texttovideo.TextToVideoRoute
+import com.deep.lumoraai.feature.uninstall.UninstallConfirmRoute
+import com.deep.lumoraai.feature.uninstall.UninstallSurveyRoute
 import com.google.firebase.auth.FirebaseAuth
 
 import androidx.navigation.navArgument
@@ -69,16 +71,18 @@ fun NavGraph(
     val context = LocalContext.current
     fun next(screen: Screen) = { navController.goTo(screen.nextScreen().route) }
 
-    LaunchedEffect(notificationRoute) {
-        val route = notificationRoute?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
-        navController.goTo(route)
-        onNotificationRouteConsumed()
-    }
-
     // Hoist a SINGLE persistent banner to the navigation root so it survives tab
     // switches and is never recreated. Only show it on the 5 primary tabs.
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+
+    LaunchedEffect(notificationRoute, currentRoute) {
+        val route = notificationRoute?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+        if (currentRoute == null || currentRoute == Screen.Splash.route) return@LaunchedEffect
+        navController.goTo(route)
+        onNotificationRouteConsumed()
+    }
+
     val showBanner = currentRoute != null && (
         currentRoute == "home" ||
         currentRoute == "templates" ||
@@ -102,12 +106,14 @@ fun NavGraph(
             SplashRoute(
                 onNext = {
                     val user = FirebaseAuth.getInstance().currentUser
-                    val target = if (user != null && OnboardingPreferences.isCompleted(context)) {
+                    val pendingRoute = notificationRoute?.takeIf { it.isNotBlank() }
+                    val target = pendingRoute ?: if (user != null && OnboardingPreferences.isCompleted(context)) {
                         Screen.Home.route
                     } else {
                         Screen.Language.route
                     }
                     navController.goTo(target)
+                    if (pendingRoute != null) onNotificationRouteConsumed()
                 }
             )
         }
@@ -343,17 +349,19 @@ fun NavGraph(
         composable(Screen.AITools.route) { AIToolsRoute(onNavigate = { navController.goTo(it) }) }
         composable(Screen.Queue.route) { QueueRoute(onNext = next(Screen.Queue), onNavigate = { navController.goTo(it) }) }
         composable(
-            route = "${Screen.Result.route}?path={path}&type={type}&mime={mime}",
+            route = "${Screen.Result.route}?path={path}&type={type}&mime={mime}&after={after}",
             arguments = listOf(
                 navArgument("path") { type = NavType.StringType; defaultValue = "" },
                 navArgument("type") { type = NavType.StringType; defaultValue = "IMAGE" },
                 navArgument("mime") { type = NavType.StringType; defaultValue = "image/png" },
+                navArgument("after") { type = NavType.IntType; defaultValue = -1 },
             ),
         ) { entry ->
             ResultRoute(
                 path = entry.arguments?.getString("path").orEmpty(),
                 mediaType = entry.arguments?.getString("type").orEmpty(),
                 mimeType = entry.arguments?.getString("mime").orEmpty(),
+                firstNewJobIndex = entry.arguments?.getInt("after") ?: -1,
                 onBack = { navController.popBackStack() },
             )
         }
@@ -424,6 +432,27 @@ fun NavGraph(
             HelpSupportRoute(
                 onBack = { navController.popBackStack() },
                 onNavigate = { navController.goTo(it) }
+            )
+        }
+        composable(Screen.UninstallConfirm.route) {
+            UninstallConfirmRoute(
+                onBackHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.UninstallConfirm.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onStillUninstall = { navController.goTo(Screen.UninstallSurvey.route) },
+            )
+        }
+        composable(Screen.UninstallSurvey.route) {
+            UninstallSurveyRoute(
+                onBackHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.UninstallConfirm.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
             )
         }
     }

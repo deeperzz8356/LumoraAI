@@ -31,6 +31,8 @@ sealed class Screen(val route: String, val title: String) {
     data object Settings : Screen("settings", "Settings")
     data object PrivacySecurity : Screen("privacysecurity", "Privacy & Security")
     data object HelpSupport : Screen("helpsupport", "Help & Support")
+    data object UninstallConfirm : Screen("uninstall/confirm", "Confirm Uninstall")
+    data object UninstallSurvey : Screen("uninstall/survey", "Uninstall Survey")
 }
 
 val navigationSequence = listOf(
@@ -62,5 +64,7 @@ val navigationSequence = listOf(
     Screen.EditProfile,
     Screen.Settings,
     Screen.PrivacySecurity,
-    Screen.HelpSupport
+    Screen.HelpSupport,
+    Screen.UninstallConfirm,
+    Screen.UninstallSurvey
 )

@@ -8,23 +8,23 @@ import com.deep.lumoraai.core.theme.LumoraTheme
 @Preview(name = "Result Light Preview", showBackground = true)
 @Composable
 fun ResultLightPreview() {
-    LumoraTheme(darkTheme = false) { ResultScreen("", "IMAGE", "image/png", {}) }
+    LumoraTheme(darkTheme = false) { ResultScreen("", "IMAGE", "image/png", onBack = {}) }
 }
 
 @Preview(name = "Result Dark Preview", showBackground = true)
 @Composable
 fun ResultDarkPreview() {
-    LumoraTheme(darkTheme = true) { ResultScreen("", "IMAGE", "image/png", {}) }
+    LumoraTheme(darkTheme = true) { ResultScreen("", "IMAGE", "image/png", onBack = {}) }
 }
 
 @Preview(name = "Result Tablet Preview", device = Devices.TABLET, showBackground = true)
 @Composable
 fun ResultTabletPreview() {
-    LumoraTheme(darkTheme = true) { ResultScreen("", "IMAGE", "image/png", {}) }
+    LumoraTheme(darkTheme = true) { ResultScreen("", "IMAGE", "image/png", onBack = {}) }
 }
 
 @Preview(name = "Result Landscape Preview", widthDp = 891, heightDp = 411, showBackground = true)
 @Composable
 fun ResultLandscapePreview() {
-    LumoraTheme(darkTheme = true) { ResultScreen("", "IMAGE", "image/png", {}) }
+    LumoraTheme(darkTheme = true) { ResultScreen("", "IMAGE", "image/png", onBack = {}) }
 }

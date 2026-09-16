@@ -59,6 +59,7 @@ import com.deep.lumoraai.databinding.GenerationResultItemBinding
 import com.deep.lumoraai.databinding.GenerationScreenBinding
 import com.deep.lumoraai.databinding.GenerationSourceItemBinding
 import com.deep.lumoraai.databinding.GenerationStyleItemBinding
+import com.deep.lumoraai.data.repository.GenerationRepository
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Adjustments
 import compose.icons.tablericons.AspectRatio
@@ -124,6 +125,7 @@ data class NativeGenerationConfig(
     val bannerPlacement: AdPlacement,
     val showRatio: Boolean = true,
     val generateButtonText: String? = null,
+    val showGenerateArrow: Boolean = true,
 )
 
 @Composable
@@ -156,6 +158,11 @@ fun NativeGenerationScreen(
     var showPrivacyNotice by remember { mutableStateOf(false) }
     var showCreditsExhausted by remember { mutableStateOf(false) }
     val privacyPrefs = remember(context) { context.getSharedPreferences("generation_privacy", android.content.Context.MODE_PRIVATE) }
+    val generateAndOpenResult = {
+        val firstNewJobIndex = GenerationRepository.activeJobs.value.size
+        onGenerate()
+        onNavigate("${Screen.Result.route}?path=&type=${Uri.encode(config.mediaType)}&mime=${Uri.encode(config.generatedMimeType)}&after=$firstNewJobIndex")
+    }
     val startGeneration = {
         val balance = credits
         if (balance != null && balance < liveConfig.creditCost && balance < GenerationGate.DEVELOPER_MODE_CREDITS_DISPLAY) {
@@ -163,7 +170,7 @@ fun NativeGenerationScreen(
         } else if (!privacyPrefs.getBoolean("notice_seen", false)) {
             showPrivacyNotice = true
         } else {
-            if (ads == null) onGenerate() else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { onGenerate() }
+            if (ads == null) generateAndOpenResult() else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { generateAndOpenResult() }
         }
     }
     val exitGeneration = {
@@ -173,16 +180,6 @@ fun NativeGenerationScreen(
     BackHandler { exitGeneration() }
     LaunchedEffect(Unit) {
         CreditBalanceStore.refresh()
-    }
-    LaunchedEffect(config.generatedPath, config.isGenerating) {
-        val path = config.generatedPath
-        if (!config.isGenerating && !path.isNullOrBlank()) {
-            val resultPrefs = context.getSharedPreferences("generation_results", android.content.Context.MODE_PRIVATE)
-            if (resultPrefs.getString("last_opened", null) != path) {
-                resultPrefs.edit().putString("last_opened", path).apply()
-                onNavigate("${Screen.Result.route}?path=${Uri.encode(path)}&type=${Uri.encode(config.mediaType)}&mime=${Uri.encode(config.generatedMimeType)}")
-            }
-        }
     }
 
     Scaffold(
@@ -259,7 +256,7 @@ fun NativeGenerationScreen(
         confirmButton = { TextButton(onClick = {
             privacyPrefs.edit().putBoolean("notice_seen", true).apply()
             showPrivacyNotice = false
-            if (ads == null) onGenerate() else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { onGenerate() }
+            if (ads == null) generateAndOpenResult() else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { generateAndOpenResult() }
         }) { Text("Continue") } },
         dismissButton = { TextButton(onClick = { showPrivacyNotice = false }) { Text("Cancel") } },
     )
@@ -632,7 +629,12 @@ private fun bindBottomBar(
     } else {
         config.generateButtonText ?: binding.root.context.getString(R.string.ui_generate_now)
     }
-    binding.generateButton.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.ic_lumora_chevron_right, 0)
+    binding.generateButton.setCompoundDrawablesRelativeWithIntrinsicBounds(
+        0,
+        0,
+        if (config.showGenerateArrow) R.drawable.ic_lumora_chevron_right else 0,
+        0,
+    )
     binding.generateButton.compoundDrawableTintList = ColorStateList.valueOf(0xFF081020.toInt())
     binding.generateButton.setOnClickListener { if (config.generateEnabled && !config.isGenerating) onGenerate() }
     binding.creditNote.text = binding.root.context.getString(R.string.ui_credits_consumed_note, config.creditCost)

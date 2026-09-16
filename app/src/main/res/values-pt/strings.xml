@@ -565,4 +565,20 @@
     <string name="ui_plan_guest">Convidado</string>
     <string name="ui_plan_premium">Premium</string>
     <string name="ui_profile_tip">Toque no seu avatar para abrir o perfil</string>
-</resources>
+    <string name="ui_uninstall_confirm_title">Before you uninstall</string>
+    <string name="ui_uninstall_confirm_subtitle">Tell us what we can improve</string>
+    <string name="ui_uninstall_confirm_body">We can take you back home to keep creating, or you can continue and share why Lumora AI did not work for you.</string>
+    <string name="ui_still_uninstall">Still Uninstall</string>
+    <string name="ui_try_again">Try Again</string>
+    <string name="ui_uninstall">Uninstall</string>
+    <string name="ui_uninstall_survey_title">Why are you uninstalling?</string>
+    <string name="ui_uninstall_survey_subtitle">Choose one reason before continuing</string>
+    <string name="ui_uninstall_reason_not_using">I do not use it enough</string>
+    <string name="ui_uninstall_reason_ads">Too many ads</string>
+    <string name="ui_uninstall_reason_cost">Credits or plans are too expensive</string>
+    <string name="ui_uninstall_reason_quality">Results were not good enough</string>
+    <string name="ui_uninstall_reason_other">Other reason</string>
+    <string name="shortcut_home">Home</string>
+    <string name="shortcut_home_long">Open Home</string>
+    <string name="shortcut_uninstall">Uninstall</string>
+    <string name="shortcut_uninstall_long">Open uninstall flow</string></resources>

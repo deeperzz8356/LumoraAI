@@ -205,7 +205,7 @@ private fun mediaReadPermissions(): Array<String> =
 
 private fun resizeCompressUpload(binding: CompressScreenBinding) {
     val viewport = binding.content.parent as View
-    val height = (viewport.height * 0.5f).toInt().coerceAtLeast((180 * binding.root.resources.displayMetrics.density).toInt())
+    val height = (viewport.height * 0.7f).toInt().coerceAtLeast((220 * binding.root.resources.displayMetrics.density).toInt())
     if (binding.uploadPanel.layoutParams.height != height) {
         binding.uploadPanel.layoutParams = binding.uploadPanel.layoutParams.apply { this.height = height }
     }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.deep.lumoraai.R
 import com.deep.lumoraai.core.nativeui.LumoraXmlScreen
+import com.deep.lumoraai.core.nativeui.setupTopBar
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.databinding.NotificationRowBinding
 import com.deep.lumoraai.databinding.NotificationsScreenBinding
@@ -34,12 +35,16 @@ fun NotificationsScreen(
         onNavigate = onNavigate,
         modifier = modifier,
     ) { shell ->
-        shell.topBar.visibility = View.GONE
+        shell.setupTopBar(
+            titleText = "Notifications",
+            subtitleText = "Updates from your studio",
+            onBack = onBack,
+        )
         shell.content.removeAllViews()
         shell.content.setPadding(0, 0, 0, 0)
         val binding = NotificationsScreenBinding.inflate(LayoutInflater.from(shell.content.context), shell.content, true)
 
-        binding.backButton.setOnClickListener { onBack() }
+        binding.header.visibility = View.GONE
         binding.markReadButton.setOnClickListener { onMarkAllRead() }
         binding.settingsButton.setOnClickListener { onNavigate(Screen.Settings.route) }
         binding.restoreButton.setOnClickListener { onClearDismissed() }

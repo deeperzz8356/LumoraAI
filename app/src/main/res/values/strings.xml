@@ -707,13 +707,13 @@
     <string name="ui_onboarding_step_4_desc">Easily switch faces in your photos using our AI Face Swipe feature. Perfect for creating amusing images or trying different looks.</string>
     <string name="ui_onboarding_step_5_desc">Effortlessly remove backgrounds from any image with AI precision and generate clean cutouts in seconds.</string>
     <string name="ui_onboarding_step_illustration">Step %1$d</string>
-    <string name="ui_create_text_to_image">Text → Image</string>
+    <string name="ui_create_text_to_image">Text to Image</string>
     <string name="ui_create_dream_it">Dream it</string>
     <string name="ui_create_img_to_img">Image to Image</string>
     <string name="ui_create_refine_it">Refine it</string>
     <string name="ui_create_img_to_video">Image to Video</string>
     <string name="ui_create_animate_it">Animate it</string>
-    <string name="ui_create_text_to_video">Text → Video</string>
+    <string name="ui_create_text_to_video">Text to Video</string>
     <string name="ui_create_direct_it">Direct it</string>
     <string name="ui_tool_ai_bg_replace">AI Background Replace</string>
     <string name="ui_tool_photo_enhancer">Photo Enhancer</string>
@@ -970,4 +970,21 @@
     <string name="ui_sub_hero_body">Credits, priority generation, and premium creative workflows.</string>
     <string name="ui_plan_guest">Guest</string>
     <string name="ui_plan_premium">Premium</string>
+    <string name="ui_uninstall_confirm_title">Before you uninstall</string>
+    <string name="ui_uninstall_confirm_subtitle">Tell us what we can improve</string>
+    <string name="ui_uninstall_confirm_body">We can take you back home to keep creating, or you can continue and share why Lumora AI did not work for you.</string>
+    <string name="ui_still_uninstall">Still Uninstall</string>
+    <string name="ui_try_again">Try Again</string>
+    <string name="ui_uninstall">Uninstall</string>
+    <string name="ui_uninstall_survey_title">Why are you uninstalling?</string>
+    <string name="ui_uninstall_survey_subtitle">Choose one reason before continuing</string>
+    <string name="ui_uninstall_reason_not_using">I do not use it enough</string>
+    <string name="ui_uninstall_reason_ads">Too many ads</string>
+    <string name="ui_uninstall_reason_cost">Credits or plans are too expensive</string>
+    <string name="ui_uninstall_reason_quality">Results were not good enough</string>
+    <string name="ui_uninstall_reason_other">Other reason</string>
+    <string name="shortcut_home">Home</string>
+    <string name="shortcut_home_long">Open Home</string>
+    <string name="shortcut_uninstall">Uninstall</string>
+    <string name="shortcut_uninstall_long">Open uninstall flow</string>
 </resources>
