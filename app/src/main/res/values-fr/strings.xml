@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Lumora AI</string>
     <string name="google_web_client_id">26472943441-9rhsfplmkbjsbmkgujifctjrmh5985gu.apps.googleusercontent.com</string>
     <string name="language">Langue</string>
@@ -350,7 +350,7 @@
     <string name="ui_create_dream_it">Imaginez-le</string>
     <string name="ui_create_img_to_img">Image → Image</string>
     <string name="ui_create_refine_it">Affinez-le</string>
-    <string name="ui_create_img_to_video">Img → Vidéo</string>
+    <string name="ui_create_img_to_video">Image → Vidéo</string>
     <string name="ui_create_animate_it">Animez-le</string>
     <string name="ui_create_text_to_video">Texte → Vidéo</string>
     <string name="ui_create_direct_it">Dirigez-le</string>

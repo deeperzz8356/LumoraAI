@@ -77,7 +77,13 @@ fun CompressScreen(
             .systemBarsPadding()
     ) {
         AndroidView(
-            factory = { CompressScreenBinding.inflate(LayoutInflater.from(it)).root },
+            factory = {
+                CompressScreenBinding.inflate(LayoutInflater.from(it)).also { binding ->
+                    (binding.content.parent as View).addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+                        if (bottom - top != oldBottom - oldTop) resizeCompressUpload(binding)
+                    }
+                }.root
+            },
             update = { root ->
                 bindCompress(
                     binding = CompressScreenBinding.bind(root),
@@ -131,6 +137,8 @@ private fun bindCompress(
     binding.resultSection.visibility = if (hasResult) View.VISIBLE else View.GONE
     binding.permissionMessage.visibility = if (permissionDenied && !hasResult) View.VISIBLE else View.GONE
 
+    binding.uploadPanel.post { resizeCompressUpload(binding) }
+    binding.uploadPanel.contentDescription = "Upload image or video"
     binding.uploadPanel.isEnabled = !uiState.isCompressing
     binding.uploadPanel.setOnClickListener { onOpenPicker() }
     binding.fileName.text = uiState.fileName.ifBlank { "Drag and drop or tap to select a file" }
@@ -194,3 +202,11 @@ private fun mediaReadPermissions(): Array<String> =
         )
         else -> emptyArray()
     }
+
+private fun resizeCompressUpload(binding: CompressScreenBinding) {
+    val viewport = binding.content.parent as View
+    val height = (viewport.height * 0.5f).toInt().coerceAtLeast((180 * binding.root.resources.displayMetrics.density).toInt())
+    if (binding.uploadPanel.layoutParams.height != height) {
+        binding.uploadPanel.layoutParams = binding.uploadPanel.layoutParams.apply { this.height = height }
+    }
+}

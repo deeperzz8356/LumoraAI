@@ -1,5 +1,7 @@
 package com.deep.lumoraai.core.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,9 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,7 +66,7 @@ fun UserHeaderBar(
             if (onBackClick != null) {
                 IconButton(onClick = onBackClick) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = TablerIcons.ArrowLeft,
                         contentDescription = stringResource(com.deep.lumoraai.R.string.ui_back),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
@@ -104,7 +103,7 @@ fun UserHeaderBar(
             // Notification Bell
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(48.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color.White.copy(alpha = 0.055f))
                     .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
@@ -112,7 +111,7 @@ fun UserHeaderBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Notifications,
+                    imageVector = TablerIcons.Bell,
                     contentDescription = stringResource(com.deep.lumoraai.R.string.ui_notifications),
                     modifier = Modifier
                         .size(21.dp),

@@ -1,5 +1,7 @@
 package com.deep.lumoraai.core.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,9 +18,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -94,7 +93,7 @@ fun PremiumTopBar(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Go back", tint = PremiumText)
+            Icon(TablerIcons.ArrowLeft, "Go back", tint = PremiumText)
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -228,7 +227,7 @@ fun PremiumActionRow(
             }
             trailing?.let {
                 Text(it, color = accent, fontFamily = FontFamily.Monospace, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            } ?: Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = accent.copy(alpha = 0.9f), modifier = Modifier.size(19.dp))
+            } ?: Icon(TablerIcons.ChevronRight, null, tint = accent.copy(alpha = 0.9f), modifier = Modifier.size(19.dp))
         }
     }
 }

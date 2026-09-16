@@ -84,11 +84,14 @@ private data class NativeGeneratedMedia(
     val mimeType: String,
 )
 
+enum class UploadSizing { Compact, LargeWorkspace }
+
 data class NativeGenerationConfig(
     val title: String,
     val promptHint: String,
     val promptOptional: Boolean,
     val showPromptSection: Boolean = true,
+    val uploadSizing: UploadSizing = UploadSizing.Compact,
     val showSingleUpload: Boolean,
     val singleUploadBitmap: Bitmap?,
     val onSingleUpload: (() -> Unit)?,
@@ -195,7 +198,15 @@ fun NativeGenerationScreen(
                 .padding(padding)
         ) {
             AndroidView(
-                factory = { GenerationScreenBinding.inflate(LayoutInflater.from(it)).root },
+                factory = {
+                    GenerationScreenBinding.inflate(LayoutInflater.from(it)).also { binding ->
+                        binding.contentScroll.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+                            if (bottom - top != oldBottom - oldTop) {
+                                (binding.singleUploadPanel.tag as? NativeGenerationConfig)?.let { current -> bindSingleUpload(binding, current) }
+                            }
+                        }
+                    }.root
+                },
                 update = { root ->
                     bindGeneration(
                         binding = GenerationScreenBinding.bind(root),
@@ -311,27 +322,32 @@ private fun bindGeneration(
 }
 
 private fun bindSingleUpload(binding: GenerationScreenBinding, config: NativeGenerationConfig) {
-    binding.singleUploadPanel.visibility = if (config.showSingleUpload) View.VISIBLE else View.GONE
-    if (!config.showSingleUpload) return
+    binding.singleUploadPanel.tag = config
+    binding.singleUploadPanel.visibility = if (config.showSingleUpload && config.multiSources.isEmpty()) View.VISIBLE else View.GONE
+    if (!config.showSingleUpload || config.multiSources.isNotEmpty()) return
     binding.singleUploadPanel.clipToOutline = true
     binding.uploadImage.clipToOutline = true
-    binding.singleUploadPanel.post {
+    val resizeUpload = {
         val maxSquare = dp(binding.root, 250)
         val minSquare = dp(binding.root, 176)
         val available = binding.content.width.takeIf { it > 0 }
             ?: binding.root.width.takeIf { it > 0 }
             ?: binding.root.resources.displayMetrics.widthPixels
-        val size = (available - dp(binding.root, 48)).coerceIn(minSquare, maxSquare)
+        val large = config.uploadSizing == UploadSizing.LargeWorkspace
+        val size = if (large) (available - binding.content.paddingLeft - binding.content.paddingRight).coerceAtLeast(1) else (available - dp(binding.root, 48)).coerceIn(minSquare, maxSquare)
+        val height = if (large) (binding.contentScroll.height * 0.7f).toInt().coerceAtLeast(dp(binding.root, 220)) else size
         val params = binding.singleUploadPanel.layoutParams as? LinearLayout.LayoutParams
-        if (params != null && (params.width != size || params.height != size)) {
+        if (params != null && (params.width != size || params.height != height)) {
             params.width = size
-            params.height = size
+            params.height = height
             params.gravity = android.view.Gravity.CENTER_HORIZONTAL
             binding.singleUploadPanel.layoutParams = params
         }
     }
-    binding.singleUploadPanel.isEnabled = !config.isGenerating
-    binding.singleUploadPanel.setOnClickListener { if (!config.isGenerating) config.onSingleUpload?.invoke() }
+    binding.singleUploadPanel.post { resizeUpload() }
+    binding.singleUploadPanel.contentDescription = binding.root.context.getString(R.string.ui_upload_image)
+    binding.singleUploadPanel.isEnabled = !config.isGenerating && !config.isSourceBusy
+    binding.singleUploadPanel.setOnClickListener { if (!config.isGenerating && !config.isSourceBusy) config.onSingleUpload?.invoke() }
     val bitmap = config.singleUploadBitmap
     binding.uploadImage.visibility = if (bitmap != null) View.VISIBLE else View.GONE
     binding.uploadEmpty.visibility = if (bitmap == null) View.VISIBLE else View.GONE
@@ -343,7 +359,7 @@ private fun bindMultiSources(binding: GenerationScreenBinding, config: NativeGen
     binding.multiSourcePanel.visibility = if (show) View.VISIBLE else View.GONE
     if (!show) return
     binding.sourceCount.text = "${config.multiSources.size} / ${config.maxSources}"
-    binding.sourceHint.visibility = if (config.multiSources.isEmpty()) View.VISIBLE else View.GONE
+    binding.sourceHint.visibility = View.GONE
     binding.sourceHint.gravity = android.view.Gravity.START
     binding.sourceRow.removeAllViews()
     binding.sourceRow.gravity = android.view.Gravity.NO_GRAVITY
@@ -352,11 +368,12 @@ private fun bindMultiSources(binding: GenerationScreenBinding, config: NativeGen
         item.root.clipToOutline = true
         item.sourceImage.clipToOutline = true
         item.sourceImage.setImageBitmap(source.bitmap)
+        item.removeButton.contentDescription = "Remove source image"
         item.removeButton.isEnabled = !config.isSourceBusy
         item.removeButton.setOnClickListener { if (!config.isSourceBusy) config.onRemoveSource?.invoke(source.id) }
         binding.sourceRow.addView(item.root, squareRowParams(binding.root, 112, 10))
     }
-    if (config.multiSources.size < config.maxSources) {
+    if (config.multiSources.isNotEmpty() && config.multiSources.size < config.maxSources) {
         val context = binding.root.context
         val addSize = if (config.multiSources.isEmpty()) 106 else 112
         val addSourceClick = View.OnClickListener {
@@ -367,18 +384,23 @@ private fun bindMultiSources(binding: GenerationScreenBinding, config: NativeGen
             setBackgroundResource(R.drawable.bg_generation_upload)
             isClickable = true
             isFocusable = true
+            isEnabled = !config.isSourceBusy
+            contentDescription = "Add image"
             setOnClickListener(addSourceClick)
             addView(LinearLayout(context).apply {
                 gravity = android.view.Gravity.CENTER
                 orientation = LinearLayout.VERTICAL
-                isClickable = true
-                setOnClickListener(addSourceClick)
+                // Let the tile receive the touch. Clickable descendants can
+                // consume taps before the tile's listener, especially after
+                // returning here from a template route.
+                isClickable = false
+                isFocusable = false
                 addView(ComposeView(context).apply {
                     bindTablerIcon(this, TablerIcons.SquarePlus, Color(0xFFD6FF2F))
                     isClickable = false
                 }, LinearLayout.LayoutParams(dp(this, 32), dp(this, 32)))
                 addView(TextView(context).apply {
-                    text = context.getString(R.string.ui_upload_image)
+                    text = "Add image"
                     gravity = android.view.Gravity.CENTER
                     setTextColor(0xFFFFFFFF.toInt())
                     textSize = if (config.multiSources.isEmpty()) 16f else 12f
@@ -576,7 +598,8 @@ private fun bindBottomBar(
     }
     binding.summaryStyleText.text = sliderSummary
     binding.summaryRatioText.text = if (config.showRatio) config.selectedAspectRatio.label else ""
-    binding.summaryStyleText.visibility = if (sliderSummary.isNotBlank()) View.VISIBLE else View.GONE
+    // The weighted label also reserves space so the toggle stays at the end.
+    binding.summaryStyleText.visibility = View.VISIBLE
     binding.summaryStyleIconHost.visibility = if (sliderSummary.isNotBlank()) View.VISIBLE else View.GONE
     binding.summaryRatioText.visibility = if (config.showRatio) View.VISIBLE else View.GONE
     binding.summaryRatioIconHost.visibility = if (config.showRatio) View.VISIBLE else View.GONE
@@ -591,6 +614,8 @@ private fun bindBottomBar(
     binding.summaryRow.isClickable = hasSelectors
     binding.summaryRow.isFocusable = hasSelectors
     binding.summaryRow.setOnClickListener(toggleSelectorsClick)
+    androidx.core.view.ViewCompat.setStateDescription(binding.summaryRow,
+        binding.root.context.getString(if (selectorsOpen) R.string.generation_controls_expanded else R.string.generation_controls_collapsed))
     binding.summaryStyleIconHost.isClickable = false
     binding.summaryStyleText.isClickable = false
     binding.summaryRatioIconHost.isClickable = false
@@ -605,8 +630,10 @@ private fun bindBottomBar(
     binding.generateButton.text = if (config.isGenerating) {
         binding.root.context.getString(R.string.loading)
     } else {
-        config.generateButtonText ?: "${binding.root.context.getString(R.string.ui_generate_now)} ->"
+        config.generateButtonText ?: binding.root.context.getString(R.string.ui_generate_now)
     }
+    binding.generateButton.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.ic_lumora_chevron_right, 0)
+    binding.generateButton.compoundDrawableTintList = ColorStateList.valueOf(0xFF081020.toInt())
     binding.generateButton.setOnClickListener { if (config.generateEnabled && !config.isGenerating) onGenerate() }
     binding.creditNote.text = binding.root.context.getString(R.string.ui_credits_consumed_note, config.creditCost)
 }
@@ -719,9 +746,13 @@ private fun bindRatios(
         bindTablerIcon(item.ratioIconHost, TablerIcons.AspectRatio, if (selected) Color(0xFFD6FF2F) else Color.White.copy(alpha = 0.75f))
         item.root.isClickable = true
         item.root.setOnClickListener { onAspectRatioChanged(ratio) }
+        item.root.isSelected = selected
+        item.root.contentDescription = binding.root.context.getString(R.string.generation_aspect_ratio, ratio.label)
         item.ratioIconHost.isClickable = false
         item.ratioLabel.isClickable = false
-        binding.ratioRow.addView(item.root, rowParams(binding.root, 104, 8))
+        binding.ratioRow.addView(item.root, rowParams(binding.root, 112, 8).apply {
+            height = dp(binding.root, 56)
+        })
     }
 }
 

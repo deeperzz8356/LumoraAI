@@ -46,6 +46,7 @@ fun BgStudioScreen(
             promptOptional = uiState.mode == BgStudioMode.Remove,
             showPromptSection = false,
             showSingleUpload = true,
+            uploadSizing = com.deep.lumoraai.feature.generation.UploadSizing.LargeWorkspace,
             singleUploadBitmap = uiState.sourceBitmap,
             onSingleUpload = { imagePicker.launch("image/*") },
             prompt = uiState.prompt,

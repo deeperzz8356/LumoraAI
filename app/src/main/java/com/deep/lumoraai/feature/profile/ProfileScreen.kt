@@ -1,5 +1,7 @@
 package com.deep.lumoraai.feature.profile
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.*
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
@@ -21,20 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Policy
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -174,12 +162,12 @@ private fun ProfileContent(
                 onNavigate(if (user == null || user.isAnonymous) Screen.Auth.route else Screen.EditProfile.route)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ProfileStat("Credits", state.credits.toString(), Icons.Default.CreditCard, Modifier.weight(1f)) { onNavigate(Screen.Credits.route) }
-                ProfileStat("Creations", state.generations.size.toString(), Icons.Default.GridView, Modifier.weight(1f)) { onNavigate(Screen.History.route) }
+                ProfileStat("Credits", state.credits.toString(), TablerIcons.CreditCard, Modifier.weight(1f)) { onNavigate(Screen.Credits.route) }
+                ProfileStat("Creations", state.generations.size.toString(), TablerIcons.LayoutGrid, Modifier.weight(1f)) { onNavigate(Screen.History.route) }
             }
             PremiumSection("Recent work", "Your latest Lumora creations") {
                 if (state.generations.isEmpty()) {
-                    PremiumActionRow("Start your first creation", "Generate an image or video from Home", Icons.Default.AutoAwesome, { onNavigate(Screen.TextToImage.route) })
+                    PremiumActionRow("Start your first creation", "Generate an image or video from Home", TablerIcons.Star, { onNavigate(Screen.TextToImage.route) })
                 } else {
                     state.generations.take(4).chunked(2).forEach { rowItems ->
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -189,28 +177,28 @@ private fun ProfileContent(
                     }
                     TextButton(onClick = { onNavigate(Screen.History.route) }, modifier = Modifier.align(Alignment.End)) {
                         Text("View all creations", color = PremiumLime, fontWeight = FontWeight.Bold)
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = PremiumLime, modifier = Modifier.padding(start = 6.dp).size(17.dp))
+                        Icon(TablerIcons.ChevronRight, null, tint = PremiumLime, modifier = Modifier.padding(start = 6.dp).size(17.dp))
                     }
                 }
             }
             PremiumSection("Account", "Shortcuts and preferences") {
-                PremiumActionRow("Account settings", "Preferences, language and billing", Icons.Default.Settings, { onNavigate(Screen.Settings.route) })
+                PremiumActionRow("Account settings", "Preferences, language and billing", TablerIcons.Settings, { onNavigate(Screen.Settings.route) })
                 PremiumActionRow(
                     "Privacy Policy",
                     "Open Lumora privacy details in your browser",
-                    Icons.Default.Policy,
+                    TablerIcons.Shield,
                     { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(privacyPolicyUrl))) },
                 )
                 PremiumActionRow(
                     "Terms & Conditions",
                     "Read our terms of use and service agreement",
-                    Icons.Default.Policy,
+                    TablerIcons.Shield,
                     { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(termsAndConditionsUrl))) },
                 )
                 PremiumActionRow(
                     "Help & support",
                     SupportEmail,
-                    Icons.AutoMirrored.Filled.HelpOutline,
+                    TablerIcons.Help,
                     {
                         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
                             data = Uri.parse("mailto:$SupportEmail")
@@ -222,7 +210,7 @@ private fun ProfileContent(
                 PremiumActionRow(
                     "Share profile",
                     "Invite others to see your Lumora identity",
-                    Icons.Default.Share,
+                    TablerIcons.Share,
                     {
                         val share = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
@@ -231,11 +219,11 @@ private fun ProfileContent(
                         context.startActivity(Intent.createChooser(share, context.getString(R.string.ui_share)))
                     },
                 )
-                PremiumActionRow("Delete account", "Permanently remove your Lumora account", Icons.Default.DeleteOutline, { pendingAction = ProfileAction.Delete }, danger = true)
+                PremiumActionRow("Delete account", "Permanently remove your Lumora account", TablerIcons.Trash, { pendingAction = ProfileAction.Delete }, danger = true)
                 PremiumActionRow(
                     if (state.isGuest) "Log in" else "Sign out",
                     if (state.isGuest) "Save your work across devices" else "End this session on this device",
-                    if (state.isGuest) Icons.AutoMirrored.Filled.Login else Icons.AutoMirrored.Filled.Logout,
+                    if (state.isGuest) TablerIcons.Login else TablerIcons.Logout,
                     { pendingAction = if (state.isGuest) ProfileAction.Login else ProfileAction.SignOut },
                     danger = !state.isGuest,
                 )
@@ -272,7 +260,7 @@ private fun ProfileHeader(credits: Int, unreadCount: Int, onNavigate: (String) -
         }
         Surface(
             onClick = { onNavigate(Screen.Notifications.route) },
-            modifier = Modifier.padding(start = 14.dp).size(38.dp),
+            modifier = Modifier.padding(start = 14.dp).size(48.dp),
             shape = RoundedCornerShape(50.dp),
             color = Color.White.copy(alpha = 0.05f),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
@@ -301,10 +289,10 @@ private fun ProfileHero(
         shadowElevation = 12.dp,
     ) {
         Box(Modifier.background(Brush.linearGradient(listOf(Color(0xFF23274C), Color(0xFF151B2D), Color(0xFF0F1726))))) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(9.dp),
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Box {
                     AsyncImage(
@@ -312,28 +300,23 @@ private fun ProfileHero(
                         contentDescription = "$name profile picture",
                         placeholder = painterResource(R.drawable.user_avatar),
                         error = painterResource(R.drawable.user_avatar),
-                        modifier = Modifier.size(96.dp).clip(CircleShape).background(PremiumStroke),
+                        modifier = Modifier.size(68.dp).clip(CircleShape).background(PremiumStroke),
                     )
-                    Box(Modifier.align(Alignment.BottomEnd).size(25.dp).clip(CircleShape).background(PremiumLime).border(4.dp, PremiumSurface, CircleShape))
+                    Box(Modifier.align(Alignment.BottomEnd).size(21.dp).clip(CircleShape).background(PremiumLime).border(3.dp, PremiumSurface, CircleShape))
                 }
-                Text(name, color = PremiumText, fontSize = 25.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (username.isNotBlank()) Text("@${username.removePrefix("@")}", color = PremiumMuted, fontSize = 13.sp)
-                Text(
-                    plan.uppercase(),
-                    color = PremiumLime,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.1.sp,
-                    modifier = Modifier.background(PremiumLime.copy(alpha = 0.10f), RoundedCornerShape(8.dp)).padding(horizontal = 9.dp, vertical = 5.dp),
-                )
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(name, color = PremiumText, fontSize = 19.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (username.isNotBlank()) Text("@${username.removePrefix("@")}", color = PremiumMuted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(plan.uppercase(), color = PremiumLime, fontFamily = FontFamily.Monospace, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                }
                 Button(
                     onClick = onEdit,
-                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.height(42.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = PremiumLime, contentColor = PremiumBackground),
                 ) {
-                    Icon(Icons.Default.Edit, null, modifier = Modifier.size(17.dp))
-                    Text("Edit profile", fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 7.dp))
+                    Icon(TablerIcons.Pencil, null, modifier = Modifier.size(17.dp))
+                    Text("Edit", fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 6.dp))
                 }
             }
         }
@@ -367,7 +350,7 @@ private fun CreationCard(item: HistoryModel, modifier: Modifier, onClick: () -> 
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC080D18)))))
             if (isVideo) {
                 Box(Modifier.align(Alignment.Center).size(38.dp).clip(CircleShape).background(PremiumLime), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.PlayArrow, null, tint = PremiumBackground)
+                    Icon(TablerIcons.PlayerPlay, null, tint = PremiumBackground)
                 }
             }
             Text(

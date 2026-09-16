@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.databinding.CommonBottomNavigationBinding
+import compose.icons.tablericons.User
 import compose.icons.TablerIcons
 import compose.icons.tablericons.History
 import compose.icons.tablericons.Home
@@ -106,7 +107,7 @@ private fun bindNavItem(
         "home" -> TablerIcons.Home
         "templates" -> TablerIcons.Search
         "history" -> TablerIcons.History
-        else -> Icons.Default.Person
+        else -> TablerIcons.User
     }
     bindTablerIcon(icon, imageVector, ComposeColor(color))
     label.setTextColor(color)

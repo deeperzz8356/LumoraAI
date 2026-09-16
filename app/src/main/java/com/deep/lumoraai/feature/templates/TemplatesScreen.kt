@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.ViewCompat
+import androidx.core.view.doOnPreDraw
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -133,8 +134,6 @@ private fun bindTemplates(
             }
             showContent(binding)
             bindHeader(binding, uiState.credits, unreadCount, onNavigate)
-            binding.uploadTemplateImage.visibility = if (selectedCategoryId == TemplateCategory.IMAGE.id) View.VISIBLE else View.GONE
-            binding.uploadTemplateImage.setOnClickListener { onNavigate(Screen.ImageToImage.route) }
 
             val tabs = mapOf(
                 TemplateCategory.IMAGE.id to binding.imagesTab,
@@ -259,6 +258,7 @@ fun TemplateSectionScreen(
     sectionId: String,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
+    onRetry: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val widthDp = LocalConfiguration.current.screenWidthDp
@@ -276,6 +276,7 @@ fun TemplateSectionScreen(
                 uiState = uiState,
                 categoryId = categoryId,
                 sectionId = sectionId,
+                onRetry = onRetry,
                 spanCount = spanCount,
                 nativeTemplateInterval = nativeTemplateInterval,
                 onBack = onBack,
@@ -295,22 +296,47 @@ private fun bindTemplateSection(
     uiState: TemplatesUiState,
     categoryId: String,
     sectionId: String,
+    onRetry: () -> Unit,
     spanCount: Int,
     nativeTemplateInterval: Int,
     onBack: () -> Unit,
     onNavigate: (String) -> Unit,
 ) {
     binding.backButton.setOnClickListener { onBack() }
+    if (uiState is TemplatesUiState.Loading) {
+        // Keep the opened View All grid and its scroll position during refresh.
+        binding.retryButton.visibility = View.GONE
+        binding.messageState.visibility = View.GONE
+        binding.loading.visibility = if (binding.grid.tag == null) View.VISIBLE else View.GONE
+        if (binding.grid.tag == null) {
+            binding.grid.visibility = View.GONE
+            binding.title.text = binding.root.context.getString(R.string.ui_templates)
+        }
+        return
+    }
     val section = (uiState as? TemplatesUiState.Success)?.section(categoryId, sectionId)
-    if (section == null) {
+    binding.retryButton.visibility = if (uiState is TemplatesUiState.Error) View.VISIBLE else View.GONE
+    binding.retryButton.setOnClickListener { onRetry() }
+    if (section == null || section.templates.isEmpty()) {
+        binding.loading.visibility = View.GONE
         binding.title.text = binding.root.context.getString(R.string.ui_templates)
         binding.grid.visibility = View.GONE
-        binding.messageState.visibility = View.VISIBLE
+        binding.grid.tag = null
+        binding.messageState.text = if (uiState is TemplatesUiState.Error) uiState.message else binding.root.context.getString(R.string.ui_template_section_empty)
+        binding.messageState.visibility = if (uiState == TemplatesUiState.Loading) View.GONE else View.VISIBLE
         return
     }
     binding.title.text = section.title
     binding.messageState.visibility = View.GONE
+    val contentKey = listOf(categoryId, sectionId, section.templates, spanCount, nativeTemplateInterval)
+    if (binding.grid.tag == contentKey) {
+        binding.loading.visibility = if (binding.grid.alpha == 0f) View.VISIBLE else View.GONE
+        return
+    }
+    binding.grid.tag = contentKey
     binding.grid.visibility = View.VISIBLE
+    binding.grid.alpha = 0f
+    binding.loading.visibility = View.VISIBLE
     val currentManager = binding.grid.layoutManager as? GridLayoutManager
     if (currentManager?.spanCount != spanCount) {
         binding.grid.layoutManager = GridLayoutManager(binding.root.context, spanCount)
@@ -332,6 +358,12 @@ private fun bindTemplateSection(
         onTemplateClick = { navigateTemplate(it, onNavigate) },
     )
     binding.grid.adapter = adapter
+    binding.grid.doOnPreDraw {
+        if (binding.grid.tag == contentKey) {
+            binding.loading.visibility = View.GONE
+            binding.grid.alpha = 1f
+        }
+    }
     // Ad rows must span all columns — configure this after setting the adapter
     // so the layout manager can query getItemViewType() on demand.
     (binding.grid.layoutManager as? GridLayoutManager)?.spanSizeLookup =

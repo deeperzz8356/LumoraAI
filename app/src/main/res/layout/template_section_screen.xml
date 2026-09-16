@@ -55,6 +55,21 @@
             android:scrollbars="none" />
     </LinearLayout>
 
+    <ProgressBar
+        android:id="@+id/loading"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/lumora_lime"
+        android:contentDescription="Loading templates" />
+    <Button
+        android:id="@+id/retryButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="32dp"
+        android:text="Try again"
+        android:visibility="gone" />
     <TextView
         android:id="@+id/messageState"
         android:layout_width="match_parent"

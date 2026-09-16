@@ -12,9 +12,10 @@ object HistoryFeedbackReporter {
     private const val KEY_RECORDS = "records"
     private const val EVENT_NAME = "history_media_feedback"
 
-    fun submit(context: Context, item: HistoryModel, reason: String) {
+    fun submit(context: Context, item: HistoryModel, reason: String, details: String = "") {
         val appContext = context.applicationContext
-        store(appContext, item, reason)
+        require(reason.isNotBlank())
+        store(appContext, item, reason, details)
         FirebaseAnalytics.getInstance(appContext).logEvent(
             EVENT_NAME,
             Bundle().apply {
@@ -27,7 +28,7 @@ object HistoryFeedbackReporter {
         )
     }
 
-    private fun store(context: Context, item: HistoryModel, reason: String) {
+    private fun store(context: Context, item: HistoryModel, reason: String, details: String = "") {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val existing = prefs.getStringSet(KEY_RECORDS, emptySet()).orEmpty()
         val record = listOf(
@@ -35,7 +36,8 @@ object HistoryFeedbackReporter {
             item.id,
             item.type,
             reason,
-            item.title.replace("|", " ")
+            item.title.replace("|", " "),
+            details.trim().replace("|", " ").replace("\n", " ")
         ).joinToString("|")
         prefs.edit()
             .putStringSet(KEY_RECORDS, existing + record)

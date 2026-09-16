@@ -1,4 +1,7 @@
 <resources>
+    <string name="generation_controls_expanded">Generation settings expanded. Tap to collapse.</string>
+    <string name="generation_controls_collapsed">Generation settings collapsed. Tap to expand.</string>
+    <string name="generation_aspect_ratio">Aspect ratio %1$s</string>
 
     <string name="app_name">Lumora AI</string>
 

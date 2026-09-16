@@ -40,6 +40,7 @@ fun TemplateSectionRoute(
         uiState = viewModel.uiState,
         categoryId = categoryId,
         sectionId = sectionId,
+        onRetry = viewModel::refreshTemplates,
         onBack = onBack,
         onNavigate = onNavigate,
     )
