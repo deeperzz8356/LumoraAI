@@ -44,7 +44,6 @@ import com.deep.lumoraai.feature.result.ResultRoute
 import com.deep.lumoraai.feature.profile.EditProfileRoute
 import com.deep.lumoraai.feature.settings.HelpSupportRoute
 import com.deep.lumoraai.feature.settings.PrivacySecurityRoute
-import com.deep.lumoraai.feature.settings.SettingsRoute
 import com.deep.lumoraai.feature.splash.SplashRoute
 import com.deep.lumoraai.feature.subscription.SubscriptionRoute
 import com.deep.lumoraai.feature.templates.TemplatesRoute
@@ -130,7 +129,7 @@ fun NavGraph(
             LanguageRoute(
                 source = source,
                 onNext = {
-                    if (source == "settings") {
+                    if (source == "settings" || source == "profile") {
                         navController.popBackStack()
                     } else {
                         navController.goTo(Screen.Onboarding.route)
@@ -384,7 +383,9 @@ fun NavGraph(
         composable(Screen.Subscription.route) {
             SubscriptionRoute(
                 onNavigate = { navController.goTo(it) },
-                onBack = { navController.popBackStack() }
+                onBack = {
+                    if (!navController.popBackStack()) navController.goTo(Screen.Profile.route)
+                }
             )
         }
         composable(Screen.Profile.route) {
@@ -409,15 +410,12 @@ fun NavGraph(
             )
         }
         composable(Screen.Settings.route) {
-            SettingsRoute(
-                onNext = next(Screen.Settings),
-                onNavigate = { navController.goTo(it) },
-                onBack = {
-                    if (!navController.popBackStack()) {
-                        navController.goTo(Screen.Profile.route)
-                    }
+            LaunchedEffect(Unit) {
+                navController.navigate(Screen.Profile.route) {
+                    popUpTo(Screen.Settings.route) { inclusive = true }
+                    launchSingleTop = true
                 }
-            )
+            }
         }
         composable(Screen.EditProfile.route) { 
             EditProfileRoute(onBack = { navController.popBackStack() })

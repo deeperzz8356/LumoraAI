@@ -50,7 +50,7 @@ fun CreditsScreen(
     val adActivity = rememberCurrentActivity()
     val adsConfig = LocalAdsConfigStore.current?.current
     val rewardAmount = adsConfig?.rewardCreditsAmount ?: 2
-    val subscriptionEnabled = adsConfig?.subscriptionEnabled ?: true
+    val subscriptionEnabled = adsConfig?.subscriptionEnabled ?: false
     var showSpinWheel by remember { mutableStateOf(false) }
 
     val onWatchAdForCredits: () -> Unit = {

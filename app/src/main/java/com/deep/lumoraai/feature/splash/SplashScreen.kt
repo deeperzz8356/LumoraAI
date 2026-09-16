@@ -20,51 +20,32 @@ import com.deep.lumoraai.ads.AdPlacement
 import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.ads.LocalAdsManager
 import com.deep.lumoraai.ads.PlacementBanner
-import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.databinding.SplashScreenBinding
 import kotlinx.coroutines.delay
 
-private const val SPLASH_INTERSTITIAL_POLL_MS = 100L
 
 @Composable
 fun SplashScreen(isReady: Boolean, onNext: () -> Unit, modifier: Modifier = Modifier) {
     val ads = LocalAdsManager.current
     val adConfig = LocalAdsConfigStore.current
-    val activity = rememberCurrentActivity()
     val context = LocalContext.current
     val handler = remember { Handler(Looper.getMainLooper()) }
     val messages = remember { listOf("INITIALIZING ENGINE...", "LOADING MODELS...", "OPTIMIZING GENERATION...") }
     val splashMaxWaitMs = adConfig?.current?.splashMaxWaitMs ?: 6_000L
-    val fullScreenLoadTimeoutMs = adConfig?.current?.fullScreenLoadTimeoutMs ?: 8_000L
-    val firstLaunch = remember { ads?.isFirstLaunch(context) ?: true }
     var bannerLoadState by remember { mutableStateOf<Boolean?>(null) }
     var advanced by remember { mutableStateOf(false) }
 
     suspend fun advanceFromSplash() {
         if (advanced) return
         advanced = true
+        ads?.prepareHomeStartup(context)
         ads?.markLaunched(context)
-        if (ads == null || firstLaunch) {
-            onNext()
-        } else {
-            val startedAt = System.currentTimeMillis()
-            while (
-                !ads.isInterstitialReady(AdPlacement.INTER_POST_SPLASH) &&
-                System.currentTimeMillis() - startedAt < fullScreenLoadTimeoutMs
-            ) {
-                delay(SPLASH_INTERSTITIAL_POLL_MS)
-            }
-            ads.showInterstitial(
-                activity = activity,
-                placement = AdPlacement.INTER_POST_SPLASH,
-                continueOnShown = true,
-                onContinue = onNext,
-            )
-        }
+        onNext()
     }
 
-    LaunchedEffect(firstLaunch) {
-        if (!firstLaunch) ads?.preloadInterstitial(context, AdPlacement.INTER_POST_SPLASH)
+    LaunchedEffect(Unit) {
+        ads?.prepareHomeStartup(context)
+        ads?.preloadInterstitial(context, AdPlacement.INTER_ALL)
     }
 
     LaunchedEffect(isReady, bannerLoadState) {

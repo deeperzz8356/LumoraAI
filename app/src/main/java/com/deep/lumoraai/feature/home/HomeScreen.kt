@@ -5,8 +5,6 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,7 +20,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import java.util.concurrent.atomic.AtomicBoolean
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import android.os.SystemClock
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
@@ -88,38 +97,54 @@ fun HomeScreen(
     val ads = LocalAdsManager.current
     val adStore = LocalAdsConfigStore.current
     val activity = rememberCurrentActivity()
-    val handler = remember { Handler(Looper.getMainLooper()) }
-    LaunchedEffect(Unit) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val navigate by rememberUpdatedState(onNavigate)
+    val attached = remember { AtomicBoolean(true) }
+    DisposableEffect(Unit) {
+        onDispose { attached.set(false) }
+    }
+    var pendingRoute by remember { mutableStateOf<String?>(null) }
+    var startupPending by remember { mutableStateOf(ads?.consumeHomeStartup() == true) }
+    var requestBusy by remember { mutableStateOf(false) }
+
+    LaunchedEffect(ads) {
         ads?.preloadInterstitial(context, AdPlacement.INTER_ALL)
     }
-
-    DisposableEffect(Unit) {
-        onDispose { handler.removeCallbacksAndMessages(null) }
+    LaunchedEffect(pendingRoute, startupPending, ads, activity) {
+        val route = pendingRoute
+        if (route == null && !startupPending) return@LaunchedEffect
+        val deadline = SystemClock.elapsedRealtime() + (ads?.config?.fullScreenLoadTimeoutMs ?: 0L)
+        var attempted = false
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            if (attempted) return@repeatOnLifecycle
+            val config = ads?.config
+            val enabled = config != null && config.formatEnabled(AdFormat.INTERSTITIAL) &&
+                config.isPlacementEnabled(AdPlacement.INTER_ALL) && config.unitIdFor(AdPlacement.INTER_ALL) != null
+            if (enabled && ads != null) {
+                ads.preloadInterstitial(context, AdPlacement.INTER_ALL)
+                while (isActive && !ads.isInterstitialReady(AdPlacement.INTER_ALL) &&
+                    SystemClock.elapsedRealtime() < deadline) {
+                    delay(HOME_INTERSTITIAL_POLL_MS)
+                }
+            }
+            attempted = true
+            val complete = {
+                startupPending = false
+                pendingRoute = null
+                requestBusy = false
+                if (route != null && attached.get()) navigate(route)
+            }
+            if (enabled && ads != null) {
+                ads.showInterstitial(activity, AdPlacement.INTER_ALL, onContinue = complete)
+            } else complete()
+        }
     }
 
     val featureSelect: (String) -> Unit = { route ->
-        if (ads == null) {
-            onNavigate(route)
-        } else {
-            ads.recordFeatureTrigger()
-            ads.preloadInterstitial(context, AdPlacement.INTER_ALL)
-            val config = ads.config
-            val canLoadInterAll = config.formatEnabled(AdFormat.INTERSTITIAL) &&
-                config.isPlacementEnabled(AdPlacement.INTER_ALL) &&
-                config.unitIdFor(AdPlacement.INTER_ALL) != null
-            if (canLoadInterAll) {
-                waitForHomeInterstitial(
-                    ads = ads,
-                    handler = handler,
-                    startedAt = System.currentTimeMillis(),
-                ) {
-                    ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) {
-                        onNavigate(route)
-                    }
-                }
-            } else {
-                onNavigate(route)
-            }
+        if (!requestBusy && !startupPending) {
+            requestBusy = true
+            ads?.recordFeatureTrigger()
+            pendingRoute = route
         }
     }
 
@@ -159,29 +184,7 @@ fun HomeScreen(
     }
 }
 
-private fun waitForHomeInterstitial(
-    ads: AdsManager,
-    handler: Handler,
-    startedAt: Long,
-    onReadyOrTimeout: () -> Unit,
-) {
-    val timeoutAt = startedAt + ads.config.fullScreenLoadTimeoutMs
-    if (ads.isInterstitialReady(AdPlacement.INTER_ALL) || System.currentTimeMillis() >= timeoutAt) {
-        onReadyOrTimeout()
-        return
-    }
-    handler.postDelayed(
-        {
-            waitForHomeInterstitial(
-                ads = ads,
-                handler = handler,
-                startedAt = startedAt,
-                onReadyOrTimeout = onReadyOrTimeout,
-            )
-        },
-        HOME_INTERSTITIAL_POLL_MS,
-    )
-}
+
 
 private fun bindHome(
     binding: HomeScreenBinding,

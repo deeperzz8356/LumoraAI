@@ -34,6 +34,10 @@ class AdsManager @Inject constructor(
     val nativeManager: NativeAdManager,
 ) {
     private val initialized = AtomicBoolean(false)
+    private val homeStartup = HomeStartupAdState()
+
+    fun prepareHomeStartup(context: Context) = homeStartup.prepare(frequency.isFirstLaunch(context))
+    fun consumeHomeStartup(): Boolean = homeStartup.consume()
 
     val config: AdsConfig get() = configStore.current
 
@@ -64,7 +68,7 @@ class AdsManager @Inject constructor(
             AdsLogger.d("MobileAds initialized: ${status.adapterStatusMap.keys}")
             interstitialManager.preload(
                 appContext,
-                if (frequency.isFirstLaunch(appContext)) AdPlacement.INTER_ALL else AdPlacement.INTER_POST_SPLASH,
+                AdPlacement.INTER_ALL,
             )
             rewardedManager.preload(appContext)
             appOpenManager.preload(appContext)

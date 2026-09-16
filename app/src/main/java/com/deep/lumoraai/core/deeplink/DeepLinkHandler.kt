@@ -177,7 +177,7 @@ object DeepLinkHandler {
     private fun navigateToSettings(navController: NavController): Boolean {
         return try {
             Log.d(TAG, "Navigating to settings")
-            navController.navigate(Screen.Settings.route)
+            navController.navigate(Screen.Profile.route)
             true
         } catch (e: Exception) {
             Log.e(TAG, "Error navigating to settings: ${e.message}", e)

@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +51,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.deep.lumoraai.BuildConfig
+import com.deep.lumoraai.data.repository.SettingsRepository
+import java.util.Locale
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.core.components.AppErrorScreen
@@ -166,8 +170,11 @@ private fun ProfileContent(
                 ProfileStat("Credits", state.credits.toString(), TablerIcons.CreditCard, Modifier.weight(1f)) { onNavigate(Screen.Credits.route) }
                 ProfileStat("Creations", state.generations.size.toString(), TablerIcons.LayoutGrid, Modifier.weight(1f)) { onNavigate(Screen.History.route) }
             }
-            PremiumSection("Account", "Shortcuts and preferences") {
-                PremiumActionRow("Account settings", "Preferences, language and billing", TablerIcons.Settings, { onNavigate(Screen.Settings.route) })
+            PremiumSection("Account", "Profile and preferences") {
+                PremiumActionRow("Language", Locale.forLanguageTag(SettingsRepository(context).localeCode).displayName, TablerIcons.Language, { onNavigate("${Screen.Language.route}?source=profile") })
+                if (config?.subscriptionEnabled == true) {
+                    PremiumActionRow("Subscription & Billing", "Manage your plan", TablerIcons.CreditCard, { onNavigate(Screen.Subscription.route) })
+                }
                 PremiumActionRow(
                     "Privacy Policy",
                     "Open Lumora privacy details in your browser",
@@ -193,13 +200,13 @@ private fun ProfileContent(
                     },
                 )
                 PremiumActionRow(
-                    "Share profile",
-                    "Invite others to see your Lumora identity",
+                    "Share LumoraAI",
+                    "Invite others to create with Lumora",
                     TablerIcons.Share,
                     {
                         val share = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, "$name on LumoraAI\nCreate with LumoraAI: $appShareUrl")
+                            putExtra(Intent.EXTRA_TEXT, "Create with LumoraAI: $appShareUrl")
                         }
                         context.startActivity(Intent.createChooser(share, context.getString(R.string.ui_share)))
                     },
@@ -215,6 +222,7 @@ private fun ProfileContent(
                     danger = !state.isGuest,
                 )
             }
+            Text(stringResource(R.string.version_format, BuildConfig.VERSION_NAME), color = PremiumMuted, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
         }
     }
 }

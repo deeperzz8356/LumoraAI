@@ -737,9 +737,7 @@ private fun HttpURLConnection.applyAuthHeaders(
 ) {
     setRequestProperty("Authorization", "Bearer $idToken")
     setRequestProperty("x-user-id", userId)
-    if (developerMode) {
-        setRequestProperty("X-Developer-Mode", "true")
-    }
+    // Client-controlled billing exemptions are intentionally never sent.
 }
 
 private fun HttpURLConnection.readResponseBody(): String {

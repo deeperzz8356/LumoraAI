@@ -12,7 +12,7 @@ import com.deep.lumoraai.core.navigation.ResetLoadingOnLeave
 fun SubscriptionRoute(
     onNavigate: (String) -> Unit = {},
     onBack: () -> Unit,
-    viewModel: SubscriptionViewModel = viewModel()
+    viewModel: SubscriptionViewModel? = null
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -22,14 +22,15 @@ fun SubscriptionRoute(
     // Disabled fast-path and plan overrides defensively — safe to call repeatedly.
     val adsConfig = LocalAdsConfigStore.current?.current
 
-    if (adsConfig?.subscriptionEnabled == false) {
+    if (adsConfig?.subscriptionEnabled != true) {
         LaunchedEffect(Unit) { onBack() }
         return
     }
 
+    val activeViewModel = viewModel ?: viewModel<SubscriptionViewModel>()
     LaunchedEffect(adsConfig?.subscriptionEnabled, adsConfig?.subscriptionPlansJson) {
         if (adsConfig != null) {
-            viewModel.applyRemoteConfig(
+            activeViewModel.applyRemoteConfig(
                 subscriptionEnabled = true,
                 plansJson = adsConfig.subscriptionPlansJson,
             )
@@ -37,16 +38,16 @@ fun SubscriptionRoute(
     }
 
     // Reset any lingering purchase spinner when the user navigates away.
-    ResetLoadingOnLeave { viewModel.clearPurchasingState() }
+    ResetLoadingOnLeave { activeViewModel.clearPurchasingState() }
 
     SubscriptionScreen(
-        uiState = viewModel.uiState,
-        onSelectPlan = viewModel::selectPlan,
+        uiState = activeViewModel.uiState,
+        onSelectPlan = activeViewModel::selectPlan,
         onPurchase = {
-            if (activity != null) viewModel.purchaseSelectedPlan(activity)
+            if (activity != null) activeViewModel.purchaseSelectedPlan(activity)
         },
-        onRestore = viewModel::restorePurchases,
-        onClearMessage = viewModel::clearPurchaseMessage,
+        onRestore = activeViewModel::restorePurchases,
+        onClearMessage = activeViewModel::clearPurchaseMessage,
         onBack = onBack,
         onNavigate = onNavigate,
     )

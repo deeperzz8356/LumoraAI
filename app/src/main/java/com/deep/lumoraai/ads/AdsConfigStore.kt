@@ -31,7 +31,12 @@ class AdsConfigStore @Inject constructor() {
 
     private val ref = AtomicReference(AdsConfig.DEFAULT)
 
-    val current: AdsConfig get() = ref.get()
+    val current: AdsConfig
+        get() {
+            // Register snapshot reads so config-driven screens update in realtime.
+            version
+            return ref.get()
+        }
 
     var version by mutableIntStateOf(0)
         private set
@@ -93,7 +98,7 @@ class AdsConfigStore @Inject constructor() {
             ),
 
             // ---------- subscription feature toggle ----------
-            subscriptionEnabled   = rc.boolOr("subscription_enabled", base.subscriptionEnabled),
+            subscriptionEnabled   = rc.boolOr("subscription_enabled", false),
             subscriptionPlansJson = rc.getString("subscription_plans_json").trim(),
 
             // ---------- legal links ----------
@@ -186,7 +191,7 @@ class AdsConfigStore @Inject constructor() {
             unlimitedPassword               = parsed.optStringOrNull("unlimited_password")
                 ?: parsed.optStringOrNull("unlimited_pswd")
                 ?: base.unlimitedPassword,
-            subscriptionEnabled             = parsed.optBoolOr("subscription_enabled", base.subscriptionEnabled),
+            subscriptionEnabled             = parsed.optBoolOr("subscription_enabled", false),
             subscriptionPlansJson           = parsed.optStringOrNull("subscription_plans_json") ?: base.subscriptionPlansJson,
             privacyPolicyUrl                = parsed.optStringOrNull("privacy_policy_url") ?: base.privacyPolicyUrl,
             termsAndConditionsUrl           = parsed.optStringOrNull("terms_and_conditions_url") ?: base.termsAndConditionsUrl,

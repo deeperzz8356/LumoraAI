@@ -148,7 +148,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         val plans = remotePlans.ifEmpty { hardcodedPlans }.withBillingPrices()
         val current = uiState
         when (current) {
-            is SubscriptionUiState.Loading -> {
+            is SubscriptionUiState.Loading, SubscriptionUiState.Disabled -> {
                 // RC arrived before the dev-mode flow set a Success state; bootstrap now.
                 uiState = SubscriptionUiState.Success(
                     plans = plans,
@@ -204,7 +204,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
     }
 
     override fun onCleared() {
-        if (uiState !is SubscriptionUiState.Disabled) billing.disconnect()
+        billing.disconnect()
         super.onCleared()
     }
 

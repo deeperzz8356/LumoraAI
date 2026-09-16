@@ -25,8 +25,9 @@ fun LanguageRoute(
     val ads = LocalAdsManager.current
     val adActivity = rememberCurrentActivity()
 
-    // Choose the placement by entry source; both must never block the flow.
-    val interPlacement = if (source == "settings") {
+    // First-launch language setup continues without an interstitial.
+    val isProfileLanguageChange = source == "settings" || source == "profile"
+    val interPlacement = if (isProfileLanguageChange) {
         AdPlacement.INTER_SETTING_LANGUAGE
     } else {
         AdPlacement.INTER_LANGUAGE
@@ -35,7 +36,7 @@ fun LanguageRoute(
     // save + locale apply already happened before this runs, so proceeding is
     // guaranteed regardless of whether an ad shows.
     val proceed: () -> Unit = {
-        if (ads == null) onNext() else ads.showInterstitial(adActivity, interPlacement, continueOnShown = true) { onNext() }
+        if (ads == null || !isProfileLanguageChange) onNext() else ads.showInterstitial(adActivity, interPlacement, continueOnShown = true) { onNext() }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(

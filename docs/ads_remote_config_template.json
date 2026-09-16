@@ -1,6 +1,6 @@
 {
   "subscription_enabled": {
-    "defaultValue": { "value": "true" },
+    "defaultValue": { "value": "false" },
     "valueType": "BOOLEAN",
     "description": "Master switch for subscription acquisition UI and paywall entry points."
   },

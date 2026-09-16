@@ -62,7 +62,6 @@ val navigationSequence = listOf(
     Screen.Subscription,
     Screen.Profile,
     Screen.EditProfile,
-    Screen.Settings,
     Screen.PrivacySecurity,
     Screen.HelpSupport,
     Screen.UninstallConfirm,

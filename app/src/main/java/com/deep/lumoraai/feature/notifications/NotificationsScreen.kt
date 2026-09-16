@@ -46,7 +46,7 @@ fun NotificationsScreen(
 
         binding.header.visibility = View.GONE
         binding.markReadButton.setOnClickListener { onMarkAllRead() }
-        binding.settingsButton.setOnClickListener { onNavigate(Screen.Settings.route) }
+        binding.settingsButton.setOnClickListener { onNavigate(Screen.Profile.route) }
         binding.restoreButton.setOnClickListener { onClearDismissed() }
 
         when (uiState) {

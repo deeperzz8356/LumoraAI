@@ -62,10 +62,10 @@ data class AdsConfig(
     /**
      * Master switch for the entire subscription / paywall feature.
      * When false: subscription acquisition entry points are hidden and direct
-     * navigation immediately exits before rendering a paywall. Defaults to true
-     * so existing subscribers and purchase entitlement checks are unaffected.
+     * navigation immediately exits before rendering a paywall. Defaults to false;
+     * existing subscribers and purchase entitlement checks remain unaffected.
      */
-    val subscriptionEnabled: Boolean = true,
+    val subscriptionEnabled: Boolean = false,
 
     /**
      * Optional JSON array of plan objects that override the in-app default plans.

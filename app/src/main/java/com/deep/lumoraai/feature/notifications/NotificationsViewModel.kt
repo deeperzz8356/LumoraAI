@@ -188,7 +188,7 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
             message = appContext.getString(com.deep.lumoraai.R.string.notif_push_off_body),
             timeLabel = appContext.getString(com.deep.lumoraai.R.string.notif_action_needed),
             type = NotificationType.Account,
-            route = Screen.Settings.route
+            route = Screen.Profile.route
         )
 
     private fun updateSet(key: String, block: (Set<String>) -> Set<String>) {
