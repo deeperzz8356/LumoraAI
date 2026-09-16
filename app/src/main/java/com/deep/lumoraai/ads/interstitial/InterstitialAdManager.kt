@@ -27,19 +27,24 @@ class InterstitialAdManager @Inject constructor(
     private val configStore: AdsConfigStore,
 ) {
     private var interstitial: InterstitialAd? = null
+    private var loadedUnitId: String? = null
+    private var requestedPlacement = AdPlacement.INTER_ALL
     private var isLoading = false
 
     fun preload(context: Context, placement: AdPlacement = AdPlacement.INTER_ALL) {
         val config = configStore.current
         if (!config.formatEnabled(AdFormat.INTERSTITIAL)) return
-        if (interstitial != null || isLoading) return
-
-        isLoading = true
         val unitId = config.unitIdFor(placement) ?: run {
             AdsLogger.missingUnitId(placement)
-            isLoading = false
             return
         }
+        requestedPlacement = placement
+        if (interstitial != null && loadedUnitId == unitId) return
+        if (isLoading) return
+
+        interstitial = null
+        loadedUnitId = null
+        isLoading = true
         AdsLogger.loadStarted(placement, unitId, config.testMode)
         InterstitialAd.load(
             context.applicationContext,
@@ -51,20 +56,28 @@ class InterstitialAdManager @Inject constructor(
                         AdRevenueTracker.trackPaidAd(context, placement, unitId, adValue)
                     }
                     AdsLogger.loadSucceeded(placement, ad.responseInfo.mediationAdapterClassName)
-                    interstitial = ad
                     isLoading = false
+                    if (configStore.current.unitIdFor(requestedPlacement) == unitId) {
+                        interstitial = ad
+                        loadedUnitId = unitId
+                    } else {
+                        preload(context, requestedPlacement)
+                    }
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     AdsLogger.loadFailed(placement, error.code, error.message)
                     interstitial = null
+                    loadedUnitId = null
                     isLoading = false
+                    if (requestedPlacement != placement) preload(context, requestedPlacement)
                 }
             }
         )
     }
 
-    fun isReady(): Boolean = interstitial != null
+    fun isReady(placement: AdPlacement): Boolean =
+        interstitial != null && loadedUnitId == configStore.current.unitIdFor(placement)
 
     /**
      * Show the (already eligibility-checked) interstitial. [onShown] fires when
@@ -78,7 +91,7 @@ class InterstitialAdManager @Inject constructor(
         onAdDisplayed: () -> Unit = {},
         onComplete: () -> Unit,
     ): Boolean {
-        val ad = interstitial ?: run {
+        val ad = interstitial?.takeIf { isReady(placement) } ?: run {
             preload(activity, placement)
             return false
         }
@@ -99,14 +112,16 @@ class InterstitialAdManager @Inject constructor(
             override fun onAdDismissedFullScreenContent() {
                 AdsLogger.dismissed(placement)
                 interstitial = null
-                preload(activity, placement)
+                loadedUnitId = null
+                preload(activity, requestedPlacement)
                 forwardOnce()
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
                 AdsLogger.showFailure(placement, error.message)
                 interstitial = null
-                preload(activity, placement)
+                loadedUnitId = null
+                preload(activity, requestedPlacement)
                 forwardOnce()
             }
         }

@@ -62,7 +62,10 @@ class AdsManager @Inject constructor(
 
         MobileAds.initialize(appContext) { status ->
             AdsLogger.d("MobileAds initialized: ${status.adapterStatusMap.keys}")
-            interstitialManager.preload(appContext)
+            interstitialManager.preload(
+                appContext,
+                if (frequency.isFirstLaunch(appContext)) AdPlacement.INTER_ALL else AdPlacement.INTER_POST_SPLASH,
+            )
             rewardedManager.preload(appContext)
             appOpenManager.preload(appContext)
         }
@@ -101,7 +104,7 @@ class AdsManager @Inject constructor(
             context = activity,
             placement = placement,
             requireTrigger = requireTrigger,
-            adReady = { interstitialManager.isReady() },
+            adReady = { interstitialManager.isReady(placement) },
         )
         if (verdict !is AdEligibility.Allowed) {
             onContinue(); return
@@ -139,7 +142,8 @@ class AdsManager @Inject constructor(
         if (!shown) complete()
     }
 
-    fun isInterstitialReady(): Boolean = interstitialManager.isReady()
+    fun isInterstitialReady(placement: AdPlacement = AdPlacement.INTER_ALL): Boolean =
+        interstitialManager.isReady(placement)
 
     // ---- Rewarded ----
 

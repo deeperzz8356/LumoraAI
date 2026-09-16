@@ -33,6 +33,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdFormat
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.AdsManager
 import com.deep.lumoraai.ads.AdsConfigStore
 import com.deep.lumoraai.ads.LocalAdsConfigStore
 import com.deep.lumoraai.ads.LocalAdsManager
@@ -66,6 +67,7 @@ import compose.icons.tablericons.Video
 import java.io.File
 
 private const val HOME_XML_NATIVE_TAG = "home_xml_native_loaded"
+private const val HOME_INTERSTITIAL_POLL_MS = 100L
 private const val HomeBackground = 0xFF081020.toInt()
 private const val Lime = 0xFFD6FF2F.toInt()
 private const val Purple = 0xFF9C63FF.toInt()
@@ -100,7 +102,22 @@ fun HomeScreen(
             onNavigate(route)
         } else {
             ads.recordFeatureTrigger()
-            ads.showInterstitial(activity, AdPlacement.INTER_ALL, requireTrigger = true, continueOnShown = true) {
+            ads.preloadInterstitial(context, AdPlacement.INTER_ALL)
+            val config = ads.config
+            val canLoadInterAll = config.formatEnabled(AdFormat.INTERSTITIAL) &&
+                config.isPlacementEnabled(AdPlacement.INTER_ALL) &&
+                config.unitIdFor(AdPlacement.INTER_ALL) != null
+            if (canLoadInterAll) {
+                waitForHomeInterstitial(
+                    ads = ads,
+                    handler = handler,
+                    startedAt = System.currentTimeMillis(),
+                ) {
+                    ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) {
+                        onNavigate(route)
+                    }
+                }
+            } else {
                 onNavigate(route)
             }
         }
@@ -140,6 +157,30 @@ fun HomeScreen(
             )
         }
     }
+}
+
+private fun waitForHomeInterstitial(
+    ads: AdsManager,
+    handler: Handler,
+    startedAt: Long,
+    onReadyOrTimeout: () -> Unit,
+) {
+    val timeoutAt = startedAt + ads.config.fullScreenLoadTimeoutMs
+    if (ads.isInterstitialReady(AdPlacement.INTER_ALL) || System.currentTimeMillis() >= timeoutAt) {
+        onReadyOrTimeout()
+        return
+    }
+    handler.postDelayed(
+        {
+            waitForHomeInterstitial(
+                ads = ads,
+                handler = handler,
+                startedAt = startedAt,
+                onReadyOrTimeout = onReadyOrTimeout,
+            )
+        },
+        HOME_INTERSTITIAL_POLL_MS,
+    )
 }
 
 private fun bindHome(
