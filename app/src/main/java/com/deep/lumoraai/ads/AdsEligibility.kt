@@ -14,7 +14,7 @@ sealed interface AdEligibility {
  * Implements the ad decision pipeline exactly once, centrally:
  *
  * ads_enabled -> format enabled -> placement enabled -> user eligible ->
- * policy eligible -> trigger/frequency -> placement cooldown ->
+ * policy eligible -> session limit -> placement cooldown ->
  * global full-screen cooldown -> ad ready
  *
  * Anything that fails returns a typed [AdRejectionReason]; the caller then just
@@ -30,14 +30,11 @@ class AdsEligibility @Inject constructor(
     /**
      * Evaluate whether [placement] may be shown right now.
      *
-     * @param requireTrigger when true (interstitial navigation triggers), the
-     *   trigger-count requirement is enforced.
      * @param adReady lambda returning whether the underlying ad object is loaded.
      */
     fun evaluate(
         context: Context,
         placement: AdPlacement,
-        requireTrigger: Boolean = false,
         adReady: () -> Boolean = { true },
     ): AdEligibility {
         val config = configStore.current
@@ -62,14 +59,9 @@ class AdsEligibility @Inject constructor(
                 return reject(placement, AdRejectionReason.REWARD_DAILY_LIMIT)
             }
 
-            if (requireTrigger && placement.format == AdFormat.INTERSTITIAL && !frequency.triggerReached(config)) {
-                return reject(
-                    placement,
-                    AdRejectionReason.TRIGGER_NOT_REACHED,
-                )
-            }
-
-            val placementCooldownMs = if (placement.format == AdFormat.INTERSTITIAL) {
+            val placementCooldownMs = if (placement == AdPlacement.INTER_ALL) {
+                config.interAllIntervalMs
+            } else if (placement.format == AdFormat.INTERSTITIAL) {
                 config.interstitialPlacementCooldownMs
             } else {
                 config.appOpenMinIntervalMs
@@ -79,8 +71,10 @@ class AdsEligibility @Inject constructor(
             }
             // Rewarded is user-initiated and intentional; exempt from the global
             // full-screen cooldown so watching for credits always works.
+            val globalCooldownMs = if (placement == AdPlacement.INTER_ALL) config.interAllIntervalMs
+                else config.globalFullScreenCooldownMs
             if (placement.format != AdFormat.REWARDED &&
-                frequency.globalFullScreenCooldownRemaining(config.globalFullScreenCooldownMs) > 0
+                frequency.globalFullScreenCooldownRemaining(globalCooldownMs) > 0
             ) {
                 return reject(placement, AdRejectionReason.COOLDOWN)
             }

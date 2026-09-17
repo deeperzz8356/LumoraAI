@@ -1,5 +1,8 @@
 package com.deep.lumoraai.feature.uninstall
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -41,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,14 +98,14 @@ fun UninstallConfirmRoute(
             ),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.ui_try_again), fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.ui_uninstall_no), fontWeight = FontWeight.Bold)
         }
         OutlinedButton(
             onClick = onStillUninstall,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF6B6B)),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.ui_still_uninstall), fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.ui_uninstall_yes), fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -109,6 +113,16 @@ fun UninstallConfirmRoute(
 @Composable
 fun UninstallSurveyRoute(onBackHome: () -> Unit) {
     val context = LocalContext.current
+    val openAppDetails = {
+        runCatching {
+            context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:${context.packageName}")))
+        }.onFailure { android.util.Log.w("Uninstall", "Unable to open application details", it) }
+        Unit
+    }
+    val uninstallLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_FIRST_USER) openAppDetails()
+    }
     val reasons = listOf(
         stringResource(R.string.ui_uninstall_reason_not_using),
         stringResource(R.string.ui_uninstall_reason_ads),
@@ -116,7 +130,7 @@ fun UninstallSurveyRoute(onBackHome: () -> Unit) {
         stringResource(R.string.ui_uninstall_reason_quality),
         stringResource(R.string.ui_uninstall_reason_other),
     )
-    var selected by remember { mutableStateOf(reasons[1]) }
+    var selectedIndex by rememberSaveable { mutableStateOf(-1) }
     BackHandler(onBack = onBackHome)
 
     UninstallScaffold(
@@ -124,30 +138,26 @@ fun UninstallSurveyRoute(onBackHome: () -> Unit) {
         subtitle = stringResource(R.string.ui_uninstall_survey_subtitle),
         onBackHome = onBackHome,
     ) {
-        reasons.forEach { reason ->
+        reasons.forEachIndexed { index, reason ->
             ReasonRow(
                 text = reason,
-                selected = selected == reason,
-                onClick = { selected = reason },
+                selected = selectedIndex == index,
+                onClick = { selectedIndex = index },
             )
             Spacer(Modifier.height(10.dp))
         }
         Spacer(Modifier.height(12.dp))
         Button(
+            enabled = selectedIndex in reasons.indices,
             onClick = {
+                if (selectedIndex !in reasons.indices) return@Button
                 runCatching {
-                    context.startActivity(
-                        Intent(Intent.ACTION_DELETE).apply {
-                            data = Uri.parse("package:${context.packageName}")
-                        }
+                    uninstallLauncher.launch(
+                        Intent(Intent.ACTION_UNINSTALL_PACKAGE,
+                            Uri.parse("package:${context.packageName}"))
+                            .putExtra(Intent.EXTRA_RETURN_RESULT, true)
                     )
-                }.onFailure {
-                    context.startActivity(
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.parse("package:${context.packageName}")
-                        }
-                    )
-                }
+                }.onFailure { openAppDetails() }
             },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFFF6B6B),

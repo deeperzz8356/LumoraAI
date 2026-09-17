@@ -27,7 +27,8 @@ data class AdsConfig(
     val placementEnabled: Map<String, Boolean> = emptyMap(),
 
     // ---- Frequency / cooldown ----
-    val interstitialTriggerCount: Int = 3,
+    /** Minimum interval for Inter_all, measured from the last fullscreen impression. */
+    val interAllIntervalMs: Long = 25_000L,
     val interstitialPlacementCooldownMs: Long = 30_000L,
     val globalFullScreenCooldownMs: Long = 30_000L,
     val maxInterstitialsPerSession: Int = 20,

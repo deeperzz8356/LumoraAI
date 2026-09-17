@@ -22,28 +22,58 @@ import com.deep.lumoraai.ads.LocalAdsManager
 import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.databinding.SplashScreenBinding
 import kotlinx.coroutines.delay
+import android.os.SystemClock
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.deep.lumoraai.ads.rememberCurrentActivity
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 
 @Composable
-fun SplashScreen(isReady: Boolean, onNext: () -> Unit, modifier: Modifier = Modifier) {
+fun SplashScreen(isReady: Boolean, onNext: () -> Unit, modifier: Modifier = Modifier, isUninstallFlow: Boolean = false) {
     val ads = LocalAdsManager.current
     val adConfig = LocalAdsConfigStore.current
     val context = LocalContext.current
+    val activity = rememberCurrentActivity()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val scope = rememberCoroutineScope()
     val handler = remember { Handler(Looper.getMainLooper()) }
     val messages = remember { listOf("INITIALIZING ENGINE...", "LOADING MODELS...", "OPTIMIZING GENERATION...") }
     val splashMaxWaitMs = adConfig?.current?.splashMaxWaitMs ?: 6_000L
     var bannerLoadState by remember { mutableStateOf<Boolean?>(null) }
     var advanced by remember { mutableStateOf(false) }
 
-    suspend fun advanceFromSplash() {
+    fun advanceFromSplash() {
         if (advanced) return
         advanced = true
-        ads?.prepareHomeStartup(context)
-        ads?.markLaunched(context)
-        onNext()
+        scope.launch {
+            if (isUninstallFlow && ads != null) {
+                val placement = AdPlacement.INTER_POST_SPLASH
+                val deadline = SystemClock.elapsedRealtime() + ads.config.fullScreenLoadTimeoutMs
+                ads.preloadInterstitial(context, placement)
+                while (SystemClock.elapsedRealtime() < deadline &&
+                    (!ads.isInterstitialReady(placement) || !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))) {
+                    delay(100)
+                }
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                    ads.showInterstitial(activity, placement, onContinue = onNext)
+                } else {
+                    onNext()
+                }
+                return@launch
+            }
+            ads?.prepareHomeStartup(context)
+            ads?.markLaunched(context)
+            onNext()
+        }
     }
 
     LaunchedEffect(Unit) {
+        if (isUninstallFlow) {
+            ads?.preloadInterstitial(context, AdPlacement.INTER_POST_SPLASH)
+            return@LaunchedEffect
+        }
         ads?.prepareHomeStartup(context)
         ads?.preloadInterstitial(context, AdPlacement.INTER_ALL)
     }

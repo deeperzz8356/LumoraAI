@@ -10,7 +10,7 @@ import javax.inject.Singleton
  * Centralized frequency, cooldown and full-screen-lock logic. All screens share
  * this single instance so counters are never duplicated or inconsistent.
  *
- * In-memory state (trigger counts, session count, cooldown timestamps, the
+ * In-memory state (session count, cooldown timestamps, the
  * full-screen lock) resets per process. Persistent state (reward daily count,
  * post-splash-seen, first-launch) uses SharedPreferences, matching the app's
  * existing lightweight persistence pattern.
@@ -19,9 +19,8 @@ import javax.inject.Singleton
 class AdsFrequencyManager @Inject constructor() {
 
     // ---- In-memory session state ----
-    private var featureTriggerCount = 0
     private var interstitialsShownThisSession = 0
-    private var lastFullScreenShownAt = 0L
+    private var lastFullScreenShownAt: Long? = null
     private val lastPlacementShownAt = mutableMapOf<String, Long>()
     private val fullScreenShowing = AtomicBoolean(false)
 
@@ -36,43 +35,28 @@ class AdsFrequencyManager @Inject constructor() {
 
     fun isFullScreenShowing(): Boolean = fullScreenShowing.get()
 
-    // ---- Interstitial trigger counting (feature selections) ----
-
-    /** Increment the eligible-feature-selection counter. Bottom-nav must NOT call this. */
-    fun recordFeatureTrigger() {
-        featureTriggerCount++
-    }
-
-    fun triggerReached(config: AdsConfig): Boolean =
-        featureTriggerCount >= config.interstitialTriggerCount
-
-    fun resetTriggerCount() {
-        featureTriggerCount = 0
-    }
-
-    fun currentTriggerCount(): Int = featureTriggerCount
-
     // ---- Cooldowns ----
 
-    fun placementCooldownRemaining(placement: AdPlacement, cooldownMs: Long): Long {
+    fun placementCooldownRemaining(placement: AdPlacement, cooldownMs: Long, nowMs: Long = System.currentTimeMillis()): Long {
         val last = lastPlacementShownAt[placement.key] ?: return 0L
-        return (last + cooldownMs - System.currentTimeMillis()).coerceAtLeast(0L)
+        return (last + cooldownMs - nowMs).coerceAtLeast(0L)
     }
 
-    fun globalFullScreenCooldownRemaining(cooldownMs: Long): Long =
-        (lastFullScreenShownAt + cooldownMs - System.currentTimeMillis()).coerceAtLeast(0L)
+    fun globalFullScreenCooldownRemaining(cooldownMs: Long, nowMs: Long = System.currentTimeMillis()): Long {
+        val last = lastFullScreenShownAt ?: return 0L
+        return (last + cooldownMs - nowMs).coerceAtLeast(0L)
+    }
 
     fun sessionLimitReached(config: AdsConfig): Boolean =
         interstitialsShownThisSession >= config.maxInterstitialsPerSession
 
     /** Record a full-screen impression: updates cooldowns, session count, trigger reset. */
-    fun recordFullScreenShown(placement: AdPlacement) {
-        val now = System.currentTimeMillis()
+    fun recordFullScreenShown(placement: AdPlacement, nowMs: Long = System.currentTimeMillis()) {
+        val now = nowMs
         lastFullScreenShownAt = now
         lastPlacementShownAt[placement.key] = now
         if (placement.format == AdFormat.INTERSTITIAL) {
             interstitialsShownThisSession++
-            resetTriggerCount()
         }
     }
 

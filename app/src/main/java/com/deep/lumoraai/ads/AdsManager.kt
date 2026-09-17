@@ -85,9 +85,6 @@ class AdsManager @Inject constructor(
     fun preloadInterstitial(context: Context, placement: AdPlacement = AdPlacement.INTER_ALL) =
         interstitialManager.preload(context, placement)
 
-    /** Record an eligible feature selection (NOT bottom-nav) for inter_all trigger counting. */
-    fun recordFeatureTrigger() = frequency.recordFeatureTrigger()
-
     /**
      * Show an interstitial for [placement] then run [onContinue]. Runs the full
      * decision pipeline; if any check fails the ad is skipped and [onContinue]
@@ -96,7 +93,6 @@ class AdsManager @Inject constructor(
     fun showInterstitial(
         activity: Activity?,
         placement: AdPlacement,
-        requireTrigger: Boolean = false,
         continueOnShown: Boolean = false,
         onContinue: () -> Unit,
     ) {
@@ -107,7 +103,6 @@ class AdsManager @Inject constructor(
         val verdict = eligibility.evaluate(
             context = activity,
             placement = placement,
-            requireTrigger = requireTrigger,
             adReady = { interstitialManager.isReady(placement) },
         )
         if (verdict !is AdEligibility.Allowed) {

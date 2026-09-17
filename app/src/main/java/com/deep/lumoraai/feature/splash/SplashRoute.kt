@@ -6,7 +6,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun SplashRoute(
     onNext: () -> Unit,
+    isUninstallFlow: Boolean = false,
     viewModel: SplashViewModel = viewModel()
 ) {
-    SplashScreen(isReady = viewModel.isReady, onNext = onNext)
+    SplashScreen(isReady = viewModel.isReady, onNext = onNext, isUninstallFlow = isUninstallFlow)
 }

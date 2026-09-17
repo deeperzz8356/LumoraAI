@@ -78,6 +78,10 @@ fun NavGraph(
     LaunchedEffect(notificationRoute, currentRoute) {
         val route = notificationRoute?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
         if (currentRoute == null || currentRoute == Screen.Splash.route) return@LaunchedEffect
+        if (route == Screen.UninstallConfirm.route) {
+            navController.goTo(Screen.Splash.route)
+            return@LaunchedEffect
+        }
         navController.goTo(route)
         onNotificationRouteConsumed()
     }
@@ -103,6 +107,7 @@ fun NavGraph(
     ) {
         composable(Screen.Splash.route) {
             SplashRoute(
+                isUninstallFlow = notificationRoute == Screen.UninstallConfirm.route,
                 onNext = {
                     val user = FirebaseAuth.getInstance().currentUser
                     val pendingRoute = notificationRoute?.takeIf { it.isNotBlank() }
@@ -447,7 +452,7 @@ fun NavGraph(
             UninstallSurveyRoute(
                 onBackHome = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.UninstallConfirm.route) { inclusive = true }
+                        popUpTo(Screen.UninstallSurvey.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 },

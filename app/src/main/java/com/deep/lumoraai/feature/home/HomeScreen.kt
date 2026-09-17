@@ -143,7 +143,6 @@ fun HomeScreen(
     val featureSelect: (String) -> Unit = { route ->
         if (!requestBusy && !startupPending) {
             requestBusy = true
-            ads?.recordFeatureTrigger()
             pendingRoute = route
         }
     }

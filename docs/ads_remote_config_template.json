@@ -1,27 +1,44 @@
 {
   "subscription_enabled": {
-    "defaultValue": { "value": "false" },
+    "defaultValue": {
+      "value": "false"
+    },
     "valueType": "BOOLEAN",
     "description": "Master switch for subscription acquisition UI and paywall entry points."
   },
   "subscription_plans_json": {
-    "defaultValue": { "value": "" },
+    "defaultValue": {
+      "value": ""
+    },
     "valueType": "STRING",
     "description": "Optional JSON array of subscription plans. Google Play Billing prices override these display prices when available."
   },
   "privacy_policy_url": {
-    "defaultValue": { "value": "https://lumoraai.example/privacy-policy" },
+    "defaultValue": {
+      "value": "https://lumoraai.example/privacy-policy"
+    },
     "valueType": "STRING",
     "description": "Browser URL opened from Privacy Policy links in Settings, Profile, and Privacy & Security."
   },
   "terms_and_conditions_url": {
-    "defaultValue": { "value": "https://lumoraai.example/terms-and-conditions" },
+    "defaultValue": {
+      "value": "https://lumoraai.example/terms-and-conditions"
+    },
     "valueType": "STRING",
     "description": "Browser URL opened from Terms & Conditions links in Settings and Profile."
   },
   "app_share_url": {
-    "defaultValue": { "value": "https://play.google.com/store/apps/details?id=com.deep.lumoraai" },
+    "defaultValue": {
+      "value": "https://play.google.com/store/apps/details?id=com.deep.lumoraai"
+    },
     "valueType": "STRING",
     "description": "App URL included when users share LumoraAI from Settings or Profile."
+  },
+  "inter_all_interval_ms": {
+    "defaultValue": {
+      "value": "25000"
+    },
+    "valueType": "NUMBER",
+    "description": "Minimum interval before Inter_all can show after the last fullscreen impression, in milliseconds (0-600000). Replaces the click-count requirement; overrides legacy Inter_all cooldowns."
   }
 }

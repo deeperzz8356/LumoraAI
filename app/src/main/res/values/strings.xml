@@ -970,9 +970,9 @@
     <string name="ui_sub_hero_body">Credits, priority generation, and premium creative workflows.</string>
     <string name="ui_plan_guest">Guest</string>
     <string name="ui_plan_premium">Premium</string>
-    <string name="ui_uninstall_confirm_title">Before you uninstall</string>
-    <string name="ui_uninstall_confirm_subtitle">Tell us what we can improve</string>
-    <string name="ui_uninstall_confirm_body">We can take you back home to keep creating, or you can continue and share why Lumora AI did not work for you.</string>
+    <string name="ui_uninstall_confirm_title">Uninstall Lumora AI?</string>
+    <string name="ui_uninstall_confirm_subtitle">Are you sure?</string>
+    <string name="ui_uninstall_confirm_body">Tap Yes to continue or No to stay.</string>
     <string name="ui_still_uninstall">Still Uninstall</string>
     <string name="ui_try_again">Try Again</string>
     <string name="ui_uninstall">Uninstall</string>
@@ -986,5 +986,7 @@
     <string name="shortcut_home">Home</string>
     <string name="shortcut_home_long">Open Home</string>
     <string name="shortcut_uninstall">Uninstall</string>
-    <string name="shortcut_uninstall_long">Open uninstall flow</string>
+    <string name="shortcut_uninstall_long">Uninstall</string>
+    <string name="ui_uninstall_yes">Yes</string>
+    <string name="ui_uninstall_no">No</string>
 </resources>
