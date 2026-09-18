@@ -112,6 +112,9 @@ class GenerationRepository {
                 }
             }
         }
+
+        fun buildRewardedAdIdempotencyKey(userId: String, amount: Int): String =
+            "rewarded-ad:${userId.ifBlank { "anonymous" }}:$amount:${System.currentTimeMillis()}"
     }
 
     suspend fun generateImage(
@@ -462,6 +465,12 @@ class GenerationRepository {
      * fresh per-call/per-retry UUID. The backend (Task 3.5) applies the effect at
      * most once per key. The key is sent in the JSON body as "idempotency_key".
      */
+    suspend fun addRewardedAdCredits(amount: Int): Result<Int> = withContext(Dispatchers.IO) {
+        val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))
+        val key = buildRewardedAdIdempotencyKey(user.uid, amount)
+        addCredits(amount, key)
+    }
+
     suspend fun addCredits(amount: Int, idempotencyKey: String): Result<Int> = withContext(Dispatchers.IO) {
         try {
             val user = auth.currentUser ?: return@withContext Result.failure(Exception("User not logged in"))

@@ -7,6 +7,7 @@ import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.LocalAdsManager
+import com.deep.lumoraai.ads.rememberCurrentActivity
 import com.deep.lumoraai.ads.PlacementNativeAd
 import com.deep.lumoraai.core.navigation.Screen
 import com.deep.lumoraai.core.restrictions.GenerationGate
@@ -44,6 +48,24 @@ fun CompressScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val ads = LocalAdsManager.current
+    val activity = rememberCurrentActivity()
+    var hasStartedTask by rememberSaveable { mutableStateOf(false) }
+    val exit = {
+        if (hasStartedTask || ads == null) onBack()
+        else ads.showInterstitial(activity, AdPlacement.INTER_BACK, continueOnShown = true) { onBack() }
+    }
+    val startCompress = {
+        onCompress()
+        hasStartedTask = true
+        ads?.showInterstitial(activity, AdPlacement.INTER_GENERATE, continueOnShown = true) {}
+        Unit
+    }
+    BackHandler { exit() }
+    androidx.compose.runtime.LaunchedEffect(ads) {
+        ads?.preloadInterstitial(context, AdPlacement.INTER_BACK)
+        ads?.preloadInterstitial(context, AdPlacement.INTER_GENERATE)
+    }
     val credits by CreditBalanceStore.balance.collectAsState()
     var permissionDenied by remember { mutableStateOf(false) }
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -90,10 +112,10 @@ fun CompressScreen(
                     uiState = uiState,
                     credits = credits ?: 0,
                     permissionDenied = permissionDenied,
-                    onBack = onBack,
+                    onBack = exit,
                     onNavigate = onNavigate,
                     onOpenPicker = openPickerWithPermission,
-                    onCompress = onCompress,
+                    onCompress = startCompress,
                     onDownload = onDownload,
                     onReset = onReset,
                 )

@@ -52,6 +52,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val NOTIFICATION_ROUTE_EXTRA = "lumora_destination_route"
         const val ACTION_OPEN_HOME = "com.deep.lumoraai.action.OPEN_HOME"
+        const val ACTION_OPEN_TEMPLATES = "com.deep.lumoraai.action.OPEN_TEMPLATES"
         const val ACTION_OPEN_UNINSTALL = "com.deep.lumoraai.action.OPEN_UNINSTALL"
     }
 
@@ -179,6 +180,7 @@ class MainActivity : ComponentActivity() {
     private fun destinationFromIntent(intent: Intent?): String? {
         return when (intent?.action) {
             ACTION_OPEN_HOME -> com.deep.lumoraai.core.navigation.Screen.Home.route
+            ACTION_OPEN_TEMPLATES -> com.deep.lumoraai.core.navigation.Screen.Templates.route
             ACTION_OPEN_UNINSTALL -> com.deep.lumoraai.core.navigation.Screen.UninstallConfirm.route
             else -> intent?.getStringExtra(NOTIFICATION_ROUTE_EXTRA)
         }

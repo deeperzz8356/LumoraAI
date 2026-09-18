@@ -104,15 +104,14 @@ fun HomeScreen(
         onDispose { attached.set(false) }
     }
     var pendingRoute by remember { mutableStateOf<String?>(null) }
-    var startupPending by remember { mutableStateOf(ads?.consumeHomeStartup() == true) }
     var requestBusy by remember { mutableStateOf(false) }
 
     LaunchedEffect(ads) {
         ads?.preloadInterstitial(context, AdPlacement.INTER_ALL)
     }
-    LaunchedEffect(pendingRoute, startupPending, ads, activity) {
-        val route = pendingRoute
-        if (route == null && !startupPending) return@LaunchedEffect
+    LaunchedEffect(pendingRoute, ads, activity) {
+        val route = pendingRoute ?: return@LaunchedEffect
+        val targetRoute = route
         val deadline = SystemClock.elapsedRealtime() + (ads?.config?.fullScreenLoadTimeoutMs ?: 0L)
         var attempted = false
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -129,10 +128,11 @@ fun HomeScreen(
             }
             attempted = true
             val complete = {
-                startupPending = false
-                pendingRoute = null
-                requestBusy = false
-                if (route != null && attached.get()) navigate(route)
+                if (pendingRoute == targetRoute) {
+                    pendingRoute = null
+                    requestBusy = false
+                    if (attached.get()) navigate(targetRoute)
+                }
             }
             if (enabled && ads != null) {
                 ads.showInterstitial(activity, AdPlacement.INTER_ALL, onContinue = complete)
@@ -141,7 +141,7 @@ fun HomeScreen(
     }
 
     val featureSelect: (String) -> Unit = { route ->
-        if (!requestBusy && !startupPending) {
+        if (!requestBusy) {
             requestBusy = true
             pendingRoute = route
         }

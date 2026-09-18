@@ -3,7 +3,7 @@
     <string name="google_web_client_id">26472943441-9rhsfplmkbjsbmkgujifctjrmh5985gu.apps.googleusercontent.com</string>
     <string name="language">Dil</string>
     <string name="done">Bitti</string>
-    <string name="auth_account_created">Hesap başarıyla oluşturuldu! Lütfen giriş yapın.</string>
+    <string name="auth_account_created">Hesap başarıyla oluşturuldu! Şimdi giriş yaptınız.</string>
     <string name="settings">Ayarlar</string>
     <string name="settings_account">Hesap</string>
     <string name="settings_manage_profile">Profili yönet</string>

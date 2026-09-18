@@ -3,7 +3,7 @@
     <string name="google_web_client_id">26472943441-9rhsfplmkbjsbmkgujifctjrmh5985gu.apps.googleusercontent.com</string>
     <string name="language">语言</string>
     <string name="done">完成</string>
-    <string name="auth_account_created">账户创建成功！请登录。</string>
+    <string name="auth_account_created">账户创建成功！您已登录。</string>
     <string name="settings">设置</string>
     <string name="settings_account">账户</string>
     <string name="settings_manage_profile">管理个人资料</string>

@@ -6,24 +6,32 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InterAllIntervalTest {
-    @Test fun firstAdNeedsNoClicksAndTwentyFiveSecondsSeparatesImpressions() {
+    @Test fun firstAdNeedsNoClicksAndTwentySecondsSeparatesImpressions() {
         val frequency = AdsFrequencyManager()
         val gap = AdsConfig.DEFAULT.interAllIntervalMs
-        assertEquals(25_000L, gap)
+        assertEquals(20_000L, gap)
         assertEquals(0L, frequency.globalFullScreenCooldownRemaining(gap, 0L))
         frequency.recordFullScreenShown(AdPlacement.INTER_ALL, 1_000L)
-        assertEquals(1L, frequency.globalFullScreenCooldownRemaining(gap, 25_999L))
-        assertEquals(0L, frequency.globalFullScreenCooldownRemaining(gap, 26_000L))
-        assertEquals(0L, frequency.placementCooldownRemaining(AdPlacement.INTER_ALL, gap, 26_000L))
+        assertEquals(1_001L, frequency.globalFullScreenCooldownRemaining(gap, 19_999L))
+        assertEquals(1_000L, frequency.globalFullScreenCooldownRemaining(gap, 20_000L))
+        assertEquals(0L, frequency.globalFullScreenCooldownRemaining(gap, 21_000L))
+        assertEquals(0L, frequency.placementCooldownRemaining(AdPlacement.INTER_ALL, gap, 21_000L))
     }
     @Test fun otherFullscreenAdsAlsoDelayInterAllAndLockStillPreventsOverlap() {
         val frequency = AdsFrequencyManager()
         frequency.recordFullScreenShown(AdPlacement.APP_OPEN, 1_000L)
-        assertEquals(25_000L, frequency.globalFullScreenCooldownRemaining(25_000L, 1_000L))
+        assertEquals(20_000L, frequency.globalFullScreenCooldownRemaining(20_000L, 1_000L))
         assertTrue(frequency.tryAcquireFullScreen())
         assertFalse(frequency.tryAcquireFullScreen())
         frequency.releaseFullScreen()
         assertTrue(frequency.tryAcquireFullScreen())
+    }
+    @Test fun independentInterstitialPlacementsDoNotShareGlobalCooldown() {
+        assertTrue(AdPlacement.INTER_ALL.isIndependentInterstitial())
+        assertTrue(AdPlacement.INTER_BACK.isIndependentInterstitial())
+        assertTrue(AdPlacement.INTER_GENERATE.isIndependentInterstitial())
+        assertFalse(AdPlacement.INTER_POST_SPLASH.isIndependentInterstitial())
+        assertFalse(AdPlacement.APP_OPEN.isIndependentInterstitial())
     }
     @Test fun remoteIntervalCanIncreaseDecreaseAndIsBounded() {
         val previous = AdsLogger.enabled

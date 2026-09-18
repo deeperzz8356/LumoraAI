@@ -63,7 +63,25 @@ fun SplashScreen(isReady: Boolean, onNext: () -> Unit, modifier: Modifier = Modi
                 }
                 return@launch
             }
-            ads?.prepareHomeStartup(context)
+
+            val shouldShowStartupInterstitial = ads?.prepareAndConsumeHomeStartup(context) == true
+            if (shouldShowStartupInterstitial && ads != null) {
+                val placement = AdPlacement.INTER_POST_SPLASH
+                val deadline = SystemClock.elapsedRealtime() + ads.config.fullScreenLoadTimeoutMs
+                ads.preloadInterstitial(context, placement)
+                while (SystemClock.elapsedRealtime() < deadline &&
+                    (!ads.isInterstitialReady(placement) || !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))) {
+                    delay(100)
+                }
+                ads.markLaunched(context)
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                    ads.showInterstitial(activity, placement, onContinue = onNext)
+                } else {
+                    onNext()
+                }
+                return@launch
+            }
+
             ads?.markLaunched(context)
             onNext()
         }

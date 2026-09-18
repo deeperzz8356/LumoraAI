@@ -288,14 +288,29 @@ class CreditsViewModel(application: Application) : AndroidViewModel(application)
         if (amount <= 0) return
         val currentState = uiState as? CreditsUiState.Success ?: return
         if (currentState.isDeveloperMode) return
-        // Optimistically reflect the reward everywhere the header reads.
-        CreditBalanceStore.applyOptimistic(amount)
-        uiState = currentState.copy(
-            credits = (currentState.credits + amount).coerceAtLeast(0),
-            rewardMessage = "+$amount credits added from watching an ad.",
-        )
-        // Reconcile with the server's authoritative balance.
-        forceRefresh()
+
+        viewModelScope.launch {
+            val result = generationRepository.addRewardedAdCredits(amount)
+            val newBalance = result.getOrNull()
+
+            if (newBalance != null) {
+                CreditBalanceStore.set(newBalance)
+                uiState = currentState.copy(
+                    credits = newBalance,
+                    rewardMessage = "+$amount credits added from watching an ad.",
+                )
+                return@launch
+            }
+
+            // Fallback: keep the UI responsive if the network call fails, then
+            // reconcile with the server on the next refresh.
+            CreditBalanceStore.applyOptimistic(amount)
+            uiState = currentState.copy(
+                credits = (currentState.credits + amount).coerceAtLeast(0),
+                rewardMessage = "+$amount credits added from watching an ad.",
+            )
+            forceRefresh()
+        }
     }
 
     private fun buildRewardTasks(isDeveloperMode: Boolean): List<CreditRewardUi> {

@@ -12,5 +12,5 @@ sealed interface AuthUiState {
      *   brand-new account (email sign-up), so the UI can surface a confirmation.
      */
     data class Success(val isNewAccount: Boolean = false) : AuthUiState
-    data class Error(val message: String) : AuthUiState
+    data class Error(val message: String, val isSignUp: Boolean = false) : AuthUiState
 }

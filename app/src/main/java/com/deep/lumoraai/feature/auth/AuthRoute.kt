@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,12 @@ import com.deep.lumoraai.core.navigation.ResetLoadingOnLeave
 import com.deep.lumoraai.core.utils.GuestIdentity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import com.google.firebase.remoteconfig.ConfigUpdateListener
+import com.google.firebase.remoteconfig.ConfigUpdate
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigException
+
+private const val GOOGLE_AUTH_ENABLED_KEY = "auth_google_sign_in_enabled"
 
 @Composable
 fun AuthRoute(
@@ -34,6 +41,26 @@ fun AuthRoute(
     val scope = rememberCoroutineScope()
     val uiState = viewModel.uiState
     val guestTrialExhausted = remember { mutableStateOf(GuestIdentity.isTrialExhausted(context)) }
+    val googleAuthEnabled = remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        val remote = FirebaseRemoteConfig.getInstance()
+        fun updateGoogleAuth() {
+            googleAuthEnabled.value = remote.getBoolean(GOOGLE_AUTH_ENABLED_KEY)
+        }
+        remote.setDefaultsAsync(mapOf(GOOGLE_AUTH_ENABLED_KEY to false))
+            .addOnCompleteListener { updateGoogleAuth() }
+        remote.fetchAndActivate().addOnCompleteListener { updateGoogleAuth() }
+        val registration = remote.addOnConfigUpdateListener(object : ConfigUpdateListener {
+            override fun onUpdate(update: ConfigUpdate) {
+                if (GOOGLE_AUTH_ENABLED_KEY in update.updatedKeys) {
+                    remote.activate().addOnCompleteListener { updateGoogleAuth() }
+                }
+            }
+            override fun onError(error: FirebaseRemoteConfigException) = Unit
+        })
+        onDispose { registration.remove() }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.resetState()
@@ -45,24 +72,18 @@ fun AuthRoute(
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
-            if (uiState.isNewAccount) {
-                // Option A: don't drop a freshly created account into the app.
-                // Confirm creation, sign back out, and send the user to the
-                // login form to sign in manually.
-                Toast.makeText(
-                    context,
-                    context.getString(com.deep.lumoraai.R.string.auth_account_created),
-                    Toast.LENGTH_LONG
-                ).show()
-                viewModel.signOutForManualLogin()
-            } else {
-                onNext()
-            }
+            Toast.makeText(
+                context,
+                context.getString(com.deep.lumoraai.R.string.auth_account_created),
+                Toast.LENGTH_LONG
+            ).show()
+            onNext()
         }
     }
 
     AuthScreen(
         uiState = uiState,
+        showGoogleSignIn = googleAuthEnabled.value,
         onGoogleSignIn = { triggerGoogleSignIn(context, scope, viewModel) },
         onEmailSignIn = { email, password, isSignUp ->
             viewModel.signInWithEmail(email, password, isSignUp)

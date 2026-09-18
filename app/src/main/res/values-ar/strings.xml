@@ -3,7 +3,7 @@
     <string name="google_web_client_id">26472943441-9rhsfplmkbjsbmkgujifctjrmh5985gu.apps.googleusercontent.com</string>
     <string name="language">اللغة</string>
     <string name="done">تم</string>
-    <string name="auth_account_created">تم إنشاء الحساب بنجاح! يُرجى تسجيل الدخول.</string>
+    <string name="auth_account_created">تم إنشاء الحساب بنجاح! أنت الآن مسجّل الدخول.</string>
     <string name="settings">الإعدادات</string>
     <string name="settings_account">الحساب</string>
     <string name="settings_manage_profile">إدارة الملف الشخصي</string>

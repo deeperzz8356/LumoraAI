@@ -16,6 +16,7 @@ import com.deep.lumoraai.core.view.applySystemBarPadding
 @Composable
 fun AuthScreen(
     uiState: AuthUiState,
+    showGoogleSignIn: Boolean = false,
     onGoogleSignIn: () -> Unit,
     onEmailSignIn: (String, String, Boolean) -> Unit,
     onGuestSignIn: () -> Unit,
@@ -28,7 +29,7 @@ fun AuthScreen(
         factory = { context -> AuthScreenBinding.inflate(LayoutInflater.from(context)).apply { content.applySystemBarPadding() }.root },
         update = { root ->
             bindAuth(
-                AuthScreenBinding.bind(root), uiState, allowGuestSignIn,
+                AuthScreenBinding.bind(root), uiState, allowGuestSignIn, showGoogleSignIn,
                 onGoogleSignIn, onEmailSignIn, onGuestSignIn, onEmailOptionClick, onBack
             )
         },
@@ -40,6 +41,7 @@ private fun bindAuth(
     binding: AuthScreenBinding,
     state: AuthUiState,
     allowGuest: Boolean,
+    showGoogleSignIn: Boolean,
     onGoogle: () -> Unit,
     onEmailSubmit: (String, String, Boolean) -> Unit,
     onGuest: () -> Unit,
@@ -48,17 +50,18 @@ private fun bindAuth(
 ) {
     val context = binding.root.context
     val emailState = state as? AuthUiState.EmailForm
-    val showEmail = emailState != null
     val loading = state is AuthUiState.Loading
+    val showEmail = !loading
 
-    binding.mainActions.visibility = if (!showEmail && !loading) View.VISIBLE else View.GONE
+    binding.mainActions.visibility = if (showGoogleSignIn && !loading) View.VISIBLE else View.GONE
+    binding.googleButton.visibility = if (showGoogleSignIn) View.VISIBLE else View.GONE
     binding.emailForm.visibility = if (showEmail) View.VISIBLE else View.GONE
     binding.loading.visibility = if (loading) View.VISIBLE else View.GONE
     binding.errorText.visibility = if (state is AuthUiState.Error) View.VISIBLE else View.GONE
     binding.errorText.text = (state as? AuthUiState.Error)?.message.orEmpty()
 
     if (showEmail) {
-        val signUp = emailState.isSignUp
+        val signUp = emailState?.isSignUp ?: (state as? AuthUiState.Error)?.isSignUp ?: false
         if (binding.passwordToggle.tag == null) {
             binding.passwordInput.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             binding.passwordInput.transformationMethod = PasswordTransformationMethod.getInstance()
@@ -102,9 +105,7 @@ private fun bindAuth(
     }
 
     binding.googleButton.setOnClickListener { onGoogle() }
-    binding.emailOptionButton.setOnClickListener { onEmailOption(false) }
-    binding.backButton.setOnClickListener { onBack() }
-    binding.guestButton.visibility = if (!showEmail) View.VISIBLE else View.GONE
+    binding.guestButton.visibility = if (!loading) View.VISIBLE else View.GONE
     binding.guestButton.isEnabled = allowGuest
     binding.guestButton.setText(if (allowGuest) R.string.auth_continue_guest else R.string.auth_trial_finished)
     binding.guestButton.setOnClickListener { if (allowGuest) onGuest() else onEmailOption(false) }

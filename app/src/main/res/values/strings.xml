@@ -11,7 +11,7 @@
 
     <string name="done">Done</string>
 
-    <string name="auth_account_created">Account created successfully! Please log in.</string>
+    <string name="auth_account_created">Account created successfully! You are now signed in.</string>
 
     <string name="settings">Settings</string>
 
@@ -983,8 +983,21 @@
     <string name="ui_uninstall_reason_cost">Credits or plans are too expensive</string>
     <string name="ui_uninstall_reason_quality">Results were not good enough</string>
     <string name="ui_uninstall_reason_other">Other reason</string>
+    <string name="ui_uninstall_v2_confirm_title">Lumora AI</string>
+    <string name="ui_uninstall_v2_confirm_subtitle">Create with confidence</string>
+    <string name="ui_uninstall_v2_confirm_body">Users trust Lumora AI to generate stunning images and videos effortlessly, enjoying a fast, smooth, and reliable creative experience.</string>
+    <string name="ui_uninstall_v2_confirm_body_secondary">Unlock high-quality AI media creation with Lumora AI—generate images, videos, and visual content with a seamless, user-friendly interface anytime, anywhere!</string>
+    <string name="ui_uninstall_v2_still">Still want to uninstall</string>
+    <string name="ui_uninstall_v2_survey_title">Issues encountered during usage</string>
+    <string name="ui_uninstall_v2_survey_subtitle">Choose a reason</string>
+    <string name="ui_uninstall_v2_reason_features">Features don’t work</string>
+    <string name="ui_uninstall_v2_reason_not_using">I don’t need it</string>
+    <string name="ui_uninstall_v2_reason_other">Others</string>
+    <string name="ui_uninstall_v2_other_hint">Tell us more</string>
     <string name="shortcut_home">Home</string>
     <string name="shortcut_home_long">Open Home</string>
+    <string name="shortcut_templates">Templates</string>
+    <string name="shortcut_templates_long">Open Templates</string>
     <string name="shortcut_uninstall">Uninstall</string>
     <string name="shortcut_uninstall_long">Uninstall</string>
     <string name="ui_uninstall_yes">Yes</string>

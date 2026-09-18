@@ -13,6 +13,18 @@
     </shortcut>
 
     <shortcut
+        android:shortcutId="templates"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_templates"
+        android:shortcutShortLabel="@string/shortcut_templates"
+        android:shortcutLongLabel="@string/shortcut_templates_long">
+        <intent
+            android:action="com.deep.lumoraai.action.OPEN_TEMPLATES"
+            android:targetPackage="com.deep.lumoraai"
+            android:targetClass="com.deep.lumoraai.MainActivity" />
+    </shortcut>
+
+    <shortcut
         android:shortcutId="uninstall"
         android:enabled="true"
         android:icon="@drawable/ic_shortcut_uninstall"

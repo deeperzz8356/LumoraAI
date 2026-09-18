@@ -37,6 +37,10 @@ class AdsManager @Inject constructor(
     private val homeStartup = HomeStartupAdState()
 
     fun prepareHomeStartup(context: Context) = homeStartup.prepare(frequency.isFirstLaunch(context))
+    fun prepareAndConsumeHomeStartup(context: Context): Boolean {
+        prepareHomeStartup(context)
+        return consumeHomeStartup()
+    }
     fun consumeHomeStartup(): Boolean = homeStartup.consume()
 
     val config: AdsConfig get() = configStore.current

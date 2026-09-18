@@ -450,9 +450,10 @@ fun NavGraph(
         }
         composable(Screen.UninstallSurvey.route) {
             UninstallSurveyRoute(
+                onBack = { navController.popBackStack() },
                 onBackHome = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.UninstallSurvey.route) { inclusive = true }
+                        popUpTo(Screen.UninstallConfirm.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 },

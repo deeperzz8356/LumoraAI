@@ -37,16 +37,6 @@ class AuthViewModel @Inject constructor(
     }
 
     /**
-     * Option A sign-up flow: after creating a brand-new account we sign the
-     * user back out so they authenticate manually, then drop them on the
-     * sign-in email form (isSignUp = false) instead of navigating into the app.
-     */
-    fun signOutForManualLogin() {
-        runCatching { auth.signOut() }
-        uiState = AuthUiState.EmailForm(isSignUp = false)
-    }
-
-    /**
      * Clears a stuck full-screen loading state. Only resets when currently
      * Loading so it never clobbers a Success (which drives navigation) or an
      * Error the user still needs to see. Safe to call on navigation-away.
@@ -75,15 +65,15 @@ class AuthViewModel @Inject constructor(
     fun signInWithEmail(email: String, password: String, isSignUp: Boolean) {
         val cleanEmail = email.trim()
         if (cleanEmail.isBlank() || password.isBlank()) {
-            uiState = AuthUiState.Error("Enter email and password.")
+            uiState = AuthUiState.Error("Enter email and password.", isSignUp)
             return
         }
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) {
-            uiState = AuthUiState.Error("Enter a valid email address.")
+            uiState = AuthUiState.Error("Enter a valid email address.", isSignUp)
             return
         }
         if (password.length < 6) {
-            uiState = AuthUiState.Error("Password must be at least 6 characters.")
+            uiState = AuthUiState.Error("Password must be at least 6 characters.", isSignUp)
             return
         }
         uiState = AuthUiState.Loading
@@ -113,7 +103,7 @@ class AuthViewModel @Inject constructor(
                 appPreferences.setUnlimitedCreditsMode(unlimitedLogin)
                 finishWithBackendSync(isNewAccount = createdNewAccount)
             } catch (error: Exception) {
-                uiState = AuthUiState.Error(authenticationMessage(error))
+                uiState = AuthUiState.Error(authenticationMessage(error), isSignUp)
             }
         }
     }

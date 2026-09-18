@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.os.SystemClock
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.TypedValue
@@ -35,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -45,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.deep.lumoraai.R
 import com.deep.lumoraai.ads.AdPlacement
+import com.deep.lumoraai.ads.AdFormat
 import com.deep.lumoraai.ads.LocalAdsManager
 import com.deep.lumoraai.ads.PlacementBanner
 import com.deep.lumoraai.ads.rememberCurrentActivity
@@ -72,6 +75,7 @@ import compose.icons.tablericons.Pencil
 import compose.icons.tablericons.SquarePlus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.io.File
 
 data class NativeGenerationSource(
@@ -155,13 +159,26 @@ fun NativeGenerationScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val ads = LocalAdsManager.current
     val activity = rememberCurrentActivity()
+    var hasStartedTask by rememberSaveable { mutableStateOf(false) }
     var showPrivacyNotice by remember { mutableStateOf(false) }
     var showCreditsExhausted by remember { mutableStateOf(false) }
     val privacyPrefs = remember(context) { context.getSharedPreferences("generation_privacy", android.content.Context.MODE_PRIVATE) }
-    val generateAndOpenResult = {
+    val generateAndOpenResult = generateAndOpenResult@{
+        val missingInput = (!config.promptOptional && config.prompt.isBlank()) ||
+            (config.showSingleUpload && config.singleUploadBitmap == null) ||
+            (config.maxSources > 0 && config.multiSources.isEmpty())
+        if (!liveConfig.generateEnabled || liveConfig.isGenerating || missingInput) {
+            onGenerate() // Preserve the feature's own validation message.
+            return@generateAndOpenResult
+        }
         val firstNewJobIndex = GenerationRepository.activeJobs.value.size
         onGenerate()
-        onNavigate("${Screen.Result.route}?path=&type=${Uri.encode(config.mediaType)}&mime=${Uri.encode(config.generatedMimeType)}&after=$firstNewJobIndex")
+        hasStartedTask = true
+        val openResult = {
+            onNavigate("${Screen.Result.route}?path=&type=${Uri.encode(config.mediaType)}&mime=${Uri.encode(config.generatedMimeType)}&after=$firstNewJobIndex")
+        }
+        if (ads == null) openResult()
+        else ads.showInterstitial(activity, AdPlacement.INTER_GENERATE, continueOnShown = true, onContinue = openResult)
     }
     val startGeneration = {
         val balance = credits
@@ -170,16 +187,19 @@ fun NativeGenerationScreen(
         } else if (!privacyPrefs.getBoolean("notice_seen", false)) {
             showPrivacyNotice = true
         } else {
-            if (ads == null) generateAndOpenResult() else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { generateAndOpenResult() }
+            generateAndOpenResult()
         }
     }
     val exitGeneration = {
-        if (config.generatedPath != null || config.generatedPaths.isNotEmpty() || ads == null) onBack()
-        else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { onBack() }
+        if (hasStartedTask || config.generatedPath != null || config.generatedPaths.isNotEmpty() || ads == null) onBack()
+        else ads.showInterstitial(activity, AdPlacement.INTER_BACK, continueOnShown = true) { onBack() }
     }
     BackHandler { exitGeneration() }
     LaunchedEffect(Unit) {
         CreditBalanceStore.refresh()
+        ads?.preloadInterstitial(context, AdPlacement.INTER_BACK)
+        ads?.preloadInterstitial(context, AdPlacement.INTER_GENERATE)
+        ads?.preloadRewarded(context)
     }
 
     Scaffold(
@@ -256,7 +276,7 @@ fun NativeGenerationScreen(
         confirmButton = { TextButton(onClick = {
             privacyPrefs.edit().putBoolean("notice_seen", true).apply()
             showPrivacyNotice = false
-            if (ads == null) generateAndOpenResult() else ads.showInterstitial(activity, AdPlacement.INTER_ALL, continueOnShown = true) { generateAndOpenResult() }
+            generateAndOpenResult()
         }) { Text("Continue") } },
         dismissButton = { TextButton(onClick = { showPrivacyNotice = false }) { Text("Cancel") } },
     )
@@ -266,7 +286,43 @@ fun NativeGenerationScreen(
         text = { Text("You need more credits to generate. Watch an ad to earn credits.") },
         confirmButton = { TextButton(onClick = {
             showCreditsExhausted = false
-            onNavigate(Screen.Credits.route)
+            if (ads == null || activity == null ||
+                !ads.config.formatEnabled(AdFormat.REWARDED) ||
+                !ads.config.isPlacementEnabled(AdPlacement.REWARD_CREDITS) ||
+                ads.config.unitIdFor(AdPlacement.REWARD_CREDITS) == null) {
+                Toast.makeText(context, "Rewarded ad is unavailable right now.", Toast.LENGTH_SHORT).show()
+            } else if (ads.rewardClaimsToday(context) >= ads.config.rewardMaxClaimsPerDay) {
+                Toast.makeText(context, "Daily ad reward limit reached.", Toast.LENGTH_SHORT).show()
+            } else {
+                scope.launch {
+                    ads.preloadRewarded(context)
+                    val deadline = SystemClock.elapsedRealtime() + ads.config.fullScreenLoadTimeoutMs
+                    while (!ads.isRewardedReady() && SystemClock.elapsedRealtime() < deadline) {
+                        delay(100)
+                    }
+                    if (!ads.isRewardedReady()) {
+                        Toast.makeText(context, "Rewarded ad is unavailable right now.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val amount = ads.config.rewardCreditsAmount
+                        ads.showRewarded(
+                            activity = activity,
+                            placement = AdPlacement.REWARD_CREDITS,
+                            onReward = {
+                                scope.launch {
+                                    val result = GenerationRepository().addRewardedAdCredits(amount)
+                                    if (result.isSuccess) {
+                                        CreditBalanceStore.set(result.getOrThrow())
+                                    } else {
+                                        CreditBalanceStore.applyOptimistic(amount)
+                                        CreditBalanceStore.refresh()
+                                    }
+                                    Toast.makeText(context, "+$amount credits added.", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                        )
+                    }
+                }
+            }
         }) { Text("Watch Ad") } },
         dismissButton = { TextButton(onClick = { showCreditsExhausted = false }) { Text("Later") } },
     )

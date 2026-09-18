@@ -52,29 +52,31 @@ class AdsEligibility @Inject constructor(
             if (frequency.isFullScreenShowing()) {
                 return reject(placement, AdRejectionReason.FULLSCREEN_ALREADY_SHOWING)
             }
-            if (placement.format == AdFormat.INTERSTITIAL && frequency.sessionLimitReached(config)) {
+            val independentInterstitial = placement.isIndependentInterstitial()
+            if (placement.format == AdFormat.INTERSTITIAL && !independentInterstitial &&
+                frequency.sessionLimitReached(config)) {
                 return reject(placement, AdRejectionReason.SESSION_LIMIT)
             }
             if (placement == AdPlacement.REWARD_CREDITS && !frequency.canClaimReward(context, config)) {
                 return reject(placement, AdRejectionReason.REWARD_DAILY_LIMIT)
             }
 
-            val placementCooldownMs = if (placement == AdPlacement.INTER_ALL) {
-                config.interAllIntervalMs
-            } else if (placement.format == AdFormat.INTERSTITIAL) {
-                config.interstitialPlacementCooldownMs
-            } else {
-                config.appOpenMinIntervalMs
+            val placementCooldownMs = when (placement) {
+                AdPlacement.INTER_ALL -> config.interAllIntervalMs
+                AdPlacement.INTER_BACK -> config.interBackIntervalMs
+                AdPlacement.INTER_GENERATE -> config.interGenerateIntervalMs
+                else -> if (placement.format == AdFormat.INTERSTITIAL) {
+                    config.interstitialPlacementCooldownMs
+                } else config.appOpenMinIntervalMs
             }
             if (frequency.placementCooldownRemaining(placement, placementCooldownMs) > 0) {
                 return reject(placement, AdRejectionReason.COOLDOWN)
             }
-            // Rewarded is user-initiated and intentional; exempt from the global
-            // full-screen cooldown so watching for credits always works.
-            val globalCooldownMs = if (placement == AdPlacement.INTER_ALL) config.interAllIntervalMs
-                else config.globalFullScreenCooldownMs
-            if (placement.format != AdFormat.REWARDED &&
-                frequency.globalFullScreenCooldownRemaining(globalCooldownMs) > 0
+            // Independent interstitial placements should never be suppressed by a
+            // shared screen-wide cooldown; each placement keeps its own timer while
+            // the in-flight ad lock still prevents overlap.
+            if (placement.format != AdFormat.REWARDED && !independentInterstitial &&
+                frequency.globalFullScreenCooldownRemaining(config.globalFullScreenCooldownMs) > 0
             ) {
                 return reject(placement, AdRejectionReason.COOLDOWN)
             }
@@ -94,3 +96,8 @@ class AdsEligibility @Inject constructor(
         val FULL_SCREEN_FORMATS = setOf(AdFormat.INTERSTITIAL, AdFormat.REWARDED, AdFormat.APP_OPEN)
     }
 }
+
+internal fun AdPlacement.isIndependentInterstitial(): Boolean =
+    this == AdPlacement.INTER_ALL ||
+        this == AdPlacement.INTER_BACK ||
+        this == AdPlacement.INTER_GENERATE

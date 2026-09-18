@@ -3,7 +3,7 @@
     <string name="google_web_client_id">26472943441-9rhsfplmkbjsbmkgujifctjrmh5985gu.apps.googleusercontent.com</string>
     <string name="language">Ngôn ngữ</string>
     <string name="done">Xong</string>
-    <string name="auth_account_created">Đã tạo tài khoản thành công! Vui lòng đăng nhập.</string>
+    <string name="auth_account_created">Đã tạo tài khoản thành công! Bạn đã đăng nhập.</string>
     <string name="settings">Cài đặt</string>
     <string name="settings_account">Tài khoản</string>
     <string name="settings_manage_profile">Quản lý hồ sơ</string>

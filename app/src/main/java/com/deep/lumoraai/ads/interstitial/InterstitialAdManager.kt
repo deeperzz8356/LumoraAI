@@ -26,10 +26,9 @@ import javax.inject.Singleton
 class InterstitialAdManager @Inject constructor(
     private val configStore: AdsConfigStore,
 ) {
-    private var interstitial: InterstitialAd? = null
-    private var loadedUnitId: String? = null
-    private var requestedPlacement = AdPlacement.INTER_ALL
-    private var isLoading = false
+    private val interstitials = mutableMapOf<AdPlacement, InterstitialAd>()
+    private val loadedUnitIds = mutableMapOf<AdPlacement, String>()
+    private val loading = mutableSetOf<AdPlacement>()
 
     fun preload(context: Context, placement: AdPlacement = AdPlacement.INTER_ALL) {
         val config = configStore.current
@@ -38,13 +37,11 @@ class InterstitialAdManager @Inject constructor(
             AdsLogger.missingUnitId(placement)
             return
         }
-        requestedPlacement = placement
-        if (interstitial != null && loadedUnitId == unitId) return
-        if (isLoading) return
+        if (interstitials[placement] != null && loadedUnitIds[placement] == unitId) return
+        if (!loading.add(placement)) return
 
-        interstitial = null
-        loadedUnitId = null
-        isLoading = true
+        interstitials.remove(placement)
+        loadedUnitIds.remove(placement)
         AdsLogger.loadStarted(placement, unitId, config.testMode)
         InterstitialAd.load(
             context.applicationContext,
@@ -56,28 +53,25 @@ class InterstitialAdManager @Inject constructor(
                         AdRevenueTracker.trackPaidAd(context, placement, unitId, adValue)
                     }
                     AdsLogger.loadSucceeded(placement, ad.responseInfo.mediationAdapterClassName)
-                    isLoading = false
-                    if (configStore.current.unitIdFor(requestedPlacement) == unitId) {
-                        interstitial = ad
-                        loadedUnitId = unitId
-                    } else {
-                        preload(context, requestedPlacement)
-                    }
+                    loading.remove(placement)
+                    if (configStore.current.unitIdFor(placement) == unitId) {
+                        interstitials[placement] = ad
+                        loadedUnitIds[placement] = unitId
+                    } else preload(context, placement)
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     AdsLogger.loadFailed(placement, error.code, error.message)
-                    interstitial = null
-                    loadedUnitId = null
-                    isLoading = false
-                    if (requestedPlacement != placement) preload(context, requestedPlacement)
+                    interstitials.remove(placement)
+                    loadedUnitIds.remove(placement)
+                    loading.remove(placement)
                 }
             }
         )
     }
 
     fun isReady(placement: AdPlacement): Boolean =
-        interstitial != null && loadedUnitId == configStore.current.unitIdFor(placement)
+        interstitials[placement] != null && loadedUnitIds[placement] == configStore.current.unitIdFor(placement)
 
     /**
      * Show the (already eligibility-checked) interstitial. [onShown] fires when
@@ -91,7 +85,7 @@ class InterstitialAdManager @Inject constructor(
         onAdDisplayed: () -> Unit = {},
         onComplete: () -> Unit,
     ): Boolean {
-        val ad = interstitial?.takeIf { isReady(placement) } ?: run {
+        val ad = interstitials[placement]?.takeIf { isReady(placement) } ?: run {
             preload(activity, placement)
             return false
         }
@@ -111,17 +105,17 @@ class InterstitialAdManager @Inject constructor(
 
             override fun onAdDismissedFullScreenContent() {
                 AdsLogger.dismissed(placement)
-                interstitial = null
-                loadedUnitId = null
-                preload(activity, requestedPlacement)
+                interstitials.remove(placement)
+                loadedUnitIds.remove(placement)
+                preload(activity, placement)
                 forwardOnce()
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
                 AdsLogger.showFailure(placement, error.message)
-                interstitial = null
-                loadedUnitId = null
-                preload(activity, requestedPlacement)
+                interstitials.remove(placement)
+                loadedUnitIds.remove(placement)
+                preload(activity, placement)
                 forwardOnce()
             }
         }

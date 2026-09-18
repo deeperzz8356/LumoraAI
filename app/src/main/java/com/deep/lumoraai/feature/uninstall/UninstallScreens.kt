@@ -1,8 +1,5 @@
 package com.deep.lumoraai.feature.uninstall
 
-import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -20,17 +17,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -40,6 +34,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,27 +60,18 @@ fun UninstallConfirmRoute(
 ) {
     BackHandler(onBack = onBackHome)
     UninstallScaffold(
-        title = stringResource(R.string.ui_uninstall_confirm_title),
-        subtitle = stringResource(R.string.ui_uninstall_confirm_subtitle),
+        title = stringResource(R.string.ui_uninstall_v2_confirm_title),
+        subtitle = stringResource(R.string.ui_uninstall_v2_confirm_subtitle),
         onBackHome = onBackHome,
     ) {
-        Box(
-            modifier = Modifier
-                .size(78.dp)
-                .clip(CircleShape)
-                .background(Color(0x22FF6B6B)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.DeleteForever,
-                contentDescription = null,
-                tint = Color(0xFFFF6B6B),
-                modifier = Modifier.size(42.dp),
-            )
-        }
-        Spacer(Modifier.height(18.dp))
         Text(
-            text = stringResource(R.string.ui_uninstall_confirm_body),
+            text = stringResource(R.string.ui_uninstall_v2_confirm_body),
+            color = Color(0xFFB8C2D8),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.ui_uninstall_v2_confirm_body_secondary),
             color = Color(0xFFB8C2D8),
             style = MaterialTheme.typography.bodyLarge,
         )
@@ -98,20 +84,20 @@ fun UninstallConfirmRoute(
             ),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.ui_uninstall_no), fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.ui_try_again), fontWeight = FontWeight.Bold)
         }
         OutlinedButton(
             onClick = onStillUninstall,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF6B6B)),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.ui_uninstall_yes), fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.ui_uninstall_v2_still), fontWeight = FontWeight.Bold)
         }
     }
 }
 
 @Composable
-fun UninstallSurveyRoute(onBackHome: () -> Unit) {
+fun UninstallSurveyRoute(onBack: () -> Unit, onBackHome: () -> Unit) {
     val context = LocalContext.current
     val openAppDetails = {
         runCatching {
@@ -120,23 +106,20 @@ fun UninstallSurveyRoute(onBackHome: () -> Unit) {
         }.onFailure { android.util.Log.w("Uninstall", "Unable to open application details", it) }
         Unit
     }
-    val uninstallLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_FIRST_USER) openAppDetails()
-    }
     val reasons = listOf(
-        stringResource(R.string.ui_uninstall_reason_not_using),
+        stringResource(R.string.ui_uninstall_v2_reason_features),
         stringResource(R.string.ui_uninstall_reason_ads),
-        stringResource(R.string.ui_uninstall_reason_cost),
-        stringResource(R.string.ui_uninstall_reason_quality),
-        stringResource(R.string.ui_uninstall_reason_other),
+        stringResource(R.string.ui_uninstall_v2_reason_not_using),
+        stringResource(R.string.ui_uninstall_v2_reason_other),
     )
-    var selectedIndex by rememberSaveable { mutableStateOf(-1) }
-    BackHandler(onBack = onBackHome)
+    var selectedIndex by rememberSaveable { mutableStateOf(1) }
+    var otherReason by rememberSaveable { mutableStateOf("") }
+    BackHandler(onBack = onBack)
 
     UninstallScaffold(
-        title = stringResource(R.string.ui_uninstall_survey_title),
-        subtitle = stringResource(R.string.ui_uninstall_survey_subtitle),
-        onBackHome = onBackHome,
+        title = stringResource(R.string.ui_uninstall_v2_survey_title),
+        subtitle = stringResource(R.string.ui_uninstall_v2_survey_subtitle),
+        onBackHome = onBack,
     ) {
         reasons.forEachIndexed { index, reason ->
             ReasonRow(
@@ -146,33 +129,34 @@ fun UninstallSurveyRoute(onBackHome: () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
         }
-        Spacer(Modifier.height(12.dp))
-        Button(
-            enabled = selectedIndex in reasons.indices,
-            onClick = {
-                if (selectedIndex !in reasons.indices) return@Button
-                runCatching {
-                    uninstallLauncher.launch(
-                        Intent(Intent.ACTION_UNINSTALL_PACKAGE,
-                            Uri.parse("package:${context.packageName}"))
-                            .putExtra(Intent.EXTRA_RETURN_RESULT, true)
-                    )
-                }.onFailure { openAppDetails() }
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFF6B6B),
-                contentColor = Color.White,
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.ui_uninstall), fontWeight = FontWeight.Bold)
+        if (selectedIndex == 3) {
+            OutlinedTextField(
+                value = otherReason,
+                onValueChange = { otherReason = it },
+                label = { Text(stringResource(R.string.ui_uninstall_v2_other_hint)) },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3,
+            )
         }
-        OutlinedButton(
-            onClick = onBackHome,
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD6FF2F)),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.ui_try_again), fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = onBackHome,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD6FF2F)),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(stringResource(R.string.ui_cancel), fontWeight = FontWeight.Bold)
+            }
+            Button(
+                onClick = openAppDetails,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF6B6B),
+                    contentColor = Color.White,
+                ),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(stringResource(R.string.ui_uninstall), fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -188,7 +172,7 @@ private fun UninstallScaffold(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF081020))
-            .systemBarsPadding(),
+            .statusBarsPadding(),
     ) {
         Row(
             modifier = Modifier
@@ -212,12 +196,12 @@ private fun UninstallScaffold(
             horizontalAlignment = Alignment.CenterHorizontally,
             content = content,
         )
-        PlacementNativeAd(
-            placement = AdPlacement.NATIVE_UNINSTALL,
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .navigationBarsPadding(),
-        )
+        Box(Modifier.fillMaxWidth().navigationBarsPadding()) {
+            PlacementNativeAd(
+                placement = AdPlacement.NATIVE_UNINSTALL,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 

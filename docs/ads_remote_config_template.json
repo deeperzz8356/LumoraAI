@@ -34,11 +34,13 @@
     "valueType": "STRING",
     "description": "App URL included when users share LumoraAI from Settings or Profile."
   },
-  "inter_all_interval_ms": {
-    "defaultValue": {
-      "value": "25000"
-    },
-    "valueType": "NUMBER",
-    "description": "Minimum interval before Inter_all can show after the last fullscreen impression, in milliseconds (0-600000). Replaces the click-count requirement; overrides legacy Inter_all cooldowns."
-  }
+  "enable_inter_all": { "defaultValue": { "value": "true" }, "valueType": "BOOLEAN", "description": "Enable Home feature-tap interstitials." },
+  "interval_inter_all": { "defaultValue": { "value": "0" }, "valueType": "NUMBER", "description": "Seconds between inter_all impressions, independently tracked (0-600)." },
+  "enable_inter_back": { "defaultValue": { "value": "true" }, "valueType": "BOOLEAN", "description": "Enable feature exit interstitials when no task was started." },
+  "interval_inter_back": { "defaultValue": { "value": "0" }, "valueType": "NUMBER", "description": "Seconds between inter_back impressions, independently tracked (0-600)." },
+  "enable_inter_generate": { "defaultValue": { "value": "true" }, "valueType": "BOOLEAN", "description": "Enable task-start interstitials." },
+  "interval_inter_generate": { "defaultValue": { "value": "0" }, "valueType": "NUMBER", "description": "Seconds between inter_generate impressions, independently tracked (0-600)." },
+  "inter_back_adunit": { "defaultValue": { "value": "" }, "valueType": "STRING", "description": "AdMob interstitial unit for feature exits." },
+  "inter_all_adunit": { "defaultValue": { "value": "" }, "valueType": "STRING", "description": "AdMob interstitial unit for Home feature taps; legacy Inter_all_adunit remains supported." },
+  "inter_generate_adunit": { "defaultValue": { "value": "" }, "valueType": "STRING", "description": "AdMob interstitial unit for task starts." }
 }

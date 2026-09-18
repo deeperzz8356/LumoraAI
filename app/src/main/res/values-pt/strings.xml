@@ -3,7 +3,7 @@
     <string name="google_web_client_id">26472943441-9rhsfplmkbjsbmkgujifctjrmh5985gu.apps.googleusercontent.com</string>
     <string name="language">Idioma</string>
     <string name="done">Concluído</string>
-    <string name="auth_account_created">Conta criada com sucesso! Faça login.</string>
+    <string name="auth_account_created">Conta criada com sucesso! Agora está conectado.</string>
     <string name="settings">Configurações</string>
     <string name="settings_account">Conta</string>
     <string name="settings_manage_profile">Gerenciar perfil</string>

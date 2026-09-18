@@ -46,9 +46,11 @@ enum class AdPlacement(
     NATIVE_HISTORY("native_history", AdFormat.NATIVE, NativeAdStyle.REGULAR),
     // 21
     NATIVE_COMPRESS("native_compress", AdFormat.NATIVE, NativeAdStyle.LARGE),
-    NATIVE_UNINSTALL("native_uninstall", AdFormat.NATIVE, NativeAdStyle.REGULAR),
+    NATIVE_UNINSTALL("native_uninstall", AdFormat.NATIVE, NativeAdStyle.LARGE),
     // 22
-    INTER_ALL("Inter_all", AdFormat.INTERSTITIAL),
+    INTER_ALL("inter_all", AdFormat.INTERSTITIAL),
+    INTER_BACK("inter_back", AdFormat.INTERSTITIAL),
+    INTER_GENERATE("inter_generate", AdFormat.INTERSTITIAL),
     // 23
     INTER_SETTING_LANGUAGE("inter_setting_language", AdFormat.INTERSTITIAL),
     // 24

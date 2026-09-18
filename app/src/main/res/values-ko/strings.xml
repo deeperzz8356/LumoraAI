@@ -3,7 +3,7 @@
     <string name="google_web_client_id">26472943441-9rhsfplmkbjsbmkgujifctjrmh5985gu.apps.googleusercontent.com</string>
     <string name="language">언어</string>
     <string name="done">완료</string>
-    <string name="auth_account_created">계정이 성공적으로 생성되었습니다! 로그인해 주세요.</string>
+    <string name="auth_account_created">계정이 성공적으로 생성되었습니다! 지금 로그인되었습니다.</string>
     <string name="settings">설정</string>
     <string name="settings_account">계정</string>
     <string name="settings_manage_profile">프로필 관리</string>
