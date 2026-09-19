@@ -64,9 +64,8 @@ class AdsConfigStore @Inject constructor() {
             appOpenEnabled        = rc.boolOr("ads_app_open_enabled", base.appOpenEnabled),
             testMode              = rc.boolOr("ads_test_mode", base.testMode),
 
-            interAllIntervalMs              = rc.secondsInMs("interval_inter_all", base.interAllIntervalMs),
-            interBackIntervalMs             = rc.secondsInMs("interval_inter_back", base.interBackIntervalMs),
-            interGenerateIntervalMs         = rc.secondsInMs("interval_inter_generate", base.interGenerateIntervalMs),
+            interBackClickInterval          = rc.intIn("interval_inter_back", 1, 100, base.interBackClickInterval),
+            interGenerateClickInterval      = rc.intIn("interval_inter_generate", 1, 100, base.interGenerateClickInterval),
             interstitialPlacementCooldownMs = rc.longIn("inter_cooldown_ms", 0, 600_000, base.interstitialPlacementCooldownMs),
             globalFullScreenCooldownMs      = rc.longIn("fullscreen_cooldown_ms", 0, 600_000, base.globalFullScreenCooldownMs),
             maxInterstitialsPerSession      = rc.intIn("max_inter_per_session", 0, 200, base.maxInterstitialsPerSession),
@@ -185,7 +184,8 @@ class AdsConfigStore @Inject constructor() {
             appOpenEnabled        = parsed.optBoolOr("ads_app_open_enabled", base.appOpenEnabled),
             testMode              = parsed.optBoolOr("ads_test_mode", base.testMode),
             placementEnabled      = parsePlacementEnabledJson(parsed, base.placementEnabled),
-            interAllIntervalMs              = parsed.optLongIn("inter_all_interval_ms", 0, 600_000, base.interAllIntervalMs),
+            interBackClickInterval          = parsed.optIntIn("interval_inter_back", 1, 100, base.interBackClickInterval),
+            interGenerateClickInterval      = parsed.optIntIn("interval_inter_generate", 1, 100, base.interGenerateClickInterval),
             interstitialPlacementCooldownMs = parsed.optLongIn("inter_cooldown_ms", 0, 600_000, base.interstitialPlacementCooldownMs),
             globalFullScreenCooldownMs      = parsed.optLongIn("fullscreen_cooldown_ms", 0, 600_000, base.globalFullScreenCooldownMs),
             maxInterstitialsPerSession      = parsed.optIntIn("max_inter_per_session", 0, 200, base.maxInterstitialsPerSession),
@@ -277,12 +277,6 @@ private fun FirebaseRemoteConfig.longIn(key: String, min: Long, max: Long, fallb
     val v = getString(key).trim()
     if (v.isBlank()) return fallback
     return getLong(key).coerceIn(min, max)
-}
-
-/** interval_inter_* values are seconds, bounded to ten minutes. */
-private fun FirebaseRemoteConfig.secondsInMs(key: String, fallback: Long): Long {
-    if (getString(key).isBlank()) return fallback
-    return getLong(key).coerceIn(0L, 600L) * 1_000L
 }
 
 private fun FirebaseRemoteConfig.colorOr(key: String, fallback: Long): Long {

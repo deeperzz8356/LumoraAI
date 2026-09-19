@@ -177,7 +177,7 @@ fun NativeGenerationScreen(
         val openResult = {
             onNavigate("${Screen.Result.route}?path=&type=${Uri.encode(config.mediaType)}&mime=${Uri.encode(config.generatedMimeType)}&after=$firstNewJobIndex")
         }
-        if (ads == null) openResult()
+        if (ads == null || !ads.shouldShowClickBasedInterstitial(AdPlacement.INTER_GENERATE)) openResult()
         else ads.showInterstitial(activity, AdPlacement.INTER_GENERATE, continueOnShown = true, onContinue = openResult)
     }
     val startGeneration = {
@@ -191,7 +191,8 @@ fun NativeGenerationScreen(
         }
     }
     val exitGeneration = {
-        if (hasStartedTask || config.generatedPath != null || config.generatedPaths.isNotEmpty() || ads == null) onBack()
+        if (hasStartedTask || config.generatedPath != null || config.generatedPaths.isNotEmpty() || ads == null ||
+            !ads.shouldShowClickBasedInterstitial(AdPlacement.INTER_BACK)) onBack()
         else ads.showInterstitial(activity, AdPlacement.INTER_BACK, continueOnShown = true) { onBack() }
     }
     BackHandler { exitGeneration() }

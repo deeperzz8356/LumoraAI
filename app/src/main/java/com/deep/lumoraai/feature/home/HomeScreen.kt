@@ -96,56 +96,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val ads = LocalAdsManager.current
     val adStore = LocalAdsConfigStore.current
-    val activity = rememberCurrentActivity()
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val navigate by rememberUpdatedState(onNavigate)
-    val attached = remember { AtomicBoolean(true) }
-    DisposableEffect(Unit) {
-        onDispose { attached.set(false) }
-    }
-    var pendingRoute by remember { mutableStateOf<String?>(null) }
-    var requestBusy by remember { mutableStateOf(false) }
-
-    LaunchedEffect(ads) {
-        ads?.preloadInterstitial(context, AdPlacement.INTER_ALL)
-    }
-    LaunchedEffect(pendingRoute, ads, activity) {
-        val route = pendingRoute ?: return@LaunchedEffect
-        val targetRoute = route
-        val deadline = SystemClock.elapsedRealtime() + (ads?.config?.fullScreenLoadTimeoutMs ?: 0L)
-        var attempted = false
-        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            if (attempted) return@repeatOnLifecycle
-            val config = ads?.config
-            val enabled = config != null && config.formatEnabled(AdFormat.INTERSTITIAL) &&
-                config.isPlacementEnabled(AdPlacement.INTER_ALL) && config.unitIdFor(AdPlacement.INTER_ALL) != null
-            if (enabled && ads != null) {
-                ads.preloadInterstitial(context, AdPlacement.INTER_ALL)
-                while (isActive && !ads.isInterstitialReady(AdPlacement.INTER_ALL) &&
-                    SystemClock.elapsedRealtime() < deadline) {
-                    delay(HOME_INTERSTITIAL_POLL_MS)
-                }
-            }
-            attempted = true
-            val complete = {
-                if (pendingRoute == targetRoute) {
-                    pendingRoute = null
-                    requestBusy = false
-                    if (attached.get()) navigate(targetRoute)
-                }
-            }
-            if (enabled && ads != null) {
-                ads.showInterstitial(activity, AdPlacement.INTER_ALL, onContinue = complete)
-            } else complete()
-        }
-    }
-
-    val featureSelect: (String) -> Unit = { route ->
-        if (!requestBusy) {
-            requestBusy = true
-            pendingRoute = route
-        }
-    }
+    val featureSelect: (String) -> Unit = onNavigate
 
     Scaffold(
         modifier = modifier.fillMaxSize(),

@@ -22,6 +22,7 @@ class AdsFrequencyManager @Inject constructor() {
     private var interstitialsShownThisSession = 0
     private var lastFullScreenShownAt: Long? = null
     private val lastPlacementShownAt = mutableMapOf<String, Long>()
+    private val placementTriggerCounts = mutableMapOf<String, Int>()
     private val fullScreenShowing = AtomicBoolean(false)
 
     // ---- Full-screen lock ----
@@ -50,11 +51,27 @@ class AdsFrequencyManager @Inject constructor() {
     fun sessionLimitReached(config: AdsConfig): Boolean =
         interstitialsShownThisSession >= config.maxInterstitialsPerSession
 
+    fun recordPlacementTrigger(placement: AdPlacement): Int {
+        val count = (placementTriggerCounts[placement.key] ?: 0) + 1
+        placementTriggerCounts[placement.key] = count
+        return count
+    }
+
+    fun triggerReached(placement: AdPlacement, interval: Int): Boolean =
+        (placementTriggerCounts[placement.key] ?: 0) >= interval
+
+    fun resetPlacementTrigger(placement: AdPlacement) {
+        placementTriggerCounts.remove(placement.key)
+    }
+
     /** Record a full-screen impression: updates cooldowns, session count, trigger reset. */
     fun recordFullScreenShown(placement: AdPlacement, nowMs: Long = System.currentTimeMillis()) {
         val now = nowMs
         lastFullScreenShownAt = now
         lastPlacementShownAt[placement.key] = now
+        if (placement == AdPlacement.INTER_BACK || placement == AdPlacement.INTER_GENERATE) {
+            resetPlacementTrigger(placement)
+        }
         if (placement.format == AdFormat.INTERSTITIAL) {
             interstitialsShownThisSession++
         }

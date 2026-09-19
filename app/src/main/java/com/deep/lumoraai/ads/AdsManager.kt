@@ -70,10 +70,8 @@ class AdsManager @Inject constructor(
 
         MobileAds.initialize(appContext) { status ->
             AdsLogger.d("MobileAds initialized: ${status.adapterStatusMap.keys}")
-            interstitialManager.preload(
-                appContext,
-                AdPlacement.INTER_ALL,
-            )
+            interstitialManager.preload(appContext, AdPlacement.INTER_BACK)
+            interstitialManager.preload(appContext, AdPlacement.INTER_GENERATE)
             rewardedManager.preload(appContext)
             appOpenManager.preload(appContext)
         }
@@ -88,6 +86,17 @@ class AdsManager @Inject constructor(
 
     fun preloadInterstitial(context: Context, placement: AdPlacement = AdPlacement.INTER_ALL) =
         interstitialManager.preload(context, placement)
+
+    /** Counts user actions independently for each click-based interstitial. */
+    fun shouldShowClickBasedInterstitial(placement: AdPlacement): Boolean {
+        val interval = when (placement) {
+            AdPlacement.INTER_BACK -> config.interBackClickInterval
+            AdPlacement.INTER_GENERATE -> config.interGenerateClickInterval
+            else -> return false
+        }
+        frequency.recordPlacementTrigger(placement)
+        return frequency.triggerReached(placement, interval)
+    }
 
     /**
      * Show an interstitial for [placement] then run [onContinue]. Runs the full

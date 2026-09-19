@@ -105,8 +105,5 @@ private fun bindAuth(
     }
 
     binding.googleButton.setOnClickListener { onGoogle() }
-    binding.guestButton.visibility = if (!loading) View.VISIBLE else View.GONE
-    binding.guestButton.isEnabled = allowGuest
-    binding.guestButton.setText(if (allowGuest) R.string.auth_continue_guest else R.string.auth_trial_finished)
-    binding.guestButton.setOnClickListener { if (allowGuest) onGuest() else onEmailOption(false) }
+    binding.guestButton.visibility = View.GONE
 }

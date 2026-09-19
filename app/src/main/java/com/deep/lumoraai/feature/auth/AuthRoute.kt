@@ -22,7 +22,6 @@ import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.deep.lumoraai.core.navigation.ResetLoadingOnLeave
-import com.deep.lumoraai.core.utils.GuestIdentity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import com.google.firebase.remoteconfig.ConfigUpdateListener
@@ -40,7 +39,6 @@ fun AuthRoute(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uiState = viewModel.uiState
-    val guestTrialExhausted = remember { mutableStateOf(GuestIdentity.isTrialExhausted(context)) }
     val googleAuthEnabled = remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
@@ -72,11 +70,7 @@ fun AuthRoute(
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
-            Toast.makeText(
-                context,
-                context.getString(com.deep.lumoraai.R.string.auth_account_created),
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(context, "User Logged in", Toast.LENGTH_SHORT).show()
             onNext()
         }
     }
@@ -88,19 +82,10 @@ fun AuthRoute(
         onEmailSignIn = { email, password, isSignUp ->
             viewModel.signInWithEmail(email, password, isSignUp)
         },
-        onGuestSignIn = {
-            if (GuestIdentity.isTrialExhausted(context)) {
-                guestTrialExhausted.value = true
-                Toast.makeText(context, "Free trial finished. Please sign in or create an account.", Toast.LENGTH_LONG).show()
-                viewModel.showEmailForm(false)
-            } else {
-                GuestIdentity.markTrialStarted(context)
-                viewModel.signInAnonymously()
-            }
-        },
+        onGuestSignIn = {},
         onEmailOptionClick = { isSignUp -> viewModel.showEmailForm(isSignUp) },
         onBack = { viewModel.resetState() },
-        allowGuestSignIn = !guestTrialExhausted.value
+        allowGuestSignIn = false,
     )
 }
 

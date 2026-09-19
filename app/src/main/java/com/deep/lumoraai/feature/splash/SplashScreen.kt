@@ -93,7 +93,6 @@ fun SplashScreen(isReady: Boolean, onNext: () -> Unit, modifier: Modifier = Modi
             return@LaunchedEffect
         }
         ads?.prepareHomeStartup(context)
-        ads?.preloadInterstitial(context, AdPlacement.INTER_ALL)
     }
 
     LaunchedEffect(isReady, bannerLoadState) {

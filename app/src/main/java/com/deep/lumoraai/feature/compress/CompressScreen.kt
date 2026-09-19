@@ -52,13 +52,15 @@ fun CompressScreen(
     val activity = rememberCurrentActivity()
     var hasStartedTask by rememberSaveable { mutableStateOf(false) }
     val exit = {
-        if (hasStartedTask || ads == null) onBack()
+        if (hasStartedTask || ads == null || !ads.shouldShowClickBasedInterstitial(AdPlacement.INTER_BACK)) onBack()
         else ads.showInterstitial(activity, AdPlacement.INTER_BACK, continueOnShown = true) { onBack() }
     }
     val startCompress = {
         onCompress()
         hasStartedTask = true
-        ads?.showInterstitial(activity, AdPlacement.INTER_GENERATE, continueOnShown = true) {}
+        if (ads?.shouldShowClickBasedInterstitial(AdPlacement.INTER_GENERATE) == true) {
+            ads.showInterstitial(activity, AdPlacement.INTER_GENERATE, continueOnShown = true) {}
+        }
         Unit
     }
     BackHandler { exit() }

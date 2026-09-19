@@ -61,15 +61,11 @@ class AdsEligibility @Inject constructor(
                 return reject(placement, AdRejectionReason.REWARD_DAILY_LIMIT)
             }
 
-            val placementCooldownMs = when (placement) {
-                AdPlacement.INTER_ALL -> config.interAllIntervalMs
-                AdPlacement.INTER_BACK -> config.interBackIntervalMs
-                AdPlacement.INTER_GENERATE -> config.interGenerateIntervalMs
-                else -> if (placement.format == AdFormat.INTERSTITIAL) {
-                    config.interstitialPlacementCooldownMs
-                } else config.appOpenMinIntervalMs
-            }
-            if (frequency.placementCooldownRemaining(placement, placementCooldownMs) > 0) {
+            val placementCooldownMs = if (placement.format == AdFormat.INTERSTITIAL) {
+                config.interstitialPlacementCooldownMs
+            } else config.appOpenMinIntervalMs
+            if (!independentInterstitial &&
+                frequency.placementCooldownRemaining(placement, placementCooldownMs) > 0) {
                 return reject(placement, AdRejectionReason.COOLDOWN)
             }
             // Independent interstitial placements should never be suppressed by a
