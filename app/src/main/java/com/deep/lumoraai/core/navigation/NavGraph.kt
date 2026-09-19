@@ -17,12 +17,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -82,6 +86,7 @@ fun NavGraph(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     var lastRootBackPressAt by remember { mutableLongStateOf(0L) }
+    var showExitConfirmation by remember { mutableStateOf(false) }
     val rootRoutes = setOf(
         Screen.Auth.route,
         Screen.Home.route,
@@ -90,14 +95,35 @@ fun NavGraph(
         Screen.History.route,
         Screen.Profile.route,
     )
-    BackHandler(enabled = currentRoute in rootRoutes) {
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute !in rootRoutes) {
+            showExitConfirmation = false
+            lastRootBackPressAt = 0L
+        }
+    }
+
+    BackHandler(enabled = currentRoute in rootRoutes && !showExitConfirmation) {
         val now = SystemClock.elapsedRealtime()
         if (now - lastRootBackPressAt <= 2_000L) {
-            (context as? Activity)?.finish()
+            showExitConfirmation = true
         } else {
             lastRootBackPressAt = now
             Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
         }
+    }
+    if (showExitConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmation = false },
+            title = { Text("Exit Lumora AI?") },
+            text = { Text("Do you want to exit the app?") },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirmation = false }) { Text("Cancel") }
+            },
+            confirmButton = {
+                TextButton(onClick = { (context as? Activity)?.finish() }) { Text("Exit") }
+            },
+        )
     }
 
     LaunchedEffect(notificationRoute, currentRoute) {
@@ -141,7 +167,7 @@ fun NavGraph(
                     } else {
                         Screen.Language.route
                     }
-                    navController.goTo(target)
+                    if (target == Screen.Home.route) navController.goToRoot(target) else navController.goTo(target)
                     if (pendingRoute != null) onNotificationRouteConsumed()
                 }
             )
@@ -181,12 +207,12 @@ fun NavGraph(
                             }
                         }
                         OnboardingPreferences.markCompleted(context)
-                        navController.goTo(Screen.Home.route)
+                        navController.goToRoot(Screen.Home.route)
                     }
                 },
             )
         }
-        composable(Screen.Auth.route) { AuthRoute(onNext = { navController.goTo(Screen.Home.route) }) }
+        composable(Screen.Auth.route) { AuthRoute(onNext = { navController.goToRoot(Screen.Home.route) }) }
         composable(Screen.Home.route) { HomeRoute(onNext = next(Screen.Home), onNavigate = { navController.goTo(it) }) }
         composable(
             route = Screen.CreateHub.route + "?prompt={prompt}&tab={tab}",

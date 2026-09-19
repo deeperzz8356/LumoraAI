@@ -14,6 +14,14 @@ fun NavHostController.goTo(route: String) {
     navigate(destination) { launchSingleTop = true }
 }
 
+/** Opens a post-auth destination without retaining splash/onboarding behind it. */
+fun NavHostController.goToRoot(route: String) {
+    navigate(route) {
+        popUpTo(Screen.Splash.route) { inclusive = true }
+        launchSingleTop = true
+    }
+}
+
 fun createHubRoute(prompt: String? = null, tab: Int = 0): String =
     buildString {
         append(Screen.CreateHub.route)
